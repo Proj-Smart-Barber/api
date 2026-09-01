@@ -1,7 +1,7 @@
-import { Entity } from "@/core/entities/Entity";
-import type { UniqueEntityId } from "@/core/entities/unique-entity-id";
-import type { Optional } from "@/core/types/optional";
+import { Entity } from "../../../core/entities/Entity";
 import type { Password } from "./value-objects/password";
+import { Optional } from "@/core/types/optional";
+import { UniqueEntityId } from "@/core/entities/unique-entity-id";
 
 export enum StaffRole {
   OWNER,

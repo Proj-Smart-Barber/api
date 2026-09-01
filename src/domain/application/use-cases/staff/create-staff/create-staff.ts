@@ -1,10 +1,10 @@
-import { type Either, left, right } from "@/core/logic/either";
-import { Staff, type StaffRole } from "@/domain/enterprise/entities/staff";
-import { Password } from "@/domain/enterprise/entities/value-objects/password";
 import type { StaffsRepository } from "../../../repositories/staffs-repository";
-import { CPFOrEmailAlreadyInUseError } from "../../_errors/cpf-or-email-already-in-use-error";
 import type { CreateStaffDTO } from "./create-staff-dto";
 import type { CreateStaffResponse } from "./create-staff-response";
+import { Staff, StaffRole } from "../../../../enterprise/entities/staff";
+import { CPFOrEmailAlreadyInUseError } from "../../_errors/cpf-or-email-already-in-use-error";
+import { Either, left, right } from "../../../../../core/logic/either";
+import { Password } from "../../../../enterprise/entities/value-objects/password";
 
 type CreateStaffUseCaseResponse = Either<
   CPFOrEmailAlreadyInUseError,
