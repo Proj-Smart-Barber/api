@@ -20,7 +20,7 @@ export const barbershopStatusEnum = pgEnum("barbershop_status", [
 export const staffs = pgTable("staffs", {
   id: uuid().primaryKey().defaultRandom(),
   name: text().notNull(),
-  avatarUrl: text(),
+  avatarUrl: text("avatar_url"),
   email: text().notNull().unique(),
   password: text().notNull(),
   role: roleEnum("role").notNull(),
@@ -31,7 +31,7 @@ export const staffs = pgTable("staffs", {
 export const barbershops = pgTable("barbershops", {
   id: uuid().primaryKey().defaultRandom(),
   name: text().notNull(),
-  avatarUrl: text(),
+  avatarUrl: text("avatar_url"),
   ownerId: uuid("owner_id")
     .notNull()
     .references(() => staffs.id),
@@ -59,7 +59,7 @@ export const barbershopSchedules = pgTable("barbershop_schedules", {
 export const customers = pgTable("customers", {
   id: uuid().primaryKey().defaultRandom(),
   name: text().notNull(),
-  avatarUrl: text(),
+  avatarUrl: text("avatar_url"),
   email: text().notNull().unique(),
   password: text().notNull(),
   cpf: text().notNull().unique(),
