@@ -34,7 +34,7 @@ export class CreateStaffUseCase {
       email,
       password: await Password.generateHashFromPlainText(password, 12),
       cpf,
-      role: "BARBERMAN" as unknown as StaffRole,
+      role: "OWNER" as unknown as StaffRole,
     });
 
     const staff = await this.staffsRepository.save(newStaff);
