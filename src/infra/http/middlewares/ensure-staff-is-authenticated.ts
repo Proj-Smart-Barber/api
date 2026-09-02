@@ -12,7 +12,7 @@ declare module "express-serve-static-core" {
   }
 }
 
-export async function auth(
+export async function ensureStaffIsAuthenticated(
   request: Request,
   reply: Response,
   next: NextFunction,
@@ -28,6 +28,8 @@ export async function auth(
   try {
     const payload = verify(token, process.env.JWT_SECRET!) as Payload;
     const staffsRepository = new DrizzleStaffsRepository();
+
+    console.log(payload);
 
     const staff = await staffsRepository.findById(payload.sub);
 
