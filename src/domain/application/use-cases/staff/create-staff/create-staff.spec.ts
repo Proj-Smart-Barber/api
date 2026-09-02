@@ -24,7 +24,7 @@ describe("Create a new staff", async () => {
     );
   });
 
-  it("not should be able to create a staff with an existing email", async () => {
+  it("should not be able to create a staff with an existing email", async () => {
     await sut.execute({
       name: "Fulano 1",
       email: "fulano1@email.com",
@@ -44,7 +44,7 @@ describe("Create a new staff", async () => {
     expect(response.value).toBeInstanceOf(CPFOrEmailAlreadyInUseError);
   });
 
-  it("not should be able to create a staff with an existing cpf", async () => {
+  it("should not be able to create a staff with an existing cpf", async () => {
     await sut.execute({
       name: "Fulano 1",
       email: "fulano1@email.com",
@@ -64,7 +64,7 @@ describe("Create a new staff", async () => {
     expect(response.value).toBeInstanceOf(CPFOrEmailAlreadyInUseError);
   });
 
-  it("not should be able to create a staff with an existing cpf or email", async () => {
+  it("should not be able to create a staff with an existing cpf or email", async () => {
     await sut.execute({
       name: "Fulano 1",
       email: "fulano1@email.com",
