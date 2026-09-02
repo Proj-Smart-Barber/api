@@ -7,7 +7,7 @@ export const adaptRoute = (controller: Controller) => {
       ...request.body,
       ...request.params,
       ...request.query,
-      // userId: request.user?.sub as string,
+      userId: request.user?.sub as string,
       // file: request.file,
     };
 

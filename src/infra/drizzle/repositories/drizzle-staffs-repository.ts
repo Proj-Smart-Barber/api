@@ -6,6 +6,16 @@ import type { StaffsRepository } from "../../../domain/application/repositories/
 import type { Staff } from "../../../domain/enterprise/entities/staff";
 
 export class DrizzleStaffsRepository implements StaffsRepository {
+  async findById(id: string): Promise<Staff | null> {
+    const [staff] = await db.select().from(staffs).where(eq(staffs.id, id));
+
+    if (!staff) {
+      return null;
+    }
+
+    return StaffMapper.toDomain(staff);
+  }
+
   async findByEmail(email: string): Promise<Staff | null> {
     const [staff] = await db
       .select()
