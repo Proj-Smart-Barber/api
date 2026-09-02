@@ -7,7 +7,11 @@ import { swaggerDocument } from "./infra/http/swagger";
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(
+  express.json({
+    type: ["application/json", "text/plain"],
+  }),
+);
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use("/api", routes);
 
@@ -15,7 +19,4 @@ app.get("/", (_request: Request, response: Response) => {
   return response.json({ message: "hello, world" });
 });
 
-const port = 3333;
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});
+export default app;
