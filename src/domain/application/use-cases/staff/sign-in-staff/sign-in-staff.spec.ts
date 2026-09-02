@@ -17,11 +17,15 @@ describe("Sign in staff", async () => {
   it("should be able to sign in a staff with an email and password", async () => {
     const staffEmail = faker.internet.email();
     const staffPassword = faker.internet.password();
+    const hashedStaffPassword = await Password.generateHashFromPlainText(
+      staffPassword,
+      12,
+    );
 
     const newStaff = Staff.create({
       name: faker.person.fullName(),
       email: staffEmail,
-      password: Password.create(staffPassword),
+      password: hashedStaffPassword,
       cpf: "12345678901",
       role: "OWNER" as unknown as StaffRole,
     });
@@ -38,47 +42,47 @@ describe("Sign in staff", async () => {
     );
   });
 
-  // it("should not be able to sign in a staff with an invalid email", async () => {
-  //   const staffPassword = faker.internet.password();
-  //   const staffEmail = faker.internet.email();
+  it("should not be able to sign in a staff with an invalid email", async () => {
+    const staffPassword = faker.internet.password();
+    const staffEmail = faker.internet.email();
 
-  //   const newStaff = Staff.create({
-  //     name: faker.person.fullName(),
-  //     email: "wrong@email.com",
-  //     password: Password.create(staffPassword),
-  //     cpf: "09876543211",
-  //     role: "OWNER" as unknown as StaffRole,
-  //   });
+    const newStaff = Staff.create({
+      name: faker.person.fullName(),
+      email: "wrong@email.com",
+      password: Password.create(staffPassword),
+      cpf: "09876543211",
+      role: "OWNER" as unknown as StaffRole,
+    });
 
-  //   await inMemoryStaffsRepository.save(newStaff);
+    await inMemoryStaffsRepository.save(newStaff);
 
-  //   const response = await sut.execute({
-  //     email: staffEmail,
-  //     password: staffPassword,
-  //   });
+    const response = await sut.execute({
+      email: staffEmail,
+      password: staffPassword,
+    });
 
-  //   expect(response.value).toBeInstanceOf(InvalidCredentialsError);
-  // });
+    expect(response.value).toBeInstanceOf(InvalidCredentialsError);
+  });
 
-  // it("should not be able to sign in a staff with an invalid password", async () => {
-  //   const staffPassword = faker.internet.password();
-  //   const staffEmail = faker.internet.email();
+  it("should not be able to sign in a staff with an invalid password", async () => {
+    const staffPassword = faker.internet.password();
+    const staffEmail = faker.internet.email();
 
-  //   const newStaff = Staff.create({
-  //     name: faker.person.fullName(),
-  //     email: staffEmail,
-  //     password: Password.create(staffPassword),
-  //     cpf: "09876543211",
-  //     role: "OWNER" as unknown as StaffRole,
-  //   });
+    const newStaff = Staff.create({
+      name: faker.person.fullName(),
+      email: staffEmail,
+      password: Password.create(staffPassword),
+      cpf: "09876543211",
+      role: "OWNER" as unknown as StaffRole,
+    });
 
-  //   await inMemoryStaffsRepository.save(newStaff);
+    await inMemoryStaffsRepository.save(newStaff);
 
-  //   const response = await sut.execute({
-  //     email: staffEmail,
-  //     password: "wrong-password",
-  //   });
+    const response = await sut.execute({
+      email: staffEmail,
+      password: "wrong-password",
+    });
 
-  //   expect(response.value).toBeInstanceOf(InvalidCredentialsError);
-  // });
+    expect(response.value).toBeInstanceOf(InvalidCredentialsError);
+  });
 });
