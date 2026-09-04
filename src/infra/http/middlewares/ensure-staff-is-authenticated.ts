@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { verify } from "jsonwebtoken";
 import { DrizzleStaffsRepository } from "../../drizzle/repositories/drizzle-staffs-repository";
+import { env } from "../../env";
 
 interface Payload {
   sub: string;
@@ -26,7 +27,7 @@ export async function ensureStaffIsAuthenticated(
   }
 
   try {
-    const payload = verify(token, process.env.JWT_SECRET!) as Payload;
+    const payload = verify(token, env.JWT_SECRET) as Payload;
     const staffsRepository = new DrizzleStaffsRepository();
 
     console.log(payload);

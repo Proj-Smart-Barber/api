@@ -6,6 +6,7 @@ import type { StringValue } from "ms";
 import type { StaffsRepository } from "../../../repositories/staffs-repository";
 import type { SignInStaffDTO } from "./sign-in-staff-dto";
 import type { SignInStaffResponse } from "./sign-in-staff-response";
+import { env } from "../../../../../infra/env";
 
 type SignInStaffUseCaseResponse = Either<
   InvalidCredentialsError,
@@ -34,8 +35,8 @@ export class SignInStaffUseCase {
       return left(new InvalidCredentialsError());
     }
 
-    const token = sign({ sub: staff.id.toString() }, process.env.JWT_SECRET!, {
-      expiresIn: process.env.JWT_EXPIRES_IN! as StringValue,
+    const token = sign({ sub: staff.id.toString() }, env.JWT_SECRET, {
+      expiresIn: env.JWT_EXPIRES_IN as StringValue,
     });
 
     return right({
