@@ -6,6 +6,7 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string(),
   PORT: z.coerce.number().optional().default(3333),
   NODE_ENV: z.string(),
+  APP_URL: z.url(),
 });
 
 export const env = envSchema.parse(process.env);
