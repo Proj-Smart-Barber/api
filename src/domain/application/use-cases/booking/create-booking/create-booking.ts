@@ -3,20 +3,27 @@ import { type Either, left, right } from "../../../../../core/logic/either";
 import type { BookingsRepository } from "../../../repositories/bookings-repository";
 import { Booking } from "../../../../enterprise/entities/booking";
 import { BookingConflictError } from "../../_errors/booking-conflict-error";
+import type { CreateBookingDTO } from "./create-booking-dto";
+import type { CreateBookingResponse } from "./create-booking-response";
 
-interface CreateBookingUseCaseRequest {
-  barbershopId: string;
-  barbermanId: string;
-  shoppingCartId: string;
-  startAt: Date;
-  durationInMinutes: number;
-}
+// interface CreateBookingUseCaseRequest {
+//   barbershopId: string;
+//   barbermanId: string;
+//   shoppingCartId: string;
+//   startAt: Date;
+//   durationInMinutes: number;
+// }
+
+// type CreateBookingUseCaseResponse = Either<
+//   BookingConflictError,
+//   {
+//     booking: Booking;
+//   }
+// >;
 
 type CreateBookingUseCaseResponse = Either<
   BookingConflictError,
-  {
-    booking: Booking;
-  }
+  CreateBookingResponse
 >;
 
 export class CreateBookingUseCase {
@@ -28,7 +35,7 @@ export class CreateBookingUseCase {
     shoppingCartId,
     startAt,
     durationInMinutes,
-  }: CreateBookingUseCaseRequest): Promise<CreateBookingUseCaseResponse> {
+  }: CreateBookingDTO): Promise<CreateBookingUseCaseResponse> {
     const endAt = new Date(startAt.getTime() + durationInMinutes * 60 * 1000);
 
     const overLappingBooking = await this.bookingsRepository.findOverlapping({
