@@ -33,7 +33,7 @@ export class DeleteScheduleExceptionController implements Controller {
       return noContent();
     } catch (err: any) {
       if (err instanceof z.ZodError) {
-        return clientError({ errors: err.errors });
+        return clientError({ errors: (err as any).errors });
       }
       return fail(err);
     }

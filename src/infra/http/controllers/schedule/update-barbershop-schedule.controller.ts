@@ -54,7 +54,7 @@ export class UpdateBarbershopScheduleController implements Controller {
       });
     } catch (err: any) {
       if (err instanceof z.ZodError) {
-        return clientError({ errors: err.errors });
+        return clientError({ errors: (err as any).errors });
       }
       return fail(err);
     }

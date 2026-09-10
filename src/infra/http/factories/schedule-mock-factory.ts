@@ -1,5 +1,5 @@
-import { InMemorySchedulesRepository } from "../../../test/repositories/in-memory-schedules-repository";
-import { InMemoryScheduleExceptionsRepository } from "../../../test/repositories/in-memory-schedule-exceptions-repository";
+import { InMemorySchedulesRepository } from "../../../../test/repositories/in-memory-schedules-repository";
+import { InMemoryScheduleExceptionsRepository } from "../../../../test/repositories/in-memory-schedule-exceptions-repository";
 import type { ServicesRepository } from "@/domain/application/repositories/services-repository";
 import type { Service } from "@/domain/enterprise/entities/service";
 import { UpdateBarbershopScheduleUseCase } from "@/domain/application/use-cases/schedule/update-barbershop-schedule";
