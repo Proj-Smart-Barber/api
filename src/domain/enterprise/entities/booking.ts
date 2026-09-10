@@ -6,6 +6,9 @@ interface BookingProps {
   barbershopId: UniqueEntityId;
   barbermanId: UniqueEntityId;
   shoppingCartId: UniqueEntityId;
+  date: Date;
+  startTime: string;
+  endTime: string;
   createdAt?: Date;
 }
 
@@ -22,6 +25,18 @@ export class Booking extends Entity<BookingProps> {
     return this.props.shoppingCartId;
   }
 
+  get date(): Date {
+    return this.props.date;
+  }
+
+  get startTime(): string {
+    return this.props.startTime;
+  }
+
+  get endTime(): string {
+    return this.props.endTime;
+  }
+
   get createdAt(): Date | undefined {
     return this.props.createdAt;
   }
@@ -33,7 +48,7 @@ export class Booking extends Entity<BookingProps> {
     const booking = new Booking(
       {
         ...props,
-        createdAt: new Date(),
+        createdAt: props.createdAt ?? new Date(),
       },
       id,
     );

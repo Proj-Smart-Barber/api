@@ -6,6 +6,7 @@ interface ServiceProps {
   title: string;
   description?: string;
   priceInCents: number;
+  durationInMinutes: number;
   createdAt?: Date;
 }
 
@@ -22,6 +23,10 @@ export class Service extends Entity<ServiceProps> {
     return this.props.priceInCents;
   }
 
+  get durationInMinutes(): number {
+    return this.props.durationInMinutes;
+  }
+
   get createdAt(): Date | undefined {
     return this.props.createdAt;
   }
@@ -33,6 +38,7 @@ export class Service extends Entity<ServiceProps> {
     const service = new Service(
       {
         ...props,
+        createdAt: props.createdAt ?? new Date(),
       },
       id,
     );

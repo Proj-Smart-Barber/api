@@ -38,6 +38,7 @@ export const barbershops = pgTable("barbershops", {
   slug: text().notNull().unique(),
   cnpj: text().notNull().unique(),
   location: text().notNull(),
+  timezone: text("timezone").notNull().default("America/Sao_Paulo"),
   status: barbershopStatusEnum("status").notNull().default("ACTIVE"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -47,6 +48,7 @@ export const barbershopSchedules = pgTable("barbershop_schedules", {
   barbershopId: uuid("barbershop_id")
     .notNull()
     .references(() => barbershops.id),
+  barbermanId: uuid("barberman_id").references(() => staffs.id),
   createdBy: uuid("created_by")
     .notNull()
     .references(() => staffs.id),
@@ -72,6 +74,7 @@ export const services = pgTable("services", {
   title: text().notNull(),
   description: text(),
   priceInCents: integer("price_in_cents").notNull(),
+  durationInMinutes: integer("duration_in_minutes").notNull().default(30),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -106,6 +109,22 @@ export const bookings = pgTable("bookings", {
   shoppingCartId: uuid("shopping_cart_id")
     .notNull()
     .references(() => shoppingCarts.id),
+  date: timestamp("date").notNull(),
+  startTime: text("start_time").notNull(),
+  endTime: text("end_time").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const scheduleExceptions = pgTable("schedule_exceptions", {
+  id: uuid().primaryKey().defaultRandom(),
+  barbershopId: uuid("barbershop_id")
+    .notNull()
+    .references(() => barbershops.id),
+  barbermanId: uuid("barberman_id").references(() => staffs.id),
+  date: timestamp("date").notNull(),
+  startTime: text("start_time"),
+  endTime: text("end_time"),
+  reason: text("reason"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -128,6 +147,8 @@ export const notifications = pgTable("notifications", {
 export const staffsRelations = relations(staffs, ({ many }) => ({
   ownedBarbershops: many(barbershops),
   createdSchedules: many(barbershopSchedules),
+  schedules: many(barbershopSchedules),
+  exceptions: many(scheduleExceptions),
   barbermanBookings: many(bookings),
 }));
 
@@ -137,6 +158,7 @@ export const barbershopsRelations = relations(barbershops, ({ one, many }) => ({
     references: [staffs.id],
   }),
   schedules: many(barbershopSchedules),
+  exceptions: many(scheduleExceptions),
   bookings: many(bookings),
 }));
 
@@ -146,6 +168,10 @@ export const barbershopSchedulesRelations = relations(
     barbershop: one(barbershops, {
       fields: [barbershopSchedules.barbershopId],
       references: [barbershops.id],
+    }),
+    barberman: one(staffs, {
+      fields: [barbershopSchedules.barbermanId],
+      references: [staffs.id],
     }),
     createdByStaff: one(staffs, {
       fields: [barbershopSchedules.createdBy],
@@ -210,3 +236,17 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
     references: [bookings.id],
   }),
 }));
+
+export const scheduleExceptionsRelations = relations(
+  scheduleExceptions,
+  ({ one }) => ({
+    barbershop: one(barbershops, {
+      fields: [scheduleExceptions.barbershopId],
+      references: [barbershops.id],
+    }),
+    barberman: one(staffs, {
+      fields: [scheduleExceptions.barbermanId],
+      references: [staffs.id],
+    }),
+  }),
+);
