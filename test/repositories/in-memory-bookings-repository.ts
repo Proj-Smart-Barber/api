@@ -47,20 +47,20 @@ export class InMemoryBookingsRepository implements BookingsRepository {
     barbermanId,
     date,
   }: FindManyByBarbermanAndDateParams): Promise<Booking[]> {
-    const bookings = this.items.filter((item) => {
-      const isSameBarberman = item.barbermanId.toString() === barbermanId;
-      const createdAt = item.createdAt;
+    // Extrai a string no formato YYYY-MM-DD da data buscada
+    const targetDateString = date.toISOString().split("T")[0];
 
-      const isSameDate =
-        createdAt &&
-        createdAt.getFullYear() === date.getFullYear() &&
-        createdAt.getMonth() === date.getMonth() &&
-        createdAt.getDate() === date.getDate();
+    return this.items.filter((item) => {
+      const isSameBarberman = item.barbermanId.toString() === barbermanId;
+
+      if (!item.createdAt) return false;
+
+      // Extrai a string YYYY-MM-DD do agendamento cadastrado
+      const itemDateString = item.createdAt.toISOString().split("T")[0];
+      const isSameDate = itemDateString === targetDateString;
 
       return isSameBarberman && isSameDate;
     });
-
-    return bookings;
   }
 
   async findManyByShoppingCart({

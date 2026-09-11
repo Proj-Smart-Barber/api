@@ -23,7 +23,6 @@ export class FetchBarbermanDailyScheduleUseCase {
       barbermanId,
       date,
     });
-
     return right({
       bookings,
     });

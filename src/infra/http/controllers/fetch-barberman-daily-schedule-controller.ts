@@ -39,8 +39,21 @@ export class FetchBarbermanDailyScheduleController implements Controller {
       }
 
       const { bookings } = result.value;
+      const formattedBookings = bookings.map((booking) => ({
+        id: booking.id?.toString() ?? String(booking.id),
+        barbershopId:
+          booking.barbershopId?.toString() ?? String(booking.barbershopId),
+        barbermanId:
+          booking.barbermanId?.toString() ?? String(booking.barbermanId),
+        shoppingCartId:
+          booking.shoppingCartId?.toString() ?? String(booking.shoppingCartId),
+        // date: booking.date, // Descomentar no merge
+        // startTime: booking.startTime, // Descomentar no merge
+        // endTime: booking.endTime, // Descomentar no merge
+        createdAt: booking.createdAt,
+      }));
 
-      return ok({ bookings });
+      return ok({ bookings: formattedBookings });
     } catch (err) {
       if (err instanceof ZodError) {
         return clientError(z.prettifyError(err));
