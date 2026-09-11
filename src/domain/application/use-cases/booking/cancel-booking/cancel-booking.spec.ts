@@ -15,11 +15,16 @@ describe("Cancel Booking Use Case", () => {
   });
 
   it("deve ser possível encontrar e cancelar um agendamento", async () => {
+    const today = new Date();
+
     const booking = Booking.create(
       {
         barbershopId: new UniqueEntityId("shop-1"),
         barbermanId: new UniqueEntityId("barber-1"),
         shoppingCartId: new UniqueEntityId("cart-1"),
+        date: today,
+        startTime: "09:00",
+        endTime: "10:00",
       },
       new UniqueEntityId("booking-1"),
     );

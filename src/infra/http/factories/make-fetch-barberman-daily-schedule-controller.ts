@@ -9,12 +9,15 @@ import { DrizzleBookingsRepository } from "@/infra/drizzle/repositories/drizzle-
 
 export function makeFetchBarbermanDailyScheduleController() {
   // const inMemoryBookingsRepository = new InMemoryBookingsRepository();
-
+  // const today = new Date()
   // const mockBooking = Booking.create(
   //   {
   //     barbershopId: new UniqueEntityId("barbershop-1"),
-  //     barbermanId: new UniqueEntityId("5ab89176-9347-47b7-b8ec-7f162a081aed"),
+  //     barbermanId: new UniqueEntityId("4903d18d-ea6e-494e-9be6-ef9f47775034"),
   //     shoppingCartId: new UniqueEntityId("cart-1"),
+  //     date:today,
+  //     startTime:"10:00",
+  //     endTime:"11:00",
   //     createdAt: new Date("2026-09-10T12:00:00.000Z"),
   //   },
   //   new UniqueEntityId("booking-teste-123"),
@@ -24,6 +27,7 @@ export function makeFetchBarbermanDailyScheduleController() {
   const drizzleBookingsRepository = new DrizzleBookingsRepository();
   const fetchBarbermanDailyScheduleUseCase =
     new FetchBarbermanDailyScheduleUseCase(drizzleBookingsRepository);
+  // new FetchBarbermanDailyScheduleUseCase(inMemoryBookingsRepository);
 
   return new FetchBarbermanDailyScheduleController(
     fetchBarbermanDailyScheduleUseCase,

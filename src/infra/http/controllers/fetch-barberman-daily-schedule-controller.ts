@@ -47,9 +47,9 @@ export class FetchBarbermanDailyScheduleController implements Controller {
           booking.barbermanId?.toString() ?? String(booking.barbermanId),
         shoppingCartId:
           booking.shoppingCartId?.toString() ?? String(booking.shoppingCartId),
-        // date: booking.date, // Descomentar no merge
-        // startTime: booking.startTime, // Descomentar no merge
-        // endTime: booking.endTime, // Descomentar no merge
+        date: booking.date, // Descomentar no merge
+        startTime: booking.startTime, // Descomentar no merge
+        endTime: booking.endTime, // Descomentar no merge
         createdAt: booking.createdAt,
       }));
 

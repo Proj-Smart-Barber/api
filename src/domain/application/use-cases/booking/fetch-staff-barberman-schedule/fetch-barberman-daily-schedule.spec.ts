@@ -14,18 +14,24 @@ describe("Fetch Barberman Daily Schedule Use Case", () => {
   });
 
   it("deve ser possível listar os agendamentos do dia de um barbeiro", async () => {
-    const today = new Date(); // Usa a data atual
+    const today = new Date();
 
     const booking1 = Booking.create({
       barbershopId: new UniqueEntityId("shop-1"),
       barbermanId: new UniqueEntityId("barber-1"),
       shoppingCartId: new UniqueEntityId("cart-1"),
+      date: today,
+      startTime: "09:00",
+      endTime: "10:00",
     });
 
     const booking2 = Booking.create({
       barbershopId: new UniqueEntityId("shop-1"),
       barbermanId: new UniqueEntityId("barber-1"),
       shoppingCartId: new UniqueEntityId("cart-2"),
+      date: today,
+      startTime: "10:00",
+      endTime: "11:00",
     });
 
     await inMemoryBookingsRepository.create(booking1);

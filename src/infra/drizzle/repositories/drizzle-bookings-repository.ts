@@ -36,9 +36,9 @@ export class DrizzleBookingsRepository implements BookingsRepository {
           barbershopId: new UniqueEntityId(row.barbershopId),
           barbermanId: new UniqueEntityId(row.barbermanId),
           shoppingCartId: new UniqueEntityId(row.shoppingCartId),
-          //   date: row.date, //tirar comentário quando realizar merge com a branch da dupla Carlos relacionaod com  Definição de Disponibilidade
-          //   startTime: row.startTime, //tirar comentário quando realizar merge com a branch da dupla Carlos relacionaod com  Definição de Disponibilidade
-          //   endTime: row.endTime, //tirar comentário quando realizar merge com a branch da dupla Carlos relacionaod com  Definição de Disponibilidade
+          date: row.date,
+          startTime: row.startTime,
+          endTime: row.endTime,
           createdAt: row.createdAt ?? undefined,
         },
         new UniqueEntityId(row.id),
@@ -52,9 +52,9 @@ export class DrizzleBookingsRepository implements BookingsRepository {
       barbershopId: booking.barbershopId.toString(),
       barbermanId: booking.barbermanId.toString(),
       shoppingCartId: booking.shoppingCartId.toString(),
-      //   date: booking.date,//tirar comentário quando realizar merge com a branch da dupla Carlos relacionaod com  Definição de Disponibilidade
-      //   startTime: booking.startTime, //tirar comentário quando realizar merge com a branch da dupla Carlos relacionaod com  Definição de Disponibilidade
-      //   endTime: booking.endTime, //tirar comentário quando realizar merge com a branch da dupla Carlos relacionaod com  Definição de Disponibilidade
+      date: booking.date,
+      startTime: booking.startTime,
+      endTime: booking.endTime,
       createdAt: booking.createdAt,
     });
   }
@@ -66,9 +66,9 @@ export class DrizzleBookingsRepository implements BookingsRepository {
         barbershopId: booking.barbershopId.toString(),
         barbermanId: booking.barbermanId.toString(),
         shoppingCartId: booking.shoppingCartId.toString(),
-        // date: booking.date, //tirar comentário quando realizar merge com a branch da dupla Carlos relacionaod com  Definição de Disponibilidade
-        // startTime: booking.startTime, //tirar comentário quando realizar merge com a branch da dupla Carlos relacionaod com  Definição de Disponibilidade
-        // endTime: booking.endTime, //tirar comentário quando realizar merge com a branch da dupla Carlos relacionaod com  Definição de Disponibilidade
+        date: booking.date,
+        startTime: booking.startTime,
+        endTime: booking.endTime,
       })
       .where(eq(bookings.id, booking.id.toString()));
   }
@@ -86,9 +86,9 @@ export class DrizzleBookingsRepository implements BookingsRepository {
         barbershopId: new UniqueEntityId(result.barbershopId),
         barbermanId: new UniqueEntityId(result.barbermanId),
         shoppingCartId: new UniqueEntityId(result.shoppingCartId),
-        // date: result.date, //tirar comentário quando realizar merge com a branch da dupla Carlos relacionaod com  Definição de Disponibilidade
-        // startTime: result.startTime, //tirar comentário quando realizar merge com a branch da dupla Carlos relacionaod com  Definição de Disponibilidade
-        // endTime: result.endTime, //tirar comentário quando realizar merge com a branch da dupla Carlos relacionaod com  Definição de Disponibilidade
+        date: result.date,
+        startTime: result.startTime,
+        endTime: result.endTime,
         createdAt: result.createdAt ?? undefined,
       },
       new UniqueEntityId(result.id),

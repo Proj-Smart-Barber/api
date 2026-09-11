@@ -14,16 +14,24 @@ describe("Fetch Client Bookings Use Case", () => {
   });
 
   it("deve ser possível listar os agendamentos do carrinho de um cliente", async () => {
+    const today = new Date();
+
     const booking1 = Booking.create({
       barbershopId: new UniqueEntityId("shop-1"),
       barbermanId: new UniqueEntityId("barber-1"),
       shoppingCartId: new UniqueEntityId("cart-1"),
+      date: today,
+      startTime: "09:00",
+      endTime: "10:00",
     });
 
     const booking2 = Booking.create({
       barbershopId: new UniqueEntityId("shop-1"),
       barbermanId: new UniqueEntityId("barber-2"),
       shoppingCartId: new UniqueEntityId("cart-1"),
+      date: today,
+      startTime: "11:00",
+      endTime: "12:00",
     });
 
     await inMemoryBookingsRepository.create(booking1);
