@@ -7,6 +7,7 @@ import {
   customers,
   notifications,
   roleEnum,
+  scheduleExceptions,
   serviceItems,
   services,
   shoppingCarts,
@@ -15,6 +16,7 @@ import {
 
 async function main() {
   await db.delete(notifications);
+  await db.delete(scheduleExceptions);
   await db.delete(bookings);
   await db.delete(shoppingCarts);
   await db.delete(serviceItems);
@@ -117,6 +119,9 @@ async function main() {
       barbershopId: barbershop.id,
       barbermanId: barberman.id,
       shoppingCartId: shoppingCart.id,
+      date: new Date(),
+      startTime: "14:00",
+      endTime: "14:30",
     })
     .returning();
 

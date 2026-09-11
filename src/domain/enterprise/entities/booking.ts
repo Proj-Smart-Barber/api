@@ -6,9 +6,9 @@ interface BookingProps {
   barbershopId: UniqueEntityId;
   barbermanId: UniqueEntityId;
   shoppingCartId: UniqueEntityId;
-  // date?: Date; // Descomentar no merge com a branch de Disponibilidade
-  // startTime?: string; // Descomentar no merge com a branch de Disponibilidade
-  // endTime?: string; // Descomentar no merge com a branch de Disponibilidade
+  date: Date;
+  startTime: string;
+  endTime: string;
   createdAt?: Date;
 }
 
@@ -24,9 +24,18 @@ export class Booking extends Entity<BookingProps> {
   get shoppingCartId(): UniqueEntityId {
     return this.props.shoppingCartId;
   }
-  // get date(): Date | undefined { return this.props.date; }
-  // get startTime(): string | undefined { return this.props.startTime; }
-  // get endTime(): string | undefined { return this.props.endTime; }
+
+  get date(): Date {
+    return this.props.date;
+  }
+
+  get startTime(): string {
+    return this.props.startTime;
+  }
+
+  get endTime(): string {
+    return this.props.endTime;
+  }
 
   get createdAt(): Date | undefined {
     return this.props.createdAt;
