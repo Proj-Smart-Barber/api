@@ -6,6 +6,7 @@ import {
   customers,
   serviceItems,
   services,
+  notifications,
 } from "../schema";
 import type {
   BookingsRepository,
@@ -110,6 +111,13 @@ export class DrizzleBookingsRepository implements BookingsRepository {
     return result.map((row) => BookingDetailsMapper.toDomain(row));
   }
   async delete(booking: Booking): Promise<void> {
-    await db.delete(bookings).where(eq(bookings.id, booking.id.toString()));
+    // await db.delete(bookings).where(eq(bookings.id, booking.id.toString()));
+    const bookingId = booking.id.toString();
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(notifications)
+        .where(eq(notifications.bookingId, bookingId));
+      await tx.delete(bookings).where(eq(bookings.id, bookingId));
+    });
   }
 }

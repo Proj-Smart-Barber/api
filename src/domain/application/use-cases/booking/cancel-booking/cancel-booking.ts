@@ -31,7 +31,7 @@ export class CancelBookingUseCase {
       return left(new BookingNotFoundError());
     }
 
-    await this.bookingsRepository.save(booking);
+    await this.bookingsRepository.delete(booking);
 
     return right({
       booking,

@@ -13,14 +13,14 @@ describe("Cancel Booking Use Case", () => {
     inMemoryBookingsRepository = new InMemoryBookingsRepository();
     sut = new CancelBookingUseCase(inMemoryBookingsRepository);
   });
-  const today = new Date();
+
   it("should be able to cancel a booking", async () => {
     const newBooking = Booking.create(
       {
         barbershopId: new UniqueEntityId("barbershop-1"),
         barbermanId: new UniqueEntityId("barberman-1"),
         shoppingCartId: new UniqueEntityId("cart-1"),
-        date: today,
+        date: new Date(),
         startTime: "14:00",
         endTime: "14:30",
       },
@@ -34,8 +34,7 @@ describe("Cancel Booking Use Case", () => {
     });
 
     expect(result.isRight()).toBe(true);
-    expect(inMemoryBookingsRepository.items).toHaveLength(1);
-    expect(inMemoryBookingsRepository.items[0].id.toString()).toBe("booking-1");
+    expect(inMemoryBookingsRepository.items).toHaveLength(0);
   });
 
   it("should not be able to cancel a non-existing booking", async () => {
