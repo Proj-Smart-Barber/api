@@ -5,7 +5,7 @@ import {
   ok,
   fail,
 } from "@/core/infra/http-response";
-import type { CalculateAvailabilityUseCase } from "@/domain/application/use-cases/schedule/calculate-availability";
+import type { CalculateAvailabilityUseCase } from "@/domain/application/use-cases/schedule/calculate-availability/calculate-availability";
 import { z } from "zod";
 
 export class CalculateAvailabilityController implements Controller {

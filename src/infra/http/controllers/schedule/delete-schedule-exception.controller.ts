@@ -5,7 +5,7 @@ import {
   noContent,
   fail,
 } from "@/core/infra/http-response";
-import type { DeleteScheduleExceptionUseCase } from "@/domain/application/use-cases/schedule/delete-schedule-exception";
+import type { DeleteScheduleExceptionUseCase } from "@/domain/application/use-cases/schedule/delete-schedule-exception/delete-schedule-exception";
 import { z } from "zod";
 
 export class DeleteScheduleExceptionController implements Controller {

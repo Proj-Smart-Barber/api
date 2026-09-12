@@ -1,4 +1,4 @@
-import { InMemorySchedulesRepository } from "../../../../../test/repositories/in-memory-schedules-repository";
+import { InMemorySchedulesRepository } from "../../../../../../test/repositories/in-memory-schedules-repository";
 import { UpdateBarbershopScheduleUseCase } from "./update-barbershop-schedule";
 
 let inMemorySchedulesRepository: InMemorySchedulesRepository;

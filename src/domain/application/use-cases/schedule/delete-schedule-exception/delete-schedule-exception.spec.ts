@@ -1,4 +1,4 @@
-import { InMemoryScheduleExceptionsRepository } from "../../../../../test/repositories/in-memory-schedule-exceptions-repository";
+import { InMemoryScheduleExceptionsRepository } from "../../../../../../test/repositories/in-memory-schedule-exceptions-repository";
 import { DeleteScheduleExceptionUseCase } from "./delete-schedule-exception";
 import { ScheduleException } from "@/domain/enterprise/entities/schedule-exception";
 import { UniqueEntityId } from "@/core/entities/unique-entity-id";

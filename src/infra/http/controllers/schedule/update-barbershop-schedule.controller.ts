@@ -5,7 +5,7 @@ import {
   ok,
   fail,
 } from "@/core/infra/http-response";
-import type { UpdateBarbershopScheduleUseCase } from "@/domain/application/use-cases/schedule/update-barbershop-schedule";
+import type { UpdateBarbershopScheduleUseCase } from "@/domain/application/use-cases/schedule/update-barbershop-schedule/update-barbershop-schedule";
 import { z } from "zod";
 
 export class UpdateBarbershopScheduleController implements Controller {

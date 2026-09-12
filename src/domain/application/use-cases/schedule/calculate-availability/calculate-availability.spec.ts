@@ -1,6 +1,6 @@
-import { InMemorySchedulesRepository } from "../../../../../test/repositories/in-memory-schedules-repository";
-import { InMemoryScheduleExceptionsRepository } from "../../../../../test/repositories/in-memory-schedule-exceptions-repository";
-import { InMemoryServicesRepository } from "../../../../../test/repositories/in-memory-services-repository";
+import { InMemorySchedulesRepository } from "../../../../../../test/repositories/in-memory-schedules-repository";
+import { InMemoryScheduleExceptionsRepository } from "../../../../../../test/repositories/in-memory-schedule-exceptions-repository";
+import { InMemoryServicesRepository } from "../../../../../../test/repositories/in-memory-services-repository";
 import { CalculateAvailabilityUseCase } from "./calculate-availability";
 import { BarbershopSchedule } from "@/domain/enterprise/entities/barbershop-schedule";
 import { ScheduleException } from "@/domain/enterprise/entities/schedule-exception";

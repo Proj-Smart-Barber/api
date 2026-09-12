@@ -1,4 +1,4 @@
-import { InMemoryScheduleExceptionsRepository } from "../../../../../test/repositories/in-memory-schedule-exceptions-repository";
+import { InMemoryScheduleExceptionsRepository } from "../../../../../../test/repositories/in-memory-schedule-exceptions-repository";
 import { CreateScheduleExceptionUseCase } from "./create-schedule-exception";
 
 let inMemoryScheduleExceptionsRepository: InMemoryScheduleExceptionsRepository;

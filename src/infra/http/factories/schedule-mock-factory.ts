@@ -2,10 +2,10 @@ import { InMemorySchedulesRepository } from "../../../../test/repositories/in-me
 import { InMemoryScheduleExceptionsRepository } from "../../../../test/repositories/in-memory-schedule-exceptions-repository";
 import type { ServicesRepository } from "@/domain/application/repositories/services-repository";
 import type { Service } from "@/domain/enterprise/entities/service";
-import { UpdateBarbershopScheduleUseCase } from "@/domain/application/use-cases/schedule/update-barbershop-schedule";
-import { CreateScheduleExceptionUseCase } from "@/domain/application/use-cases/schedule/create-schedule-exception";
-import { DeleteScheduleExceptionUseCase } from "@/domain/application/use-cases/schedule/delete-schedule-exception";
-import { CalculateAvailabilityUseCase } from "@/domain/application/use-cases/schedule/calculate-availability";
+import { UpdateBarbershopScheduleUseCase } from "@/domain/application/use-cases/schedule/update-barbershop-schedule/update-barbershop-schedule";
+import { CreateScheduleExceptionUseCase } from "@/domain/application/use-cases/schedule/create-schedule-exception/create-schedule-exception";
+import { DeleteScheduleExceptionUseCase } from "@/domain/application/use-cases/schedule/delete-schedule-exception/delete-schedule-exception";
+import { CalculateAvailabilityUseCase } from "@/domain/application/use-cases/schedule/calculate-availability/calculate-availability";
 import { UpdateBarbershopScheduleController } from "../controllers/schedule/update-barbershop-schedule.controller";
 import { CreateScheduleExceptionController } from "../controllers/schedule/create-schedule-exception.controller";
 import { DeleteScheduleExceptionController } from "../controllers/schedule/delete-schedule-exception.controller";
