@@ -8,6 +8,7 @@ import type { FetchBarbermanDailyScheduleResponse } from "./fetch-barberman-dail
 //   barbermanId: string;
 //   date: Date;
 // }
+
 type FetchBarbermanDailyScheduleUseCaseResponse = Either<
   null,
   FetchBarbermanDailyScheduleResponse

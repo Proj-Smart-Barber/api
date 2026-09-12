@@ -5,6 +5,8 @@ import type {
   FindOverlappingParams,
 } from "../../src/domain/application/repositories/bookings-repository";
 import type { Booking } from "../../src/domain/enterprise/entities/booking";
+import { BookingDetails } from "@/domain/enterprise/entities/value-objects/booking-details";
+import { UniqueEntityId } from "@/core/entities/unique-entity-id";
 
 export class InMemoryBookingsRepository implements BookingsRepository {
   public items: Booking[] = [];
@@ -69,5 +71,40 @@ export class InMemoryBookingsRepository implements BookingsRepository {
     return this.items.filter(
       (item) => item.shoppingCartId.toString() === shoppingCartId,
     );
+  }
+  async findManyWithDetailsByBarbermanAndDate({
+    barbermanId,
+    date,
+  }: FindManyByBarbermanAndDateParams): Promise<BookingDetails[]> {
+    const bookings = await this.findManyByBarbermanAndDate({
+      barbermanId,
+      date,
+    });
+
+    return bookings.map((booking) => {
+      return BookingDetails.create({
+        bookingId: booking.id,
+        barbershopId: booking.barbershopId,
+        barbermanId: booking.barbermanId,
+        shoppingCartId: booking.shoppingCartId,
+        customer: {
+          id: new UniqueEntityId("customer-1"),
+          name: "John Doe",
+          phoneNumber: "(11) 99999-9999",
+        },
+        services: [
+          {
+            id: new UniqueEntityId("service-1"),
+            title: "Corte de Cabelo",
+            priceInCents: 5000,
+            durationInMinutes: 30,
+          },
+        ],
+        date: booking.date,
+        startTime: booking.startTime,
+        endTime: booking.endTime,
+        createdAt: booking.createdAt,
+      });
+    });
   }
 }

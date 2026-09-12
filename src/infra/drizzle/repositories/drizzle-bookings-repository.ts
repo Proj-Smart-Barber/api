@@ -1,12 +1,21 @@
 import { eq, and, gte, lte } from "drizzle-orm";
 import { db } from "../index";
-import { bookings } from "../schema";
+import {
+  bookings,
+  shoppingCarts,
+  customers,
+  serviceItems,
+  services,
+} from "../schema";
 import type {
   BookingsRepository,
   FindManyByBarbermanAndDateParams,
 } from "@/domain/application/repositories/bookings-repository";
-import { Booking } from "@/domain/enterprise/entities/booking";
+import type { Booking } from "@/domain/enterprise/entities/booking";
 import { UniqueEntityId } from "@/core/entities/unique-entity-id";
+import type { BookingDetails } from "@/domain/enterprise/entities/value-objects/booking-details";
+import { BookingMapper } from "@/domain/enterprise/mappers/booking-mapper";
+import { BookingDetailsMapper } from "@/domain/enterprise/mappers/booking-details-mapper";
 
 export class DrizzleBookingsRepository implements BookingsRepository {
   async findManyByBarbermanAndDate({
@@ -25,51 +34,24 @@ export class DrizzleBookingsRepository implements BookingsRepository {
       .where(
         and(
           eq(bookings.barbermanId, barbermanId),
-          gte(bookings.createdAt, startOfDay),
-          lte(bookings.createdAt, endOfDay),
+          gte(bookings.date, startOfDay),
+          lte(bookings.date, endOfDay),
         ),
       );
 
-    return result.map((row) =>
-      Booking.create(
-        {
-          barbershopId: new UniqueEntityId(row.barbershopId),
-          barbermanId: new UniqueEntityId(row.barbermanId),
-          shoppingCartId: new UniqueEntityId(row.shoppingCartId),
-          date: row.date,
-          startTime: row.startTime,
-          endTime: row.endTime,
-          createdAt: row.createdAt ?? undefined,
-        },
-        new UniqueEntityId(row.id),
-      ),
-    );
+    return result.map((row) => BookingMapper.toDomain(row));
   }
 
   async create(booking: Booking): Promise<void> {
-    await db.insert(bookings).values({
-      id: booking.id.toString(),
-      barbershopId: booking.barbershopId.toString(),
-      barbermanId: booking.barbermanId.toString(),
-      shoppingCartId: booking.shoppingCartId.toString(),
-      date: booking.date,
-      startTime: booking.startTime,
-      endTime: booking.endTime,
-      createdAt: booking.createdAt,
-    });
+    const data = BookingMapper.toPersistence(booking);
+    await db.insert(bookings).values(data);
   }
 
   async save(booking: Booking): Promise<void> {
+    const data = BookingMapper.toPersistence(booking);
     await db
       .update(bookings)
-      .set({
-        barbershopId: booking.barbershopId.toString(),
-        barbermanId: booking.barbermanId.toString(),
-        shoppingCartId: booking.shoppingCartId.toString(),
-        date: booking.date,
-        startTime: booking.startTime,
-        endTime: booking.endTime,
-      })
+      .set(data)
       .where(eq(bookings.id, booking.id.toString()));
   }
 
@@ -81,18 +63,7 @@ export class DrizzleBookingsRepository implements BookingsRepository {
 
     if (!result) return null;
 
-    return Booking.create(
-      {
-        barbershopId: new UniqueEntityId(result.barbershopId),
-        barbermanId: new UniqueEntityId(result.barbermanId),
-        shoppingCartId: new UniqueEntityId(result.shoppingCartId),
-        date: result.date,
-        startTime: result.startTime,
-        endTime: result.endTime,
-        createdAt: result.createdAt ?? undefined,
-      },
-      new UniqueEntityId(result.id),
-    );
+    return BookingMapper.toDomain(result);
   }
 
   async findOverlapping(): Promise<Booking | null> {
@@ -101,5 +72,36 @@ export class DrizzleBookingsRepository implements BookingsRepository {
 
   async findManyByShoppingCart(): Promise<Booking[]> {
     return [];
+  }
+  async findManyWithDetailsByBarbermanAndDate({
+    barbermanId,
+    date,
+  }: FindManyByBarbermanAndDateParams): Promise<BookingDetails[]> {
+    const startOfDay = new Date(date);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(date);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
+    const result = await db
+      .select({
+        booking: bookings,
+        customer: customers,
+        service: services,
+      })
+      .from(bookings)
+      .innerJoin(shoppingCarts, eq(bookings.shoppingCartId, shoppingCarts.id))
+      .innerJoin(customers, eq(shoppingCarts.customerId, customers.id))
+      .innerJoin(serviceItems, eq(shoppingCarts.serviceItemId, serviceItems.id))
+      .innerJoin(services, eq(serviceItems.serviceId, services.id))
+      .where(
+        and(
+          eq(bookings.barbermanId, barbermanId),
+          gte(bookings.date, startOfDay),
+          lte(bookings.date, endOfDay),
+        ),
+      );
+
+    return result.map((row) => BookingDetailsMapper.toDomain(row));
   }
 }
