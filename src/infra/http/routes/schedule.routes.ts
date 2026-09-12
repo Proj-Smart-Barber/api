@@ -5,7 +5,7 @@ import {
   createScheduleExceptionController,
   deleteScheduleExceptionController,
   calculateAvailabilityController,
-} from "../factories/schedule-mock-factory";
+} from "../factories/schedule-factory";
 
 const scheduleRoutes = Router({ mergeParams: true });
 
