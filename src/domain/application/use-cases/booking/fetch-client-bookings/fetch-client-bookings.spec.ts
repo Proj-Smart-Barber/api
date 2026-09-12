@@ -13,7 +13,7 @@ describe("Fetch Client Bookings Use Case", () => {
     sut = new FetchClientBookingsUseCase(inMemoryBookingsRepository);
   });
 
-  it("deve ser possível listar os agendamentos do carrinho de um cliente", async () => {
+  it("should be able to fetch bookings from a customer shopping cart", async () => {
     const today = new Date();
 
     const booking1 = Booking.create({

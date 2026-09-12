@@ -13,7 +13,7 @@ describe("Fetch Barberman Daily Schedule Use Case", () => {
     sut = new FetchBarbermanDailyScheduleUseCase(inMemoryBookingsRepository);
   });
 
-  it("deve ser possível listar os agendamentos do dia de um barbeiro", async () => {
+  it("should be able to fetch daily schedule for a barberman", async () => {
     const today = new Date();
 
     const booking1 = Booking.create({

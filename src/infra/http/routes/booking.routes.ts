@@ -20,12 +20,12 @@ const bookingRoutes = Router();
 //   adaptRoute(makeCreateBookingController()),
 // );
 bookingRoutes.get(
-  "/barberman/:barbermanId/schedule",
+  "/barberman/schedule",
   ensureStaffIsAuthenticated,
   adaptRoute(makeFetchBarbermanDailyScheduleController()),
 );
 bookingRoutes.get(
-  "/barberman/:barbermanId/schedule/details",
+  "/barberman/schedule/details",
   ensureStaffIsAuthenticated,
   adaptRoute(makeFetchBarbermanDailyScheduleWithDetailsController()),
 );

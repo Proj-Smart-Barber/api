@@ -9,7 +9,7 @@ import {
 import type { FetchBarbermanDailyScheduleUseCase } from "../../../domain/application/use-cases/booking/fetch-staff-barberman-schedule/fetch-barberman-daily-schedule";
 import { BookingMapper } from "@/domain/enterprise/mappers/booking-mapper";
 const fetchBarbermanDailyScheduleControllerRequest = z.object({
-  barbermanId: z.string().uuid(),
+  userId: z.string().uuid(),
   date: z.coerce.date(),
 });
 
@@ -26,7 +26,7 @@ export class FetchBarbermanDailyScheduleController implements Controller {
     request: FetchBarbermanDailyScheduleControllerRequest,
   ): Promise<HttpResponse> {
     try {
-      const { barbermanId, date } =
+      const { userId: barbermanId, date } =
         fetchBarbermanDailyScheduleControllerRequest.parse(request);
 
       const result = await this.fetchBarbermanDailyScheduleUseCase.execute({

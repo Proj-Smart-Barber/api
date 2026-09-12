@@ -15,7 +15,7 @@ describe("Fetch Barberman Daily Schedule With Details Use Case", () => {
     );
   });
 
-  it("deve ser possível listar os agendamentos do dia de um barbeiro com dados do cliente e serviços", async () => {
+  it("should be able to fetch daily schedule with customer and service details for a barberman", async () => {
     const today = new Date();
 
     const booking = Booking.create({

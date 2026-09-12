@@ -14,7 +14,7 @@ describe("Cancel Booking Use Case", () => {
     sut = new CancelBookingUseCase(inMemoryBookingsRepository);
   });
 
-  it("deve ser possível encontrar e cancelar um agendamento", async () => {
+  it("should be able to find and cancel a booking", async () => {
     const today = new Date();
 
     const booking = Booking.create(
@@ -38,7 +38,7 @@ describe("Cancel Booking Use Case", () => {
     expect(result.isRight()).toBe(true);
   });
 
-  it("não deve ser possível cancelar um agendamento inexistente", async () => {
+  it("should not be able to cancel a non-existing booking", async () => {
     const result = await sut.execute({
       bookingId: "non-existing-id",
     });

@@ -107,4 +107,12 @@ export class InMemoryBookingsRepository implements BookingsRepository {
       });
     });
   }
+  async delete(booking: Booking): Promise<void> {
+    const itemIndex = this.items.findIndex(
+      (item) => item.id.toString() === booking.id.toString(),
+    );
+    if (itemIndex >= 0) {
+      this.items.splice(itemIndex, 1);
+    }
+  }
 }

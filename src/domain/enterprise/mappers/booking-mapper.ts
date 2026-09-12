@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/complexity/noStaticOnlyClass: <explanation> */
+/** biome-ignore-all lint/complexity/noStaticOnlyClass: mapper class */
 import type { InferSelectModel } from "drizzle-orm";
 import { UniqueEntityId } from "@/core/entities/unique-entity-id";
 import type { bookings } from "@/infra/drizzle/schema";

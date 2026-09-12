@@ -10,7 +10,7 @@ import type { FetchBarbermanDailyScheduleWithDetailsUseCase } from "@/domain/app
 import { BookingDetailsMapper } from "@/domain/enterprise/mappers/booking-details-mapper";
 
 const fetchBarbermanDailyScheduleWithDetailsControllerRequest = z.object({
-  barbermanId: z.string().uuid(),
+  userId: z.string().uuid(),
   date: z.coerce.date(),
 });
 
@@ -29,7 +29,7 @@ export class FetchBarbermanDailyScheduleWithDetailsController
     request: FetchBarbermanDailyScheduleWithDetailsControllerRequest,
   ): Promise<HttpResponse> {
     try {
-      const { barbermanId, date } =
+      const { userId: barbermanId, date } =
         fetchBarbermanDailyScheduleWithDetailsControllerRequest.parse(request);
 
       const result =

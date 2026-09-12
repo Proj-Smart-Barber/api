@@ -8,7 +8,7 @@ import {
   type HttpResponse,
 } from "../../../core/infra/http-response";
 import type { CancelBookingUseCase } from "../../../domain/application/use-cases/booking/cancel-booking/cancel-booking";
-
+import { BookingMapper } from "@/domain/enterprise/mappers/booking-mapper";
 const cancelBookingControllerRequest = z.object({
   bookingId: z.string().uuid(),
 });
@@ -34,7 +34,9 @@ export class CancelBookingController implements Controller {
 
       const { booking } = result.value;
 
-      return ok({ booking });
+      return ok({
+        booking: BookingMapper.toHTTP(booking),
+      });
     } catch (err) {
       if (err instanceof ZodError) {
         return clientError(z.prettifyError(err));

@@ -22,6 +22,7 @@ export interface FindManyByShoppingCartParams {
 export interface BookingsRepository {
   create(booking: Booking): Promise<void>;
   save(booking: Booking): Promise<void>;
+  delete(booking: Booking): Promise<void>;
   findById(id: string): Promise<Booking | null>;
   findOverlapping(params: FindOverlappingParams): Promise<Booking | null>;
   findManyByBarbermanAndDate(

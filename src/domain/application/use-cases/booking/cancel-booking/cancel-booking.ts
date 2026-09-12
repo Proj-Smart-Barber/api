@@ -1,6 +1,5 @@
 import { type Either, left, right } from "../../../../../core/logic/either";
 import type { BookingsRepository } from "../../../repositories/bookings-repository";
-import type { Booking } from "../../../../enterprise/entities/booking";
 import { BookingNotFoundError } from "../../_errors/booking-not-found-error";
 import type { CancelBookingDTO } from "./cancel-booking-dto";
 import type { CancelBookingResponse } from "./cancel-booking-response";
@@ -32,7 +31,7 @@ export class CancelBookingUseCase {
       return left(new BookingNotFoundError());
     }
 
-    await this.bookingsRepository.save(booking);
+    await this.bookingsRepository.delete(booking);
 
     return right({
       booking,

@@ -309,22 +309,12 @@ export const swaggerDocument = {
         },
       },
     },
-    "/api/booking/barberman/{barbermanId}/schedule": {
+    "/api/booking/barberman/schedule": {
       get: {
         tags: ["Bookings"],
-        summary: "Fetch barberman daily schedule with IDs only",
+        summary: "Fetch authenticated barberman daily schedule with IDs only",
         security: [{ bearerAuth: [] }],
         parameters: [
-          {
-            in: "path",
-            name: "barbermanId",
-            required: true,
-            schema: {
-              type: "string",
-              format: "uuid",
-            },
-            description: "ID do barbeiro",
-          },
           {
             in: "query",
             name: "date",
@@ -334,7 +324,7 @@ export const swaggerDocument = {
               format: "date",
             },
             example: "2026-09-11",
-            description: "Data da agenda no formato YYYY-MM-DD",
+            description: "Date in YYYY-MM-DD format",
           },
         ],
         responses: {
@@ -432,23 +422,13 @@ export const swaggerDocument = {
         },
       },
     },
-    "/api/booking/barberman/{barbermanId}/schedule/details": {
+    "/api/booking/barberman/schedule/details": {
       get: {
         tags: ["Bookings"],
         summary:
-          "Fetch barberman daily schedule with customer and service details",
+          "Fetch authenticated barberman daily schedule with customer and service details",
         security: [{ bearerAuth: [] }],
         parameters: [
-          {
-            in: "path",
-            name: "barbermanId",
-            required: true,
-            schema: {
-              type: "string",
-              format: "uuid",
-            },
-            description: "ID do barbeiro",
-          },
           {
             in: "query",
             name: "date",
@@ -458,7 +438,7 @@ export const swaggerDocument = {
               format: "date",
             },
             example: "2026-09-11",
-            description: "Data da agenda no formato YYYY-MM-DD",
+            description: "Date in YYYY-MM-DD format",
           },
         ],
         responses: {
@@ -594,6 +574,76 @@ export const swaggerDocument = {
               },
             },
           },
+        },
+      },
+    },
+  },
+  "/api/booking/{bookingId}/cancel": {
+    patch: {
+      tags: ["Bookings"],
+      summary: "Cancel an existing booking",
+      security: [{ bearerAuth: [] }],
+      parameters: [
+        {
+          in: "path",
+          name: "bookingId",
+          required: true,
+          schema: {
+            type: "string",
+            format: "uuid",
+          },
+          description: "ID do agendamento a ser cancelado",
+        },
+      ],
+      responses: {
+        "200": {
+          description: "Booking canceled successfully",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  booking: {
+                    type: "object",
+                    properties: {
+                      id: {
+                        type: "string",
+                        format: "uuid",
+                        example: "9e241c16-650f-492e-9cda-320f8c0b16c3",
+                      },
+                      barbershopId: {
+                        type: "string",
+                        format: "uuid",
+                      },
+                      barbermanId: {
+                        type: "string",
+                        format: "uuid",
+                      },
+                      shoppingCartId: {
+                        type: "string",
+                        format: "uuid",
+                      },
+                      date: {
+                        type: "string",
+                        format: "date-time",
+                      },
+                      startTime: { type: "string", example: "14:00" },
+                      endTime: { type: "string", example: "14:30" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        "401": {
+          description: "Unauthorized",
+        },
+        "404": {
+          description: "Booking not found",
+        },
+        "500": {
+          description: "Internal server error",
         },
       },
     },
