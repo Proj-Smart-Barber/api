@@ -5,15 +5,17 @@ import {
   createScheduleExceptionController,
   deleteScheduleExceptionController,
   calculateAvailabilityController,
+  fetchBarbershopSchedulesController,
+  fetchScheduleExceptionsController,
 } from "../factories/schedule-factory";
 
 const scheduleRoutes = Router({ mergeParams: true });
 
 // 1. GET /barbershops/:shopId/schedules?barbermanId=
-scheduleRoutes.get("/schedules", (req, res) => {
-  // Retorna mock vazio pois o UseCase GET não foi solicitado no passo 3
-  res.status(200).json({ schedules: [] });
-});
+scheduleRoutes.get(
+  "/schedules",
+  adaptRoute(fetchBarbershopSchedulesController),
+);
 
 // 2. PUT /barbershops/:shopId/schedules
 scheduleRoutes.put(
@@ -22,10 +24,10 @@ scheduleRoutes.put(
 );
 
 // 3. GET /barbershops/:shopId/schedule-exceptions?barbermanId=
-scheduleRoutes.get("/schedule-exceptions", (req, res) => {
-  // Retorna mock vazio pois o UseCase GET não foi solicitado no passo 3
-  res.status(200).json({ exceptions: [] });
-});
+scheduleRoutes.get(
+  "/schedule-exceptions",
+  adaptRoute(fetchScheduleExceptionsController),
+);
 
 // 4. POST /barbershops/:shopId/schedule-exceptions
 scheduleRoutes.post(

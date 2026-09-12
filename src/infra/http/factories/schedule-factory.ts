@@ -11,7 +11,10 @@ import { UpdateBarbershopScheduleController } from "../controllers/schedule/upda
 import { CreateScheduleExceptionController } from "../controllers/schedule/create-schedule-exception.controller";
 import { DeleteScheduleExceptionController } from "../controllers/schedule/delete-schedule-exception.controller";
 import { CalculateAvailabilityController } from "../controllers/schedule/calculate-availability.controller";
-
+import { FetchBarbershopSchedulesUseCase } from "@/domain/application/use-cases/schedule/fetch-barbershop-schedules/fetch-barbershop-schedules";
+import { FetchScheduleExceptionsUseCase } from "@/domain/application/use-cases/schedule/fetch-schedule-exceptions/fetch-schedule-exceptions";
+import { FetchBarbershopSchedulesController } from "../controllers/schedule/fetch-barbershop-schedules.controller";
+import { FetchScheduleExceptionsController } from "../controllers/schedule/fetch-schedule-exceptions.controller";
 // Instâncias para uso global na API HTTP
 const schedulesRepository = new DrizzleSchedulesRepository();
 const scheduleExceptionsRepository = new DrizzleScheduleExceptionsRepository();
@@ -32,6 +35,12 @@ const calculateAvailabilityUseCase = new CalculateAvailabilityUseCase(
   scheduleExceptionsRepository,
   servicesRepository,
 );
+const fetchBarbershopSchedulesUseCase = new FetchBarbershopSchedulesUseCase(
+  schedulesRepository,
+);
+const fetchScheduleExceptionsUseCase = new FetchScheduleExceptionsUseCase(
+  scheduleExceptionsRepository,
+);
 
 // Controllers
 export const updateBarbershopScheduleController =
@@ -42,3 +51,7 @@ export const deleteScheduleExceptionController =
   new DeleteScheduleExceptionController(deleteScheduleExceptionUseCase);
 export const calculateAvailabilityController =
   new CalculateAvailabilityController(calculateAvailabilityUseCase);
+export const fetchBarbershopSchedulesController =
+  new FetchBarbershopSchedulesController(fetchBarbershopSchedulesUseCase);
+export const fetchScheduleExceptionsController =
+  new FetchScheduleExceptionsController(fetchScheduleExceptionsUseCase);
