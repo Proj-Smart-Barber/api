@@ -577,73 +577,73 @@ export const swaggerDocument = {
         },
       },
     },
-  },
-  "/api/booking/{bookingId}/cancel": {
-    patch: {
-      tags: ["Bookings"],
-      summary: "Cancel an existing booking",
-      security: [{ bearerAuth: [] }],
-      parameters: [
-        {
-          in: "path",
-          name: "bookingId",
-          required: true,
-          schema: {
-            type: "string",
-            format: "uuid",
+    "/api/booking/{bookingId}/cancel": {
+      patch: {
+        tags: ["Bookings"],
+        summary: "Cancel an existing booking",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: "path",
+            name: "bookingId",
+            required: true,
+            schema: {
+              type: "string",
+              format: "uuid",
+            },
+            description: "ID do agendamento a ser cancelado",
           },
-          description: "ID do agendamento a ser cancelado",
-        },
-      ],
-      responses: {
-        "200": {
-          description: "Booking canceled successfully",
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  booking: {
-                    type: "object",
-                    properties: {
-                      id: {
-                        type: "string",
-                        format: "uuid",
-                        example: "9e241c16-650f-492e-9cda-320f8c0b16c3",
+        ],
+        responses: {
+          "200": {
+            description: "Booking canceled successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    booking: {
+                      type: "object",
+                      properties: {
+                        id: {
+                          type: "string",
+                          format: "uuid",
+                          example: "9e241c16-650f-492e-9cda-320f8c0b16c3",
+                        },
+                        barbershopId: {
+                          type: "string",
+                          format: "uuid",
+                        },
+                        barbermanId: {
+                          type: "string",
+                          format: "uuid",
+                        },
+                        shoppingCartId: {
+                          type: "string",
+                          format: "uuid",
+                        },
+                        date: {
+                          type: "string",
+                          format: "date-time",
+                        },
+                        startTime: { type: "string", example: "14:00" },
+                        endTime: { type: "string", example: "14:30" },
                       },
-                      barbershopId: {
-                        type: "string",
-                        format: "uuid",
-                      },
-                      barbermanId: {
-                        type: "string",
-                        format: "uuid",
-                      },
-                      shoppingCartId: {
-                        type: "string",
-                        format: "uuid",
-                      },
-                      date: {
-                        type: "string",
-                        format: "date-time",
-                      },
-                      startTime: { type: "string", example: "14:00" },
-                      endTime: { type: "string", example: "14:30" },
                     },
                   },
                 },
               },
             },
           },
-        },
-        "401": {
-          description: "Unauthorized",
-        },
-        "404": {
-          description: "Booking not found",
-        },
-        "500": {
-          description: "Internal server error",
+          "401": {
+            description: "Unauthorized",
+          },
+          "404": {
+            description: "Booking not found",
+          },
+          "500": {
+            description: "Internal server error",
+          },
         },
       },
     },

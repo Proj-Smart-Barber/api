@@ -13,34 +13,34 @@ describe("Cancel Booking Use Case", () => {
     inMemoryBookingsRepository = new InMemoryBookingsRepository();
     sut = new CancelBookingUseCase(inMemoryBookingsRepository);
   });
-
-  it("should be able to find and cancel a booking", async () => {
-    const today = new Date();
-
-    const booking = Booking.create(
+  const today = new Date();
+  it("should be able to cancel a booking", async () => {
+    const newBooking = Booking.create(
       {
-        barbershopId: new UniqueEntityId("shop-1"),
-        barbermanId: new UniqueEntityId("barber-1"),
+        barbershopId: new UniqueEntityId("barbershop-1"),
+        barbermanId: new UniqueEntityId("barberman-1"),
         shoppingCartId: new UniqueEntityId("cart-1"),
         date: today,
-        startTime: "09:00",
-        endTime: "10:00",
+        startTime: "14:00",
+        endTime: "14:30",
       },
       new UniqueEntityId("booking-1"),
     );
 
-    await inMemoryBookingsRepository.create(booking);
+    await inMemoryBookingsRepository.create(newBooking);
 
     const result = await sut.execute({
       bookingId: "booking-1",
     });
 
     expect(result.isRight()).toBe(true);
+    expect(inMemoryBookingsRepository.items).toHaveLength(1);
+    expect(inMemoryBookingsRepository.items[0].id.toString()).toBe("booking-1");
   });
 
   it("should not be able to cancel a non-existing booking", async () => {
     const result = await sut.execute({
-      bookingId: "non-existing-id",
+      bookingId: "non-existing-booking-id",
     });
 
     expect(result.isLeft()).toBe(true);
