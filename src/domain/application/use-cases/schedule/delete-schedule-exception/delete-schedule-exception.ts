@@ -1,5 +1,5 @@
 import { type Either, left, right } from "@/core/logic/either";
-import type { ScheduleExceptionsRepository } from "../../repositories/schedule-exceptions-repository";
+import type { ScheduleExceptionsRepository } from "@/domain/application/repositories/schedule-exceptions-repository";
 
 interface DeleteScheduleExceptionDTO {
   exceptionId: string;

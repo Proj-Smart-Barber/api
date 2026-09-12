@@ -1,5 +1,5 @@
 import { type Either, left, right } from "@/core/logic/either";
-import type { SchedulesRepository } from "../../repositories/schedules-repository";
+import type { SchedulesRepository } from "@/domain/application/repositories/schedules-repository";
 import { BarbershopSchedule } from "@/domain/enterprise/entities/barbershop-schedule";
 import { UniqueEntityId } from "@/core/entities/unique-entity-id";
 

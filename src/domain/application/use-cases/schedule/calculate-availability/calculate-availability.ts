@@ -1,7 +1,19 @@
 import { type Either, left, right } from "@/core/logic/either";
-import type { SchedulesRepository } from "../../repositories/schedules-repository";
-import type { ScheduleExceptionsRepository } from "../../repositories/schedule-exceptions-repository";
-import type { ServicesRepository } from "../../repositories/services-repository";
+import type { SchedulesRepository } from "@/domain/application/repositories/schedules-repository";
+import type { ScheduleExceptionsRepository } from "@/domain/application/repositories/schedule-exceptions-repository";
+import type { ServicesRepository } from "@/domain/application/repositories/services-repository";
+import type { BookingsRepository } from "@/domain/application/repositories/bookings-repository";
+
+function timeToMinutes(time: string): number {
+  const [hours, minutes] = time.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+function minutesToTime(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
+}
 
 interface CalculateAvailabilityDTO {
   barbershopId: string;
@@ -25,6 +37,7 @@ export class CalculateAvailabilityUseCase {
     private schedulesRepository: SchedulesRepository,
     private scheduleExceptionsRepository: ScheduleExceptionsRepository,
     private servicesRepository: ServicesRepository,
+    private bookingsRepository: BookingsRepository,
   ) {}
 
   async execute({
@@ -58,11 +71,10 @@ export class CalculateAvailabilityUseCase {
     ];
     const dayOfWeek = daysMap[dayOfWeekIndex];
 
-    const schedules =
+    const allSchedules =
       await this.schedulesRepository.findManyByBarbershopId(barbershopId);
 
-    // Filtrar pela jornada específica ou do estabelecimento
-    const currentSchedule = schedules.find(
+    const daySchedules = allSchedules.filter(
       (s) =>
         s.dayOfWeek === dayOfWeek &&
         (barbermanId
@@ -70,8 +82,7 @@ export class CalculateAvailabilityUseCase {
           : !s.barbermanId),
     );
 
-    if (!currentSchedule) {
-      // Regra: ausência de linha = fechado
+    if (daySchedules.length === 0) {
       return right({ availableSlots: [] });
     }
 
@@ -90,21 +101,58 @@ export class CalculateAvailabilityUseCase {
       return eDate === tDate && matchBarberman;
     });
 
-    // Se houver uma exceção que fecha o dia todo (startTime e endTime null)
     const closedAllDay = dayExceptions.some((e) => !e.startTime && !e.endTime);
     if (closedAllDay) {
       return right({ availableSlots: [] });
     }
 
-    // Mock simples: retornamos o horário de abertura até fechamento como um slot inteiro
-    // Isso é suficiente para mock frontend, posteriormente o motor real dividirá em slots baseados em totalDurationInMinutes
-    // e removerá os períodos exatos das exceptions
-    const availableSlots: AvailabilitySlotDTO[] = [
-      {
-        start: `${date}T${currentSchedule.openTime}:00-03:00`,
-        end: `${date}T${currentSchedule.closeTime}:00-03:00`,
-      },
-    ];
+    // 4. Buscar Bookings do dia
+    const dayBookings = barbermanId
+      ? await this.bookingsRepository.findManyByBarbermanAndDate({
+          barbermanId,
+          date: targetDate,
+        })
+      : [];
+
+    // 5. Gerar os slots fatiados
+    const availableSlots: AvailabilitySlotDTO[] = [];
+    const SLOT_STEP_MINUTES = 30; // Fatias geradas a cada 30 minutos
+
+    for (const schedule of daySchedules) {
+      const openMinutes = timeToMinutes(schedule.openTime);
+      const closeMinutes = timeToMinutes(schedule.closeTime);
+
+      let currentStartMinutes = openMinutes;
+
+      while (currentStartMinutes + totalDurationInMinutes <= closeMinutes) {
+        const currentEndMinutes = currentStartMinutes + totalDurationInMinutes;
+
+        const overlapsException = dayExceptions.some((ex) => {
+          if (!ex.startTime || !ex.endTime) return true;
+          const exStart = timeToMinutes(ex.startTime);
+          const exEnd = timeToMinutes(ex.endTime);
+          return currentStartMinutes < exEnd && currentEndMinutes > exStart;
+        });
+
+        const overlapsBooking = dayBookings.some((booking) => {
+          const bStart = timeToMinutes(booking.startTime);
+          const bEnd = timeToMinutes(booking.endTime);
+          return currentStartMinutes < bEnd && currentEndMinutes > bStart;
+        });
+
+        if (!overlapsException && !overlapsBooking) {
+          const startStr = minutesToTime(currentStartMinutes);
+          const endStr = minutesToTime(currentEndMinutes);
+
+          availableSlots.push({
+            start: `${date}T${startStr}:00-03:00`,
+            end: `${date}T${endStr}:00-03:00`,
+          });
+        }
+
+        currentStartMinutes += SLOT_STEP_MINUTES;
+      }
+    }
 
     return right({ availableSlots });
   }

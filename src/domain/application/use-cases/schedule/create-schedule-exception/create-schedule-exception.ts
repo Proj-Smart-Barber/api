@@ -1,5 +1,5 @@
 import { type Either, right } from "@/core/logic/either";
-import type { ScheduleExceptionsRepository } from "../../repositories/schedule-exceptions-repository";
+import type { ScheduleExceptionsRepository } from "@/domain/application/repositories/schedule-exceptions-repository";
 import { ScheduleException } from "@/domain/enterprise/entities/schedule-exception";
 import { UniqueEntityId } from "@/core/entities/unique-entity-id";
 
