@@ -29,7 +29,7 @@ bookingRoutes.get(
   ensureStaffIsAuthenticated,
   adaptRoute(makeFetchBarbermanDailyScheduleWithDetailsController()),
 );
-bookingRoutes.patch(
+bookingRoutes.delete(
   "/:bookingId/cancel",
   ensureStaffIsAuthenticated,
   adaptRoute(makeCancelBookingController()),

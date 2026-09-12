@@ -578,7 +578,7 @@ export const swaggerDocument = {
       },
     },
     "/api/booking/{bookingId}/cancel": {
-      patch: {
+      delete: {
         tags: ["Bookings"],
         summary: "Cancel an existing booking",
         security: [{ bearerAuth: [] }],
