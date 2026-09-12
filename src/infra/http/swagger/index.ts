@@ -309,6 +309,171 @@ export const swaggerDocument = {
         },
       },
     },
+    "/api/booking/barberman/{barbermanId}/schedule/details": {
+      get: {
+        tags: ["Bookings"],
+        summary:
+          "Fetch barberman daily schedule with customer and service details",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: "path",
+            name: "barbermanId",
+            required: true,
+            schema: {
+              type: "string",
+              format: "uuid",
+            },
+            description: "ID do barbeiro",
+          },
+          {
+            in: "query",
+            name: "date",
+            required: true,
+            schema: {
+              type: "string",
+              format: "date",
+            },
+            example: "2026-09-11",
+            description: "Data da agenda no formato YYYY-MM-DD",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Daily schedule retrieved successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    bookings: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: {
+                            type: "string",
+                            format: "uuid",
+                            example: "9e241c16-650f-492e-9cda-320f8c0b16c3",
+                          },
+                          barbershopId: {
+                            type: "string",
+                            format: "uuid",
+                            example: "13d4b8e0-7f42-4b7f-b390-b06bb776701f",
+                          },
+                          barbermanId: {
+                            type: "string",
+                            format: "uuid",
+                            example: "4903d18d-ea6e-494e-9be6-ef9f47775034",
+                          },
+                          shoppingCartId: {
+                            type: "string",
+                            format: "uuid",
+                            example: "09a90c95-1ef3-4cac-9a0a-ff03aa902022",
+                          },
+                          customer: {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                                format: "uuid",
+                                example: "c1a2b3c4-d5e6-7890-abcd-ef1234567890",
+                              },
+                              name: { type: "string", example: "John Doe" },
+                              phoneNumber: {
+                                type: "string",
+                                example: "(11) 99999-9999",
+                              },
+                            },
+                          },
+                          services: {
+                            type: "array",
+                            items: {
+                              type: "object",
+                              properties: {
+                                id: {
+                                  type: "string",
+                                  format: "uuid",
+                                  example:
+                                    "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
+                                },
+                                title: {
+                                  type: "string",
+                                  example: "Corte de Cabelo",
+                                },
+                                priceInCents: {
+                                  type: "integer",
+                                  example: 5000,
+                                },
+                                durationInMinutes: {
+                                  type: "integer",
+                                  example: 30,
+                                },
+                              },
+                            },
+                          },
+                          date: {
+                            type: "string",
+                            format: "date-time",
+                            example: "2026-09-11T00:00:00.000Z",
+                          },
+                          startTime: { type: "string", example: "14:00" },
+                          endTime: { type: "string", example: "14:30" },
+                          createdAt: {
+                            type: "string",
+                            format: "date-time",
+                            example: "2026-09-11T13:21:09.915Z",
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "500": {
+            description: "Internal server error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
