@@ -7,7 +7,7 @@ import {
   type HttpResponse,
 } from "../../../core/infra/http-response";
 import type { FetchBarbermanDailyScheduleUseCase } from "../../../domain/application/use-cases/booking/fetch-staff-barberman-schedule/fetch-barberman-daily-schedule";
-
+import { BookingMapper } from "@/domain/enterprise/mappers/booking-mapper";
 const fetchBarbermanDailyScheduleControllerRequest = z.object({
   barbermanId: z.string().uuid(),
   date: z.coerce.date(),
@@ -39,21 +39,10 @@ export class FetchBarbermanDailyScheduleController implements Controller {
       }
 
       const { bookings } = result.value;
-      const formattedBookings = bookings.map((booking) => ({
-        id: booking.id?.toString() ?? String(booking.id),
-        barbershopId:
-          booking.barbershopId?.toString() ?? String(booking.barbershopId),
-        barbermanId:
-          booking.barbermanId?.toString() ?? String(booking.barbermanId),
-        shoppingCartId:
-          booking.shoppingCartId?.toString() ?? String(booking.shoppingCartId),
-        date: booking.date, // Descomentar no merge
-        startTime: booking.startTime, // Descomentar no merge
-        endTime: booking.endTime, // Descomentar no merge
-        createdAt: booking.createdAt,
-      }));
 
-      return ok({ bookings: formattedBookings });
+      return ok({
+        bookings: bookings.map((booking) => BookingMapper.toHTTP(booking)),
+      });
     } catch (err) {
       if (err instanceof ZodError) {
         return clientError(z.prettifyError(err));

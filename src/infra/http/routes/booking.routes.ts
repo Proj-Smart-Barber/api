@@ -6,7 +6,7 @@ import { ensureStaffIsAuthenticated } from "../middlewares/ensure-staff-is-authe
 // import { makeGetAvailableSlotsController } from "../factories/make-get-available-slots-controller";
 import { makeFetchBarbermanDailyScheduleController } from "../factories/make-fetch-barberman-daily-schedule-controller";
 import { makeCancelBookingController } from "../factories/make-cancel-booking-controller";
-
+import { makeFetchBarbermanDailyScheduleWithDetailsController } from "../factories/make-fetch-barberman-daily-schedule-with-details-controller";
 const bookingRoutes = Router();
 
 // bookingRoutes.get(
@@ -23,6 +23,11 @@ bookingRoutes.get(
   "/barberman/:barbermanId/schedule",
   ensureStaffIsAuthenticated,
   adaptRoute(makeFetchBarbermanDailyScheduleController()),
+);
+bookingRoutes.get(
+  "/barberman/:barbermanId/schedule/details",
+  ensureStaffIsAuthenticated,
+  adaptRoute(makeFetchBarbermanDailyScheduleWithDetailsController()),
 );
 bookingRoutes.patch(
   "/:bookingId/cancel",

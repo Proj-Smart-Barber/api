@@ -13,21 +13,23 @@ export function makeFetchBarbermanDailyScheduleController() {
   // const mockBooking = Booking.create(
   //   {
   //     barbershopId: new UniqueEntityId("barbershop-1"),
-  //     barbermanId: new UniqueEntityId("4903d18d-ea6e-494e-9be6-ef9f47775034"),
+  //     barbermanId: new UniqueEntityId("957cf329-b48c-4f93-9cdc-73d682dffba6"),
   //     shoppingCartId: new UniqueEntityId("cart-1"),
   //     date:today,
   //     startTime:"10:00",
   //     endTime:"11:00",
-  //     createdAt: new Date("2026-09-10T12:00:00.000Z"),
+  //     createdAt: new Date("2026-09-11T12:00:00.000Z"),
   //   },
   //   new UniqueEntityId("booking-teste-123"),
   // );
 
   // inMemoryBookingsRepository.items = [mockBooking];
+  // const fetchBarbermanDailyScheduleUseCase =
+  // new FetchBarbermanDailyScheduleUseCase(inMemoryBookingsRepository);
+
   const drizzleBookingsRepository = new DrizzleBookingsRepository();
   const fetchBarbermanDailyScheduleUseCase =
     new FetchBarbermanDailyScheduleUseCase(drizzleBookingsRepository);
-  // new FetchBarbermanDailyScheduleUseCase(inMemoryBookingsRepository);
 
   return new FetchBarbermanDailyScheduleController(
     fetchBarbermanDailyScheduleUseCase,
