@@ -6,16 +6,15 @@ import {
   notFound,
   fail,
 } from "@/core/infra/http-response";
-import { z } from "zod";
 import type { GetBarbershopUseCase } from "@/domain/application/use-cases/barbershop/get-barbershop/get-barbershop";
 import { DrizzleBarbershopMapper } from "@/infra/drizzle/mappers/drizzle-barbershop-mapper";
 
 export class GetBarbershopController implements Controller {
   constructor(private getBarbershopUseCase: GetBarbershopUseCase) {}
 
-  async handle(request: any): Promise<HttpResponse> {
+  async handle(request: unknown): Promise<HttpResponse> {
     try {
-      const barbershopId = request.shopId; // the parameter is :shopId from the route
+      const barbershopId = (request as any).shopId; // the parameter is :shopId from the route
 
       const result = await this.getBarbershopUseCase.execute({
         barbershopId,
@@ -36,8 +35,8 @@ export class GetBarbershopController implements Controller {
       return ok({
         barbershop: DrizzleBarbershopMapper.toDrizzle(barbershop),
       });
-    } catch (err: any) {
-      return fail(err);
+    } catch (err: unknown) {
+      return fail(err as Error);
     }
   }
 }

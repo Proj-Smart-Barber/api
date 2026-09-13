@@ -2,7 +2,7 @@ import type { SchedulesRepository } from "@/domain/application/repositories/sche
 import type { BarbershopSchedule } from "@/domain/enterprise/entities/barbershop-schedule";
 import { db } from "../index";
 import { barbershopSchedules } from "../schema";
-import { eq } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import { DrizzleBarbershopScheduleMapper } from "../mappers/drizzle-barbershop-schedule-mapper";
 
 export class DrizzleSchedulesRepository implements SchedulesRepository {
@@ -59,14 +59,31 @@ export class DrizzleSchedulesRepository implements SchedulesRepository {
 
   async bulkReplace(
     barbershopId: string,
+    barbermanId: string | null,
     schedules: BarbershopSchedule[],
   ): Promise<void> {
     // Utilizamos uma transação para garantir atomicidade. Se a inserção falhar, o delete é revertido (rollback).
     await db.transaction(async (tx) => {
-      // 1. Apaga todos os horários antigos desta barbearia
-      await tx
-        .delete(barbershopSchedules)
-        .where(eq(barbershopSchedules.barbershopId, barbershopId));
+      // 1. Apaga os horários antigos desta barbearia no escopo (geral ou específico)
+      if (barbermanId) {
+        await tx
+          .delete(barbershopSchedules)
+          .where(
+            and(
+              eq(barbershopSchedules.barbershopId, barbershopId),
+              eq(barbershopSchedules.barbermanId, barbermanId),
+            ),
+          );
+      } else {
+        await tx
+          .delete(barbershopSchedules)
+          .where(
+            and(
+              eq(barbershopSchedules.barbershopId, barbershopId),
+              isNull(barbershopSchedules.barbermanId),
+            ),
+          );
+      }
 
       // 2. Insere os novos horários
       if (schedules.length > 0) {

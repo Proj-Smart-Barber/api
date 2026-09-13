@@ -2,8 +2,13 @@ import { Barbershop } from "@/domain/enterprise/entities/barbershop";
 import { UniqueEntityId } from "@/core/entities/unique-entity-id";
 import { Slug } from "@/domain/enterprise/entities/value-objects/slug";
 
+import type { InferSelectModel } from "drizzle-orm";
+import type { barbershops } from "../schema";
+
+type RawBarbershop = InferSelectModel<typeof barbershops>;
+
 export class DrizzleBarbershopMapper {
-  static toDomain(raw: any): Barbershop {
+  static toDomain(raw: RawBarbershop): Barbershop {
     return Barbershop.create(
       {
         name: raw.name,
@@ -13,8 +18,8 @@ export class DrizzleBarbershopMapper {
         location: raw.location,
         timezone: raw.timezone,
         status: raw.status,
-        avatarUrl: raw.avatarUrl,
-        createdAt: raw.createdAt,
+        avatarUrl: raw.avatarUrl ?? undefined,
+        createdAt: raw.createdAt ?? undefined,
       },
       new UniqueEntityId(raw.id),
     );

@@ -1,5 +1,10 @@
 import type { Controller } from "@/core/infra/controller";
-import { type HttpResponse, ok, fail } from "@/core/infra/http-response";
+import {
+  type HttpResponse,
+  fail,
+  ok,
+  clientError,
+} from "@/core/infra/http-response";
 import type { FetchBarbershopSchedulesUseCase } from "@/domain/application/use-cases/schedule/fetch-barbershop-schedules/fetch-barbershop-schedules";
 import { z } from "zod";
 
@@ -8,7 +13,7 @@ export class FetchBarbershopSchedulesController implements Controller {
     private fetchBarbershopSchedulesUseCase: FetchBarbershopSchedulesUseCase,
   ) {}
 
-  async handle(request: any): Promise<HttpResponse> {
+  async handle(request: unknown): Promise<HttpResponse> {
     const schema = z.object({
       shopId: z.string(),
       barbermanId: z.string().optional(),
@@ -38,7 +43,7 @@ export class FetchBarbershopSchedulesController implements Controller {
       return ok({ schedules });
     } catch (err: unknown) {
       if (err instanceof z.ZodError) {
-        return fail((err as any).errors);
+        return clientError({ errors: err.issues });
       }
       return fail(err as Error);
     }

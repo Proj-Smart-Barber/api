@@ -18,7 +18,7 @@ export async function ensureStaffIsAuthenticated(
   reply: Response,
   next: NextFunction,
 ) {
-  const authHeader = request.headers["authorization"];
+  const authHeader = request.headers.authorization;
 
   const token = authHeader && authHeader.split(" ")[1];
 

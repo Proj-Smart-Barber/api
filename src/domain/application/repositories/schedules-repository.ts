@@ -8,6 +8,7 @@ export interface SchedulesRepository {
   delete(schedule: BarbershopSchedule): Promise<void>;
   bulkReplace(
     barbershopId: string,
+    barbermanId: string | null,
     schedules: BarbershopSchedule[],
   ): Promise<void>;
 }

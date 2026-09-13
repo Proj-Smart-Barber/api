@@ -5,16 +5,18 @@ import { UniqueEntityId } from "@/core/entities/unique-entity-id";
 
 interface UpdateBarbershopScheduleDTO {
   barbershopId: string;
+  barbermanId: string | null;
   createdBy: string;
-  dayOfWeek: string;
-  openTime: string;
-  closeTime: string;
-  barbermanId?: string | null;
+  schedules: Array<{
+    dayOfWeek: string;
+    openTime: string;
+    closeTime: string;
+  }>;
 }
 
 type UpdateBarbershopScheduleResponse = Either<
   Error,
-  { schedule: BarbershopSchedule }
+  { schedules: BarbershopSchedule[] }
 >;
 
 export class UpdateBarbershopScheduleUseCase {
@@ -22,29 +24,39 @@ export class UpdateBarbershopScheduleUseCase {
 
   async execute({
     barbershopId,
-    createdBy,
-    dayOfWeek,
-    openTime,
-    closeTime,
     barbermanId,
+    createdBy,
+    schedules,
   }: UpdateBarbershopScheduleDTO): Promise<UpdateBarbershopScheduleResponse> {
-    if (openTime >= closeTime) {
-      return left(
-        new Error("O horário de fechamento deve ser maior que o de abertura."),
-      );
+    const barbershopSchedules: BarbershopSchedule[] = [];
+
+    for (const item of schedules) {
+      if (item.openTime >= item.closeTime) {
+        return left(
+          new Error(
+            "O horário de fechamento deve ser maior que o de abertura.",
+          ),
+        );
+      }
+
+      const schedule = BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId(barbershopId),
+        createdBy: new UniqueEntityId(createdBy),
+        dayOfWeek: item.dayOfWeek,
+        openTime: item.openTime,
+        closeTime: item.closeTime,
+        barbermanId: barbermanId ? new UniqueEntityId(barbermanId) : null,
+      });
+
+      barbershopSchedules.push(schedule);
     }
 
-    const schedule = BarbershopSchedule.create({
-      barbershopId: new UniqueEntityId(barbershopId),
-      createdBy: new UniqueEntityId(createdBy),
-      dayOfWeek,
-      openTime,
-      closeTime,
-      barbermanId: barbermanId ? new UniqueEntityId(barbermanId) : null,
-    });
+    await this.schedulesRepository.bulkReplace(
+      barbershopId,
+      barbermanId,
+      barbershopSchedules,
+    );
 
-    await this.schedulesRepository.create(schedule);
-
-    return right({ schedule });
+    return right({ schedules: barbershopSchedules });
   }
 }

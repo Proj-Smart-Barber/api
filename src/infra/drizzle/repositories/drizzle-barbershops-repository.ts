@@ -20,4 +20,19 @@ export class DrizzleBarbershopsRepository implements BarbershopsRepository {
 
     return DrizzleBarbershopMapper.toDomain(barbershop);
   }
+
+  async findByOwnerId(ownerId: string): Promise<Barbershop | null> {
+    const results = await db
+      .select()
+      .from(barbershops)
+      .where(eq(barbershops.ownerId, ownerId));
+
+    const barbershop = results[0];
+
+    if (!barbershop) {
+      return null;
+    }
+
+    return DrizzleBarbershopMapper.toDomain(barbershop);
+  }
 }

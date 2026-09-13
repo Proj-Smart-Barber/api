@@ -13,4 +13,16 @@ export class InMemoryBarbershopsRepository implements BarbershopsRepository {
 
     return barbershop;
   }
+
+  async findByOwnerId(ownerId: string): Promise<Barbershop | null> {
+    const barbershop = this.items.find(
+      (item) => item.ownerId.toString() === ownerId,
+    );
+
+    if (!barbershop) {
+      return null;
+    }
+
+    return barbershop;
+  }
 }

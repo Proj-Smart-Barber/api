@@ -3,6 +3,7 @@ import type { SchedulesRepository } from "@/domain/application/repositories/sche
 import type { ScheduleExceptionsRepository } from "@/domain/application/repositories/schedule-exceptions-repository";
 import type { ServicesRepository } from "@/domain/application/repositories/services-repository";
 import type { BookingsRepository } from "@/domain/application/repositories/bookings-repository";
+import type { BarbershopsRepository } from "@/domain/application/repositories/barbershops-repository";
 
 function timeToMinutes(time: string): number {
   const [hours, minutes] = time.split(":").map(Number);
@@ -13,6 +14,25 @@ function minutesToTime(minutes: number): string {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
+}
+
+function getOffsetForTimezone(dateStr: string, timeZone: string): string {
+  try {
+    const d = new Date(`${dateStr}T12:00:00Z`);
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      timeZoneName: "longOffset",
+    });
+    const parts = formatter.formatToParts(d);
+    const tzPart = parts.find((p) => p.type === "timeZoneName")?.value;
+    if (tzPart) {
+      const offset = tzPart.replace("GMT", "");
+      if (offset === "") return "Z";
+      if (offset === "+00:00") return "+00:00";
+      return offset;
+    }
+  } catch (_e) {}
+  return "-03:00";
 }
 
 interface CalculateAvailabilityDTO {
@@ -38,6 +58,7 @@ export class CalculateAvailabilityUseCase {
     private scheduleExceptionsRepository: ScheduleExceptionsRepository,
     private servicesRepository: ServicesRepository,
     private bookingsRepository: BookingsRepository,
+    private barbershopsRepository: BarbershopsRepository,
   ) {}
 
   async execute({
@@ -46,6 +67,10 @@ export class CalculateAvailabilityUseCase {
     serviceIds,
     barbermanId,
   }: CalculateAvailabilityDTO): Promise<CalculateAvailabilityResponse> {
+    const barbershop = await this.barbershopsRepository.findById(barbershopId);
+    const timezone = barbershop?.timezone || "America/Sao_Paulo";
+    const offset = getOffsetForTimezone(date, timezone);
+
     // 1. Calcular a duração total dos serviços
     const services = await this.servicesRepository.findManyByIds(serviceIds);
     if (services.length !== serviceIds.length) {
@@ -58,7 +83,7 @@ export class CalculateAvailabilityUseCase {
     );
 
     // 2. Buscar a jornada para o dia da semana
-    const targetDate = new Date(date);
+    const targetDate = new Date(`${date}T12:00:00${offset}`);
     const dayOfWeekIndex = targetDate.getUTCDay();
     const daysMap = [
       "SUNDAY",
@@ -94,7 +119,7 @@ export class CalculateAvailabilityUseCase {
 
     const dayExceptions = allExceptions.filter((e) => {
       const eDate = new Date(e.date).toISOString().split("T")[0];
-      const tDate = targetDate.toISOString().split("T")[0];
+      const tDate = date; // date from parameter
       const matchBarberman = barbermanId
         ? e.barbermanId?.toString() === barbermanId
         : !e.barbermanId;
@@ -110,7 +135,7 @@ export class CalculateAvailabilityUseCase {
     const dayBookings = barbermanId
       ? await this.bookingsRepository.findManyByBarbermanAndDate({
           barbermanId,
-          date: targetDate,
+          date: targetDate, // we pass the Date object which represents the correct day
         })
       : [];
 
@@ -145,8 +170,8 @@ export class CalculateAvailabilityUseCase {
           const endStr = minutesToTime(currentEndMinutes);
 
           availableSlots.push({
-            start: `${date}T${startStr}:00-03:00`,
-            end: `${date}T${endStr}:00-03:00`,
+            start: `${date}T${startStr}:00${offset}`,
+            end: `${date}T${endStr}:00${offset}`,
           });
         }
 

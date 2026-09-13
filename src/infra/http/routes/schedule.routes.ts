@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { ensureStaffIsAuthenticated } from "../middlewares/ensure-staff-is-authenticated";
 import { adaptRoute } from "../../../core/infra/adapters/express-route-adapter";
 import { makeUpdateBarbershopScheduleController } from "../factories/make-update-barbershop-schedule-controller";
 import { makeCreateScheduleExceptionController } from "../factories/make-create-schedule-exception-controller";
@@ -19,6 +20,7 @@ scheduleRoutes.get(
 // 2. PUT /barbershops/:shopId/schedules
 scheduleRoutes.put(
   "/schedules",
+  ensureStaffIsAuthenticated,
   adaptRoute(makeUpdateBarbershopScheduleController()),
 );
 
@@ -31,18 +33,21 @@ scheduleRoutes.get(
 // 4. POST /barbershops/:shopId/schedule-exceptions
 scheduleRoutes.post(
   "/schedule-exceptions",
+  ensureStaffIsAuthenticated,
   adaptRoute(makeCreateScheduleExceptionController()),
 );
 
 // 5. PATCH /barbershops/:shopId/schedule-exceptions/:exceptionId
 scheduleRoutes.patch(
   "/schedule-exceptions/:exceptionId",
+  ensureStaffIsAuthenticated,
   adaptRoute(makeUpdateScheduleExceptionController()),
 );
 
 // 6. DELETE /barbershops/:shopId/schedule-exceptions/:exceptionId
 scheduleRoutes.delete(
   "/schedule-exceptions/:exceptionId",
+  ensureStaffIsAuthenticated,
   adaptRoute(makeDeleteScheduleExceptionController()),
 );
 

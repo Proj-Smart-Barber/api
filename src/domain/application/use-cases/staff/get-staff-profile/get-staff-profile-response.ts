@@ -8,4 +8,9 @@ export interface GetStaffProfileResponse {
     email: string;
     role: StaffRole;
   };
+  barbershop?: {
+    id: string;
+    name: string;
+    timezone: string;
+  };
 }

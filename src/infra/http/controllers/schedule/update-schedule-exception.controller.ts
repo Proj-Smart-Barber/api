@@ -10,14 +10,20 @@ import {
 import { z } from "zod";
 import type { UpdateScheduleExceptionUseCase } from "@/domain/application/use-cases/schedule/update-schedule-exception/update-schedule-exception";
 
-const updateScheduleExceptionParamsSchema = z.object({
-  id: z.string().uuid(),
-});
-
 const updateScheduleExceptionBodySchema = z.object({
+  shopId: z.string().uuid(),
+  userId: z.string().uuid(),
   date: z.string().date().optional(),
-  startTime: z.string().optional().nullable(),
-  endTime: z.string().optional().nullable(),
+  startTime: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+    .optional()
+    .nullable(),
+  endTime: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+    .optional()
+    .nullable(),
   reason: z.string().optional().nullable(),
 });
 
@@ -26,19 +32,18 @@ export class UpdateScheduleExceptionController implements Controller {
     private updateScheduleExceptionUseCase: UpdateScheduleExceptionUseCase,
   ) {}
 
-  async handle(request: any): Promise<HttpResponse> {
+  async handle(request: unknown): Promise<HttpResponse> {
     try {
       const { exceptionId } = z
         .object({ exceptionId: z.string().uuid() })
         .parse(request);
-      const { date, startTime, endTime, reason } =
+      const { shopId, userId, date, startTime, endTime, reason } =
         updateScheduleExceptionBodySchema.parse(request);
-
-      const barbershopId = request.user?.barbershopId || request.shopId; // Fallback to shopId from params if user is not populated
 
       const result = await this.updateScheduleExceptionUseCase.execute({
         exceptionId,
-        barbershopId,
+        barbershopId: shopId,
+        staffId: userId,
         date,
         startTime,
         endTime,
@@ -58,11 +63,11 @@ export class UpdateScheduleExceptionController implements Controller {
       }
 
       return ok();
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err instanceof z.ZodError) {
-        return clientError({ errors: (err as any).errors });
+        return clientError({ errors: err.issues });
       }
-      return fail(err);
+      return fail(err as Error);
     }
   }
 }

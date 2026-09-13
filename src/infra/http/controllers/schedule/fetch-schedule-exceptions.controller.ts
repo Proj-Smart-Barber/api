@@ -1,5 +1,10 @@
 import type { Controller } from "@/core/infra/controller";
-import { type HttpResponse, ok, fail } from "@/core/infra/http-response";
+import {
+  type HttpResponse,
+  fail,
+  ok,
+  clientError,
+} from "@/core/infra/http-response";
 import type { FetchScheduleExceptionsUseCase } from "@/domain/application/use-cases/schedule/fetch-schedule-exceptions/fetch-schedule-exceptions";
 import { z } from "zod";
 
@@ -8,7 +13,7 @@ export class FetchScheduleExceptionsController implements Controller {
     private fetchScheduleExceptionsUseCase: FetchScheduleExceptionsUseCase,
   ) {}
 
-  async handle(request: any): Promise<HttpResponse> {
+  async handle(request: unknown): Promise<HttpResponse> {
     const schema = z.object({
       shopId: z.string(),
       barbermanId: z.string().optional(),
@@ -29,7 +34,7 @@ export class FetchScheduleExceptionsController implements Controller {
       const exceptions = result.value.exceptions.map((e) => ({
         id: e.id.toString(),
         barbershopId: e.barbershopId.toString(),
-        barbermanId: e.barbermanId?.toString() ?? null,
+        barbermanId: e.barbermanId?.toString() ?? undefined,
         date: e.date.toISOString(),
         startTime: e.startTime,
         endTime: e.endTime,
@@ -39,7 +44,7 @@ export class FetchScheduleExceptionsController implements Controller {
       return ok({ exceptions });
     } catch (err: unknown) {
       if (err instanceof z.ZodError) {
-        return fail((err as any).errors);
+        return clientError({ errors: err.issues });
       }
       return fail(err as Error);
     }

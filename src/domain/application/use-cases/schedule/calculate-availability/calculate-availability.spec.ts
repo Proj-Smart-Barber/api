@@ -2,17 +2,21 @@ import { InMemorySchedulesRepository } from "../../../../../../test/repositories
 import { InMemoryScheduleExceptionsRepository } from "../../../../../../test/repositories/in-memory-schedule-exceptions-repository";
 import { InMemoryServicesRepository } from "../../../../../../test/repositories/in-memory-services-repository";
 import { InMemoryBookingsRepository } from "../../../../../../test/repositories/in-memory-bookings-repository";
+import { InMemoryBarbershopsRepository } from "../../../../../../test/repositories/in-memory-barbershops-repository";
 import { CalculateAvailabilityUseCase } from "./calculate-availability";
 import { BarbershopSchedule } from "@/domain/enterprise/entities/barbershop-schedule";
 import { ScheduleException } from "@/domain/enterprise/entities/schedule-exception";
 import { Service } from "@/domain/enterprise/entities/service";
 import { Booking } from "@/domain/enterprise/entities/booking";
 import { UniqueEntityId } from "@/core/entities/unique-entity-id";
+import { Barbershop } from "@/domain/enterprise/entities/barbershop";
+import { Slug } from "@/domain/enterprise/entities/value-objects/slug";
 
 let inMemorySchedulesRepository: InMemorySchedulesRepository;
 let inMemoryScheduleExceptionsRepository: InMemoryScheduleExceptionsRepository;
 let inMemoryServicesRepository: InMemoryServicesRepository;
 let inMemoryBookingsRepository: InMemoryBookingsRepository;
+let inMemoryBarbershopsRepository: InMemoryBarbershopsRepository;
 let sut: CalculateAvailabilityUseCase;
 
 describe("Calculate Availability", () => {
@@ -22,12 +26,29 @@ describe("Calculate Availability", () => {
       new InMemoryScheduleExceptionsRepository();
     inMemoryServicesRepository = new InMemoryServicesRepository();
     inMemoryBookingsRepository = new InMemoryBookingsRepository();
+    inMemoryBarbershopsRepository = new InMemoryBarbershopsRepository();
 
     sut = new CalculateAvailabilityUseCase(
       inMemorySchedulesRepository,
       inMemoryScheduleExceptionsRepository,
       inMemoryServicesRepository,
       inMemoryBookingsRepository,
+      inMemoryBarbershopsRepository,
+    );
+
+    inMemoryBarbershopsRepository.items.push(
+      Barbershop.create(
+        {
+          name: "Test Barbershop",
+          ownerId: new UniqueEntityId("owner-1"),
+          timezone: "America/Sao_Paulo",
+          slug: Slug.create("test-barbershop"),
+          cnpj: "12345678901234",
+          location: "Location",
+          status: "ACTIVE",
+        },
+        new UniqueEntityId("shop-1"),
+      ),
     );
   });
 

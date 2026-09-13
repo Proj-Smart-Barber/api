@@ -15,25 +15,35 @@ describe("Update Barbershop Schedule", () => {
     const result = await sut.execute({
       barbershopId: "shop-1",
       createdBy: "staff-1",
-      dayOfWeek: "MONDAY",
-      openTime: "09:00",
-      closeTime: "18:00",
+      barbermanId: null,
+      schedules: [
+        {
+          dayOfWeek: "MONDAY",
+          openTime: "08:00",
+          closeTime: "18:00",
+        },
+      ],
     });
 
-    // 2. Verificando o sucesso
     expect(result.isRight()).toBe(true);
     expect(inMemorySchedulesRepository.items).toHaveLength(1);
-    expect(inMemorySchedulesRepository.items[0].dayOfWeek).toEqual("MONDAY");
+    expect(inMemorySchedulesRepository.items[0].dayOfWeek).toBe("MONDAY");
+    expect(inMemorySchedulesRepository.items[0].openTime).toBe("08:00");
+    expect(inMemorySchedulesRepository.items[0].closeTime).toBe("18:00");
   });
 
   it("should not be able to create a schedule if openTime is greater or equal to closeTime", async () => {
-    // 1. Tentando abrir a barbearia às 18h e fechar às 09h
     const result = await sut.execute({
       barbershopId: "shop-1",
       createdBy: "staff-1",
-      dayOfWeek: "MONDAY",
-      openTime: "18:00",
-      closeTime: "09:00",
+      barbermanId: null,
+      schedules: [
+        {
+          dayOfWeek: "MONDAY",
+          openTime: "18:00",
+          closeTime: "08:00",
+        },
+      ],
     });
 
     // 2. Verificando a falha

@@ -13,13 +13,22 @@ export class CreateScheduleExceptionController implements Controller {
     private createScheduleExceptionUseCase: CreateScheduleExceptionUseCase,
   ) {}
 
-  async handle(request: any): Promise<HttpResponse> {
+  async handle(request: unknown): Promise<HttpResponse> {
     const schema = z.object({
       shopId: z.string(),
+      userId: z.string().uuid(),
       date: z.string(),
       barbermanId: z.string().nullable().optional(),
-      startTime: z.string().nullable().optional(),
-      endTime: z.string().nullable().optional(),
+      startTime: z
+        .string()
+        .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+        .nullable()
+        .optional(),
+      endTime: z
+        .string()
+        .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+        .nullable()
+        .optional(),
       reason: z.string().nullable().optional(),
     });
 
@@ -28,6 +37,7 @@ export class CreateScheduleExceptionController implements Controller {
 
       const result = await this.createScheduleExceptionUseCase.execute({
         barbershopId: parsedData.shopId,
+        staffId: parsedData.userId,
         date: parsedData.date,
         barbermanId: parsedData.barbermanId,
         startTime: parsedData.startTime,
@@ -44,11 +54,11 @@ export class CreateScheduleExceptionController implements Controller {
         exceptionId: result.value.exception.id.toString(),
         message: "Exceção de jornada criada com sucesso.",
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err instanceof z.ZodError) {
-        return clientError({ errors: (err as any).errors });
+        return clientError({ errors: err.issues });
       }
-      return fail(err);
+      return fail(err as Error);
     }
   }
 }

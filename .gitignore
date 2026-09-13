@@ -5,5 +5,3 @@ node_modules
 .husky/_
 .vercel
 .env*
-
-doc_agendamento_tecnico.md
