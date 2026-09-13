@@ -246,6 +246,18 @@ export const swaggerDocument = {
                         },
                       },
                     },
+                    barbershop: {
+                      type: "object",
+                      nullable: true,
+                      properties: {
+                        id: {
+                          type: "string",
+                          format: "uuid",
+                        },
+                        name: { type: "string" },
+                        timezone: { type: "string" },
+                      },
+                    },
                   },
                 },
               },
@@ -470,6 +482,12 @@ export const swaggerDocument = {
             required: true,
             schema: { type: "string", format: "uuid" },
           },
+          {
+            name: "barbermanId",
+            in: "query",
+            required: false,
+            schema: { type: "string", format: "uuid" },
+          },
         ],
         requestBody: {
           required: true,
@@ -483,10 +501,20 @@ export const swaggerDocument = {
                     items: {
                       type: "object",
                       properties: {
-                        dayOfWeek: { type: "string" },
-                        openTime: { type: "string" },
-                        closeTime: { type: "string" },
-                        barbermanId: { type: "string", nullable: true },
+                        dayOfWeek: {
+                          type: "string",
+                          enum: [
+                            "MONDAY",
+                            "TUESDAY",
+                            "WEDNESDAY",
+                            "THURSDAY",
+                            "FRIDAY",
+                            "SATURDAY",
+                            "SUNDAY",
+                          ],
+                        },
+                        openTime: { type: "string", example: "09:00" },
+                        closeTime: { type: "string", example: "18:00" },
                       },
                     },
                   },
