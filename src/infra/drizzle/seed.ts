@@ -66,14 +66,14 @@ async function main() {
     {
       barbershopId: barbershop.id,
       createdBy: owner.id,
-      dayOfWeek: "monday",
+      dayOfWeek: "MONDAY",
       openTime: "09:00",
       closeTime: "18:00",
     },
     {
       barbershopId: barbershop.id,
       createdBy: owner.id,
-      dayOfWeek: "tuesday",
+      dayOfWeek: "TUESDAY",
       openTime: "09:00",
       closeTime: "18:00",
     },

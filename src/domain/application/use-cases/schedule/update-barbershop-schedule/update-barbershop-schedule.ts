@@ -1,7 +1,10 @@
 import { type Either, left, right } from "@/core/logic/either";
 import type { SchedulesRepository } from "@/domain/application/repositories/schedules-repository";
+import type { BarbershopsRepository } from "@/domain/application/repositories/barbershops-repository";
 import { BarbershopSchedule } from "@/domain/enterprise/entities/barbershop-schedule";
 import { UniqueEntityId } from "@/core/entities/unique-entity-id";
+import { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
+import { NotAllowedError } from "../../_errors/not-allowed-error";
 
 interface UpdateBarbershopScheduleDTO {
   barbershopId: string;
@@ -15,12 +18,15 @@ interface UpdateBarbershopScheduleDTO {
 }
 
 type UpdateBarbershopScheduleResponse = Either<
-  Error,
+  ResourceNotFoundError | NotAllowedError | Error,
   { schedules: BarbershopSchedule[] }
 >;
 
 export class UpdateBarbershopScheduleUseCase {
-  constructor(private schedulesRepository: SchedulesRepository) {}
+  constructor(
+    private schedulesRepository: SchedulesRepository,
+    private barbershopsRepository: BarbershopsRepository,
+  ) {}
 
   async execute({
     barbershopId,
@@ -28,6 +34,16 @@ export class UpdateBarbershopScheduleUseCase {
     createdBy,
     schedules,
   }: UpdateBarbershopScheduleDTO): Promise<UpdateBarbershopScheduleResponse> {
+    const barbershop = await this.barbershopsRepository.findById(barbershopId);
+
+    if (!barbershop) {
+      return left(new ResourceNotFoundError());
+    }
+
+    if (barbershop.ownerId.toString() !== createdBy) {
+      return left(new NotAllowedError());
+    }
+
     const barbershopSchedules: BarbershopSchedule[] = [];
 
     for (const item of schedules) {

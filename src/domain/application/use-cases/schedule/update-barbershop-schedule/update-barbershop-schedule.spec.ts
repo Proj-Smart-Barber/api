@@ -1,13 +1,37 @@
 import { InMemorySchedulesRepository } from "../../../../../../test/repositories/in-memory-schedules-repository";
+import { InMemoryBarbershopsRepository } from "../../../../../../test/repositories/in-memory-barbershops-repository";
 import { UpdateBarbershopScheduleUseCase } from "./update-barbershop-schedule";
+import { Barbershop } from "@/domain/enterprise/entities/barbershop";
+import { UniqueEntityId } from "@/core/entities/unique-entity-id";
+import { Slug } from "@/domain/enterprise/entities/value-objects/slug";
 
 let inMemorySchedulesRepository: InMemorySchedulesRepository;
+let inMemoryBarbershopsRepository: InMemoryBarbershopsRepository;
 let sut: UpdateBarbershopScheduleUseCase;
 
 describe("Update Barbershop Schedule", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     inMemorySchedulesRepository = new InMemorySchedulesRepository();
-    sut = new UpdateBarbershopScheduleUseCase(inMemorySchedulesRepository);
+    inMemoryBarbershopsRepository = new InMemoryBarbershopsRepository();
+    sut = new UpdateBarbershopScheduleUseCase(
+      inMemorySchedulesRepository,
+      inMemoryBarbershopsRepository,
+    );
+
+    const barbershop = Barbershop.create(
+      {
+        name: "Test Shop",
+        slug: Slug.create("test-shop"),
+        timezone: "America/Sao_Paulo",
+        ownerId: new UniqueEntityId("staff-1"),
+        status: "ACTIVE",
+        cnpj: "12.345.678/0001-90",
+        location: "Rua de Teste, 123",
+      },
+      new UniqueEntityId("shop-1"),
+    );
+
+    inMemoryBarbershopsRepository.items.push(barbershop);
   });
 
   it("should be able to create/update a schedule day", async () => {

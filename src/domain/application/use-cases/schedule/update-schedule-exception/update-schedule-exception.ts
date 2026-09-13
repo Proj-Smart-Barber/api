@@ -69,6 +69,27 @@ export class UpdateScheduleExceptionUseCase {
       exception.reason = reason;
     }
 
+    const start = exception.startTime ?? null;
+    const end = exception.endTime ?? null;
+
+    if ((start === null && end !== null) || (start !== null && end === null)) {
+      return left(
+        new Error(
+          "O horário de início e fim devem ser ambos nulos ou ambos preenchidos.",
+        ),
+      );
+    }
+
+    if (start !== null && end !== null) {
+      if (end <= start) {
+        return left(
+          new Error(
+            "O horário de fechamento deve ser maior que o de abertura.",
+          ),
+        );
+      }
+    }
+
     await this.scheduleExceptionsRepository.save(exception);
 
     return right({
