@@ -2,9 +2,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { InMemoryBookingsRepository } from "../../../../../../test/repositories/in-memory-bookings-repository";
 import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
 import { Booking } from "../../../../enterprise/entities/booking";
-import { BookingNotFoundError } from "../../_errors/booking-not-found-error";
 import { CancelBookingUseCase } from "./cancel-booking";
-import { NotAllowedError } from "../../_errors/not-allowed-error";
+import { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
+import { UnauthorizedError } from "../../_errors/unauthorized-error";
 let inMemoryBookingsRepository: InMemoryBookingsRepository;
 let sut: CancelBookingUseCase;
 
@@ -58,7 +58,7 @@ describe("Cancel Booking Use Case", () => {
     });
 
     expect(result.isLeft()).toBe(true);
-    expect(result.value).toBeInstanceOf(NotAllowedError);
+    expect(result.value).toBeInstanceOf(UnauthorizedError);
   });
 
   it("should not be able to cancel a non-existing booking", async () => {
@@ -68,6 +68,6 @@ describe("Cancel Booking Use Case", () => {
     });
 
     expect(result.isLeft()).toBe(true);
-    expect(result.value).toBeInstanceOf(BookingNotFoundError);
+    expect(result.value).toBeInstanceOf(ResourceNotFoundError);
   });
 });

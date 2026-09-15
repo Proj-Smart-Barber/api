@@ -7,11 +7,12 @@ import {
   fail,
   forbidden,
   type HttpResponse,
+  unauthorized,
 } from "../../../core/infra/http-response";
 import type { CancelBookingUseCase } from "../../../domain/application/use-cases/booking/cancel-booking/cancel-booking";
 import { BookingMapper } from "@/domain/enterprise/mappers/booking-mapper";
-import { BookingNotFoundError } from "@/domain/application/use-cases/_errors/booking-not-found-error";
-import { NotAllowedError } from "@/domain/application/use-cases/_errors/not-allowed-error";
+import { ResourceNotFoundError } from "@/domain/application/use-cases/_errors/resource-not-found-error";
+import { UnauthorizedError } from "@/domain/application/use-cases/_errors/unauthorized-error";
 const cancelBookingControllerRequest = z.object({
   bookingId: z.string().uuid(),
   userId: z.string().uuid(),
@@ -37,12 +38,12 @@ export class CancelBookingController implements Controller {
       if (result.isLeft()) {
         const error = result.value;
 
-        if (error instanceof BookingNotFoundError) {
+        if (error instanceof ResourceNotFoundError) {
           return notFound(error.message);
         }
 
-        if (error instanceof NotAllowedError) {
-          return forbidden(error.message);
+        if (error instanceof UnauthorizedError) {
+          return unauthorized(error.message);
         }
 
         return clientError(error);
