@@ -30,8 +30,6 @@ export async function ensureStaffIsAuthenticated(
     const payload = verify(token, env.JWT_SECRET) as Payload;
     const staffsRepository = new DrizzleStaffsRepository();
 
-    console.log(payload);
-
     const staff = await staffsRepository.findById(payload.sub);
 
     if (!staff) {

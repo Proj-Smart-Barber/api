@@ -7,6 +7,7 @@ import {
   customers,
   notifications,
   roleEnum,
+  scheduleExceptions,
   serviceItems,
   services,
   shoppingCarts,
@@ -15,6 +16,7 @@ import {
 
 async function main() {
   await db.delete(notifications);
+  await db.delete(scheduleExceptions);
   await db.delete(bookings);
   await db.delete(shoppingCarts);
   await db.delete(serviceItems);
@@ -111,12 +113,18 @@ async function main() {
     })
     .returning();
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   const [booking] = await db
     .insert(bookings)
     .values({
       barbershopId: barbershop.id,
       barbermanId: barberman.id,
       shoppingCartId: shoppingCart.id,
+      date: today,
+      startTime: "23:40",
+      endTime: "23:50",
     })
     .returning();
 

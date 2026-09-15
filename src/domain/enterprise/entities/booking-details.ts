@@ -1,18 +1,34 @@
-import { Entity } from "@/core/entities/Entity";
 import type { UniqueEntityId } from "@/core/entities/unique-entity-id";
-import type { Optional } from "@/core/types/optional";
 
-interface BookingProps {
+export interface BookingDetailsProps {
+  bookingId: UniqueEntityId;
   barbershopId: UniqueEntityId;
   barbermanId: UniqueEntityId;
   shoppingCartId: UniqueEntityId;
+  customer: {
+    id: UniqueEntityId;
+    name: string;
+    phoneNumber: string;
+  };
+  services: Array<{
+    id: UniqueEntityId;
+    title: string;
+    priceInCents: number;
+    durationInMinutes: number;
+  }>;
   date: Date;
   startTime: string;
   endTime: string;
   createdAt?: Date;
 }
 
-export class Booking extends Entity<BookingProps> {
+export class BookingDetails {
+  private props: BookingDetailsProps;
+
+  get bookingId(): UniqueEntityId {
+    return this.props.bookingId;
+  }
+
   get barbershopId(): UniqueEntityId {
     return this.props.barbershopId;
   }
@@ -23,6 +39,14 @@ export class Booking extends Entity<BookingProps> {
 
   get shoppingCartId(): UniqueEntityId {
     return this.props.shoppingCartId;
+  }
+
+  get customer() {
+    return this.props.customer;
+  }
+
+  get services() {
+    return this.props.services;
   }
 
   get date(): Date {
@@ -41,18 +65,11 @@ export class Booking extends Entity<BookingProps> {
     return this.props.createdAt;
   }
 
-  static create(
-    props: Optional<BookingProps, "createdAt">,
-    id?: UniqueEntityId,
-  ) {
-    const booking = new Booking(
-      {
-        ...props,
-        createdAt: props.createdAt ?? new Date(),
-      },
-      id,
-    );
+  private constructor(props: BookingDetailsProps) {
+    this.props = props;
+  }
 
-    return booking;
+  static create(props: BookingDetailsProps) {
+    return new BookingDetails(props);
   }
 }
