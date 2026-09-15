@@ -75,11 +75,6 @@ export class DrizzleBookingsRepository implements BookingsRepository {
     barbermanId,
     date,
   }: FindManyByBarbermanAndDateParams): Promise<BookingDetails[]> {
-    // const startOfDay = new Date(date);
-    // startOfDay.setHours(0, 0, 0, 0);
-
-    // const endOfDay = new Date(date);
-    // endOfDay.setHours(23, 59, 59, 999);
     const dateStr = new Date(date).toISOString().split("T")[0];
     const startOfDay = new Date(`${dateStr}T00:00:00.000Z`);
     const endOfDay = new Date(`${dateStr}T23:59:59.999Z`);
@@ -105,7 +100,6 @@ export class DrizzleBookingsRepository implements BookingsRepository {
     return result.map((row) => BookingDetailsMapper.toDomain(row));
   }
   async delete(booking: Booking): Promise<void> {
-    // await db.delete(bookings).where(eq(bookings.id, booking.id.toString()));
     const bookingId = booking.id.toString();
     await db.transaction(async (tx) => {
       await tx

@@ -1,6 +1,5 @@
 import { type Either, right } from "../../../../../core/logic/either";
 import type { BookingsRepository } from "../../../repositories/bookings-repository";
-// import type { Booking } from "../../../../enterprise/entities/booking";
 import type { FetchClientBookingsDTO } from "./fetch-client-booking-dto";
 import type { FetchClientBookingsResponse } from "./fetch-client-booking-response";
 

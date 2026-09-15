@@ -3,16 +3,6 @@ import type { BookingsRepository } from "../../../repositories/bookings-reposito
 import { BookingNotFoundError } from "../../_errors/booking-not-found-error";
 import type { CancelBookingDTO } from "./cancel-booking-dto";
 import type { CancelBookingResponse } from "./cancel-booking-response";
-// interface CancelBookingUseCaseRequest {
-//   bookingId: string;
-// }
-
-// type CancelBookingUseCaseResponse = Either<
-//   BookingNotFoundError,
-//   {
-//     booking: Booking;
-//   }
-// >;
 
 type CancelBookingUseCaseResponse = Either<
   BookingNotFoundError,

@@ -122,7 +122,6 @@ async function main() {
       barbershopId: barbershop.id,
       barbermanId: barberman.id,
       shoppingCartId: shoppingCart.id,
-      // date: new Date(),
       date: today,
       startTime: "23:40",
       endTime: "23:50",

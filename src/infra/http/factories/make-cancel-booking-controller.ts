@@ -3,10 +3,6 @@ import { CancelBookingController } from "../controllers/cancel-booking-controlle
 import { DrizzleBookingsRepository } from "@/infra/drizzle/repositories/drizzle-bookings-repository";
 
 export function makeCancelBookingController() {
-  // const inMemoryBookingsRepository = new InMemoryBookingsRepository();
-  // const cancelBookingUseCase = new CancelBookingUseCase(
-  //   inMemoryBookingsRepository,
-  // );
   const drizzleBookingsRepository = new DrizzleBookingsRepository();
   const cancelBookingUseCase = new CancelBookingUseCase(
     drizzleBookingsRepository,
