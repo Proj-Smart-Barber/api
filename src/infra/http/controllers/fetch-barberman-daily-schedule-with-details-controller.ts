@@ -39,7 +39,8 @@ export class FetchBarbermanDailyScheduleWithDetailsController
         });
 
       if (result.isLeft()) {
-        return clientError("Failed to fetch detailed schedule.");
+        const error = result.value;
+        return clientError(error.message);
       }
 
       const { bookings } = result.value;

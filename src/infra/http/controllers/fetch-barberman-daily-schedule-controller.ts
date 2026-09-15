@@ -35,7 +35,8 @@ export class FetchBarbermanDailyScheduleController implements Controller {
       });
 
       if (result.isLeft()) {
-        return clientError("Failed to fetch barberman daily schedule.");
+        const error = result.value;
+        return clientError(error.message);
       }
 
       const { bookings } = result.value;
