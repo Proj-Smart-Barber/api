@@ -5,12 +5,16 @@ import {
   notFound,
   ok,
   fail,
+  forbidden,
   type HttpResponse,
 } from "../../../core/infra/http-response";
 import type { CancelBookingUseCase } from "../../../domain/application/use-cases/booking/cancel-booking/cancel-booking";
 import { BookingMapper } from "@/domain/enterprise/mappers/booking-mapper";
+import { BookingNotFoundError } from "@/domain/application/use-cases/_errors/booking-not-found-error";
+import { NotAllowedError } from "@/domain/application/use-cases/_errors/not-allowed-error";
 const cancelBookingControllerRequest = z.object({
   bookingId: z.string().uuid(),
+  userId: z.string().uuid(),
 });
 
 type CancelBookingControllerRequest = z.infer<
@@ -22,14 +26,26 @@ export class CancelBookingController implements Controller {
 
   async handle(request: CancelBookingControllerRequest): Promise<HttpResponse> {
     try {
-      const { bookingId } = cancelBookingControllerRequest.parse(request);
+      const { bookingId, userId: barbermanId } =
+        cancelBookingControllerRequest.parse(request);
 
-      const result = await this.cancelBookingUseCase.execute({ bookingId });
+      const result = await this.cancelBookingUseCase.execute({
+        bookingId,
+        barbermanId,
+      });
 
       if (result.isLeft()) {
         const error = result.value;
 
-        return notFound(error.message);
+        if (error instanceof BookingNotFoundError) {
+          return notFound(error.message);
+        }
+
+        if (error instanceof NotAllowedError) {
+          return forbidden(error.message);
+        }
+
+        return clientError(error);
       }
 
       const { booking } = result.value;
