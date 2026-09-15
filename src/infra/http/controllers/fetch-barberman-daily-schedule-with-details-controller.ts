@@ -39,7 +39,7 @@ export class FetchBarbermanDailyScheduleWithDetailsController
         });
 
       if (result.isLeft()) {
-        return clientError("Erro ao buscar agenda detalhada do barbeiro.");
+        return clientError("Failed to fetch detailed schedule.");
       }
 
       const { bookings } = result.value;
@@ -54,7 +54,9 @@ export class FetchBarbermanDailyScheduleWithDetailsController
         return clientError(z.prettifyError(err));
       }
 
-      return fail(new Error(String(err)));
+      return fail(
+        new Error("Internal server error. Failed to fetch detailed schedule."),
+      );
     }
   }
 }

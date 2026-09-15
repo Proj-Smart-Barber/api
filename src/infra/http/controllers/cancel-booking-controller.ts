@@ -42,7 +42,9 @@ export class CancelBookingController implements Controller {
         return clientError(z.prettifyError(err));
       }
 
-      return fail(new Error(String(err)));
+      return fail(
+        new Error("Internal server error. Failed to cancel booking."),
+      );
     }
   }
 }
