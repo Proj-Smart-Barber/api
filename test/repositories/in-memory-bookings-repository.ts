@@ -5,7 +5,7 @@ import type {
   FindOverlappingParams,
 } from "../../src/domain/application/repositories/bookings-repository";
 import type { Booking } from "../../src/domain/enterprise/entities/booking";
-import { BookingDetails } from "@/domain/enterprise/entities/value-objects/booking-details";
+import { BookingDetails } from "@/domain/enterprise/entities/booking-details";
 import { UniqueEntityId } from "@/core/entities/unique-entity-id";
 
 export class InMemoryBookingsRepository implements BookingsRepository {
@@ -49,7 +49,6 @@ export class InMemoryBookingsRepository implements BookingsRepository {
     barbermanId,
     date,
   }: FindManyByBarbermanAndDateParams): Promise<Booking[]> {
-    // Extrai a string no formato YYYY-MM-DD da data buscada
     const targetDateString = date.toISOString().split("T")[0];
 
     return this.items.filter((item) => {
@@ -57,7 +56,6 @@ export class InMemoryBookingsRepository implements BookingsRepository {
 
       if (!item.createdAt) return false;
 
-      // Extrai a string YYYY-MM-DD do agendamento cadastrado
       const itemDateString = item.createdAt.toISOString().split("T")[0];
       const isSameDate = itemDateString === targetDateString;
 

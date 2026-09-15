@@ -13,8 +13,7 @@ import type {
   FindManyByBarbermanAndDateParams,
 } from "@/domain/application/repositories/bookings-repository";
 import type { Booking } from "@/domain/enterprise/entities/booking";
-// import { UniqueEntityId } from "@/core/entities/unique-entity-id";
-import type { BookingDetails } from "@/domain/enterprise/entities/value-objects/booking-details";
+import type { BookingDetails } from "@/domain/enterprise/entities/booking-details";
 import { BookingMapper } from "@/domain/enterprise/mappers/booking-mapper";
 import { BookingDetailsMapper } from "@/domain/enterprise/mappers/booking-details-mapper";
 
@@ -23,11 +22,6 @@ export class DrizzleBookingsRepository implements BookingsRepository {
     barbermanId,
     date,
   }: FindManyByBarbermanAndDateParams): Promise<Booking[]> {
-    // const startOfDay = new Date(date);
-    // startOfDay.setHours(0, 0, 0, 0);
-
-    // const endOfDay = new Date(date);
-    // endOfDay.setHours(23, 59, 59, 999);
     const dateStr = new Date(date).toISOString().split("T")[0];
     const startOfDay = new Date(`${dateStr}T00:00:00.000Z`);
     const endOfDay = new Date(`${dateStr}T23:59:59.999Z`);

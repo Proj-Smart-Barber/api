@@ -1,5 +1,5 @@
 import type { Booking } from "../../enterprise/entities/booking";
-import type { BookingDetails } from "@/domain/enterprise/entities/value-objects/booking-details";
+import type { BookingDetails } from "@/domain/enterprise/entities/booking-details";
 
 export interface FindOverlappingParams {
   barbermanId: string;
