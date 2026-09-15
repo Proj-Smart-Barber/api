@@ -99,6 +99,7 @@ export class DrizzleBookingsRepository implements BookingsRepository {
 
     return result.map((row) => BookingDetailsMapper.toDomain(row));
   }
+
   async delete(booking: Booking): Promise<void> {
     const bookingId = booking.id.toString();
     await db.transaction(async (tx) => {
