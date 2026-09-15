@@ -309,7 +309,7 @@ export const swaggerDocument = {
         },
       },
     },
-    "/api/booking/barberman/schedule": {
+    "/api/bookings/barberman/schedule": {
       get: {
         tags: ["Bookings"],
         summary: "Fetch authenticated barberman daily schedule with IDs only",
@@ -422,7 +422,7 @@ export const swaggerDocument = {
         },
       },
     },
-    "/api/booking/barberman/schedule/details": {
+    "/api/bookings/barberman/schedule/details": {
       get: {
         tags: ["Bookings"],
         summary:
@@ -577,7 +577,7 @@ export const swaggerDocument = {
         },
       },
     },
-    "/api/booking/{bookingId}/cancel": {
+    "/api/bookings/{bookingId}/cancel": {
       delete: {
         tags: ["Bookings"],
         summary: "Cancel an existing booking",
@@ -591,7 +591,7 @@ export const swaggerDocument = {
               type: "string",
               format: "uuid",
             },
-            description: "ID do agendamento a ser cancelado",
+            description: "ID of the booking to be canceled",
           },
         ],
         responses: {
@@ -637,6 +637,9 @@ export const swaggerDocument = {
           },
           "401": {
             description: "Unauthorized",
+          },
+          "403": {
+            description: "Forbidden - Not allowed to cancel this booking",
           },
           "404": {
             description: "Booking not found",
