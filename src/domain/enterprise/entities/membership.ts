@@ -1,5 +1,6 @@
 import type { UniqueEntityId } from "../../../core/entities/unique-entity-id";
 import { Entity } from "../../../core/entities/Entity";
+import type { Optional } from "../../../core/types/optional";
 
 export enum Role {
   OWNER,
@@ -10,6 +11,7 @@ interface MembershipProps {
   role: Role;
   barbershopId: UniqueEntityId;
   staffId: UniqueEntityId;
+  createdAt?: Date;
 }
 
 export class Membership extends Entity<MembershipProps> {
@@ -25,8 +27,14 @@ export class Membership extends Entity<MembershipProps> {
     return this.props.staffId;
   }
 
-  static create(props: MembershipProps, id?: UniqueEntityId) {
-    const membership = new Membership(props, id);
+  static create(
+    props: Optional<MembershipProps, "createdAt">,
+    id?: UniqueEntityId,
+  ) {
+    const membership = new Membership(
+      { ...props, createdAt: props.createdAt ?? new Date() },
+      id,
+    );
 
     return membership;
   }

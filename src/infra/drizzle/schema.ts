@@ -36,6 +36,7 @@ export const membership = pgTable("membership", {
   staffId: uuid("staff_id")
     .notNull()
     .references(() => staffs.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const barbershops = pgTable("barbershops", {
