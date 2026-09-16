@@ -23,9 +23,19 @@ export const staffs = pgTable("staffs", {
   avatarUrl: text("avatar_url"),
   email: text().notNull().unique(),
   password: text().notNull(),
-  role: roleEnum("role").notNull(),
   cpf: text().notNull().unique(),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const membership = pgTable("membership", {
+  id: uuid().primaryKey().defaultRandom(),
+  role: roleEnum("role").default("OWNER").notNull(),
+  barbershopId: uuid("barbershop_id")
+    .notNull()
+    .references(() => barbershops.id, { onDelete: "cascade" }),
+  staffId: uuid("staff_id")
+    .notNull()
+    .references(() => staffs.id, { onDelete: "cascade" }),
 });
 
 export const barbershops = pgTable("barbershops", {
