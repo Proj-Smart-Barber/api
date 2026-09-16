@@ -6,6 +6,5 @@ export interface GetStaffProfileResponse {
     name: string;
     avatarUrl?: string;
     email: string;
-    role: StaffRole;
   };
 }
