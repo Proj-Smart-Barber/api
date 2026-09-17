@@ -15,7 +15,6 @@ interface BarbershopProps {
   slug: Slug;
   cnpj: string;
   location: string;
-  scheduleId: UniqueEntityId;
   status: BarbershopStatus;
   createdAt?: Date;
 }
@@ -43,10 +42,6 @@ export class Barbershop extends Entity<BarbershopProps> {
 
   get location(): string {
     return this.props.location;
-  }
-
-  get scheduleId(): UniqueEntityId {
-    return this.props.scheduleId;
   }
 
   get status(): BarbershopStatus {
