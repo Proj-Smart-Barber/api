@@ -1,22 +1,16 @@
 import { faker } from "@faker-js/faker";
 import { InMemoryStaffsRepository } from "../../../../../../test/repositories/in-memory-staffs-repository";
-import { InMemoryBarbershopsRepository } from "../../../../../../test/repositories/in-memory-barbershops-repository";
 import { Staff, type StaffRole } from "../../../../enterprise/entities/staff";
 import { GetStaffProfileUseCase } from "./get-staff-profile";
 import { Password } from "../../../../enterprise/entities/value-objects/password";
 
 let inMemoryStaffsRepository: InMemoryStaffsRepository;
-let inMemoryBarbershopsRepository: InMemoryBarbershopsRepository;
 let sut: GetStaffProfileUseCase;
 
 describe("Get staff profile", async () => {
   beforeEach(() => {
     inMemoryStaffsRepository = new InMemoryStaffsRepository();
-    inMemoryBarbershopsRepository = new InMemoryBarbershopsRepository();
-    sut = new GetStaffProfileUseCase(
-      inMemoryStaffsRepository,
-      inMemoryBarbershopsRepository,
-    );
+    sut = new GetStaffProfileUseCase(inMemoryStaffsRepository);
   });
 
   it("should be able to get staff profile", async () => {

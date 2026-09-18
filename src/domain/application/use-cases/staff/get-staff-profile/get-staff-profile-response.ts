@@ -7,9 +7,4 @@ export interface GetStaffProfileResponse {
     avatarUrl?: string;
     email: string;
   };
-  barbershop?: {
-    id: string;
-    name: string;
-    timezone: string;
-  };
 }
