@@ -52,7 +52,6 @@ export class GetStaffProfileUseCase {
         name: staff.name,
         email: staff.email,
         avatarUrl: staff.avatarUrl,
-        role: staff.role,
       },
       barbershop: barbershopData,
     });

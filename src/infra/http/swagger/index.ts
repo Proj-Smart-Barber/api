@@ -321,123 +321,68 @@ export const swaggerDocument = {
         },
       },
     },
-    "/api/barbershops/{shopId}": {
+    "/api/bookings/barberman/schedule": {
       get: {
-        tags: ["Barbershops"],
-        summary: "Get barbershop metadata",
+        tags: ["Bookings"],
+        summary: "Fetch authenticated barberman daily schedule with IDs only",
+        security: [{ bearerAuth: [] }],
         parameters: [
           {
-            name: "shopId",
-            in: "path",
-            required: true,
-            schema: { type: "string", format: "uuid" },
-          },
-        ],
-        responses: {
-          "200": {
-            description: "Barbershop data retrieved successfully",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    barbershop: {
-                      type: "object",
-                      properties: {
-                        id: { type: "string", format: "uuid" },
-                        name: { type: "string" },
-                        slug: { type: "string" },
-                        cnpj: { type: "string" },
-                        location: { type: "string" },
-                        timezone: { type: "string" },
-                        status: {
-                          type: "string",
-                          enum: ["ACTIVE", "INACTIVE"],
-                        },
-                        ownerId: { type: "string", format: "uuid" },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-          "404": {
-            description: "Not found",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: { error: { type: "string" } },
-                },
-              },
-            },
-          },
-          "400": {
-            description: "Validation error",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: { error: { type: "string" } },
-                },
-              },
-            },
-          },
-          "500": {
-            description: "Internal server error",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: { error: { type: "string" } },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-    "/api/barbershops/{shopId}/schedules": {
-      get: {
-        tags: ["Schedules"],
-        summary: "Get barbershop schedules",
-        parameters: [
-          {
-            name: "shopId",
-            in: "path",
-            required: true,
-            schema: { type: "string", format: "uuid" },
-          },
-          {
-            name: "barbermanId",
             in: "query",
-            required: false,
-            schema: { type: "string", format: "uuid" },
+            name: "date",
+            required: true,
+            schema: {
+              type: "string",
+              format: "date",
+            },
+            example: "2026-09-11",
+            description: "Date in YYYY-MM-DD format",
           },
         ],
         responses: {
           "200": {
-            description: "Schedules retrieved successfully",
+            description: "Daily schedule retrieved successfully",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
                   properties: {
-                    schedules: {
+                    bookings: {
                       type: "array",
                       items: {
                         type: "object",
                         properties: {
-                          id: { type: "string", format: "uuid" },
-                          dayOfWeek: { type: "number" },
-                          openTime: { type: "string" },
-                          closeTime: { type: "string" },
-                          barbershopId: { type: "string", format: "uuid" },
+                          id: {
+                            type: "string",
+                            format: "uuid",
+                            example: "9e241c16-650f-492e-9cda-320f8c0b16c3",
+                          },
+                          barbershopId: {
+                            type: "string",
+                            format: "uuid",
+                            example: "13d4b8e0-7f42-4b7f-b390-b06bb776701f",
+                          },
                           barbermanId: {
                             type: "string",
                             format: "uuid",
-                            nullable: true,
+                            example: "4903d18d-ea6e-494e-9be6-ef9f47775034",
+                          },
+                          shoppingCartId: {
+                            type: "string",
+                            format: "uuid",
+                            example: "09a90c95-1ef3-4cac-9a0a-ff03aa902022",
+                          },
+                          date: {
+                            type: "string",
+                            format: "date-time",
+                            example: "2026-09-11T00:00:00.000Z",
+                          },
+                          startTime: { type: "string", example: "14:00" },
+                          endTime: { type: "string", example: "14:30" },
+                          createdAt: {
+                            type: "string",
+                            format: "date-time",
+                            example: "2026-09-11T13:21:09.915Z",
                           },
                         },
                       },
@@ -453,7 +398,22 @@ export const swaggerDocument = {
               "application/json": {
                 schema: {
                   type: "object",
-                  properties: { error: { type: "string" } },
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                  },
                 },
               },
             },
@@ -464,16 +424,20 @@ export const swaggerDocument = {
               "application/json": {
                 schema: {
                   type: "object",
-                  properties: { error: { type: "string" } },
+                  properties: {
+                    error: { type: "string" },
+                  },
                 },
               },
             },
           },
         },
       },
+    },
+    "/api/barbershops/{shopId}/schedules": {
       put: {
         tags: ["Schedules"],
-        summary: "Update entire barbershop schedule",
+        summary: "Update barbershop schedules",
         security: [{ bearerAuth: [] }],
         parameters: [
           {
@@ -504,13 +468,13 @@ export const swaggerDocument = {
                         dayOfWeek: {
                           type: "string",
                           enum: [
+                            "SUNDAY",
                             "MONDAY",
                             "TUESDAY",
                             "WEDNESDAY",
                             "THURSDAY",
                             "FRIDAY",
                             "SATURDAY",
-                            "SUNDAY",
                           ],
                         },
                         openTime: { type: "string", example: "09:00" },
@@ -524,80 +488,125 @@ export const swaggerDocument = {
           },
         },
         responses: {
-          "204": {
+          "200": {
             description: "Schedules updated successfully",
-          },
-          "401": {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: { message: { type: "string" } },
-                },
-              },
-            },
           },
           "400": {
             description: "Validation error",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: { error: { type: "string" } },
-                },
-              },
-            },
           },
-          "500": {
-            description: "Internal server error",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: { error: { type: "string" } },
-                },
-              },
-            },
+          "403": {
+            description: "Forbidden (Not Allowed)",
+          },
+          "404": {
+            description: "Barbershop not found",
           },
         },
       },
     },
-    "/api/barbershops/{shopId}/schedule-exceptions": {
+    "/api/bookings/barberman/schedule/details": {
       get: {
-        tags: ["Schedules"],
-        summary: "Get schedule exceptions",
+        tags: ["Bookings"],
+        summary:
+          "Fetch authenticated barberman daily schedule with customer and service details",
+        security: [{ bearerAuth: [] }],
         parameters: [
           {
-            name: "shopId",
-            in: "path",
+            in: "query",
+            name: "date",
             required: true,
-            schema: { type: "string", format: "uuid" },
+            schema: {
+              type: "string",
+              format: "date",
+            },
+            example: "2026-09-11",
+            description: "Date in YYYY-MM-DD format",
           },
         ],
         responses: {
           "200": {
-            description: "Exceptions retrieved successfully",
+            description: "Daily schedule retrieved successfully",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
                   properties: {
-                    exceptions: {
+                    bookings: {
                       type: "array",
                       items: {
                         type: "object",
                         properties: {
-                          id: { type: "string", format: "uuid" },
-                          date: { type: "string", format: "date" },
-                          startTime: { type: "string", nullable: true },
-                          endTime: { type: "string", nullable: true },
-                          reason: { type: "string", nullable: true },
-                          barbershopId: { type: "string", format: "uuid" },
+                          id: {
+                            type: "string",
+                            format: "uuid",
+                            example: "9e241c16-650f-492e-9cda-320f8c0b16c3",
+                          },
+                          barbershopId: {
+                            type: "string",
+                            format: "uuid",
+                            example: "13d4b8e0-7f42-4b7f-b390-b06bb776701f",
+                          },
                           barbermanId: {
                             type: "string",
                             format: "uuid",
-                            nullable: true,
+                            example: "4903d18d-ea6e-494e-9be6-ef9f47775034",
+                          },
+                          shoppingCartId: {
+                            type: "string",
+                            format: "uuid",
+                            example: "09a90c95-1ef3-4cac-9a0a-ff03aa902022",
+                          },
+                          customer: {
+                            type: "object",
+                            properties: {
+                              id: {
+                                type: "string",
+                                format: "uuid",
+                                example: "c1a2b3c4-d5e6-7890-abcd-ef1234567890",
+                              },
+                              name: { type: "string", example: "John Doe" },
+                              phoneNumber: {
+                                type: "string",
+                                example: "(11) 99999-9999",
+                              },
+                            },
+                          },
+                          services: {
+                            type: "array",
+                            items: {
+                              type: "object",
+                              properties: {
+                                id: {
+                                  type: "string",
+                                  format: "uuid",
+                                  example:
+                                    "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
+                                },
+                                title: {
+                                  type: "string",
+                                  example: "Corte de Cabelo",
+                                },
+                                priceInCents: {
+                                  type: "integer",
+                                  example: 5000,
+                                },
+                                durationInMinutes: {
+                                  type: "integer",
+                                  example: 30,
+                                },
+                              },
+                            },
+                          },
+                          date: {
+                            type: "string",
+                            format: "date-time",
+                            example: "2026-09-11T00:00:00.000Z",
+                          },
+                          startTime: { type: "string", example: "14:00" },
+                          endTime: { type: "string", example: "14:30" },
+                          createdAt: {
+                            type: "string",
+                            format: "date-time",
+                            example: "2026-09-11T13:21:09.915Z",
                           },
                         },
                       },
@@ -613,315 +622,93 @@ export const swaggerDocument = {
               "application/json": {
                 schema: {
                   type: "object",
-                  properties: { error: { type: "string" } },
-                },
-              },
-            },
-          },
-          "500": {
-            description: "Internal server error",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: { error: { type: "string" } },
-                },
-              },
-            },
-          },
-        },
-      },
-      post: {
-        tags: ["Schedules"],
-        summary: "Create a schedule exception",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            name: "shopId",
-            in: "path",
-            required: true,
-            schema: { type: "string", format: "uuid" },
-          },
-        ],
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  date: { type: "string", format: "date" },
-                  startTime: { type: "string", nullable: true },
-                  endTime: { type: "string", nullable: true },
-                  reason: { type: "string", nullable: true },
-                  barbermanId: { type: "string", nullable: true },
-                },
-              },
-            },
-          },
-        },
-        responses: {
-          "201": {
-            description: "Exception created successfully",
-          },
-          "401": {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: { message: { type: "string" } },
-                },
-              },
-            },
-          },
-          "400": {
-            description: "Validation error",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: { error: { type: "string" } },
-                },
-              },
-            },
-          },
-          "500": {
-            description: "Internal server error",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: { error: { type: "string" } },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-    "/api/barbershops/{shopId}/schedule-exceptions/{exceptionId}": {
-      patch: {
-        tags: ["Schedules"],
-        summary: "Update a schedule exception",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            name: "shopId",
-            in: "path",
-            required: true,
-            schema: { type: "string", format: "uuid" },
-          },
-          {
-            name: "exceptionId",
-            in: "path",
-            required: true,
-            schema: { type: "string", format: "uuid" },
-          },
-        ],
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  date: { type: "string", format: "date" },
-                  startTime: { type: "string", nullable: true },
-                  endTime: { type: "string", nullable: true },
-                  reason: { type: "string", nullable: true },
-                },
-              },
-            },
-          },
-        },
-        responses: {
-          "200": {
-            description: "Exception updated successfully",
-          },
-          "404": {
-            description: "Not found",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: { error: { type: "string" } },
-                },
-              },
-            },
-          },
-          "403": {
-            description: "Forbidden",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: { error: { type: "string" } },
+                  properties: {
+                    error: { type: "string" },
+                  },
                 },
               },
             },
           },
           "401": {
             description: "Unauthorized",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: { message: { type: "string" } },
-                },
-              },
-            },
-          },
-          "400": {
-            description: "Validation error",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: { error: { type: "string" } },
-                },
-              },
-            },
-          },
-          "500": {
-            description: "Internal server error",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: { error: { type: "string" } },
-                },
-              },
-            },
-          },
-        },
-      },
-      delete: {
-        tags: ["Schedules"],
-        summary: "Delete a schedule exception",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            name: "shopId",
-            in: "path",
-            required: true,
-            schema: { type: "string", format: "uuid" },
-          },
-          {
-            name: "exceptionId",
-            in: "path",
-            required: true,
-            schema: { type: "string", format: "uuid" },
-          },
-        ],
-        responses: {
-          "204": {
-            description: "Exception deleted successfully",
-          },
-          "404": {
-            description: "Not found",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: { error: { type: "string" } },
-                },
-              },
-            },
-          },
-          "403": {
-            description: "Forbidden",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: { error: { type: "string" } },
-                },
-              },
-            },
-          },
-          "401": {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: { message: { type: "string" } },
-                },
-              },
-            },
-          },
-          "400": {
-            description: "Validation error",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: { error: { type: "string" } },
-                },
-              },
-            },
-          },
-          "500": {
-            description: "Internal server error",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: { error: { type: "string" } },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-    "/api/barbershops/{shopId}/availability": {
-      get: {
-        tags: ["Schedules"],
-        summary: "Calculate barbershop availability slots",
-        parameters: [
-          {
-            name: "shopId",
-            in: "path",
-            required: true,
-            schema: { type: "string", format: "uuid" },
-          },
-          {
-            name: "date",
-            in: "query",
-            required: true,
-            schema: { type: "string", format: "date" },
-          },
-          {
-            name: "serviceIds",
-            in: "query",
-            required: true,
-            schema: { type: "string" },
-          },
-          {
-            name: "barbermanId",
-            in: "query",
-            required: false,
-            schema: { type: "string", format: "uuid" },
-          },
-        ],
-        responses: {
-          "200": {
-            description: "Availability slots retrieved successfully",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
                   properties: {
-                    availability: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          time: { type: "string", example: "09:00" },
-                          available: { type: "boolean", example: true },
+                    message: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "500": {
+            description: "Internal server error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/bookings/{bookingId}/cancel": {
+      delete: {
+        tags: ["Bookings"],
+        summary: "Cancel an existing booking",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: "path",
+            name: "bookingId",
+            required: true,
+            schema: {
+              type: "string",
+              format: "uuid",
+            },
+            description: "ID of the booking to be canceled",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Booking canceled successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    booking: {
+                      type: "object",
+                      properties: {
+                        id: {
+                          type: "string",
+                          format: "uuid",
+                          example: "9e241c16-650f-492e-9cda-320f8c0b16c3",
                         },
+                        barbershopId: {
+                          type: "string",
+                          format: "uuid",
+                        },
+                        barbermanId: {
+                          type: "string",
+                          format: "uuid",
+                        },
+                        shoppingCartId: {
+                          type: "string",
+                          format: "uuid",
+                        },
+                        date: {
+                          type: "string",
+                          format: "date-time",
+                        },
+                        startTime: { type: "string", example: "14:00" },
+                        endTime: { type: "string", example: "14:30" },
                       },
                     },
                   },
@@ -929,27 +716,17 @@ export const swaggerDocument = {
               },
             },
           },
-          "400": {
-            description: "Validation error",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: { error: { type: "string" } },
-                },
-              },
-            },
+          "401": {
+            description: "Unauthorized",
+          },
+          "403": {
+            description: "Forbidden - Not allowed to cancel this booking",
+          },
+          "404": {
+            description: "Booking not found",
           },
           "500": {
             description: "Internal server error",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: { error: { type: "string" } },
-                },
-              },
-            },
           },
         },
       },

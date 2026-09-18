@@ -23,8 +23,19 @@ export const staffs = pgTable("staffs", {
   avatarUrl: text("avatar_url"),
   email: text().notNull().unique(),
   password: text().notNull(),
-  role: roleEnum("role").notNull(),
   cpf: text().notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const membership = pgTable("membership", {
+  id: uuid().primaryKey().defaultRandom(),
+  role: roleEnum("role").default("OWNER").notNull(),
+  barbershopId: uuid("barbershop_id")
+    .notNull()
+    .references(() => barbershops.id, { onDelete: "cascade" }),
+  staffId: uuid("staff_id")
+    .notNull()
+    .references(() => staffs.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -146,6 +157,7 @@ export const notifications = pgTable("notifications", {
 
 export const staffsRelations = relations(staffs, ({ many }) => ({
   ownedBarbershops: many(barbershops),
+  memberships: many(membership),
   createdSchedules: many(barbershopSchedules),
   schedules: many(barbershopSchedules),
   exceptions: many(scheduleExceptions),
@@ -157,9 +169,21 @@ export const barbershopsRelations = relations(barbershops, ({ one, many }) => ({
     fields: [barbershops.ownerId],
     references: [staffs.id],
   }),
+  memberships: many(membership),
   schedules: many(barbershopSchedules),
   exceptions: many(scheduleExceptions),
   bookings: many(bookings),
+}));
+
+export const membershipRelations = relations(membership, ({ one }) => ({
+  barbershop: one(barbershops, {
+    fields: [membership.barbershopId],
+    references: [barbershops.id],
+  }),
+  staff: one(staffs, {
+    fields: [membership.staffId],
+    references: [staffs.id],
+  }),
 }));
 
 export const barbershopSchedulesRelations = relations(

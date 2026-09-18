@@ -3,17 +3,11 @@ import type { UniqueEntityId } from "../../../core/entities/unique-entity-id";
 import type { Optional } from "../../../core/types/optional";
 import type { Password } from "./value-objects/password";
 
-export enum StaffRole {
-  OWNER,
-  BARBERMAN,
-}
-
 interface StaffProps {
   name: string;
   avatarUrl?: string;
   email: string;
   password: Password;
-  role: StaffRole;
   cpf: string;
   createdAt?: Date;
 }

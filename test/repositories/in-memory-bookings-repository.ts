@@ -5,6 +5,8 @@ import type {
   FindOverlappingParams,
 } from "@/domain/application/repositories/bookings-repository";
 import type { Booking } from "@/domain/enterprise/entities/booking";
+import { BookingDetails } from "@/domain/enterprise/entities/booking-details";
+import { UniqueEntityId } from "@/core/entities/unique-entity-id";
 
 export class InMemoryBookingsRepository implements BookingsRepository {
   public items: Booking[] = [];
@@ -24,7 +26,7 @@ export class InMemoryBookingsRepository implements BookingsRepository {
 
   async findById(id: string): Promise<Booking | null> {
     const booking = this.items.find((item) => item.id.toString() === id);
-    return booking || null;
+    return booking ?? null;
   }
 
   async findOverlapping({
@@ -56,7 +58,7 @@ export class InMemoryBookingsRepository implements BookingsRepository {
       return startAt < bookingEnd && endAt > bookingStart;
     });
 
-    return overlapping || null;
+    return overlapping ?? null;
   }
 
   async findManyByBarbermanAndDate({
@@ -81,5 +83,51 @@ export class InMemoryBookingsRepository implements BookingsRepository {
     return this.items
       .filter((booking) => booking.shoppingCartId.toString() === shoppingCartId)
       .slice((page - 1) * 20, page * 20);
+  }
+
+  async findManyWithDetailsByBarbermanAndDate({
+    barbermanId,
+    date,
+  }: FindManyByBarbermanAndDateParams): Promise<BookingDetails[]> {
+    const bookings = await this.findManyByBarbermanAndDate({
+      barbermanId,
+      date,
+    });
+
+    return bookings.map((booking) => {
+      return BookingDetails.create({
+        bookingId: booking.id,
+        barbershopId: booking.barbershopId,
+        barbermanId: booking.barbermanId,
+        shoppingCartId: booking.shoppingCartId,
+        customer: {
+          id: new UniqueEntityId("customer-1"),
+          name: "John Doe",
+          phoneNumber: "(11) 99999-9999",
+        },
+        services: [
+          {
+            id: new UniqueEntityId("service-1"),
+            title: "Corte de Cabelo",
+            priceInCents: 5000,
+            durationInMinutes: 30,
+          },
+        ],
+        date: booking.date,
+        startTime: booking.startTime,
+        endTime: booking.endTime,
+        createdAt: booking.createdAt,
+      });
+    });
+  }
+
+  async delete(booking: Booking): Promise<void> {
+    const itemIndex = this.items.findIndex(
+      (item) => item.id.toString() === booking.id.toString(),
+    );
+
+    if (itemIndex >= 0) {
+      this.items.splice(itemIndex, 1);
+    }
   }
 }

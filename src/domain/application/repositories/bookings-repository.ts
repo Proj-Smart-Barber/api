@@ -1,4 +1,5 @@
 import type { Booking } from "../../enterprise/entities/booking";
+import type { BookingDetails } from "@/domain/enterprise/entities/booking-details";
 
 export interface FindOverlappingParams {
   barbermanId: string;
@@ -21,6 +22,7 @@ export interface FindManyByShoppingCartParams {
 export interface BookingsRepository {
   create(booking: Booking): Promise<void>;
   save(booking: Booking): Promise<void>;
+  delete(booking: Booking): Promise<void>;
   findById(id: string): Promise<Booking | null>;
   findOverlapping(params: FindOverlappingParams): Promise<Booking | null>;
   findManyByBarbermanAndDate(
@@ -29,4 +31,7 @@ export interface BookingsRepository {
   findManyByShoppingCart(
     params: FindManyByShoppingCartParams,
   ): Promise<Booking[]>;
+  findManyWithDetailsByBarbermanAndDate(
+    params: FindManyByBarbermanAndDateParams,
+  ): Promise<BookingDetails[]>;
 }

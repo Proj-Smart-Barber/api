@@ -42,7 +42,6 @@ describe("Get staff profile", async () => {
           name: expect.any(String),
           avatarUrl: undefined,
           email: expect.any(String),
-          role: expect.any(String),
         },
       }),
     );

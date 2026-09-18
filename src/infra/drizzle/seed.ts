@@ -113,15 +113,18 @@ async function main() {
     })
     .returning();
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   const [booking] = await db
     .insert(bookings)
     .values({
       barbershopId: barbershop.id,
       barbermanId: barberman.id,
       shoppingCartId: shoppingCart.id,
-      date: new Date(),
-      startTime: "14:00",
-      endTime: "14:30",
+      date: today,
+      startTime: "23:40",
+      endTime: "23:50",
     })
     .returning();
 
