@@ -25,16 +25,32 @@ export class ScheduleException extends Entity<ScheduleExceptionProps> {
     return this.props.date;
   }
 
+  set date(value: Date) {
+    this.props.date = value;
+  }
+
   get startTime(): string | null | undefined {
     return this.props.startTime;
+  }
+
+  set startTime(value: string | null | undefined) {
+    this.props.startTime = value;
   }
 
   get endTime(): string | null | undefined {
     return this.props.endTime;
   }
 
+  set endTime(value: string | null | undefined) {
+    this.props.endTime = value;
+  }
+
   get reason(): string | null | undefined {
     return this.props.reason;
+  }
+
+  set reason(value: string | null | undefined) {
+    this.props.reason = value;
   }
 
   get createdAt(): Date | undefined {

@@ -5,7 +5,7 @@ import {
   ok,
   fail,
 } from "@/core/infra/http-response";
-import type { UpdateBarbershopScheduleUseCase } from "@/domain/application/use-cases/schedule/update-barbershop-schedule";
+import type { UpdateBarbershopScheduleUseCase } from "@/domain/application/use-cases/schedule/update-barbershop-schedule/update-barbershop-schedule";
 import { z } from "zod";
 
 export class UpdateBarbershopScheduleController implements Controller {
@@ -13,22 +13,31 @@ export class UpdateBarbershopScheduleController implements Controller {
     private updateBarbershopScheduleUseCase: UpdateBarbershopScheduleUseCase,
   ) {}
 
-  async handle(request: any): Promise<HttpResponse> {
+  async handle(request: unknown): Promise<HttpResponse> {
     const schema = z.object({
       shopId: z.string(),
-      createdBy: z.string().default("mock-user-id"),
-      dayOfWeek: z.enum([
-        "MONDAY",
-        "TUESDAY",
-        "WEDNESDAY",
-        "THURSDAY",
-        "FRIDAY",
-        "SATURDAY",
-        "SUNDAY",
-      ]),
-      openTime: z.string(),
-      closeTime: z.string(),
+      userId: z.string().uuid(),
       barbermanId: z.string().nullable().optional(),
+      schedules: z.array(
+        z.object({
+          dayOfWeek: z
+            .string()
+            .transform((val) => val.toUpperCase())
+            .pipe(
+              z.enum([
+                "MONDAY",
+                "TUESDAY",
+                "WEDNESDAY",
+                "THURSDAY",
+                "FRIDAY",
+                "SATURDAY",
+                "SUNDAY",
+              ]),
+            ),
+          openTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+          closeTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+        }),
+      ),
     });
 
     try {
@@ -36,11 +45,9 @@ export class UpdateBarbershopScheduleController implements Controller {
 
       const result = await this.updateBarbershopScheduleUseCase.execute({
         barbershopId: parsedData.shopId,
-        createdBy: parsedData.createdBy,
-        dayOfWeek: parsedData.dayOfWeek,
-        openTime: parsedData.openTime,
-        closeTime: parsedData.closeTime,
-        barbermanId: parsedData.barbermanId,
+        barbermanId: parsedData.barbermanId ?? null,
+        createdBy: parsedData.userId,
+        schedules: parsedData.schedules,
       });
 
       if (result.isLeft()) {
@@ -49,14 +56,13 @@ export class UpdateBarbershopScheduleController implements Controller {
       }
 
       return ok({
-        scheduleId: result.value.schedule.id.toString(),
         message: "Jornada atualizada com sucesso.",
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err instanceof z.ZodError) {
-        return clientError({ errors: (err as any).errors });
+        return clientError({ errors: err.issues });
       }
-      return fail(err);
+      return fail(err as Error);
     }
   }
 }

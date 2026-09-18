@@ -5,7 +5,7 @@ import {
   ok,
   fail,
 } from "@/core/infra/http-response";
-import type { CalculateAvailabilityUseCase } from "@/domain/application/use-cases/schedule/calculate-availability";
+import type { CalculateAvailabilityUseCase } from "@/domain/application/use-cases/schedule/calculate-availability/calculate-availability";
 import { z } from "zod";
 
 export class CalculateAvailabilityController implements Controller {
@@ -13,7 +13,7 @@ export class CalculateAvailabilityController implements Controller {
     private calculateAvailabilityUseCase: CalculateAvailabilityUseCase,
   ) {}
 
-  async handle(request: any): Promise<HttpResponse> {
+  async handle(request: unknown): Promise<HttpResponse> {
     const schema = z.object({
       shopId: z.string(),
       date: z.string(),
@@ -44,11 +44,11 @@ export class CalculateAvailabilityController implements Controller {
       return ok({
         slots: result.value.availableSlots,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err instanceof z.ZodError) {
-        return clientError({ errors: (err as any).errors });
+        return clientError({ errors: err.issues });
       }
-      return fail(err);
+      return fail(err as Error);
     }
   }
 }

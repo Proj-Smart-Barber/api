@@ -3,10 +3,7 @@ import type { UniqueEntityId } from "@/core/entities/unique-entity-id";
 import type { Optional } from "@/core/types/optional";
 import type { Slug } from "./value-objects/slug";
 
-enum BarbershopStatus {
-  ACTIVE,
-  INACTIVE,
-}
+export type BarbershopStatus = "ACTIVE" | "INACTIVE";
 
 interface BarbershopProps {
   name: string;
@@ -15,7 +12,7 @@ interface BarbershopProps {
   slug: Slug;
   cnpj: string;
   location: string;
-  scheduleId: UniqueEntityId;
+  timezone: string;
   status: BarbershopStatus;
   createdAt?: Date;
 }
@@ -45,8 +42,8 @@ export class Barbershop extends Entity<BarbershopProps> {
     return this.props.location;
   }
 
-  get scheduleId(): UniqueEntityId {
-    return this.props.scheduleId;
+  get timezone(): string {
+    return this.props.timezone;
   }
 
   get status(): BarbershopStatus {

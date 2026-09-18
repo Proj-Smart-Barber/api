@@ -3,8 +3,8 @@ import type {
   FindManyByBarbermanAndDateParams,
   FindManyByShoppingCartParams,
   FindOverlappingParams,
-} from "../../src/domain/application/repositories/bookings-repository";
-import type { Booking } from "../../src/domain/enterprise/entities/booking";
+} from "@/domain/application/repositories/bookings-repository";
+import type { Booking } from "@/domain/enterprise/entities/booking";
 import { BookingDetails } from "@/domain/enterprise/entities/booking-details";
 import { UniqueEntityId } from "@/core/entities/unique-entity-id";
 
@@ -31,15 +31,31 @@ export class InMemoryBookingsRepository implements BookingsRepository {
 
   async findOverlapping({
     barbermanId,
+    barbershopId,
+    startAt,
+    endAt,
     excludeBookingId,
   }: FindOverlappingParams): Promise<Booking | null> {
-    const overlapping = this.items.find((item) => {
-      if (excludeBookingId && item.id.toString() === excludeBookingId) {
+    const overlapping = this.items.find((booking) => {
+      if (excludeBookingId && booking.id.toString() === excludeBookingId) {
+        return false;
+      }
+      if (
+        booking.barbermanId.toString() !== barbermanId ||
+        booking.barbershopId.toString() !== barbershopId
+      ) {
         return false;
       }
 
-      const isSameBarberman = item.barbermanId.toString() === barbermanId;
-      return isSameBarberman;
+      const bookingStart = new Date(booking.date);
+      const [startHour, startMin] = booking.startTime.split(":").map(Number);
+      bookingStart.setUTCHours(startHour, startMin, 0, 0);
+
+      const bookingEnd = new Date(booking.date);
+      const [endHour, endMin] = booking.endTime.split(":").map(Number);
+      bookingEnd.setUTCHours(endHour, endMin, 0, 0);
+
+      return startAt < bookingEnd && endAt > bookingStart;
     });
 
     return overlapping ?? null;
@@ -49,27 +65,26 @@ export class InMemoryBookingsRepository implements BookingsRepository {
     barbermanId,
     date,
   }: FindManyByBarbermanAndDateParams): Promise<Booking[]> {
-    const targetDateString = date.toISOString().split("T")[0];
+    const targetDateStr = date.toISOString().split("T")[0];
 
-    return this.items.filter((item) => {
-      const isSameBarberman = item.barbermanId.toString() === barbermanId;
-
-      if (!item.createdAt) return false;
-
-      const itemDateString = item.createdAt.toISOString().split("T")[0];
-      const isSameDate = itemDateString === targetDateString;
-
-      return isSameBarberman && isSameDate;
+    return this.items.filter((booking) => {
+      const bookingDateStr = booking.date.toISOString().split("T")[0];
+      return (
+        booking.barbermanId.toString() === barbermanId &&
+        bookingDateStr === targetDateStr
+      );
     });
   }
 
   async findManyByShoppingCart({
     shoppingCartId,
+    page = 1,
   }: FindManyByShoppingCartParams): Promise<Booking[]> {
-    return this.items.filter(
-      (item) => item.shoppingCartId.toString() === shoppingCartId,
-    );
+    return this.items
+      .filter((booking) => booking.shoppingCartId.toString() === shoppingCartId)
+      .slice((page - 1) * 20, page * 20);
   }
+
   async findManyWithDetailsByBarbermanAndDate({
     barbermanId,
     date,

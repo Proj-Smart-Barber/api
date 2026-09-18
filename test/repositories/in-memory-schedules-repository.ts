@@ -45,4 +45,23 @@ export class InMemorySchedulesRepository implements SchedulesRepository {
       this.items.splice(itemIndex, 1);
     }
   }
+
+  async bulkReplace(
+    barbershopId: string,
+    barbermanId: string | null,
+    schedules: BarbershopSchedule[],
+  ): Promise<void> {
+    // Apaga os existentes do escopo
+    this.items = this.items.filter((item) => {
+      const matchShop = item.barbershopId.toString() === barbershopId;
+      const matchBarber = barbermanId
+        ? item.barbermanId?.toString() === barbermanId
+        : !item.barbermanId;
+
+      return !(matchShop && matchBarber);
+    });
+
+    // Insere os novos
+    this.items.push(...schedules);
+  }
 }
