@@ -1,17 +1,38 @@
-import { InMemoryScheduleExceptionsRepository } from "../../../../../test/repositories/in-memory-schedule-exceptions-repository";
+import { InMemoryScheduleExceptionsRepository } from "../../../../../../test/repositories/in-memory-schedule-exceptions-repository";
+import { InMemoryBarbershopsRepository } from "../../../../../../test/repositories/in-memory-barbershops-repository";
 import { DeleteScheduleExceptionUseCase } from "./delete-schedule-exception";
 import { ScheduleException } from "@/domain/enterprise/entities/schedule-exception";
+import { Barbershop } from "@/domain/enterprise/entities/barbershop";
+import { Slug } from "@/domain/enterprise/entities/value-objects/slug";
 import { UniqueEntityId } from "@/core/entities/unique-entity-id";
 
 let inMemoryScheduleExceptionsRepository: InMemoryScheduleExceptionsRepository;
+let inMemoryBarbershopsRepository: InMemoryBarbershopsRepository;
 let sut: DeleteScheduleExceptionUseCase;
 
 describe("Delete Schedule Exception", () => {
   beforeEach(() => {
     inMemoryScheduleExceptionsRepository =
       new InMemoryScheduleExceptionsRepository();
+    inMemoryBarbershopsRepository = new InMemoryBarbershopsRepository();
     sut = new DeleteScheduleExceptionUseCase(
       inMemoryScheduleExceptionsRepository,
+      inMemoryBarbershopsRepository,
+    );
+
+    inMemoryBarbershopsRepository.items.push(
+      Barbershop.create(
+        {
+          name: "Test Barbershop",
+          ownerId: new UniqueEntityId("owner-1"),
+          timezone: "UTC",
+          slug: Slug.create("test-barbershop"),
+          cnpj: "12345678901234",
+          location: "Location",
+          status: "ACTIVE",
+        },
+        new UniqueEntityId("shop-1"),
+      ),
     );
   });
 
@@ -31,6 +52,8 @@ describe("Delete Schedule Exception", () => {
     // 2. Execução: O sistema tenta deletar usando a nossa regra de negócio
     const result = await sut.execute({
       exceptionId: "exception-1",
+      barbershopId: "shop-1",
+      staffId: "owner-1",
     });
 
     // 3. Verificação: Sucesso e repositório vazio
@@ -42,6 +65,8 @@ describe("Delete Schedule Exception", () => {
     // 1. Execução: Tentamos deletar um ID que não existe
     const result = await sut.execute({
       exceptionId: "fake-id",
+      barbershopId: "shop-1",
+      staffId: "owner-1",
     });
 
     // 2. Verificação: Deve falhar e retornar o Error

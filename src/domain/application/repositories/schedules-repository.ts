@@ -6,4 +6,9 @@ export interface SchedulesRepository {
   findById(id: string): Promise<BarbershopSchedule | null>;
   findManyByBarbershopId(barbershopId: string): Promise<BarbershopSchedule[]>;
   delete(schedule: BarbershopSchedule): Promise<void>;
+  bulkReplace(
+    barbershopId: string,
+    barbermanId: string | null,
+    schedules: BarbershopSchedule[],
+  ): Promise<void>;
 }

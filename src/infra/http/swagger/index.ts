@@ -246,6 +246,18 @@ export const swaggerDocument = {
                         },
                       },
                     },
+                    barbershop: {
+                      type: "object",
+                      nullable: true,
+                      properties: {
+                        id: {
+                          type: "string",
+                          format: "uuid",
+                        },
+                        name: { type: "string" },
+                        timezone: { type: "string" },
+                      },
+                    },
                   },
                 },
               },
@@ -418,6 +430,75 @@ export const swaggerDocument = {
                 },
               },
             },
+          },
+        },
+      },
+    },
+    "/api/barbershops/{shopId}/schedules": {
+      put: {
+        tags: ["Schedules"],
+        summary: "Update barbershop schedules",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "barbermanId",
+            in: "query",
+            required: false,
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  schedules: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        dayOfWeek: {
+                          type: "string",
+                          enum: [
+                            "SUNDAY",
+                            "MONDAY",
+                            "TUESDAY",
+                            "WEDNESDAY",
+                            "THURSDAY",
+                            "FRIDAY",
+                            "SATURDAY",
+                          ],
+                        },
+                        openTime: { type: "string", example: "09:00" },
+                        closeTime: { type: "string", example: "18:00" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Schedules updated successfully",
+          },
+          "400": {
+            description: "Validation error",
+          },
+          "403": {
+            description: "Forbidden (Not Allowed)",
+          },
+          "404": {
+            description: "Barbershop not found",
           },
         },
       },

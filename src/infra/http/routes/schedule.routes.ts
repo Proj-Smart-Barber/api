@@ -1,54 +1,60 @@
 import { Router } from "express";
+import { ensureStaffIsAuthenticated } from "../middlewares/ensure-staff-is-authenticated";
 import { adaptRoute } from "../../../core/infra/adapters/express-route-adapter";
-import {
-  updateBarbershopScheduleController,
-  createScheduleExceptionController,
-  deleteScheduleExceptionController,
-  calculateAvailabilityController,
-} from "../factories/schedule-mock-factory";
+import { makeUpdateBarbershopScheduleController } from "../factories/make-update-barbershop-schedule-controller";
+import { makeCreateScheduleExceptionController } from "../factories/make-create-schedule-exception-controller";
+import { makeDeleteScheduleExceptionController } from "../factories/make-delete-schedule-exception-controller";
+import { makeUpdateScheduleExceptionController } from "../factories/make-update-schedule-exception-controller";
+import { makeCalculateAvailabilityController } from "../factories/make-calculate-availability-controller";
+import { makeFetchBarbershopSchedulesController } from "../factories/make-fetch-barbershop-schedules-controller";
+import { makeFetchScheduleExceptionsController } from "../factories/make-fetch-schedule-exceptions-controller";
 
 const scheduleRoutes = Router({ mergeParams: true });
 
 // 1. GET /barbershops/:shopId/schedules?barbermanId=
-scheduleRoutes.get("/schedules", (req, res) => {
-  // Retorna mock vazio pois o UseCase GET não foi solicitado no passo 3
-  res.status(200).json({ schedules: [] });
-});
+scheduleRoutes.get(
+  "/schedules",
+  adaptRoute(makeFetchBarbershopSchedulesController()),
+);
 
 // 2. PUT /barbershops/:shopId/schedules
 scheduleRoutes.put(
   "/schedules",
-  adaptRoute(updateBarbershopScheduleController),
+  ensureStaffIsAuthenticated,
+  adaptRoute(makeUpdateBarbershopScheduleController()),
 );
 
 // 3. GET /barbershops/:shopId/schedule-exceptions?barbermanId=
-scheduleRoutes.get("/schedule-exceptions", (req, res) => {
-  // Retorna mock vazio pois o UseCase GET não foi solicitado no passo 3
-  res.status(200).json({ exceptions: [] });
-});
+scheduleRoutes.get(
+  "/schedule-exceptions",
+  adaptRoute(makeFetchScheduleExceptionsController()),
+);
 
 // 4. POST /barbershops/:shopId/schedule-exceptions
 scheduleRoutes.post(
   "/schedule-exceptions",
-  adaptRoute(createScheduleExceptionController),
+  ensureStaffIsAuthenticated,
+  adaptRoute(makeCreateScheduleExceptionController()),
 );
 
 // 5. PATCH /barbershops/:shopId/schedule-exceptions/:exceptionId
-scheduleRoutes.patch("/schedule-exceptions/:exceptionId", (req, res) => {
-  // UseCase PATCH não foi solicitado no passo 3, retornamos sucesso genérico
-  res.status(200).json({ message: "Exceção atualizada (mock)." });
-});
+scheduleRoutes.patch(
+  "/schedule-exceptions/:exceptionId",
+  ensureStaffIsAuthenticated,
+  adaptRoute(makeUpdateScheduleExceptionController()),
+);
 
 // 6. DELETE /barbershops/:shopId/schedule-exceptions/:exceptionId
 scheduleRoutes.delete(
   "/schedule-exceptions/:exceptionId",
-  adaptRoute(deleteScheduleExceptionController),
+  ensureStaffIsAuthenticated,
+  adaptRoute(makeDeleteScheduleExceptionController()),
 );
 
 // 7. GET /barbershops/:shopId/availability?date=&serviceIds=&barbermanId=
 scheduleRoutes.get(
   "/availability",
-  adaptRoute(calculateAvailabilityController),
+  adaptRoute(makeCalculateAvailabilityController()),
 );
 
 export { scheduleRoutes };

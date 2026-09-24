@@ -1,4 +1,4 @@
-import { eq, and, gte, lte } from "drizzle-orm";
+import { eq, and, gte, lte, lt, gt, ne } from "drizzle-orm";
 import { db } from "../index";
 import {
   bookings,
@@ -11,6 +11,8 @@ import {
 import type {
   BookingsRepository,
   FindManyByBarbermanAndDateParams,
+  FindOverlappingParams,
+  FindManyByShoppingCartParams,
 } from "@/domain/application/repositories/bookings-repository";
 import type { Booking } from "@/domain/enterprise/entities/booking";
 import type { BookingDetails } from "@/domain/enterprise/entities/booking-details";
@@ -64,12 +66,58 @@ export class DrizzleBookingsRepository implements BookingsRepository {
     return BookingMapper.toDomain(result);
   }
 
-  async findOverlapping(): Promise<Booking | null> {
-    return null;
+  async findOverlapping({
+    barbermanId,
+    barbershopId,
+    startAt,
+    endAt,
+    excludeBookingId,
+  }: FindOverlappingParams): Promise<Booking | null> {
+    const targetDateStr = startAt.toISOString().split("T")[0];
+    const targetStartOfDay = new Date(`${targetDateStr}T00:00:00.000Z`);
+
+    const startHour = String(startAt.getUTCHours()).padStart(2, "0");
+    const startMin = String(startAt.getUTCMinutes()).padStart(2, "0");
+    const targetStartTime = `${startHour}:${startMin}`;
+
+    const endHour = String(endAt.getUTCHours()).padStart(2, "0");
+    const endMin = String(endAt.getUTCMinutes()).padStart(2, "0");
+    const targetEndTime = `${endHour}:${endMin}`;
+
+    const filters = [
+      eq(bookings.barbermanId, barbermanId),
+      eq(bookings.barbershopId, barbershopId),
+      eq(bookings.date, targetStartOfDay),
+      lt(bookings.startTime, targetEndTime),
+      gt(bookings.endTime, targetStartTime),
+    ];
+
+    if (excludeBookingId) {
+      filters.push(ne(bookings.id, excludeBookingId));
+    }
+
+    const [result] = await db
+      .select()
+      .from(bookings)
+      .where(and(...filters));
+
+    if (!result) return null;
+
+    return BookingMapper.toDomain(result);
   }
 
-  async findManyByShoppingCart(): Promise<Booking[]> {
-    return [];
+  async findManyByShoppingCart({
+    shoppingCartId,
+    page = 1,
+  }: FindManyByShoppingCartParams): Promise<Booking[]> {
+    const result = await db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.shoppingCartId, shoppingCartId))
+      .limit(20)
+      .offset((page - 1) * 20);
+
+    return result.map((row) => BookingMapper.toDomain(row));
   }
   async findManyWithDetailsByBarbermanAndDate({
     barbermanId,
