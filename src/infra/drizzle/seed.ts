@@ -5,8 +5,8 @@ import {
   barbershops,
   bookings,
   customers,
+  membership,
   notifications,
-  roleEnum,
   scheduleExceptions,
   serviceItems,
   services,
@@ -23,6 +23,7 @@ async function main() {
   await db.delete(services);
   await db.delete(barbershopSchedules);
   await db.delete(customers);
+  await db.delete(membership);
   await db.delete(barbershops);
   await db.delete(staffs);
 
@@ -35,7 +36,6 @@ async function main() {
       name: "Carlos Silva",
       email: "owner@smartbarber.com",
       password: ownerHash.value,
-      role: roleEnum.enumValues[0],
       cpf: "123.456.789-00",
     })
     .returning();
@@ -46,7 +46,6 @@ async function main() {
       name: "João Souza",
       email: "barberman@smartbarber.com",
       password: ownerHash.value,
-      role: roleEnum.enumValues[1],
       cpf: "987.654.321-00",
     })
     .returning();
@@ -57,10 +56,23 @@ async function main() {
       name: "Barbearia do Carlos",
       ownerId: owner.id,
       slug: "barbearia-do-carlos",
-      cnpj: "12.345.678/0001-90",
+      cnpj: "12345678000190",
       location: "Av. Paulista, 1000 - São Paulo/SP",
     })
     .returning();
+
+  await db.insert(membership).values([
+    {
+      role: "OWNER",
+      barbershopId: barbershop.id,
+      staffId: owner.id,
+    },
+    {
+      role: "BARBERMAN",
+      barbershopId: barbershop.id,
+      staffId: barberman.id,
+    },
+  ]);
 
   await db.insert(barbershopSchedules).values([
     {

@@ -3,8 +3,8 @@ import { Entity } from "../../../core/entities/Entity";
 import type { Optional } from "../../../core/types/optional";
 
 export enum Role {
-  OWNER,
-  BARBERMAN,
+  OWNER = "OWNER",
+  BARBERMAN = "BARBERMAN",
 }
 
 interface MembershipProps {
@@ -19,12 +19,16 @@ export class Membership extends Entity<MembershipProps> {
     return this.props.role;
   }
 
-  get babershopId(): UniqueEntityId {
+  get barbershopId(): UniqueEntityId {
     return this.props.barbershopId;
   }
 
   get staffId(): UniqueEntityId {
     return this.props.staffId;
+  }
+
+  get createdAt(): Date | undefined {
+    return this.props.createdAt;
   }
 
   static create(

@@ -5,6 +5,7 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -27,17 +28,26 @@ export const staffs = pgTable("staffs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const membership = pgTable("membership", {
-  id: uuid().primaryKey().defaultRandom(),
-  role: roleEnum("role").default("OWNER").notNull(),
-  barbershopId: uuid("barbershop_id")
-    .notNull()
-    .references(() => barbershops.id, { onDelete: "cascade" }),
-  staffId: uuid("staff_id")
-    .notNull()
-    .references(() => staffs.id, { onDelete: "cascade" }),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+export const membership = pgTable(
+  "membership",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    role: roleEnum("role").notNull(),
+    barbershopId: uuid("barbershop_id")
+      .notNull()
+      .references(() => barbershops.id, { onDelete: "cascade" }),
+    staffId: uuid("staff_id")
+      .notNull()
+      .references(() => staffs.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    unique("membership_barbershop_staff_unique").on(
+      table.barbershopId,
+      table.staffId,
+    ),
+  ],
+);
 
 export const barbershops = pgTable("barbershops", {
   id: uuid().primaryKey().defaultRandom(),

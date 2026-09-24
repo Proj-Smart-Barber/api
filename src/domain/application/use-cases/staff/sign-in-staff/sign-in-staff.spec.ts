@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker";
 import { InMemoryStaffsRepository } from "../../../../../../test/repositories/in-memory-staffs-repository";
-import { Staff, type StaffRole } from "../../../../enterprise/entities/staff";
+import { Staff } from "../../../../enterprise/entities/staff";
 import { SignInStaffUseCase } from "./sign-in-staff";
 import { Password } from "../../../../enterprise/entities/value-objects/password";
 import { InvalidCredentialsError } from "../../_errors/invalid-credentials-error";
@@ -27,7 +27,6 @@ describe("Sign in staff", async () => {
       email: staffEmail,
       password: hashedStaffPassword,
       cpf: "12345678901",
-      role: "OWNER" as unknown as StaffRole,
     });
 
     await inMemoryStaffsRepository.save(newStaff);
@@ -51,7 +50,6 @@ describe("Sign in staff", async () => {
       email: "wrong@email.com",
       password: Password.create(staffPassword),
       cpf: "09876543211",
-      role: "OWNER" as unknown as StaffRole,
     });
 
     await inMemoryStaffsRepository.save(newStaff);
@@ -73,7 +71,6 @@ describe("Sign in staff", async () => {
       email: staffEmail,
       password: Password.create(staffPassword),
       cpf: "09876543211",
-      role: "OWNER" as unknown as StaffRole,
     });
 
     await inMemoryStaffsRepository.save(newStaff);
