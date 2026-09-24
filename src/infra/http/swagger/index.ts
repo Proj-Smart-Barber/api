@@ -239,23 +239,6 @@ export const swaggerDocument = {
                           nullable: true,
                           example: null,
                         },
-                        role: {
-                          type: "string",
-                          enum: ["OWNER", "BARBER"],
-                          example: "OWNER",
-                        },
-                      },
-                    },
-                    barbershop: {
-                      type: "object",
-                      nullable: true,
-                      properties: {
-                        id: {
-                          type: "string",
-                          format: "uuid",
-                        },
-                        name: { type: "string" },
-                        timezone: { type: "string" },
                       },
                     },
                   },
@@ -318,6 +301,171 @@ export const swaggerDocument = {
               },
             },
           },
+        },
+      },
+    },
+    "/api/barbershops/": {
+      post: {
+        tags: ["Barbershops"],
+        summary: "Create a barbershop",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                additionalProperties: false,
+                required: ["name", "cnpj", "location"],
+                properties: {
+                  name: {
+                    type: "string",
+                    minLength: 1,
+                    example: "Barbearia do Zé",
+                  },
+                  cnpj: {
+                    type: "string",
+                    example: "12.345.678/0001-90",
+                  },
+                  location: {
+                    type: "string",
+                    minLength: 1,
+                    example: "Rua X, 123 - São Paulo/SP",
+                  },
+                  timezone: {
+                    type: "string",
+                    example: "America/Sao_Paulo",
+                  },
+                  avatarUrl: {
+                    type: "string",
+                    format: "uri",
+                    example: "https://example.com/barbershop.png",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Barbershop created successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    barbershopId: {
+                      type: "string",
+                      format: "uuid",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Validation error" },
+          "401": { description: "Missing or invalid authentication" },
+          "404": { description: "Authenticated staff member not found" },
+          "409": { description: "CNPJ or generated slug already in use" },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
+    "/api/barbershops/{shopId}": {
+      get: {
+        tags: ["Barbershops"],
+        summary: "Get a barbershop by ID",
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            description: "Barbershop ID",
+            schema: {
+              type: "string",
+              format: "uuid",
+              example: "13d4b8e0-7f42-4b7f-b390-b06bb776701f",
+            },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Barbershop retrieved successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["barbershop"],
+                  properties: {
+                    barbershop: {
+                      type: "object",
+                      required: [
+                        "id",
+                        "name",
+                        "ownerId",
+                        "slug",
+                        "cnpj",
+                        "location",
+                        "timezone",
+                        "status",
+                      ],
+                      properties: {
+                        id: {
+                          type: "string",
+                          format: "uuid",
+                          example: "13d4b8e0-7f42-4b7f-b390-b06bb776701f",
+                        },
+                        name: {
+                          type: "string",
+                          example: "Barbearia do Zé",
+                        },
+                        avatarUrl: {
+                          type: "string",
+                          format: "uri",
+                          nullable: true,
+                          example: "https://example.com/barbershop.png",
+                        },
+                        ownerId: {
+                          type: "string",
+                          format: "uuid",
+                          example: "4903d18d-ea6e-494e-9be6-ef9f47775034",
+                        },
+                        slug: {
+                          type: "string",
+                          example: "barbearia-do-ze",
+                        },
+                        cnpj: {
+                          type: "string",
+                          example: "12345678000190",
+                        },
+                        location: {
+                          type: "string",
+                          example: "Rua X, 123 - São Paulo/SP",
+                        },
+                        timezone: {
+                          type: "string",
+                          example: "America/Sao_Paulo",
+                        },
+                        status: {
+                          type: "string",
+                          enum: ["ACTIVE", "INACTIVE"],
+                          example: "ACTIVE",
+                        },
+                        createdAt: {
+                          type: "string",
+                          format: "date-time",
+                          nullable: true,
+                          example: "2026-09-24T13:21:09.915Z",
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "404": { description: "Barbershop not found" },
+          "500": { description: "Internal server error" },
         },
       },
     },

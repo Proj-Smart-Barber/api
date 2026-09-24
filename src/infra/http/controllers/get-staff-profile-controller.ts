@@ -36,9 +36,9 @@ export class GetStaffProfileController implements Controller {
         return notFound(error.message);
       }
 
-      const { staff, barbershop } = result.value;
+      const { staff } = result.value;
 
-      return ok({ staff, barbershop });
+      return ok({ staff });
     } catch (err) {
       if (err instanceof ZodError) {
         return clientError(z.prettifyError(err));

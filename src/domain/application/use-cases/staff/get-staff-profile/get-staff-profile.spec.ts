@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker";
 import { InMemoryStaffsRepository } from "../../../../../../test/repositories/in-memory-staffs-repository";
-import { Staff, type StaffRole } from "../../../../enterprise/entities/staff";
+import { Staff } from "../../../../enterprise/entities/staff";
 import { GetStaffProfileUseCase } from "./get-staff-profile";
 import { Password } from "../../../../enterprise/entities/value-objects/password";
 
@@ -22,7 +22,6 @@ describe("Get staff profile", async () => {
         12,
       ),
       cpf: faker.phone.number(),
-      role: "OWNER" as unknown as StaffRole,
     });
 
     const createdStaff = await inMemoryStaffsRepository.save(newStaff);

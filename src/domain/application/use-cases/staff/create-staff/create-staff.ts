@@ -1,5 +1,5 @@
 import { type Either, left, right } from "../../../../../core/logic/either";
-import { Staff, type StaffRole } from "../../../../enterprise/entities/staff";
+import { Staff } from "../../../../enterprise/entities/staff";
 import { Password } from "../../../../enterprise/entities/value-objects/password";
 import type { StaffsRepository } from "../../../repositories/staffs-repository";
 import { CPFOrEmailAlreadyInUseError } from "../../_errors/cpf-or-email-already-in-use-error";

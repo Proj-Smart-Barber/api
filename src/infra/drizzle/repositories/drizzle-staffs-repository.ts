@@ -50,7 +50,6 @@ export class DrizzleStaffsRepository implements StaffsRepository {
         email: staff.email,
         password: staff.password.toString(),
         cpf: staff.cpf,
-        role: "OWNER",
       })
       .returning();
 

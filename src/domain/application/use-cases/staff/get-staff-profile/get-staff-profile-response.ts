@@ -1,5 +1,3 @@
-import type { StaffRole } from "../../../../enterprise/entities/staff";
-
 export interface GetStaffProfileResponse {
   staff: {
     id: string;
