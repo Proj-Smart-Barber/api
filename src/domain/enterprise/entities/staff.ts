@@ -29,10 +29,6 @@ export class Staff extends Entity<StaffProps> {
     return this.props.password;
   }
 
-  get role(): StaffRole {
-    return this.props.role;
-  }
-
   get cpf(): string {
     return this.props.cpf;
   }
