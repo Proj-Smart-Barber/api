@@ -1,11 +1,11 @@
-import type { Controller } from "@/core/infra/controller";
+import type { Controller } from "../../../../core/infra/controller";
 import {
   type HttpResponse,
   clientError,
   ok,
   fail,
-} from "@/core/infra/http-response";
-import type { CalculateAvailabilityUseCase } from "@/domain/application/use-cases/schedule/calculate-availability/calculate-availability";
+} from "../../../../core/infra/http-response";
+import type { CalculateAvailabilityUseCase } from "../../../../domain/application/use-cases/schedule/calculate-availability/calculate-availability";
 import { z } from "zod";
 
 export class CalculateAvailabilityController implements Controller {

@@ -1,11 +1,11 @@
-import type { Controller } from "@/core/infra/controller";
+import type { Controller } from "../../../../core/infra/controller";
 import {
   type HttpResponse,
   clientError,
   created,
   fail,
-} from "@/core/infra/http-response";
-import type { CreateScheduleExceptionUseCase } from "@/domain/application/use-cases/schedule/create-schedule-exception/create-schedule-exception";
+} from "../../../../core/infra/http-response";
+import type { CreateScheduleExceptionUseCase } from "../../../../domain/application/use-cases/schedule/create-schedule-exception/create-schedule-exception";
 import { z } from "zod";
 
 export class CreateScheduleExceptionController implements Controller {

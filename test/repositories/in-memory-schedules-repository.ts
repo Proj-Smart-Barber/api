@@ -1,5 +1,5 @@
-import type { SchedulesRepository } from "@/domain/application/repositories/schedules-repository";
-import type { BarbershopSchedule } from "@/domain/enterprise/entities/barbershop-schedule";
+import type { SchedulesRepository } from "../../src/domain/application/repositories/schedules-repository";
+import type { BarbershopSchedule } from "../../src/domain/enterprise/entities/barbershop-schedule";
 
 export class InMemorySchedulesRepository implements SchedulesRepository {
   public items: BarbershopSchedule[] = [];

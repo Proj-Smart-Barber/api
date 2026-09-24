@@ -10,9 +10,9 @@ import {
   unauthorized,
 } from "../../../core/infra/http-response";
 import type { CancelBookingUseCase } from "../../../domain/application/use-cases/booking/cancel-booking/cancel-booking";
-import { BookingMapper } from "@/domain/enterprise/mappers/booking-mapper";
-import { ResourceNotFoundError } from "@/domain/application/use-cases/_errors/resource-not-found-error";
-import { UnauthorizedError } from "@/domain/application/use-cases/_errors/unauthorized-error";
+import { BookingMapper } from "../../../domain/enterprise/mappers/booking-mapper";
+import { ResourceNotFoundError } from "../../../domain/application/use-cases/_errors/resource-not-found-error";
+import { UnauthorizedError } from "../../../domain/application/use-cases/_errors/unauthorized-error";
 const cancelBookingControllerRequest = z.object({
   bookingId: z.string().uuid(),
   userId: z.string().uuid(),

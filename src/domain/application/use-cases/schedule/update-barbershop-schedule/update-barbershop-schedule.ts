@@ -1,8 +1,8 @@
-import { type Either, left, right } from "@/core/logic/either";
-import type { SchedulesRepository } from "@/domain/application/repositories/schedules-repository";
-import type { BarbershopsRepository } from "@/domain/application/repositories/barbershops-repository";
-import { BarbershopSchedule } from "@/domain/enterprise/entities/barbershop-schedule";
-import { UniqueEntityId } from "@/core/entities/unique-entity-id";
+import { type Either, left, right } from "../../../../../core/logic/either";
+import type { SchedulesRepository } from "../../../repositories/schedules-repository";
+import type { BarbershopsRepository } from "../../../repositories/barbershops-repository";
+import { BarbershopSchedule } from "../../../../enterprise/entities/barbershop-schedule";
+import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
 import { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
 import { NotAllowedError } from "../../_errors/not-allowed-error";
 

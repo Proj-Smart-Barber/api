@@ -3,10 +3,10 @@ import type {
   FindManyByBarbermanAndDateParams,
   FindManyByShoppingCartParams,
   FindOverlappingParams,
-} from "@/domain/application/repositories/bookings-repository";
-import type { Booking } from "@/domain/enterprise/entities/booking";
-import { BookingDetails } from "@/domain/enterprise/entities/booking-details";
-import { UniqueEntityId } from "@/core/entities/unique-entity-id";
+} from "../../src/domain/application/repositories/bookings-repository";
+import type { Booking } from "../../src/domain/enterprise/entities/booking";
+import { BookingDetails } from "../../src/domain/enterprise/entities/booking-details";
+import { UniqueEntityId } from "../../src/core/entities/unique-entity-id";
 
 export class InMemoryBookingsRepository implements BookingsRepository {
   public items: Booking[] = [];

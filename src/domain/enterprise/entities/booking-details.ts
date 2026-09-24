@@ -1,4 +1,4 @@
-import type { UniqueEntityId } from "@/core/entities/unique-entity-id";
+import type { UniqueEntityId } from "../../../core/entities/unique-entity-id";
 
 export interface BookingDetailsProps {
   bookingId: UniqueEntityId;

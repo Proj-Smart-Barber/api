@@ -1,9 +1,9 @@
-import { type Either, left, right } from "@/core/logic/either";
-import type { SchedulesRepository } from "@/domain/application/repositories/schedules-repository";
-import type { ScheduleExceptionsRepository } from "@/domain/application/repositories/schedule-exceptions-repository";
-import type { ServicesRepository } from "@/domain/application/repositories/services-repository";
-import type { BookingsRepository } from "@/domain/application/repositories/bookings-repository";
-import type { BarbershopsRepository } from "@/domain/application/repositories/barbershops-repository";
+import { type Either, left, right } from "../../../../../core/logic/either";
+import type { SchedulesRepository } from "../../../repositories/schedules-repository";
+import type { ScheduleExceptionsRepository } from "../../../repositories/schedule-exceptions-repository";
+import type { ServicesRepository } from "../../../repositories/services-repository";
+import type { BookingsRepository } from "../../../repositories/bookings-repository";
+import type { BarbershopsRepository } from "../../../repositories/barbershops-repository";
 
 function timeToMinutes(time: string): number {
   const [hours, minutes] = time.split(":").map(Number);

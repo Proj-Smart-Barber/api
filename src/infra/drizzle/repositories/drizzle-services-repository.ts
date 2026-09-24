@@ -1,5 +1,5 @@
-import type { ServicesRepository } from "@/domain/application/repositories/services-repository";
-import type { Service } from "@/domain/enterprise/entities/service";
+import type { ServicesRepository } from "../../../domain/application/repositories/services-repository";
+import type { Service } from "../../../domain/enterprise/entities/service";
 import { db } from "../index";
 import { services } from "../schema";
 import { inArray, eq } from "drizzle-orm";

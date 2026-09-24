@@ -1,10 +1,10 @@
-import { type Either, left, right } from "@/core/logic/either";
-import type { BarbershopsRepository } from "@/domain/application/repositories/barbershops-repository";
-import { BarbershopAlreadyExistsError } from "@/domain/application/use-cases/_errors/barbershop-already-exists-error";
-import { ResourceNotFoundError } from "@/domain/application/use-cases/_errors/resource-not-found-error";
-import { Barbershop } from "@/domain/enterprise/entities/barbershop";
-import { Membership, Role } from "@/domain/enterprise/entities/membership";
-import { Slug } from "@/domain/enterprise/entities/value-objects/slug";
+import { type Either, left, right } from "../../../../../core/logic/either";
+import type { BarbershopsRepository } from "../../../repositories/barbershops-repository";
+import { BarbershopAlreadyExistsError } from "../../_errors/barbershop-already-exists-error";
+import { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
+import { Barbershop } from "../../../../enterprise/entities/barbershop";
+import { Membership, Role } from "../../../../enterprise/entities/membership";
+import { Slug } from "../../../../enterprise/entities/value-objects/slug";
 import type { StaffsRepository } from "../../../repositories/staffs-repository";
 import type { CreateBarbershopDTO } from "./create-barbershop-dto";
 import type { CreateBarbershopResponse } from "./create-barbershop-response";

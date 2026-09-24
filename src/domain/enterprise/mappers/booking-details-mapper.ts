@@ -1,5 +1,5 @@
 /** biome-ignore-all lint/complexity/noStaticOnlyClass: mapper class */
-import { UniqueEntityId } from "@/core/entities/unique-entity-id";
+import { UniqueEntityId } from "../../../core/entities/unique-entity-id";
 import { BookingDetails } from "../entities/booking-details";
 
 export interface PersistenceBookingDetails {

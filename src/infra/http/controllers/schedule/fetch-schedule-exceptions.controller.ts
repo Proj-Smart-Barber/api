@@ -1,11 +1,11 @@
-import type { Controller } from "@/core/infra/controller";
+import type { Controller } from "../../../../core/infra/controller";
 import {
   type HttpResponse,
   fail,
   ok,
   clientError,
-} from "@/core/infra/http-response";
-import type { FetchScheduleExceptionsUseCase } from "@/domain/application/use-cases/schedule/fetch-schedule-exceptions/fetch-schedule-exceptions";
+} from "../../../../core/infra/http-response";
+import type { FetchScheduleExceptionsUseCase } from "../../../../domain/application/use-cases/schedule/fetch-schedule-exceptions/fetch-schedule-exceptions";
 import { z } from "zod";
 
 export class FetchScheduleExceptionsController implements Controller {

@@ -1,5 +1,5 @@
-import type { ScheduleExceptionsRepository } from "@/domain/application/repositories/schedule-exceptions-repository";
-import type { ScheduleException } from "@/domain/enterprise/entities/schedule-exception";
+import type { ScheduleExceptionsRepository } from "../../src/domain/application/repositories/schedule-exceptions-repository";
+import type { ScheduleException } from "../../src/domain/enterprise/entities/schedule-exception";
 
 export class InMemoryScheduleExceptionsRepository
   implements ScheduleExceptionsRepository

@@ -1,5 +1,5 @@
-import type { ServicesRepository } from "@/domain/application/repositories/services-repository";
-import type { Service } from "@/domain/enterprise/entities/service";
+import type { ServicesRepository } from "../../src/domain/application/repositories/services-repository";
+import type { Service } from "../../src/domain/enterprise/entities/service";
 
 export class InMemoryServicesRepository implements ServicesRepository {
   public items: Service[] = [];

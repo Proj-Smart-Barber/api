@@ -1,6 +1,6 @@
-import { Barbershop } from "@/domain/enterprise/entities/barbershop";
-import { UniqueEntityId } from "@/core/entities/unique-entity-id";
-import { Slug } from "@/domain/enterprise/entities/value-objects/slug";
+import { Barbershop } from "../../../domain/enterprise/entities/barbershop";
+import { UniqueEntityId } from "../../../core/entities/unique-entity-id";
+import { Slug } from "../../../domain/enterprise/entities/value-objects/slug";
 
 import type { InferSelectModel } from "drizzle-orm";
 import type { barbershops } from "../schema";

@@ -1,7 +1,7 @@
 import { InMemorySchedulesRepository } from "../../../../../../test/repositories/in-memory-schedules-repository";
 import { FetchBarbershopSchedulesUseCase } from "./fetch-barbershop-schedules";
-import { BarbershopSchedule } from "@/domain/enterprise/entities/barbershop-schedule";
-import { UniqueEntityId } from "@/core/entities/unique-entity-id";
+import { BarbershopSchedule } from "../../../../enterprise/entities/barbershop-schedule";
+import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
 
 let inMemorySchedulesRepository: InMemorySchedulesRepository;
 let sut: FetchBarbershopSchedulesUseCase;

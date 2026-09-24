@@ -1,11 +1,11 @@
-import type { Controller } from "@/core/infra/controller";
+import type { Controller } from "../../../../core/infra/controller";
 import {
   type HttpResponse,
   clientError,
   ok,
   fail,
-} from "@/core/infra/http-response";
-import type { UpdateBarbershopScheduleUseCase } from "@/domain/application/use-cases/schedule/update-barbershop-schedule/update-barbershop-schedule";
+} from "../../../../core/infra/http-response";
+import type { UpdateBarbershopScheduleUseCase } from "../../../../domain/application/use-cases/schedule/update-barbershop-schedule/update-barbershop-schedule";
 import { z } from "zod";
 
 export class UpdateBarbershopScheduleController implements Controller {

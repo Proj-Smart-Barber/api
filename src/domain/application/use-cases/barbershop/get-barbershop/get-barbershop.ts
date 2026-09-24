@@ -1,7 +1,7 @@
-import { type Either, left, right } from "@/core/logic/either";
-import { ResourceNotFoundError } from "@/domain/application/use-cases/_errors/resource-not-found-error";
+import { type Either, left, right } from "../../../../../core/logic/either";
+import { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
 import type { BarbershopsRepository } from "../../../repositories/barbershops-repository";
-import type { Barbershop } from "@/domain/enterprise/entities/barbershop";
+import type { Barbershop } from "../../../../enterprise/entities/barbershop";
 
 interface GetBarbershopDTO {
   barbershopId: string;

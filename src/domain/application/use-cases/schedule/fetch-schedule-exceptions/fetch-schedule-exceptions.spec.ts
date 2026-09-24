@@ -1,7 +1,7 @@
 import { InMemoryScheduleExceptionsRepository } from "../../../../../../test/repositories/in-memory-schedule-exceptions-repository";
 import { FetchScheduleExceptionsUseCase } from "./fetch-schedule-exceptions";
-import { ScheduleException } from "@/domain/enterprise/entities/schedule-exception";
-import { UniqueEntityId } from "@/core/entities/unique-entity-id";
+import { ScheduleException } from "../../../../enterprise/entities/schedule-exception";
+import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
 
 let inMemoryScheduleExceptionsRepository: InMemoryScheduleExceptionsRepository;
 let sut: FetchScheduleExceptionsUseCase;

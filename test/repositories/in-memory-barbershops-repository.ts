@@ -1,6 +1,9 @@
-import type { BarbershopsRepository } from "@/domain/application/repositories/barbershops-repository";
-import type { Barbershop } from "@/domain/enterprise/entities/barbershop";
-import { Role, type Membership } from "@/domain/enterprise/entities/membership";
+import type { BarbershopsRepository } from "../../src/domain/application/repositories/barbershops-repository";
+import type { Barbershop } from "../../src/domain/enterprise/entities/barbershop";
+import {
+  Role,
+  type Membership,
+} from "../../src/domain/enterprise/entities/membership";
 
 export class InMemoryBarbershopsRepository implements BarbershopsRepository {
   public items: Barbershop[] = [];

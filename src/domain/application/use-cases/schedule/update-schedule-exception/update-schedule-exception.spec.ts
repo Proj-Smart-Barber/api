@@ -1,11 +1,11 @@
 import { InMemoryScheduleExceptionsRepository } from "../../../../../../test/repositories/in-memory-schedule-exceptions-repository";
 import { InMemoryBarbershopsRepository } from "../../../../../../test/repositories/in-memory-barbershops-repository";
 import { UpdateScheduleExceptionUseCase } from "./update-schedule-exception";
-import { ScheduleException } from "@/domain/enterprise/entities/schedule-exception";
-import { Barbershop } from "@/domain/enterprise/entities/barbershop";
-import { Slug } from "@/domain/enterprise/entities/value-objects/slug";
-import { UniqueEntityId } from "@/core/entities/unique-entity-id";
-import { NotAllowedError } from "@/domain/application/use-cases/_errors/not-allowed-error";
+import { ScheduleException } from "../../../../enterprise/entities/schedule-exception";
+import { Barbershop } from "../../../../enterprise/entities/barbershop";
+import { Slug } from "../../../../enterprise/entities/value-objects/slug";
+import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
+import { NotAllowedError } from "../../_errors/not-allowed-error";
 
 let inMemoryScheduleExceptionsRepository: InMemoryScheduleExceptionsRepository;
 let inMemoryBarbershopsRepository: InMemoryBarbershopsRepository;

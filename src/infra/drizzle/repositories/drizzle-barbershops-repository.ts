@@ -1,6 +1,9 @@
-import type { BarbershopsRepository } from "@/domain/application/repositories/barbershops-repository";
-import type { Barbershop } from "@/domain/enterprise/entities/barbershop";
-import { Role, type Membership } from "@/domain/enterprise/entities/membership";
+import type { BarbershopsRepository } from "../../../domain/application/repositories/barbershops-repository";
+import type { Barbershop } from "../../../domain/enterprise/entities/barbershop";
+import {
+  Role,
+  type Membership,
+} from "../../../domain/enterprise/entities/membership";
 import { eq, or } from "drizzle-orm";
 import { db } from "../index";
 import { DrizzleBarbershopMapper } from "../mappers/drizzle-barbershop-mapper";

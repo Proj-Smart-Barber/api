@@ -13,11 +13,11 @@ import type {
   FindManyByBarbermanAndDateParams,
   FindOverlappingParams,
   FindManyByShoppingCartParams,
-} from "@/domain/application/repositories/bookings-repository";
-import type { Booking } from "@/domain/enterprise/entities/booking";
-import type { BookingDetails } from "@/domain/enterprise/entities/booking-details";
-import { BookingMapper } from "@/domain/enterprise/mappers/booking-mapper";
-import { BookingDetailsMapper } from "@/domain/enterprise/mappers/booking-details-mapper";
+} from "../../../domain/application/repositories/bookings-repository";
+import type { Booking } from "../../../domain/enterprise/entities/booking";
+import type { BookingDetails } from "../../../domain/enterprise/entities/booking-details";
+import { BookingMapper } from "../../../domain/enterprise/mappers/booking-mapper";
+import { BookingDetailsMapper } from "../../../domain/enterprise/mappers/booking-details-mapper";
 
 export class DrizzleBookingsRepository implements BookingsRepository {
   async findManyByBarbermanAndDate({

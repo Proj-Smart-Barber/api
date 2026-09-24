@@ -7,7 +7,7 @@ import {
   type HttpResponse,
 } from "../../../core/infra/http-response";
 import type { FetchBarbermanDailyScheduleUseCase } from "../../../domain/application/use-cases/booking/fetch-staff-barberman-schedule/fetch-barberman-daily-schedule";
-import { BookingMapper } from "@/domain/enterprise/mappers/booking-mapper";
+import { BookingMapper } from "../../../domain/enterprise/mappers/booking-mapper";
 const fetchBarbermanDailyScheduleControllerRequest = z.object({
   userId: z.string().uuid(),
   date: z.coerce.date(),

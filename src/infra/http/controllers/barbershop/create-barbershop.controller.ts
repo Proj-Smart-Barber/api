@@ -1,4 +1,4 @@
-import type { Controller } from "@/core/infra/controller";
+import type { Controller } from "../../../../core/infra/controller";
 import {
   clientError,
   conflict,
@@ -6,9 +6,9 @@ import {
   fail,
   type HttpResponse,
   notFound,
-} from "@/core/infra/http-response";
-import { BarbershopAlreadyExistsError } from "@/domain/application/use-cases/_errors/barbershop-already-exists-error";
-import type { CreateBarbershopUseCase } from "@/domain/application/use-cases/barbershop/create-barbershop/create-barbershop";
+} from "../../../../core/infra/http-response";
+import { BarbershopAlreadyExistsError } from "../../../../domain/application/use-cases/_errors/barbershop-already-exists-error";
+import type { CreateBarbershopUseCase } from "../../../../domain/application/use-cases/barbershop/create-barbershop/create-barbershop";
 import { z, ZodError } from "zod";
 
 const cnpjSchema = z

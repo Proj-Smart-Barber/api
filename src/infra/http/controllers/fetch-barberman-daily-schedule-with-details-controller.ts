@@ -1,13 +1,13 @@
 import { ZodError, z } from "zod";
-import type { Controller } from "@/core/infra/controller";
+import type { Controller } from "../../../core/infra/controller";
 import {
   clientError,
   fail,
   ok,
   type HttpResponse,
-} from "@/core/infra/http-response";
-import type { FetchBarbermanDailyScheduleWithDetailsUseCase } from "@/domain/application/use-cases/booking/fetch-barberman-daily-schedule-with-details/fetch-barberman-daily-schedule-with-details";
-import { BookingDetailsMapper } from "@/domain/enterprise/mappers/booking-details-mapper";
+} from "../../../core/infra/http-response";
+import type { FetchBarbermanDailyScheduleWithDetailsUseCase } from "../../../domain/application/use-cases/booking/fetch-barberman-daily-schedule-with-details/fetch-barberman-daily-schedule-with-details";
+import { BookingDetailsMapper } from "../../../domain/enterprise/mappers/booking-details-mapper";
 
 const fetchBarbermanDailyScheduleWithDetailsControllerRequest = z.object({
   userId: z.string().uuid(),

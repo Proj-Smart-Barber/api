@@ -1,5 +1,5 @@
 import { DrizzleScheduleExceptionsRepository } from "../../drizzle/repositories/drizzle-schedule-exceptions-repository";
-import { UpdateScheduleExceptionUseCase } from "@/domain/application/use-cases/schedule/update-schedule-exception/update-schedule-exception";
+import { UpdateScheduleExceptionUseCase } from "../../../domain/application/use-cases/schedule/update-schedule-exception/update-schedule-exception";
 import { DrizzleBarbershopsRepository } from "../../drizzle/repositories/drizzle-barbershops-repository";
 import { UpdateScheduleExceptionController } from "../controllers/schedule/update-schedule-exception.controller";
 

@@ -1,7 +1,7 @@
-import { CreateBarbershopUseCase } from "@/domain/application/use-cases/barbershop/create-barbershop/create-barbershop";
-import { Role } from "@/domain/enterprise/entities/membership";
-import { Staff } from "@/domain/enterprise/entities/staff";
-import { Password } from "@/domain/enterprise/entities/value-objects/password";
+import { CreateBarbershopUseCase } from "../../../../domain/application/use-cases/barbershop/create-barbershop/create-barbershop";
+import { Role } from "../../../../domain/enterprise/entities/membership";
+import { Staff } from "../../../../domain/enterprise/entities/staff";
+import { Password } from "../../../../domain/enterprise/entities/value-objects/password";
 import { InMemoryBarbershopsRepository } from "../../../../../test/repositories/in-memory-barbershops-repository";
 import { InMemoryStaffsRepository } from "../../../../../test/repositories/in-memory-staffs-repository";
 import { CreateBarbershopController } from "./create-barbershop.controller";

@@ -1,4 +1,4 @@
-import type { Controller } from "@/core/infra/controller";
+import type { Controller } from "../../../../core/infra/controller";
 import {
   type HttpResponse,
   clientError,
@@ -6,8 +6,8 @@ import {
   fail,
   forbidden,
   notFound,
-} from "@/core/infra/http-response";
-import type { DeleteScheduleExceptionUseCase } from "@/domain/application/use-cases/schedule/delete-schedule-exception/delete-schedule-exception";
+} from "../../../../core/infra/http-response";
+import type { DeleteScheduleExceptionUseCase } from "../../../../domain/application/use-cases/schedule/delete-schedule-exception/delete-schedule-exception";
 import { z } from "zod";
 
 export class DeleteScheduleExceptionController implements Controller {

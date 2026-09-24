@@ -1,5 +1,5 @@
-import type { SchedulesRepository } from "@/domain/application/repositories/schedules-repository";
-import type { BarbershopSchedule } from "@/domain/enterprise/entities/barbershop-schedule";
+import type { SchedulesRepository } from "../../../domain/application/repositories/schedules-repository";
+import type { BarbershopSchedule } from "../../../domain/enterprise/entities/barbershop-schedule";
 import { db } from "../index";
 import { barbershopSchedules } from "../schema";
 import { eq, and, isNull } from "drizzle-orm";

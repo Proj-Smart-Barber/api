@@ -1,5 +1,5 @@
-import { UniqueEntityId } from "@/core/entities/unique-entity-id";
-import { ScheduleException } from "@/domain/enterprise/entities/schedule-exception";
+import { UniqueEntityId } from "../../../core/entities/unique-entity-id";
+import { ScheduleException } from "../../../domain/enterprise/entities/schedule-exception";
 import type { scheduleExceptions } from "../schema";
 import type { InferSelectModel } from "drizzle-orm";
 

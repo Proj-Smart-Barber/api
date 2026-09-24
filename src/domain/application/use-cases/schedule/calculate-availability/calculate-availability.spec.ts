@@ -4,13 +4,13 @@ import { InMemoryServicesRepository } from "../../../../../../test/repositories/
 import { InMemoryBookingsRepository } from "../../../../../../test/repositories/in-memory-bookings-repository";
 import { InMemoryBarbershopsRepository } from "../../../../../../test/repositories/in-memory-barbershops-repository";
 import { CalculateAvailabilityUseCase } from "./calculate-availability";
-import { BarbershopSchedule } from "@/domain/enterprise/entities/barbershop-schedule";
-import { ScheduleException } from "@/domain/enterprise/entities/schedule-exception";
-import { Service } from "@/domain/enterprise/entities/service";
-import { Booking } from "@/domain/enterprise/entities/booking";
-import { UniqueEntityId } from "@/core/entities/unique-entity-id";
-import { Barbershop } from "@/domain/enterprise/entities/barbershop";
-import { Slug } from "@/domain/enterprise/entities/value-objects/slug";
+import { BarbershopSchedule } from "../../../../enterprise/entities/barbershop-schedule";
+import { ScheduleException } from "../../../../enterprise/entities/schedule-exception";
+import { Service } from "../../../../enterprise/entities/service";
+import { Booking } from "../../../../enterprise/entities/booking";
+import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
+import { Barbershop } from "../../../../enterprise/entities/barbershop";
+import { Slug } from "../../../../enterprise/entities/value-objects/slug";
 
 let inMemorySchedulesRepository: InMemorySchedulesRepository;
 let inMemoryScheduleExceptionsRepository: InMemoryScheduleExceptionsRepository;

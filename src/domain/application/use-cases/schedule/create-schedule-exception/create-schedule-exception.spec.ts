@@ -1,10 +1,10 @@
 import { InMemoryScheduleExceptionsRepository } from "../../../../../../test/repositories/in-memory-schedule-exceptions-repository";
 import { InMemoryBarbershopsRepository } from "../../../../../../test/repositories/in-memory-barbershops-repository";
 import { CreateScheduleExceptionUseCase } from "./create-schedule-exception";
-import { Barbershop } from "@/domain/enterprise/entities/barbershop";
-import { UniqueEntityId } from "@/core/entities/unique-entity-id";
+import { Barbershop } from "../../../../enterprise/entities/barbershop";
+import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
 
-import { Slug } from "@/domain/enterprise/entities/value-objects/slug";
+import { Slug } from "../../../../enterprise/entities/value-objects/slug";
 
 let inMemoryScheduleExceptionsRepository: InMemoryScheduleExceptionsRepository;
 let inMemoryBarbershopsRepository: InMemoryBarbershopsRepository;

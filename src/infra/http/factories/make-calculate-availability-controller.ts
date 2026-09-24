@@ -3,7 +3,7 @@ import { DrizzleScheduleExceptionsRepository } from "../../drizzle/repositories/
 import { DrizzleServicesRepository } from "../../drizzle/repositories/drizzle-services-repository";
 import { InMemoryBookingsRepository } from "../../../../test/repositories/in-memory-bookings-repository";
 import { DrizzleBarbershopsRepository } from "../../drizzle/repositories/drizzle-barbershops-repository";
-import { CalculateAvailabilityUseCase } from "@/domain/application/use-cases/schedule/calculate-availability/calculate-availability";
+import { CalculateAvailabilityUseCase } from "../../../domain/application/use-cases/schedule/calculate-availability/calculate-availability";
 import { CalculateAvailabilityController } from "../controllers/schedule/calculate-availability.controller";
 
 export function makeCalculateAvailabilityController() {

@@ -1,9 +1,9 @@
 import { InMemorySchedulesRepository } from "../../../../../../test/repositories/in-memory-schedules-repository";
 import { InMemoryBarbershopsRepository } from "../../../../../../test/repositories/in-memory-barbershops-repository";
 import { UpdateBarbershopScheduleUseCase } from "./update-barbershop-schedule";
-import { Barbershop } from "@/domain/enterprise/entities/barbershop";
-import { UniqueEntityId } from "@/core/entities/unique-entity-id";
-import { Slug } from "@/domain/enterprise/entities/value-objects/slug";
+import { Barbershop } from "../../../../enterprise/entities/barbershop";
+import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
+import { Slug } from "../../../../enterprise/entities/value-objects/slug";
 
 let inMemorySchedulesRepository: InMemorySchedulesRepository;
 let inMemoryBarbershopsRepository: InMemoryBarbershopsRepository;

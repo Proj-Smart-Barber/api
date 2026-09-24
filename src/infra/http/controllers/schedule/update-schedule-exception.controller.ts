@@ -1,4 +1,4 @@
-import type { Controller } from "@/core/infra/controller";
+import type { Controller } from "../../../../core/infra/controller";
 import {
   type HttpResponse,
   clientError,
@@ -6,9 +6,9 @@ import {
   fail,
   forbidden,
   notFound,
-} from "@/core/infra/http-response";
+} from "../../../../core/infra/http-response";
 import { z } from "zod";
-import type { UpdateScheduleExceptionUseCase } from "@/domain/application/use-cases/schedule/update-schedule-exception/update-schedule-exception";
+import type { UpdateScheduleExceptionUseCase } from "../../../../domain/application/use-cases/schedule/update-schedule-exception/update-schedule-exception";
 
 const updateScheduleExceptionBodySchema = z.object({
   shopId: z.string().uuid(),

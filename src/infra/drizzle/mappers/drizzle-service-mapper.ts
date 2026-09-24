@@ -1,5 +1,5 @@
-import { UniqueEntityId } from "@/core/entities/unique-entity-id";
-import { Service } from "@/domain/enterprise/entities/service";
+import { UniqueEntityId } from "../../../core/entities/unique-entity-id";
+import { Service } from "../../../domain/enterprise/entities/service";
 import type { services } from "../schema";
 import type { InferSelectModel } from "drizzle-orm";
 
