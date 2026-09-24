@@ -1,10 +1,10 @@
-import { type Either, left, right } from "@/core/logic/either";
-import type { ScheduleExceptionsRepository } from "@/domain/application/repositories/schedule-exceptions-repository";
-import type { BarbershopsRepository } from "@/domain/application/repositories/barbershops-repository";
-import { ScheduleException } from "@/domain/enterprise/entities/schedule-exception";
-import { UniqueEntityId } from "@/core/entities/unique-entity-id";
-import { ResourceNotFoundError } from "@/domain/application/use-cases/_errors/resource-not-found-error";
-import { NotAllowedError } from "@/domain/application/use-cases/_errors/not-allowed-error";
+import { type Either, left, right } from "../../../../../core/logic/either";
+import type { ScheduleExceptionsRepository } from "../../../repositories/schedule-exceptions-repository";
+import type { BarbershopsRepository } from "../../../repositories/barbershops-repository";
+import { ScheduleException } from "../../../../enterprise/entities/schedule-exception";
+import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
+import { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
+import { NotAllowedError } from "../../_errors/not-allowed-error";
 
 interface CreateScheduleExceptionDTO {
   barbershopId: string;

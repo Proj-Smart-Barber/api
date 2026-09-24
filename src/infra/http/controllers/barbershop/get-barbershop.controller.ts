@@ -1,13 +1,13 @@
-import type { Controller } from "@/core/infra/controller";
+import type { Controller } from "../../../../core/infra/controller";
 import {
   type HttpResponse,
   clientError,
   ok,
   notFound,
   fail,
-} from "@/core/infra/http-response";
-import type { GetBarbershopUseCase } from "@/domain/application/use-cases/barbershop/get-barbershop/get-barbershop";
-import { DrizzleBarbershopMapper } from "@/infra/drizzle/mappers/drizzle-barbershop-mapper";
+} from "../../../../core/infra/http-response";
+import type { GetBarbershopUseCase } from "../../../../domain/application/use-cases/barbershop/get-barbershop/get-barbershop";
+import { DrizzleBarbershopMapper } from "../../../drizzle/mappers/drizzle-barbershop-mapper";
 
 export class GetBarbershopController implements Controller {
   constructor(private getBarbershopUseCase: GetBarbershopUseCase) {}

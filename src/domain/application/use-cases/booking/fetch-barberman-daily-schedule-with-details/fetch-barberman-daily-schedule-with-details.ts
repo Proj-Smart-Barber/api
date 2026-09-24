@@ -1,4 +1,4 @@
-import { type Either, right } from "@/core/logic/either";
+import { type Either, right } from "../../../../../core/logic/either";
 import type { BookingsRepository } from "../../../repositories/bookings-repository";
 import type { FetchBarbermanDailyScheduleWithDetailsDTO } from "./fetch-barberman-daily-schedule-with-details-dto";
 import type { FetchBarbermanDailyScheduleWithDetailsResponse } from "./fetch-barberman-daily-schedule-with-details-response";

@@ -1,6 +1,6 @@
-import { Entity } from "@/core/entities/Entity";
-import type { UniqueEntityId } from "@/core/entities/unique-entity-id";
-import type { Optional } from "@/core/types/optional";
+import { Entity } from "../../../core/entities/Entity";
+import type { UniqueEntityId } from "../../../core/entities/unique-entity-id";
+import type { Optional } from "../../../core/types/optional";
 
 interface ServiceProps {
   title: string;

@@ -1,8 +1,8 @@
 import { InMemoryBarbershopsRepository } from "../../../../../../test/repositories/in-memory-barbershops-repository";
 import { InMemoryStaffsRepository } from "../../../../../../test/repositories/in-memory-staffs-repository";
-import { Staff } from "@/domain/enterprise/entities/staff";
-import { Role } from "@/domain/enterprise/entities/membership";
-import { Password } from "@/domain/enterprise/entities/value-objects/password";
+import { Staff } from "../../../../enterprise/entities/staff";
+import { Role } from "../../../../enterprise/entities/membership";
+import { Password } from "../../../../enterprise/entities/value-objects/password";
 import { BarbershopAlreadyExistsError } from "../../_errors/barbershop-already-exists-error";
 import { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
 import { CreateBarbershopUseCase } from "./create-barbershop";

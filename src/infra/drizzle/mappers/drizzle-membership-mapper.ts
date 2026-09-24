@@ -1,5 +1,8 @@
-import { UniqueEntityId } from "@/core/entities/unique-entity-id";
-import { Membership, type Role } from "@/domain/enterprise/entities/membership";
+import { UniqueEntityId } from "../../../core/entities/unique-entity-id";
+import {
+  Membership,
+  type Role,
+} from "../../../domain/enterprise/entities/membership";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import type { membership } from "../schema";
 

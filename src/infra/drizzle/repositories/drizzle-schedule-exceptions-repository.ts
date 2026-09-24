@@ -1,5 +1,5 @@
-import type { ScheduleExceptionsRepository } from "@/domain/application/repositories/schedule-exceptions-repository";
-import type { ScheduleException } from "@/domain/enterprise/entities/schedule-exception";
+import type { ScheduleExceptionsRepository } from "../../../domain/application/repositories/schedule-exceptions-repository";
+import type { ScheduleException } from "../../../domain/enterprise/entities/schedule-exception";
 import { db } from "../index";
 import { scheduleExceptions } from "../schema";
 import { eq } from "drizzle-orm";

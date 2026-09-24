@@ -1,5 +1,5 @@
-import { UniqueEntityId } from "@/core/entities/unique-entity-id";
-import { BarbershopSchedule } from "@/domain/enterprise/entities/barbershop-schedule";
+import { UniqueEntityId } from "../../../core/entities/unique-entity-id";
+import { BarbershopSchedule } from "../../../domain/enterprise/entities/barbershop-schedule";
 import type { barbershopSchedules } from "../schema";
 import type { InferSelectModel } from "drizzle-orm";
 

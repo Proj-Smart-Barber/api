@@ -1,6 +1,6 @@
-import type { SchedulesRepository } from "@/domain/application/repositories/schedules-repository";
-import type { BarbershopSchedule } from "@/domain/enterprise/entities/barbershop-schedule";
-import { type Either, right } from "@/core/logic/either";
+import type { SchedulesRepository } from "../../../repositories/schedules-repository";
+import type { BarbershopSchedule } from "../../../../enterprise/entities/barbershop-schedule";
+import { type Either, right } from "../../../../../core/logic/either";
 
 interface FetchBarbershopSchedulesUseCaseRequest {
   barbershopId: string;
