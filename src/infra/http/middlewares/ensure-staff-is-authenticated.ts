@@ -39,6 +39,7 @@ export async function ensureStaffIsAuthenticated(
     request.user = payload;
     next();
   } catch (error) {
+    console.error("[ensureStaffIsAuthenticated] Error:", error);
     return reply.status(500).json({ error });
   }
 }

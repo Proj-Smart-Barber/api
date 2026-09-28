@@ -55,6 +55,11 @@ export class FetchBarbermanDailyScheduleWithDetailsController
         return clientError(z.prettifyError(err));
       }
 
+      console.error(
+        "[FetchBarbermanDailyScheduleWithDetailsController] Error:",
+        err,
+      );
+
       return fail(
         new Error("Internal server error. Failed to fetch detailed schedule."),
       );

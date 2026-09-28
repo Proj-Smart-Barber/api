@@ -28,6 +28,13 @@ export const adaptRoute = (controller: Controller) => {
         errorMessage = httpResponse.body;
       }
 
+      if (httpResponse.statusCode >= 500) {
+        console.error(
+          `[HTTP ${httpResponse.statusCode}] Error on ${request.method} ${request.originalUrl}:`,
+          httpResponse.body,
+        );
+      }
+
       return response.status(httpResponse.statusCode).json({
         error: errorMessage,
       });
