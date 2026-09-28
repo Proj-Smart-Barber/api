@@ -105,15 +105,23 @@ async function main() {
   const [service] = await db
     .insert(services)
     .values({
+      barbershopId: barbershop.id,
       title: "Corte de cabelo",
       description: "Corte com máquina e tesoura",
       priceInCents: 4000,
+      durationInMinutes: 30,
+      isActive: true,
     })
     .returning();
 
   const [serviceItem] = await db
     .insert(serviceItems)
-    .values({ serviceId: service.id })
+    .values({
+      serviceId: service.id,
+      titleSnapshot: service.title,
+      priceInCentsSnapshot: service.priceInCents,
+      durationInMinutesSnapshot: service.durationInMinutes,
+    })
     .returning();
 
   const [shoppingCart] = await db

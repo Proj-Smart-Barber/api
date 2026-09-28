@@ -67,6 +67,7 @@ describe("Calculate Availability", () => {
     inMemoryServicesRepository.items.push(
       Service.create(
         {
+          barbershopId: new UniqueEntityId("shop-1"),
           title: "Corte",
           durationInMinutes: 45,
           priceInCents: 5000,
@@ -120,7 +121,12 @@ describe("Calculate Availability", () => {
 
     inMemoryServicesRepository.items.push(
       Service.create(
-        { title: "Corte", durationInMinutes: 60, priceInCents: 5000 },
+        {
+          barbershopId: new UniqueEntityId("shop-1"),
+          title: "Corte",
+          durationInMinutes: 60,
+          priceInCents: 5000,
+        },
         new UniqueEntityId("service-1"),
       ),
     );
@@ -158,7 +164,12 @@ describe("Calculate Availability", () => {
 
     inMemoryServicesRepository.items.push(
       Service.create(
-        { title: "Corte", durationInMinutes: 30, priceInCents: 5000 },
+        {
+          barbershopId: new UniqueEntityId("shop-1"),
+          title: "Corte",
+          durationInMinutes: 30,
+          priceInCents: 5000,
+        },
         new UniqueEntityId("service-1"),
       ),
     );
@@ -205,7 +216,12 @@ describe("Calculate Availability", () => {
 
     inMemoryServicesRepository.items.push(
       Service.create(
-        { title: "Corte", durationInMinutes: 30, priceInCents: 5000 },
+        {
+          barbershopId: new UniqueEntityId("shop-1"),
+          title: "Corte",
+          durationInMinutes: 30,
+          priceInCents: 5000,
+        },
         new UniqueEntityId("service-1"),
       ),
     );
@@ -239,7 +255,12 @@ describe("Calculate Availability", () => {
 
   it("should return empty slots if there is no schedule for the day (Closed)", async () => {
     const service = Service.create(
-      { title: "Corte", priceInCents: 4000, durationInMinutes: 30 },
+      {
+        barbershopId: new UniqueEntityId("shop-1"),
+        title: "Corte",
+        priceInCents: 4000,
+        durationInMinutes: 30,
+      },
       new UniqueEntityId("service-1"),
     );
     inMemoryServicesRepository.items.push(service);
@@ -261,7 +282,12 @@ describe("Calculate Availability", () => {
 
   it("should return empty slots if there is a full day exception (Holiday)", async () => {
     const service = Service.create(
-      { title: "Corte", priceInCents: 4000, durationInMinutes: 30 },
+      {
+        barbershopId: new UniqueEntityId("shop-1"),
+        title: "Corte",
+        priceInCents: 4000,
+        durationInMinutes: 30,
+      },
       new UniqueEntityId("service-1"),
     );
     inMemoryServicesRepository.items.push(service);
@@ -293,6 +319,134 @@ describe("Calculate Availability", () => {
     expect(result.isRight()).toBe(true);
     if (result.isRight()) {
       expect(result.value.availableSlots).toHaveLength(0);
+    }
+  });
+
+  it("should sum durations correctly for multiple services", async () => {
+    inMemorySchedulesRepository.items.push(
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        createdBy: new UniqueEntityId("owner-1"),
+        dayOfWeek: "TUESDAY",
+        openTime: "09:00",
+        closeTime: "11:00",
+      }),
+    );
+
+    inMemoryServicesRepository.items.push(
+      Service.create(
+        {
+          barbershopId: new UniqueEntityId("shop-1"),
+          title: "Corte",
+          durationInMinutes: 45,
+          priceInCents: 4000,
+        },
+        new UniqueEntityId("service-1"),
+      ),
+      Service.create(
+        {
+          barbershopId: new UniqueEntityId("shop-1"),
+          title: "Barba",
+          durationInMinutes: 15,
+          priceInCents: 3000,
+        },
+        new UniqueEntityId("service-2"),
+      ),
+    );
+
+    const result = await sut.execute({
+      barbershopId: "shop-1",
+      date: "2026-09-15",
+      serviceIds: ["service-1", "service-2"],
+    });
+
+    // Total duration: 45 + 15 = 60 mins.
+    // 09:00 to 11:00 with duration 60 mins:
+    // 09:00 -> 10:00
+    // 09:30 -> 10:30
+    // 10:00 -> 11:00
+    expect(result.isRight()).toBe(true);
+    if (result.isRight()) {
+      expect(result.value.availableSlots).toHaveLength(3);
+    }
+  });
+
+  it("should not allow duplicate service IDs", async () => {
+    inMemoryServicesRepository.items.push(
+      Service.create(
+        {
+          barbershopId: new UniqueEntityId("shop-1"),
+          title: "Corte",
+          durationInMinutes: 30,
+          priceInCents: 4000,
+        },
+        new UniqueEntityId("service-1"),
+      ),
+    );
+
+    const result = await sut.execute({
+      barbershopId: "shop-1",
+      date: "2026-09-15",
+      serviceIds: ["service-1", "service-1"],
+    });
+
+    expect(result.isLeft()).toBe(true);
+    if (result.isLeft()) {
+      expect(result.value.message).toBe("IDs de serviços duplicados.");
+    }
+  });
+
+  it("should reject service belonging to another barbershop", async () => {
+    inMemoryServicesRepository.items.push(
+      Service.create(
+        {
+          barbershopId: new UniqueEntityId("shop-2"), // different barbershop!
+          title: "Corte de Outra Loja",
+          durationInMinutes: 30,
+          priceInCents: 4000,
+        },
+        new UniqueEntityId("service-other"),
+      ),
+    );
+
+    const result = await sut.execute({
+      barbershopId: "shop-1",
+      date: "2026-09-15",
+      serviceIds: ["service-other"],
+    });
+
+    expect(result.isLeft()).toBe(true);
+    if (result.isLeft()) {
+      expect(result.value.message).toBe(
+        "Um ou mais serviços não foram encontrados ou estão inativos para esta barbearia.",
+      );
+    }
+  });
+
+  it("should reject inactive service", async () => {
+    const inactiveService = Service.create(
+      {
+        barbershopId: new UniqueEntityId("shop-1"),
+        title: "Corte Antigo",
+        durationInMinutes: 30,
+        priceInCents: 4000,
+        isActive: false,
+      },
+      new UniqueEntityId("service-inactive"),
+    );
+    inMemoryServicesRepository.items.push(inactiveService);
+
+    const result = await sut.execute({
+      barbershopId: "shop-1",
+      date: "2026-09-15",
+      serviceIds: ["service-inactive"],
+    });
+
+    expect(result.isLeft()).toBe(true);
+    if (result.isLeft()) {
+      expect(result.value.message).toBe(
+        "Um ou mais serviços não foram encontrados ou estão inativos para esta barbearia.",
+      );
     }
   });
 });

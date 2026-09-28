@@ -73,6 +73,24 @@ export class DrizzleBarbershopsRepository implements BarbershopsRepository {
     return results.map(DrizzleBarbershopMapper.toDomain);
   }
 
+  async findManyByStaffId(
+    staffId: string,
+  ): Promise<Array<{ barbershop: Barbershop; role: string }>> {
+    const rows = await db
+      .select({
+        barbershop: barbershops,
+        role: membership.role,
+      })
+      .from(membership)
+      .innerJoin(barbershops, eq(membership.barbershopId, barbershops.id))
+      .where(eq(membership.staffId, staffId));
+
+    return rows.map((row) => ({
+      barbershop: DrizzleBarbershopMapper.toDomain(row.barbershop),
+      role: row.role,
+    }));
+  }
+
   private validateOwnerMembership(
     barbershop: Barbershop,
     ownerMembership: Membership,

@@ -71,10 +71,23 @@ export class CalculateAvailabilityUseCase {
     const timezone = barbershop?.timezone || "America/Sao_Paulo";
     const offset = getOffsetForTimezone(date, timezone);
 
-    // 1. Calcular a duração total dos serviços
-    const services = await this.servicesRepository.findManyByIds(serviceIds);
-    if (services.length !== serviceIds.length) {
-      return left(new Error("Um ou mais serviços não foram encontrados."));
+    // 1. Validar serviços únicos e ativos pertencentes à barbearia
+    const uniqueServiceIds = Array.from(new Set(serviceIds));
+    if (uniqueServiceIds.length !== serviceIds.length) {
+      return left(new Error("IDs de serviços duplicados."));
+    }
+
+    const services =
+      await this.servicesRepository.findManyActiveByBarbershopIdAndIds(
+        barbershopId,
+        uniqueServiceIds,
+      );
+    if (services.length !== uniqueServiceIds.length) {
+      return left(
+        new Error(
+          "Um ou mais serviços não foram encontrados ou estão inativos para esta barbearia.",
+        ),
+      );
     }
 
     const totalDurationInMinutes = services.reduce(
