@@ -7,4 +7,7 @@ node_modules
 .env*
 
 coverage/*
-.tmp/
+.tmp/
+.demo-seed-credentials.json
+.demo-seed-manifest.json
+
