@@ -131,6 +131,7 @@ export class DrizzleBookingsRepository implements BookingsRepository {
         booking: bookings,
         customer: customers,
         service: services,
+        serviceItem: serviceItems,
       })
       .from(bookings)
       .innerJoin(shoppingCarts, eq(bookings.shoppingCartId, shoppingCarts.id))

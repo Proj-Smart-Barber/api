@@ -1,5 +1,9 @@
 import { relations } from "drizzle-orm/_relations";
+import { sql } from "drizzle-orm";
 import {
+  boolean,
+  check,
+  index,
   integer,
   pgEnum,
   pgTable,
@@ -90,20 +94,46 @@ export const customers = pgTable("customers", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const services = pgTable("services", {
-  id: uuid().primaryKey().defaultRandom(),
-  title: text().notNull(),
-  description: text(),
-  priceInCents: integer("price_in_cents").notNull(),
-  durationInMinutes: integer("duration_in_minutes").notNull().default(30),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+export const services = pgTable(
+  "services",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    barbershopId: uuid("barbershop_id")
+      .notNull()
+      .references(() => barbershops.id, { onDelete: "cascade" }),
+    title: text().notNull(),
+    description: text(),
+    priceInCents: integer("price_in_cents").notNull(),
+    durationInMinutes: integer("duration_in_minutes").notNull().default(30),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    index("services_barbershop_active_title_id_idx").on(
+      table.barbershopId,
+      table.isActive,
+      table.title,
+      table.id,
+    ),
+    check("services_price_positive_check", sql`${table.priceInCents} > 0`),
+    check(
+      "services_duration_positive_check",
+      sql`${table.durationInMinutes} > 0`,
+    ),
+  ],
+);
 
 export const serviceItems = pgTable("service_items", {
   id: uuid().primaryKey().defaultRandom(),
   serviceId: uuid("service_id")
     .notNull()
     .references(() => services.id),
+  titleSnapshot: text("title_snapshot"),
+  priceInCentsSnapshot: integer("price_in_cents_snapshot"),
+  durationInMinutesSnapshot: integer("duration_in_minutes_snapshot"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -179,6 +209,7 @@ export const barbershopsRelations = relations(barbershops, ({ one, many }) => ({
     fields: [barbershops.ownerId],
     references: [staffs.id],
   }),
+  services: many(services),
   memberships: many(membership),
   schedules: many(barbershopSchedules),
   exceptions: many(scheduleExceptions),
@@ -218,7 +249,11 @@ export const customersRelations = relations(customers, ({ many }) => ({
   shoppingCarts: many(shoppingCarts),
 }));
 
-export const servicesRelations = relations(services, ({ many }) => ({
+export const servicesRelations = relations(services, ({ one, many }) => ({
+  barbershop: one(barbershops, {
+    fields: [services.barbershopId],
+    references: [barbershops.id],
+  }),
   serviceItems: many(serviceItems),
 }));
 

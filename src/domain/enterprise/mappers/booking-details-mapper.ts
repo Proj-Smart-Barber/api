@@ -24,6 +24,11 @@ export interface PersistenceBookingDetails {
     priceInCents: number;
     durationInMinutes: number;
   };
+  serviceItem?: {
+    titleSnapshot?: string | null;
+    priceInCentsSnapshot?: number | null;
+    durationInMinutesSnapshot?: number | null;
+  };
 }
 
 export class BookingDetailsMapper {
@@ -41,9 +46,12 @@ export class BookingDetailsMapper {
       services: [
         {
           id: new UniqueEntityId(raw.service.id),
-          title: raw.service.title,
-          priceInCents: raw.service.priceInCents,
-          durationInMinutes: raw.service.durationInMinutes,
+          title: raw.serviceItem?.titleSnapshot ?? raw.service.title,
+          priceInCents:
+            raw.serviceItem?.priceInCentsSnapshot ?? raw.service.priceInCents,
+          durationInMinutes:
+            raw.serviceItem?.durationInMinutesSnapshot ??
+            raw.service.durationInMinutes,
         },
       ],
       date: raw.booking.date,

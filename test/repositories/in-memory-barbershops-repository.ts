@@ -58,4 +58,22 @@ export class InMemoryBarbershopsRepository implements BarbershopsRepository {
   async findManyByOwnerId(ownerId: string): Promise<Barbershop[]> {
     return this.items.filter((item) => item.ownerId.toString() === ownerId);
   }
+
+  async findManyByStaffId(
+    staffId: string,
+  ): Promise<Array<{ barbershop: Barbershop; role: string }>> {
+    const userMemberships = this.memberships.filter(
+      (m) => m.staffId.toString() === staffId,
+    );
+    const results: Array<{ barbershop: Barbershop; role: string }> = [];
+    for (const mem of userMemberships) {
+      const shop = this.items.find(
+        (b) => b.id.toString() === mem.barbershopId.toString(),
+      );
+      if (shop) {
+        results.push({ barbershop: shop, role: mem.role });
+      }
+    }
+    return results;
+  }
 }
