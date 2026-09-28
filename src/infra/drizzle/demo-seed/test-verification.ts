@@ -16,6 +16,7 @@ import {
   staffs,
 } from "../schema";
 import app from "../../../app";
+import { DemoSeedEngine } from "./engine";
 
 interface TestReport {
   passed: number;
@@ -272,7 +273,7 @@ async function runVerification() {
       );
 
       assert(
-        hasUnit && !hasOtherUnit,
+        Boolean(hasUnit && !hasOtherUnit),
         `Isolamento correto: ${cred.name} pertence apenas a ${cred.unit}`,
       );
     }
@@ -285,7 +286,9 @@ async function runVerification() {
     const resHorizontePub = await fetch(
       `${baseUrl}/api/barbershops/${shopHorizonte.id}/services`,
     );
-    const bodyHorizontePub = await resHorizontePub.json();
+    const bodyHorizontePub = (await resHorizontePub.json()) as {
+      items?: ServiceItemResponse[];
+    };
     assert(
       resHorizontePub.status === 200 && bodyHorizontePub.items?.length === 6,
       `Catálogo público de Horizonte retorna exatamente os 6 serviços ativos (atual: ${bodyHorizontePub.items?.length})`,
@@ -302,7 +305,9 @@ async function runVerification() {
     const resEstacaoPub = await fetch(
       `${baseUrl}/api/barbershops/${shopEstacao.id}/services`,
     );
-    const bodyEstacaoPub = await resEstacaoPub.json();
+    const bodyEstacaoPub = (await resEstacaoPub.json()) as {
+      items?: ServiceItemResponse[];
+    };
     assert(
       resEstacaoPub.status === 200 && bodyEstacaoPub.items?.length === 6,
       `Catálogo público de Estação retorna exatamente os 6 serviços ativos (atual: ${bodyEstacaoPub.items?.length})`,
@@ -339,7 +344,6 @@ async function runVerification() {
         .where(eq(bookings.id, disposableHorizonte.bookingId));
 
       if (!existingBooking) {
-        const { DemoSeedEngine } = await import("./engine");
         const engine = new DemoSeedEngine();
         await engine.run({ forceReplenishDisposables: true });
 

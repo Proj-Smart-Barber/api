@@ -10,6 +10,7 @@ export interface DemoStaffFixture {
   cpf: string;
   role: Role;
   unitKey: "horizonte" | "estacao";
+  defaultPasswordHash?: string;
 }
 
 export interface DemoBarbershopFixture {
