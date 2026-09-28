@@ -627,9 +627,17 @@ export class DemoSeedEngine {
         ),
       };
 
-      writeFileSync(MANIFEST_FILE_PATH, JSON.stringify(manifestData, null, 2), {
-        encoding: "utf-8",
-      });
+      try {
+        writeFileSync(
+          MANIFEST_FILE_PATH,
+          JSON.stringify(manifestData, null, 2),
+          {
+            encoding: "utf-8",
+          },
+        );
+      } catch {
+        // Ignora erro em ambientes de filesystem read-only (ex: Vercel serverless)
+      }
     }
 
     return {

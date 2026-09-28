@@ -18,6 +18,8 @@ export const DEMO_STAFFS: DemoStaffFixture[] = [
     cpf: "001.111.222-33",
     role: "OWNER",
     unitKey: "horizonte",
+    defaultPasswordHash:
+      "$2b$12$q2wr2LZxFQJ8u8t7tk/BeObBJrOWWd05I9vYMag/Ze57TbYmiDQo2",
   },
   {
     logicalKey: "horizonte:staff:arthur",
@@ -27,6 +29,8 @@ export const DEMO_STAFFS: DemoStaffFixture[] = [
     cpf: "002.222.333-44",
     role: "BARBERMAN",
     unitKey: "horizonte",
+    defaultPasswordHash:
+      "$2b$12$e8sHvtqx45648Sz3DNPgcO3wLmEQJIFuSqF1toq47BWUdEK0Du2Kq",
   },
   {
     logicalKey: "horizonte:staff:pedro",
@@ -36,6 +40,8 @@ export const DEMO_STAFFS: DemoStaffFixture[] = [
     cpf: "003.333.444-55",
     role: "BARBERMAN",
     unitKey: "horizonte",
+    defaultPasswordHash:
+      "$2b$12$rM6OPhSYHnr309BKmTOg.ufTIHWx.z0FIWU4gDuXgqOgg6.Q/zXq2",
   },
   {
     logicalKey: "horizonte:staff:jhon",
@@ -45,6 +51,8 @@ export const DEMO_STAFFS: DemoStaffFixture[] = [
     cpf: "004.444.555-66",
     role: "BARBERMAN",
     unitKey: "horizonte",
+    defaultPasswordHash:
+      "$2b$12$AXz4d0/dqdnslQDiapD1j.oKW/lKH1RN9AnsyW8OxklE1Vh0HChim",
   },
 
   // ── Unidade Estação ───────────────────────────────────────
@@ -56,6 +64,8 @@ export const DEMO_STAFFS: DemoStaffFixture[] = [
     cpf: "005.555.666-77",
     role: "OWNER",
     unitKey: "estacao",
+    defaultPasswordHash:
+      "$2b$12$S54tuSr0SOjfdAuOI7ZKw.WIgvlyahd5DL7AqBVHsc8vVj9kS530q",
   },
   {
     logicalKey: "estacao:staff:carlos",
@@ -65,6 +75,8 @@ export const DEMO_STAFFS: DemoStaffFixture[] = [
     cpf: "006.666.777-88",
     role: "BARBERMAN",
     unitKey: "estacao",
+    defaultPasswordHash:
+      "$2b$12$nrmMPXLn2vvjx/ucdoyNceX3itwv/yAwsobB66pFW9sH7wmW4C0kC",
   },
   {
     logicalKey: "estacao:staff:felipe",
@@ -74,6 +86,8 @@ export const DEMO_STAFFS: DemoStaffFixture[] = [
     cpf: "007.777.888-99",
     role: "BARBERMAN",
     unitKey: "estacao",
+    defaultPasswordHash:
+      "$2b$12$PwweJKOpNv9FJE0iQQUn.O5vqlAMjdOZLvk9DLyZDCINtIVle3/a6",
   },
   {
     logicalKey: "estacao:staff:kaua",
@@ -83,6 +97,8 @@ export const DEMO_STAFFS: DemoStaffFixture[] = [
     cpf: "008.888.999-00",
     role: "BARBERMAN",
     unitKey: "estacao",
+    defaultPasswordHash:
+      "$2b$12$Plhetfzl..j8RPNeKr/pSuNyFTs8pmetzpVWy9jIZcl9Agw7ZnRoO",
   },
 ];
 

@@ -60,6 +60,20 @@ export async function loadOrCreateStaffCredentials(
 
     if (existing && existing.plainPassword && existing.passwordHash) {
       credentialsMap[staff.logicalKey] = existing;
+    } else if (staff.defaultPasswordHash) {
+      const credential: StaffCredential = {
+        githubUser: staff.githubUser,
+        name: staff.name,
+        email: staff.email,
+        role: staff.role,
+        unit: staff.unitKey,
+        plainPassword: existing?.plainPassword || "",
+        passwordHash: staff.defaultPasswordHash,
+      };
+
+      credentialsMap[staff.logicalKey] = credential;
+      existingCredentials[staff.logicalKey] = credential;
+      modified = true;
     } else {
       const plainPassword = generateSecurePassword();
       const passwordHash = await hashPlainText(plainPassword);
@@ -81,11 +95,15 @@ export async function loadOrCreateStaffCredentials(
   }
 
   if (modified) {
-    writeFileSync(
-      CREDENTIALS_FILE_PATH,
-      JSON.stringify(existingCredentials, null, 2),
-      { encoding: "utf-8", mode: 0o600 },
-    );
+    try {
+      writeFileSync(
+        CREDENTIALS_FILE_PATH,
+        JSON.stringify(existingCredentials, null, 2),
+        { encoding: "utf-8", mode: 0o600 },
+      );
+    } catch {
+      // Ignora erro em ambientes de filesystem read-only (ex: Vercel serverless)
+    }
   }
 
   return credentialsMap;
