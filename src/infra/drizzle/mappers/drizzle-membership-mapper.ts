@@ -16,7 +16,7 @@ export class DrizzleMembershipMapper {
       {
         role: raw.role as Role,
         barbershopId: new UniqueEntityId(raw.barbershopId),
-        staffId: new UniqueEntityId(raw.staffId),
+        userId: new UniqueEntityId(raw.userId),
         createdAt: raw.createdAt ?? undefined,
       },
       new UniqueEntityId(raw.id),
@@ -28,7 +28,7 @@ export class DrizzleMembershipMapper {
       id: entity.id.toString(),
       role: entity.role,
       barbershopId: entity.barbershopId.toString(),
-      staffId: entity.staffId.toString(),
+      userId: entity.userId.toString(),
       createdAt: entity.createdAt,
     };
   }

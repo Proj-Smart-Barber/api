@@ -35,10 +35,10 @@ export const swaggerDocument = {
         },
       },
     },
-    "/api/staffs/": {
+    "/api/users/": {
       post: {
-        tags: ["Staffs"],
-        summary: "Create a new staff member",
+        tags: ["Users"],
+        summary: "Create a new user",
         requestBody: {
           required: true,
           content: {
@@ -55,6 +55,11 @@ export const swaggerDocument = {
                   },
                   password: { type: "string", example: "secret123" },
                   cpf: { type: "string", example: "12345678901" },
+                  phoneNumber: {
+                    type: "string",
+                    nullable: true,
+                    example: "(11) 99999-9999",
+                  },
                 },
               },
             },
@@ -62,13 +67,13 @@ export const swaggerDocument = {
         },
         responses: {
           "201": {
-            description: "Staff member created successfully",
+            description: "User created successfully",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
                   properties: {
-                    staffId: {
+                    userId: {
                       type: "string",
                       format: "uuid",
                       example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
@@ -123,9 +128,9 @@ export const swaggerDocument = {
         },
       },
     },
-    "/api/staffs/sessions/auth": {
+    "/api/users/sessions/auth": {
       post: {
-        tags: ["Staffs"],
+        tags: ["Users"],
         summary: "Sign in and get access token",
         requestBody: {
           required: true,
@@ -208,20 +213,20 @@ export const swaggerDocument = {
         },
       },
     },
-    "/api/staffs/me": {
+    "/api/users/me": {
       get: {
-        tags: ["Staffs"],
-        summary: "Get authenticated staff profile",
+        tags: ["Users"],
+        summary: "Get authenticated user profile",
         security: [{ bearerAuth: [] }],
         responses: {
           "200": {
-            description: "Staff profile retrieved successfully",
+            description: "User profile retrieved successfully",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
                   properties: {
-                    staff: {
+                    user: {
                       type: "object",
                       properties: {
                         id: {
@@ -238,6 +243,11 @@ export const swaggerDocument = {
                           type: "string",
                           nullable: true,
                           example: null,
+                        },
+                        phoneNumber: {
+                          type: "string",
+                          nullable: true,
+                          example: "(11) 99999-9999",
                         },
                       },
                     },
@@ -273,7 +283,7 @@ export const swaggerDocument = {
             },
           },
           "404": {
-            description: "Staff member not found",
+            description: "User not found",
             content: {
               "application/json": {
                 schema: {
@@ -365,7 +375,7 @@ export const swaggerDocument = {
           },
           "400": { description: "Validation error" },
           "401": { description: "Missing or invalid authentication" },
-          "404": { description: "Authenticated staff member not found" },
+          "404": { description: "Authenticated user not found" },
           "409": { description: "CNPJ or generated slug already in use" },
           "500": { description: "Internal server error" },
         },

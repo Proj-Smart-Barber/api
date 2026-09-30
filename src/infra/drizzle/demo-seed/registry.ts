@@ -81,12 +81,11 @@ export class SeedRegistryManager {
       "bookings",
       "shopping_carts",
       "service_items",
-      "customers",
+      "users",
       "services",
       "barbershop_schedules",
       "membership",
       "barbershops",
-      "staffs",
     ];
 
     const recordsByTable: Record<string, string[]> = {};

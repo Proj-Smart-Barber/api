@@ -7,13 +7,12 @@ import {
   barbershopSchedules,
   barbershops,
   bookings,
-  customers,
+  users,
   membership,
   scheduleExceptions,
   serviceItems,
   services,
   shoppingCarts,
-  staffs,
 } from "../schema";
 import app from "../../../app";
 import { DemoSeedEngine } from "./engine";
@@ -53,16 +52,19 @@ async function runVerification() {
     "\n[1/5] Validando integridade de dados e restrições no banco...",
   );
 
-  const allStaffs = await db.select().from(staffs);
+  const allUsers = await db.select().from(users);
   const allShops = await db.select().from(barbershops);
   const allMemberships = await db.select().from(membership);
   const allSchedules = await db.select().from(barbershopSchedules);
   const allServices = await db.select().from(services);
-  const allCustomers = await db.select().from(customers);
   const allExceptions = await db.select().from(scheduleExceptions);
   const allBookings = await db.select().from(bookings);
   const allCarts = await db.select().from(shoppingCarts);
   const allItems = await db.select().from(serviceItems);
+
+  const staffIds = new Set(allMemberships.map((m) => m.userId));
+  const allStaffs = allUsers.filter((u) => staffIds.has(u.id));
+  const allCustomers = allUsers.filter((u) => !staffIds.has(u.id));
 
   assert(
     allShops.length >= 2,
@@ -219,7 +221,7 @@ async function runVerification() {
     for (const [_key, cred] of Object.entries(
       credentialsMap as Record<string, CredentialItem>,
     )) {
-      const res = await fetch(`${baseUrl}/api/staffs/sessions/auth`, {
+      const res = await fetch(`${baseUrl}/api/users/sessions/auth`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -249,7 +251,7 @@ async function runVerification() {
       const token = authTokens[cred.email];
       if (!token) continue;
 
-      const res = await fetch(`${baseUrl}/api/staffs/me/barbershops`, {
+      const res = await fetch(`${baseUrl}/api/users/me/barbershops`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const body = (await res.json()) as {

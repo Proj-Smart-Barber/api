@@ -3,7 +3,7 @@ import { db } from "../index";
 import {
   bookings,
   shoppingCarts,
-  customers,
+  users,
   serviceItems,
   services,
   notifications,
@@ -129,13 +129,13 @@ export class DrizzleBookingsRepository implements BookingsRepository {
     const result = await db
       .select({
         booking: bookings,
-        customer: customers,
+        customer: users,
         service: services,
         serviceItem: serviceItems,
       })
       .from(bookings)
       .innerJoin(shoppingCarts, eq(bookings.shoppingCartId, shoppingCarts.id))
-      .innerJoin(customers, eq(shoppingCarts.customerId, customers.id))
+      .innerJoin(users, eq(shoppingCarts.userId, users.id))
       .innerJoin(serviceItems, eq(shoppingCarts.serviceItemId, serviceItems.id))
       .innerJoin(services, eq(serviceItems.serviceId, services.id))
       .where(

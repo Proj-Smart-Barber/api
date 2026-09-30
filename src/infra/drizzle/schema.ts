@@ -22,13 +22,14 @@ export const barbershopStatusEnum = pgEnum("barbershop_status", [
 
 // ── Tables ────────────────────────────────────────────────
 
-export const staffs = pgTable("staffs", {
+export const users = pgTable("users", {
   id: uuid().primaryKey().defaultRandom(),
   name: text().notNull(),
   avatarUrl: text("avatar_url"),
   email: text().notNull().unique(),
   password: text().notNull(),
   cpf: text().notNull().unique(),
+  phoneNumber: text("phone_number"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -40,15 +41,15 @@ export const membership = pgTable(
     barbershopId: uuid("barbershop_id")
       .notNull()
       .references(() => barbershops.id, { onDelete: "cascade" }),
-    staffId: uuid("staff_id")
+    userId: uuid("user_id")
       .notNull()
-      .references(() => staffs.id, { onDelete: "cascade" }),
+      .references(() => users.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at").defaultNow(),
   },
   (table) => [
-    unique("membership_barbershop_staff_unique").on(
+    unique("membership_barbershop_user_unique").on(
       table.barbershopId,
-      table.staffId,
+      table.userId,
     ),
   ],
 );
@@ -59,7 +60,7 @@ export const barbershops = pgTable("barbershops", {
   avatarUrl: text("avatar_url"),
   ownerId: uuid("owner_id")
     .notNull()
-    .references(() => staffs.id),
+    .references(() => users.id),
   slug: text().notNull().unique(),
   cnpj: text().notNull().unique(),
   location: text().notNull(),
@@ -73,24 +74,13 @@ export const barbershopSchedules = pgTable("barbershop_schedules", {
   barbershopId: uuid("barbershop_id")
     .notNull()
     .references(() => barbershops.id),
-  barbermanId: uuid("barberman_id").references(() => staffs.id),
+  barbermanId: uuid("barberman_id").references(() => users.id),
   createdBy: uuid("created_by")
     .notNull()
-    .references(() => staffs.id),
+    .references(() => users.id),
   dayOfWeek: text("day_of_week").notNull(),
   openTime: text("open_time").notNull(),
   closeTime: text("close_time").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const customers = pgTable("customers", {
-  id: uuid().primaryKey().defaultRandom(),
-  name: text().notNull(),
-  avatarUrl: text("avatar_url"),
-  email: text().notNull().unique(),
-  password: text().notNull(),
-  cpf: text().notNull().unique(),
-  phoneNumber: text("phone_number").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -142,9 +132,9 @@ export const shoppingCarts = pgTable("shopping_carts", {
   serviceItemId: uuid("service_item_id")
     .notNull()
     .references(() => serviceItems.id),
-  customerId: uuid("customer_id")
+  userId: uuid("user_id")
     .notNull()
-    .references(() => customers.id),
+    .references(() => users.id),
   totalPriceInCents: integer("total_price_in_cents").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -156,7 +146,7 @@ export const bookings = pgTable("bookings", {
     .references(() => barbershops.id),
   barbermanId: uuid("barberman_id")
     .notNull()
-    .references(() => staffs.id),
+    .references(() => users.id),
   shoppingCartId: uuid("shopping_cart_id")
     .notNull()
     .references(() => shoppingCarts.id),
@@ -171,7 +161,7 @@ export const scheduleExceptions = pgTable("schedule_exceptions", {
   barbershopId: uuid("barbershop_id")
     .notNull()
     .references(() => barbershops.id),
-  barbermanId: uuid("barberman_id").references(() => staffs.id),
+  barbermanId: uuid("barberman_id").references(() => users.id),
   date: timestamp("date").notNull(),
   startTime: text("start_time"),
   endTime: text("end_time"),
@@ -195,19 +185,20 @@ export const notifications = pgTable("notifications", {
 
 // ── Relations ─────────────────────────────────────────────
 
-export const staffsRelations = relations(staffs, ({ many }) => ({
+export const usersRelations = relations(users, ({ many }) => ({
   ownedBarbershops: many(barbershops),
   memberships: many(membership),
   createdSchedules: many(barbershopSchedules),
   schedules: many(barbershopSchedules),
   exceptions: many(scheduleExceptions),
   barbermanBookings: many(bookings),
+  shoppingCarts: many(shoppingCarts),
 }));
 
 export const barbershopsRelations = relations(barbershops, ({ one, many }) => ({
-  owner: one(staffs, {
+  owner: one(users, {
     fields: [barbershops.ownerId],
-    references: [staffs.id],
+    references: [users.id],
   }),
   services: many(services),
   memberships: many(membership),
@@ -221,9 +212,9 @@ export const membershipRelations = relations(membership, ({ one }) => ({
     fields: [membership.barbershopId],
     references: [barbershops.id],
   }),
-  staff: one(staffs, {
-    fields: [membership.staffId],
-    references: [staffs.id],
+  user: one(users, {
+    fields: [membership.userId],
+    references: [users.id],
   }),
 }));
 
@@ -234,20 +225,16 @@ export const barbershopSchedulesRelations = relations(
       fields: [barbershopSchedules.barbershopId],
       references: [barbershops.id],
     }),
-    barberman: one(staffs, {
+    barberman: one(users, {
       fields: [barbershopSchedules.barbermanId],
-      references: [staffs.id],
+      references: [users.id],
     }),
-    createdByStaff: one(staffs, {
+    createdByUser: one(users, {
       fields: [barbershopSchedules.createdBy],
-      references: [staffs.id],
+      references: [users.id],
     }),
   }),
 );
-
-export const customersRelations = relations(customers, ({ many }) => ({
-  shoppingCarts: many(shoppingCarts),
-}));
 
 export const servicesRelations = relations(services, ({ one, many }) => ({
   barbershop: one(barbershops, {
@@ -269,9 +256,9 @@ export const serviceItemsRelations = relations(
 );
 
 export const shoppingCartsRelations = relations(shoppingCarts, ({ one }) => ({
-  customer: one(customers, {
-    fields: [shoppingCarts.customerId],
-    references: [customers.id],
+  user: one(users, {
+    fields: [shoppingCarts.userId],
+    references: [users.id],
   }),
   serviceItem: one(serviceItems, {
     fields: [shoppingCarts.serviceItemId],
@@ -288,9 +275,9 @@ export const bookingsRelations = relations(bookings, ({ one, many }) => ({
     fields: [bookings.barbershopId],
     references: [barbershops.id],
   }),
-  barberman: one(staffs, {
+  barberman: one(users, {
     fields: [bookings.barbermanId],
-    references: [staffs.id],
+    references: [users.id],
   }),
   shoppingCart: one(shoppingCarts, {
     fields: [bookings.shoppingCartId],
@@ -313,9 +300,9 @@ export const scheduleExceptionsRelations = relations(
       fields: [scheduleExceptions.barbershopId],
       references: [barbershops.id],
     }),
-    barberman: one(staffs, {
+    barberman: one(users, {
       fields: [scheduleExceptions.barbermanId],
-      references: [staffs.id],
+      references: [users.id],
     }),
   }),
 );

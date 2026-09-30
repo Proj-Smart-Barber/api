@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { adaptRoute } from "../../../core/infra/adapters/express-route-adapter";
-import { ensureStaffIsAuthenticated } from "../middlewares/ensure-staff-is-authenticated";
-import { optionalStaffAuthentication } from "../middlewares/optional-staff-authentication";
+import { ensureUserIsAuthenticated } from "../middlewares/ensure-user-is-authenticated";
+import { optionalUserAuthentication } from "../middlewares/optional-user-authentication";
 import { makeCreateServiceController } from "../factories/make-create-service-controller";
 import { makeUpdateServiceController } from "../factories/make-update-service-controller";
 import { makeToggleServiceActivationController } from "../factories/make-toggle-service-activation-controller";
@@ -12,31 +12,31 @@ const serviceRoutes = Router({ mergeParams: true });
 
 serviceRoutes.get(
   "/",
-  optionalStaffAuthentication,
+  optionalUserAuthentication,
   adaptRoute(makeListServicesController()),
 );
 
 serviceRoutes.post(
   "/",
-  ensureStaffIsAuthenticated,
+  ensureUserIsAuthenticated,
   adaptRoute(makeCreateServiceController()),
 );
 
 serviceRoutes.get(
   "/:serviceId",
-  optionalStaffAuthentication,
+  optionalUserAuthentication,
   adaptRoute(makeGetServiceController()),
 );
 
 serviceRoutes.patch(
   "/:serviceId",
-  ensureStaffIsAuthenticated,
+  ensureUserIsAuthenticated,
   adaptRoute(makeUpdateServiceController()),
 );
 
 serviceRoutes.patch(
   "/:serviceId/activation",
-  ensureStaffIsAuthenticated,
+  ensureUserIsAuthenticated,
   adaptRoute(makeToggleServiceActivationController()),
 );
 
