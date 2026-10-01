@@ -4,7 +4,6 @@ import { Password } from "../../../../enterprise/entities/value-objects/password
 import { InvalidCredentialsError } from "../../_errors/invalid-credentials-error";
 import type { StringValue } from "ms";
 import type { UsersRepository } from "../../../repositories/users-repository";
-import type { BarbershopsRepository } from "../../../repositories/barbershops-repository";
 import type { SignInUserDTO } from "./sign-in-user-dto";
 import type { SignInUserResponse } from "./sign-in-user-response";
 import { env } from "../../../../../infra/env";
@@ -15,10 +14,7 @@ type SignInUserUseCaseResponse = Either<
 >;
 
 export class SignInUserUseCase {
-  constructor(
-    private usersRepository: UsersRepository,
-    private barbershopsRepository: BarbershopsRepository,
-  ) {}
+  constructor(private usersRepository: UsersRepository) {}
 
   async execute({
     email,
@@ -27,14 +23,6 @@ export class SignInUserUseCase {
     const user = await this.usersRepository.findByEmail(email);
 
     if (!user) {
-      return left(new InvalidCredentialsError());
-    }
-
-    const memberships = await this.barbershopsRepository.findManyByStaffId(
-      user.id.toString(),
-    );
-
-    if (memberships.length === 0) {
       return left(new InvalidCredentialsError());
     }
 

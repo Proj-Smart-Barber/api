@@ -1,7 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { verify } from "jsonwebtoken";
 import { DrizzleUsersRepository } from "../../drizzle/repositories/drizzle-users-repository";
-import { DrizzleBarbershopsRepository } from "../../drizzle/repositories/drizzle-barbershops-repository";
 import { env } from "../../env";
 
 interface Payload {
@@ -30,19 +29,10 @@ export async function ensureUserIsAuthenticated(
   try {
     const payload = verify(token, env.JWT_SECRET) as Payload;
     const usersRepository = new DrizzleUsersRepository();
-    const barbershopsRepository = new DrizzleBarbershopsRepository();
 
     const user = await usersRepository.findById(payload.sub);
 
     if (!user) {
-      return reply.status(401).json({ message: "Usuário não encontrado." });
-    }
-
-    const memberships = await barbershopsRepository.findManyByStaffId(
-      user.id.toString(),
-    );
-
-    if (memberships.length === 0) {
       return reply.status(401).json({ message: "Usuário não encontrado." });
     }
 
