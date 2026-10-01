@@ -188,8 +188,12 @@ export const notifications = pgTable("notifications", {
 export const usersRelations = relations(users, ({ many }) => ({
   ownedBarbershops: many(barbershops),
   memberships: many(membership),
-  createdSchedules: many(barbershopSchedules),
-  schedules: many(barbershopSchedules),
+  createdSchedules: many(barbershopSchedules, {
+    relationName: "createdByUser",
+  }),
+  schedules: many(barbershopSchedules, {
+    relationName: "barberman",
+  }),
   exceptions: many(scheduleExceptions),
   barbermanBookings: many(bookings),
   shoppingCarts: many(shoppingCarts),
@@ -228,10 +232,12 @@ export const barbershopSchedulesRelations = relations(
     barberman: one(users, {
       fields: [barbershopSchedules.barbermanId],
       references: [users.id],
+      relationName: "barberman",
     }),
     createdByUser: one(users, {
       fields: [barbershopSchedules.createdBy],
       references: [users.id],
+      relationName: "createdByUser",
     }),
   }),
 );
