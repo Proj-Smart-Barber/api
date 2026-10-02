@@ -4,7 +4,7 @@ import type { Optional } from "../../../core/types/optional";
 
 interface ShoppingCartProps {
   serviceItemId: UniqueEntityId;
-  customerId: UniqueEntityId;
+  userId: UniqueEntityId;
   totalPriceInCents: number;
   createdAt?: Date;
 }
@@ -14,8 +14,8 @@ export class ShoppingCart extends Entity<ShoppingCartProps> {
     return this.props.serviceItemId;
   }
 
-  get customerId(): UniqueEntityId {
-    return this.props.customerId;
+  get userId(): UniqueEntityId {
+    return this.props.userId;
   }
 
   get totalPriceInCents(): number {

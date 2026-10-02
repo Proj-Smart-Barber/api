@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { adaptRoute } from "../../../core/infra/adapters/express-route-adapter";
-import { ensureStaffIsAuthenticated } from "../middlewares/ensure-staff-is-authenticated";
+import { ensureUserIsAuthenticated } from "../middlewares/ensure-user-is-authenticated";
 
 import { makeFetchBarbermanDailyScheduleController } from "../factories/make-fetch-barberman-daily-schedule-controller";
 import { makeCancelBookingController } from "../factories/make-cancel-booking-controller";
@@ -9,17 +9,17 @@ const bookingRoutes = Router();
 
 bookingRoutes.get(
   "/barberman/schedule",
-  ensureStaffIsAuthenticated,
+  ensureUserIsAuthenticated,
   adaptRoute(makeFetchBarbermanDailyScheduleController()),
 );
 bookingRoutes.get(
   "/barberman/schedule/details",
-  ensureStaffIsAuthenticated,
+  ensureUserIsAuthenticated,
   adaptRoute(makeFetchBarbermanDailyScheduleWithDetailsController()),
 );
 bookingRoutes.delete(
   "/:bookingId/cancel",
-  ensureStaffIsAuthenticated,
+  ensureUserIsAuthenticated,
   adaptRoute(makeCancelBookingController()),
 );
 

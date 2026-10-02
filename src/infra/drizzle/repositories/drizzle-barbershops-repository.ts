@@ -83,7 +83,7 @@ export class DrizzleBarbershopsRepository implements BarbershopsRepository {
       })
       .from(membership)
       .innerJoin(barbershops, eq(membership.barbershopId, barbershops.id))
-      .where(eq(membership.staffId, staffId));
+      .where(eq(membership.userId, staffId));
 
     return rows.map((row) => ({
       barbershop: DrizzleBarbershopMapper.toDomain(row.barbershop),
@@ -97,7 +97,7 @@ export class DrizzleBarbershopsRepository implements BarbershopsRepository {
   ): void {
     const hasValidOwner =
       ownerMembership.barbershopId.toString() === barbershop.id.toString() &&
-      ownerMembership.staffId.toString() === barbershop.ownerId.toString() &&
+      ownerMembership.userId.toString() === barbershop.ownerId.toString() &&
       ownerMembership.role === Role.OWNER;
 
     if (!hasValidOwner) {

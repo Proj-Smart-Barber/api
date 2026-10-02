@@ -1,6 +1,6 @@
 import { InMemoryBarbershopsRepository } from "../../../../../../test/repositories/in-memory-barbershops-repository";
-import { InMemoryStaffsRepository } from "../../../../../../test/repositories/in-memory-staffs-repository";
-import { Staff } from "../../../../enterprise/entities/staff";
+import { InMemoryUsersRepository } from "../../../../../../test/repositories/in-memory-users-repository";
+import { User } from "../../../../enterprise/entities/user";
 import { Role } from "../../../../enterprise/entities/membership";
 import { Password } from "../../../../enterprise/entities/value-objects/password";
 import { BarbershopAlreadyExistsError } from "../../_errors/barbershop-already-exists-error";
@@ -8,26 +8,26 @@ import { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
 import { CreateBarbershopUseCase } from "./create-barbershop";
 
 let barbershopsRepository: InMemoryBarbershopsRepository;
-let staffsRepository: InMemoryStaffsRepository;
+let usersRepository: InMemoryUsersRepository;
 let sut: CreateBarbershopUseCase;
-let owner: Staff;
+let owner: User;
 
 async function createOwner() {
-  const newOwner = Staff.create({
+  const newOwner = User.create({
     name: "Owner",
     email: "owner@example.com",
     password: Password.create("hashed-password"),
     cpf: "12345678901",
   });
 
-  return staffsRepository.save(newOwner);
+  return usersRepository.save(newOwner);
 }
 
 describe("Create barbershop", () => {
   beforeEach(async () => {
     barbershopsRepository = new InMemoryBarbershopsRepository();
-    staffsRepository = new InMemoryStaffsRepository();
-    sut = new CreateBarbershopUseCase(barbershopsRepository, staffsRepository);
+    usersRepository = new InMemoryUsersRepository();
+    sut = new CreateBarbershopUseCase(barbershopsRepository, usersRepository);
     owner = await createOwner();
   });
 
@@ -52,7 +52,7 @@ describe("Create barbershop", () => {
       expect(barbershop.status).toBe("ACTIVE");
       expect(barbershop.timezone).toBe("America/Sao_Paulo");
       expect(membership.barbershopId.toString()).toBe(barbershop.id.toString());
-      expect(membership.staffId.toString()).toBe(owner.id.toString());
+      expect(membership.userId.toString()).toBe(owner.id.toString());
       expect(membership.role).toBe(Role.OWNER);
     }
   });

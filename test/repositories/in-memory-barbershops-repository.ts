@@ -15,7 +15,7 @@ export class InMemoryBarbershopsRepository implements BarbershopsRepository {
   ): Promise<Barbershop> {
     const hasValidOwner =
       ownerMembership.barbershopId.toString() === barbershop.id.toString() &&
-      ownerMembership.staffId.toString() === barbershop.ownerId.toString() &&
+      ownerMembership.userId.toString() === barbershop.ownerId.toString() &&
       ownerMembership.role === Role.OWNER;
 
     if (!hasValidOwner) {
@@ -63,7 +63,7 @@ export class InMemoryBarbershopsRepository implements BarbershopsRepository {
     staffId: string,
   ): Promise<Array<{ barbershop: Barbershop; role: string }>> {
     const userMemberships = this.memberships.filter(
-      (m) => m.staffId.toString() === staffId,
+      (m) => m.userId.toString() === staffId,
     );
     const results: Array<{ barbershop: Barbershop; role: string }> = [];
     for (const mem of userMemberships) {

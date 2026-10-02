@@ -10,7 +10,7 @@ export enum Role {
 interface MembershipProps {
   role: Role;
   barbershopId: UniqueEntityId;
-  staffId: UniqueEntityId;
+  userId: UniqueEntityId;
   createdAt?: Date;
 }
 
@@ -23,8 +23,8 @@ export class Membership extends Entity<MembershipProps> {
     return this.props.barbershopId;
   }
 
-  get staffId(): UniqueEntityId {
-    return this.props.staffId;
+  get userId(): UniqueEntityId {
+    return this.props.userId;
   }
 
   get createdAt(): Date | undefined {

@@ -5,7 +5,7 @@ import { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
 import { Barbershop } from "../../../../enterprise/entities/barbershop";
 import { Membership, Role } from "../../../../enterprise/entities/membership";
 import { Slug } from "../../../../enterprise/entities/value-objects/slug";
-import type { StaffsRepository } from "../../../repositories/staffs-repository";
+import type { UsersRepository } from "../../../repositories/users-repository";
 import type { CreateBarbershopDTO } from "./create-barbershop-dto";
 import type { CreateBarbershopResponse } from "./create-barbershop-response";
 
@@ -19,7 +19,7 @@ type CreateBarbershopUseCaseResponse = Either<
 export class CreateBarbershopUseCase {
   constructor(
     private barbershopsRepository: BarbershopsRepository,
-    private staffsRepository: StaffsRepository,
+    private usersRepository: UsersRepository,
   ) {}
 
   async execute({
@@ -30,7 +30,7 @@ export class CreateBarbershopUseCase {
     timezone = DEFAULT_TIMEZONE,
     avatarUrl,
   }: CreateBarbershopDTO): Promise<CreateBarbershopUseCaseResponse> {
-    const owner = await this.staffsRepository.findById(ownerId);
+    const owner = await this.usersRepository.findById(ownerId);
 
     if (!owner) {
       return left(new ResourceNotFoundError());
@@ -62,7 +62,7 @@ export class CreateBarbershopUseCase {
     const ownerMembership = Membership.create({
       role: Role.OWNER,
       barbershopId: barbershop.id,
-      staffId: owner.id,
+      userId: owner.id,
     });
 
     const createdBarbershop =

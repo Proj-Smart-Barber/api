@@ -7,13 +7,12 @@ import {
   barbershopSchedules,
   barbershops,
   bookings,
-  customers,
+  users,
   membership,
   scheduleExceptions,
   serviceItems,
   services,
   shoppingCarts,
-  staffs,
 } from "../schema";
 import {
   DEMO_BARBERSHOPS,
@@ -149,9 +148,9 @@ export class DemoSeedEngine {
         if (!isDryRun) {
           // Prevenção de colisão por e-mail preexistente fora do registry
           const existingByEmail = await db
-            .select({ id: staffs.id })
-            .from(staffs)
-            .where(eq(staffs.email, staffFixture.email));
+            .select({ id: users.id })
+            .from(users)
+            .where(eq(users.email, staffFixture.email));
 
           let staffId: string;
           if (existingByEmail.length > 0) {
@@ -159,14 +158,14 @@ export class DemoSeedEngine {
           } else {
             const cred = staffCredentials[staffFixture.logicalKey];
             const [created] = await db
-              .insert(staffs)
+              .insert(users)
               .values({
                 name: staffFixture.name,
                 email: staffFixture.email,
                 password: cred.passwordHash,
                 cpf: staffFixture.cpf,
               })
-              .returning({ id: staffs.id });
+              .returning({ id: users.id });
             staffId = created.id;
           }
 
@@ -174,7 +173,7 @@ export class DemoSeedEngine {
           await this.registry.recordEntry(
             DEMO_SEED_NAMESPACE,
             staffFixture.logicalKey,
-            "staffs",
+            "users",
             staffId,
           );
         } else {
@@ -257,7 +256,7 @@ export class DemoSeedEngine {
             .select({ id: membership.id })
             .from(membership)
             .where(
-              sql`${membership.barbershopId} = ${barbershopId} AND ${membership.staffId} = ${staffId}`,
+              sql`${membership.barbershopId} = ${barbershopId} AND ${membership.userId} = ${staffId}`,
             );
 
           let memberId: string;
@@ -268,7 +267,7 @@ export class DemoSeedEngine {
               .insert(membership)
               .values({
                 barbershopId,
-                staffId,
+                userId: staffId,
                 role: staffFixture.role,
               })
               .returning({ id: membership.id });
@@ -387,16 +386,16 @@ export class DemoSeedEngine {
         counts.customers.created++;
         if (!isDryRun) {
           const existingByEmail = await db
-            .select({ id: customers.id })
-            .from(customers)
-            .where(eq(customers.email, customerFixture.email));
+            .select({ id: users.id })
+            .from(users)
+            .where(eq(users.email, customerFixture.email));
 
           let customerId: string;
           if (existingByEmail.length > 0) {
             customerId = existingByEmail[0].id;
           } else {
             const [created] = await db
-              .insert(customers)
+              .insert(users)
               .values({
                 name: customerFixture.name,
                 email: customerFixture.email,
@@ -404,7 +403,7 @@ export class DemoSeedEngine {
                 cpf: customerFixture.cpf,
                 phoneNumber: customerFixture.phoneNumber,
               })
-              .returning({ id: customers.id });
+              .returning({ id: users.id });
             customerId = created.id;
           }
 
@@ -412,7 +411,7 @@ export class DemoSeedEngine {
           await this.registry.recordEntry(
             DEMO_SEED_NAMESPACE,
             customerFixture.logicalKey,
-            "customers",
+            "users",
             customerId,
           );
         } else {
@@ -547,7 +546,7 @@ export class DemoSeedEngine {
             .insert(shoppingCarts)
             .values({
               serviceItemId: serviceItem.id,
-              customerId,
+              userId: customerId,
               totalPriceInCents: serviceRow.priceInCents,
             })
             .returning({ id: shoppingCarts.id });

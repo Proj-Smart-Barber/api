@@ -4,14 +4,13 @@ import {
   barbershopSchedules,
   barbershops,
   bookings,
-  customers,
+  users,
   membership,
   notifications,
   scheduleExceptions,
   serviceItems,
   services,
   shoppingCarts,
-  staffs,
 } from "./schema";
 
 async function main() {
@@ -22,16 +21,15 @@ async function main() {
   await db.delete(serviceItems);
   await db.delete(services);
   await db.delete(barbershopSchedules);
-  await db.delete(customers);
   await db.delete(membership);
   await db.delete(barbershops);
-  await db.delete(staffs);
+  await db.delete(users);
 
   const ownerHash = await Password.generateHashFromPlainText("123456", 10);
   const customerHash = await Password.generateHashFromPlainText("123456", 10);
 
   const [owner] = await db
-    .insert(staffs)
+    .insert(users)
     .values({
       name: "Carlos Silva",
       email: "owner@smartbarber.com",
@@ -41,7 +39,7 @@ async function main() {
     .returning();
 
   const [barberman] = await db
-    .insert(staffs)
+    .insert(users)
     .values({
       name: "João Souza",
       email: "barberman@smartbarber.com",
@@ -65,12 +63,12 @@ async function main() {
     {
       role: "OWNER",
       barbershopId: barbershop.id,
-      staffId: owner.id,
+      userId: owner.id,
     },
     {
       role: "BARBERMAN",
       barbershopId: barbershop.id,
-      staffId: barberman.id,
+      userId: barberman.id,
     },
   ]);
 
@@ -92,7 +90,7 @@ async function main() {
   ]);
 
   const [customer] = await db
-    .insert(customers)
+    .insert(users)
     .values({
       name: "Ana Pereira",
       email: "ana@example.com",
@@ -128,7 +126,7 @@ async function main() {
     .insert(shoppingCarts)
     .values({
       serviceItemId: serviceItem.id,
-      customerId: customer.id,
+      userId: customer.id,
       totalPriceInCents: 4000,
     })
     .returning();
