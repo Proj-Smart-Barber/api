@@ -81,11 +81,13 @@ export class SeedRegistryManager {
       "bookings",
       "shopping_carts",
       "service_items",
-      "users",
       "services",
       "barbershop_schedules",
       "membership",
       "barbershops",
+      "customers",
+      "staffs",
+      "users",
     ];
 
     const recordsByTable: Record<string, string[]> = {};
@@ -102,13 +104,48 @@ export class SeedRegistryManager {
         const quotedIds = ids
           .map((id) => `'${id.replace(/'/g, "''")}'`)
           .join(", ");
-        await db.execute(
-          sql.raw(`
-          DELETE FROM ${table}
-          WHERE id IN (${quotedIds});
-        `),
-        );
-        deletedCounts[table] = ids.length;
+        if (table === "barbershops") {
+          try {
+            await db.execute(
+              sql.raw(`
+              DELETE FROM barbershop_schedules
+              WHERE barbershop_id IN (${quotedIds});
+            `),
+            );
+          } catch {
+            // Ignora se tabela não existir ou já limpa
+          }
+        }
+
+        try {
+          await db.execute(
+            sql.raw(`
+            DELETE FROM ${table}
+            WHERE id IN (${quotedIds});
+          `),
+          );
+          deletedCounts[table] = ids.length;
+        } catch (err: unknown) {
+          const errMsg = err instanceof Error ? err.message : String(err);
+          if (
+            (table === "staffs" || table === "customers") &&
+            errMsg.includes("does not exist")
+          ) {
+            try {
+              await db.execute(
+                sql.raw(`
+                DELETE FROM users
+                WHERE id IN (${quotedIds});
+              `),
+              );
+              deletedCounts.users = (deletedCounts.users || 0) + ids.length;
+            } catch {
+              // Ignora se já tiver sido deletado
+            }
+          } else {
+            throw err;
+          }
+        }
       }
     }
 

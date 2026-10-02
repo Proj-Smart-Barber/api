@@ -93,6 +93,36 @@ export async function runSchemaMigrations() {
       CREATE INDEX IF NOT EXISTS "services_barbershop_active_title_id_idx" ON "services" ("barbershop_id","is_active","title","id");
     `);
 
+    // 7. Unificação de staffs e customers para users
+    await db.execute(sql`
+      DO $$
+      BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'staffs') THEN
+          ALTER TABLE "staffs" RENAME TO "users";
+        END IF;
+
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'users') THEN
+          ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "phone_number" text;
+        END IF;
+
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'customers') THEN
+          INSERT INTO "users" ("id", "name", "avatar_url", "email", "password", "cpf", "phone_number", "created_at")
+          SELECT "id", "name", "avatar_url", "email", "password", "cpf", "phone_number", "created_at"
+          FROM "customers"
+          ON CONFLICT ("id") DO NOTHING;
+          DROP TABLE "customers" CASCADE;
+        END IF;
+
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'membership' AND column_name = 'staff_id') THEN
+          ALTER TABLE "membership" RENAME COLUMN "staff_id" TO "user_id";
+        END IF;
+
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'shopping_carts' AND column_name = 'customer_id') THEN
+          ALTER TABLE "shopping_carts" RENAME COLUMN "customer_id" TO "user_id";
+        END IF;
+      END $$;
+    `);
+
     hasMigrated = true;
     console.log("[Migration] Schema migrations completed successfully.");
     return {

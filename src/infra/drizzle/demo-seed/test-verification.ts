@@ -242,7 +242,7 @@ async function runVerification() {
 
     // ── 3. Perfis e Descoberta de Barbearia ───────────────────────
     console.log(
-      "\n[3/5] Testando /api/staffs/me/barbershops e isolamento de tenant...",
+      "\n[3/5] Testando /api/users/me/barbershops e isolamento de tenant...",
     );
 
     for (const [_key, cred] of Object.entries(
