@@ -38,7 +38,7 @@ export class GetUserProfileController implements Controller {
 
       const { user } = result.value;
 
-      return ok({ user });
+      return ok({ user, staff: user });
     } catch (err) {
       if (err instanceof ZodError) {
         return clientError(z.prettifyError(err));

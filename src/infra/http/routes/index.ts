@@ -7,6 +7,7 @@ import { barbershopRoutes } from "./barbershop.routes";
 const routes = Router();
 
 routes.use("/users", userRoutes);
+routes.use("/staffs", userRoutes);
 routes.use("/barbershops", barbershopRoutes);
 routes.use("/bookings", bookingRoutes);
 routes.use("/barbershops/:shopId", scheduleRoutes);
