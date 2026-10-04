@@ -4,6 +4,7 @@ import { ensureUserIsAuthenticated } from "../middlewares/ensure-user-is-authent
 
 import { makeFetchBarbermanDailyScheduleController } from "../factories/make-fetch-barberman-daily-schedule-controller";
 import { makeCancelBookingController } from "../factories/make-cancel-booking-controller";
+import { makeUpdateBookingController } from "../factories/make-update-booking-controller";
 import { makeFetchBarbermanDailyScheduleWithDetailsController } from "../factories/make-fetch-barberman-daily-schedule-with-details-controller";
 const bookingRoutes = Router();
 
@@ -21,6 +22,11 @@ bookingRoutes.delete(
   "/:bookingId/cancel",
   ensureUserIsAuthenticated,
   adaptRoute(makeCancelBookingController()),
+);
+bookingRoutes.patch(
+  "/:bookingId",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeUpdateBookingController()),
 );
 
 export { bookingRoutes };

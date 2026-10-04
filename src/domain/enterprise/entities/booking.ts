@@ -29,12 +29,24 @@ export class Booking extends Entity<BookingProps> {
     return this.props.date;
   }
 
+  set date(value: Date) {
+    this.props.date = value;
+  }
+
   get startTime(): string {
     return this.props.startTime;
   }
 
+  set startTime(value: string) {
+    this.props.startTime = value;
+  }
+
   get endTime(): string {
     return this.props.endTime;
+  }
+
+  set endTime(value: string) {
+    this.props.endTime = value;
   }
 
   get createdAt(): Date | undefined {
