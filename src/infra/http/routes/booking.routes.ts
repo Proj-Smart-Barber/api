@@ -24,7 +24,7 @@ bookingRoutes.delete(
   adaptRoute(makeCancelBookingController()),
 );
 bookingRoutes.patch(
-  "/:bookingId",
+  "/:bookingId/update",
   ensureUserIsAuthenticated,
   adaptRoute(makeUpdateBookingController()),
 );

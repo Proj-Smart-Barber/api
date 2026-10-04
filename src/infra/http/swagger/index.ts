@@ -889,7 +889,7 @@ export const swaggerDocument = {
         },
       },
     },
-    "/api/bookings/{bookingId}": {
+    "/api/bookings/{bookingId}/update": {
       patch: {
         tags: ["Bookings"],
         summary: "Update an existing booking schedule time",
