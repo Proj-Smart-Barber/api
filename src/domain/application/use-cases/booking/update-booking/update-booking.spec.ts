@@ -113,7 +113,6 @@ describe("Update Booking Use Case", () => {
     await inMemoryBookingsRepository.create(booking1);
     await inMemoryBookingsRepository.create(booking2);
 
-    // Try to update booking1 to conflict with booking2 (15:00 - 15:30)
     const result = await sut.execute({
       bookingId: "booking-1",
       barbermanId: "barberman-1",

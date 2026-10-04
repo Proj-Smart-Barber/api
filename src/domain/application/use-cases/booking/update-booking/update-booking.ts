@@ -35,7 +35,6 @@ export class UpdateBookingUseCase {
     const targetStartTime = startTime ?? booking.startTime;
     const targetEndTime = endTime ?? booking.endTime;
 
-    // Check for overlaps if time or date is being updated
     if (
       date !== undefined ||
       startTime !== undefined ||
