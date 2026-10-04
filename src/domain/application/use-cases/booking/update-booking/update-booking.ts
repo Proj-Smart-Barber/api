@@ -1,5 +1,6 @@
 import { type Either, left, right } from "../../../../../core/logic/either";
 import type { BookingsRepository } from "../../../repositories/bookings-repository";
+import type { BarbershopsRepository } from "../../../repositories/barbershops-repository";
 import { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
 import { UnauthorizedError } from "../../_errors/unauthorized-error";
 import { BookingConflictError } from "../../_errors/booking-conflict-error";
@@ -12,7 +13,10 @@ type UpdateBookingUseCaseResponse = Either<
 >;
 
 export class UpdateBookingUseCase {
-  constructor(private bookingsRepository: BookingsRepository) {}
+  constructor(
+    private bookingsRepository: BookingsRepository,
+    private barbershopsRepository: BarbershopsRepository,
+  ) {}
 
   async execute({
     bookingId,
@@ -27,7 +31,14 @@ export class UpdateBookingUseCase {
       return left(new ResourceNotFoundError("Reserva não encontrada."));
     }
 
-    if (booking.barbermanId.toString() !== barbermanId) {
+    const barbershop = await this.barbershopsRepository.findById(
+      booking.barbershopId.toString(),
+    );
+
+    const isBarberman = booking.barbermanId.toString() === barbermanId;
+    const isOwner = barbershop?.ownerId.toString() === barbermanId;
+
+    if (!isBarberman && !isOwner) {
       return left(new UnauthorizedError());
     }
 
