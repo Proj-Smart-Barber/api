@@ -889,6 +889,100 @@ export const swaggerDocument = {
         },
       },
     },
+    "/api/bookings/{bookingId}": {
+      patch: {
+        tags: ["Bookings"],
+        summary: "Update an existing booking schedule time",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: "path",
+            name: "bookingId",
+            required: true,
+            schema: {
+              type: "string",
+              format: "uuid",
+            },
+            description: "ID of the booking to be updated",
+          },
+        ],
+        requestBody: {
+          required: false,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  date: {
+                    type: "string",
+                    format: "date-time",
+                    example: "2026-09-15T00:00:00.000Z",
+                  },
+                  startTime: { type: "string", example: "15:00" },
+                  endTime: { type: "string", example: "15:30" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Booking updated successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    booking: {
+                      type: "object",
+                      properties: {
+                        id: {
+                          type: "string",
+                          format: "uuid",
+                        },
+                        barbershopId: {
+                          type: "string",
+                          format: "uuid",
+                        },
+                        barbermanId: {
+                          type: "string",
+                          format: "uuid",
+                        },
+                        shoppingCartId: {
+                          type: "string",
+                          format: "uuid",
+                        },
+                        date: {
+                          type: "string",
+                          format: "date-time",
+                        },
+                        startTime: { type: "string", example: "15:00" },
+                        endTime: { type: "string", example: "15:30" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+          },
+          "401": {
+            description: "Unauthorized",
+          },
+          "404": {
+            description: "Booking not found",
+          },
+          "409": {
+            description: "Booking conflict error (time slot already booked)",
+          },
+          "500": {
+            description: "Internal server error",
+          },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
