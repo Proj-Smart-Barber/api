@@ -99,7 +99,7 @@ async function main() {
           "  [APPLY] As 8 senhas fortes foram salvas em '.demo-seed-credentials.json' (git-ignored).",
         );
         console.log(
-          "  [INFO] Apenas hashes bcrypt com salt 12 foram gravados no banco de dados.",
+          "  [INFO] Os hashes no formato better-auth foram gravados em account.password.",
         );
       }
     }

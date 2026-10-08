@@ -1,45 +1,42 @@
 import type { Request, Response, NextFunction } from "express";
-import { verify } from "jsonwebtoken";
-import { DrizzleUsersRepository } from "../../drizzle/repositories/drizzle-users-repository";
-import { env } from "../../env";
-
-interface Payload {
-  sub: string;
-}
+import { authGateway } from "../../auth/better-auth-gateway";
 
 declare module "express-serve-static-core" {
   interface Request {
-    user?: Payload;
+    user?: {
+      sub: string;
+      role?: string;
+    };
   }
 }
 
+/**
+ * Valida a sessão via better-auth (cookie de web ou `Authorization: Bearer`
+ * nativo). A leitura é sempre autoritativa (sem cookie cache), então logout,
+ * expiração e revogação valem imediatamente.
+ */
 export async function ensureUserIsAuthenticated(
   request: Request,
   reply: Response,
   next: NextFunction,
 ) {
-  const authHeader = request.headers.authorization;
-
-  const token = authHeader && authHeader.split(" ")[1];
-
-  if (!token) {
-    return reply.status(401).json({ message: "Token is missing!" });
-  }
-
   try {
-    const payload = verify(token, env.JWT_SECRET) as Payload;
-    const usersRepository = new DrizzleUsersRepository();
+    const session = await authGateway.getSession(request.headers);
 
-    const user = await usersRepository.findById(payload.sub);
-
-    if (!user) {
-      return reply.status(401).json({ message: "Usuário não encontrado." });
+    if (!session) {
+      return reply
+        .status(401)
+        .json({ message: "Sessão inválida ou expirada." });
     }
 
-    request.user = payload;
+    request.user = {
+      sub: session.user.id,
+      role: session.user.role,
+    };
+
     next();
   } catch (error) {
     console.error("[ensureUserIsAuthenticated] Error:", error);
-    return reply.status(500).json({ error });
+    return reply.status(401).json({ message: "Sessão inválida ou expirada." });
   }
 }

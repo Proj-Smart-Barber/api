@@ -4,14 +4,17 @@ import {
   clientError,
   created,
   fail,
-  unauthorized,
   type HttpResponse,
 } from "../../../core/infra/http-response";
 import type { SignInUserUseCase } from "../../../domain/application/use-cases/users/sign-in-user/sign-in-user";
+import { authErrorResponse } from "./users/auth-error-response";
+import { relayHeaders } from "../utils/relay-headers";
+import { isAllowedRedirectUrl } from "../utils/is-allowed-redirect-url";
 
 const signInUserControllerRequest = z.object({
   email: z.email(),
   password: z.string(),
+  callbackURL: z.string().optional(),
 });
 
 type SignInUserControllerRequest = z.infer<typeof signInUserControllerRequest>;
@@ -21,22 +24,33 @@ export class SignInUserController implements Controller {
 
   async handle(request: SignInUserControllerRequest): Promise<HttpResponse> {
     try {
-      const { email, password } = signInUserControllerRequest.parse(request);
+      const { email, password, callbackURL } =
+        signInUserControllerRequest.parse(request);
+
+      if (callbackURL && !isAllowedRedirectUrl(callbackURL)) {
+        return clientError("URL de retorno não permitida.");
+      }
 
       const result = await this.signInUserUseCase.execute({
         email,
         password,
+        callbackURL,
       });
 
       if (result.isLeft()) {
-        const error = result.value;
-
-        return unauthorized(error.message);
+        return (
+          authErrorResponse(result.value) ??
+          fail(new Error(String(result.value)))
+        );
       }
 
-      const { access_token } = result.value;
+      const { access_token, token, user, expiresAt, setCookies, authToken } =
+        result.value;
 
-      return created({ access_token });
+      return created(
+        { access_token, token, user, expiresAt },
+        relayHeaders({ setCookies, authToken }),
+      );
     } catch (err) {
       if (err instanceof ZodError) {
         return clientError(z.prettifyError(err));

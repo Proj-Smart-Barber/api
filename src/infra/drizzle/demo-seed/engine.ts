@@ -1,9 +1,10 @@
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and } from "drizzle-orm";
 import { db } from "../index";
 import { env } from "../../env";
 import {
+  account,
   barbershopSchedules,
   barbershops,
   bookings,
@@ -14,6 +15,7 @@ import {
   services,
   shoppingCarts,
 } from "../schema";
+import { Cpf } from "../../../domain/enterprise/entities/value-objects/cpf";
 import {
   DEMO_BARBERSHOPS,
   DEMO_BOOKINGS,
@@ -67,6 +69,31 @@ export class DemoSeedEngine {
     const utcDate = new Date(`${dateString}T00:00:00.000Z`);
 
     return { dateString, utcDate };
+  }
+
+  /**
+   * Garante a credencial no formato better-auth (`account.password`), que é o
+   * que o login unificado valida. Idempotente para reexecuções do seed.
+   */
+  private async ensureCredentialAccount(
+    userId: string,
+    passwordHash: string,
+  ): Promise<void> {
+    const [existing] = await db
+      .select({ id: account.id })
+      .from(account)
+      .where(
+        and(eq(account.userId, userId), eq(account.providerId, "credential")),
+      );
+
+    if (existing) return;
+
+    await db.insert(account).values({
+      accountId: userId,
+      providerId: "credential",
+      userId,
+      password: passwordHash,
+    });
   }
 
   async run(
@@ -152,22 +179,27 @@ export class DemoSeedEngine {
             .from(users)
             .where(eq(users.email, staffFixture.email));
 
+          const cred = staffCredentials[staffFixture.logicalKey];
           let staffId: string;
           if (existingByEmail.length > 0) {
             staffId = existingByEmail[0].id;
           } else {
-            const cred = staffCredentials[staffFixture.logicalKey];
             const [created] = await db
               .insert(users)
               .values({
                 name: staffFixture.name,
                 email: staffFixture.email,
                 password: cred.passwordHash,
-                cpf: staffFixture.cpf,
+                cpf: Cpf.normalize(staffFixture.cpf),
+                role: staffFixture.role === "OWNER" ? "OWNER" : "BARBER",
+                emailVerified: true,
               })
               .returning({ id: users.id });
             staffId = created.id;
           }
+
+          // Credencial no formato better-auth (login unificado)
+          await this.ensureCredentialAccount(staffId, cred.passwordHash);
 
           resolvedIds[staffFixture.logicalKey] = staffId;
           await this.registry.recordEntry(
@@ -400,12 +432,16 @@ export class DemoSeedEngine {
                 name: customerFixture.name,
                 email: customerFixture.email,
                 password: customerPasswordHash,
-                cpf: customerFixture.cpf,
+                cpf: Cpf.normalize(customerFixture.cpf),
                 phoneNumber: customerFixture.phoneNumber,
+                role: "CLIENT",
+                emailVerified: true,
               })
               .returning({ id: users.id });
             customerId = created.id;
           }
+
+          await this.ensureCredentialAccount(customerId, customerPasswordHash);
 
           resolvedIds[customerFixture.logicalKey] = customerId;
           await this.registry.recordEntry(

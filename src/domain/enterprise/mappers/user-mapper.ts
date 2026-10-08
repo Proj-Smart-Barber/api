@@ -13,10 +13,12 @@ export class UserMapper {
       {
         name: raw.name,
         avatarUrl: raw.avatarUrl ?? undefined,
-        password: Password.create(raw.password),
+        password: raw.password ? Password.create(raw.password) : undefined,
         email: raw.email,
         cpf: raw.cpf,
         phoneNumber: raw.phoneNumber ?? undefined,
+        role: raw.role ?? "CLIENT",
+        emailVerified: raw.emailVerified ?? false,
         createdAt: raw.createdAt ?? new Date(),
       },
       new UniqueEntityId(raw.id),
@@ -26,11 +28,14 @@ export class UserMapper {
   static toPersistence(user: User) {
     return {
       id: user.id.toString(),
+      name: user.name,
       avatarUrl: user.avatarUrl,
-      password: user.password.toString(),
+      password: user.password?.toString() ?? null,
       email: user.email,
       cpf: user.cpf,
       phoneNumber: user.phoneNumber,
+      role: user.role,
+      emailVerified: user.emailVerified,
       createdAt: user.createdAt ?? new Date(),
     };
   }

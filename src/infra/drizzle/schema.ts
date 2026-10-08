@@ -15,6 +15,13 @@ import {
 
 export const roleEnum = pgEnum("role", ["OWNER", "BARBERMAN"]);
 
+export const userRoleEnum = pgEnum("user_role", [
+  "CLIENT",
+  "BARBER",
+  "OWNER",
+  "PLATFORM_ADMIN",
+]);
+
 export const barbershopStatusEnum = pgEnum("barbershop_status", [
   "ACTIVE",
   "INACTIVE",
@@ -27,11 +34,84 @@ export const users = pgTable("users", {
   name: text().notNull(),
   avatarUrl: text("avatar_url"),
   email: text().notNull().unique(),
-  password: text().notNull(),
+  /**
+   * Legado: hash bcrypt gravado antes da migração para better-auth.
+   * As credenciais atuais vivem em `account.password` (better-auth).
+   */
+  password: text(),
   cpf: text().notNull().unique(),
   phoneNumber: text("phone_number"),
+  role: userRoleEnum("role").notNull().default("CLIENT"),
+  emailVerified: boolean("email_verified").notNull().default(false),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+// ── Better Auth models (user, session, account, verification) ──
+
+export const session = pgTable(
+  "session",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    expiresAt: timestamp("expires_at").notNull(),
+    token: text().notNull().unique(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [index("session_user_id_idx").on(table.userId)],
+);
+
+export const account = pgTable(
+  "account",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    accountId: text("account_id").notNull(),
+    providerId: text("provider_id").notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    accessToken: text("access_token"),
+    refreshToken: text("refresh_token"),
+    idToken: text("id_token"),
+    accessTokenExpiresAt: timestamp("access_token_expires_at"),
+    refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
+    scope: text(),
+    password: text(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [index("account_user_id_idx").on(table.userId)],
+);
+
+export const verification = pgTable(
+  "verification",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    identifier: text().notNull(),
+    value: text().notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [index("verification_identifier_idx").on(table.identifier)],
+);
 
 export const membership = pgTable(
   "membership",

@@ -71,6 +71,13 @@ export class CreateBarbershopUseCase {
         ownerMembership,
       );
 
+    // O papel OWNER é atribuído pelo servidor ao criar a unidade — nunca
+    // vem do cliente. Passa a valer também para a política de sessão (8h).
+    if (owner.role !== "OWNER") {
+      owner.assignRole("OWNER");
+      await this.usersRepository.save(owner);
+    }
+
     return right({
       barbershopId: createdBarbershop.id.toString(),
     });

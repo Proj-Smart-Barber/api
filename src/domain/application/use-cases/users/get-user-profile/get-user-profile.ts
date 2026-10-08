@@ -28,6 +28,9 @@ export class GetUserProfileUseCase {
         email: user.email,
         avatarUrl: user.avatarUrl,
         phoneNumber: user.phoneNumber,
+        cpf: user.cpf,
+        role: user.role ?? "CLIENT",
+        emailVerified: user.emailVerified ?? false,
       },
     });
   }

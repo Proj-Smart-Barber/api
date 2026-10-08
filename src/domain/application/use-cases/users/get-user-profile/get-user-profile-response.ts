@@ -1,3 +1,5 @@
+import type { UserRole } from "../../../gateways/auth-gateway";
+
 export interface GetUserProfileResponse {
   user: {
     id: string;
@@ -5,5 +7,9 @@ export interface GetUserProfileResponse {
     avatarUrl?: string;
     email: string;
     phoneNumber?: string;
+    cpf: string;
+    /** Tipo da conta, definido pelo servidor. */
+    role: UserRole;
+    emailVerified: boolean;
   };
 }

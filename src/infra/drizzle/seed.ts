@@ -1,6 +1,7 @@
-import { Password } from "../../domain/enterprise/entities/value-objects/password";
+import { hashPassword } from "better-auth/crypto";
 import { db } from "./index";
 import {
+  account,
   barbershopSchedules,
   barbershops,
   bookings,
@@ -10,7 +11,9 @@ import {
   scheduleExceptions,
   serviceItems,
   services,
+  session,
   shoppingCarts,
+  verification,
 } from "./schema";
 
 async function main() {
@@ -23,18 +26,23 @@ async function main() {
   await db.delete(barbershopSchedules);
   await db.delete(membership);
   await db.delete(barbershops);
+  await db.delete(session);
+  await db.delete(account);
+  await db.delete(verification);
   await db.delete(users);
 
-  const ownerHash = await Password.generateHashFromPlainText("123456", 10);
-  const customerHash = await Password.generateHashFromPlainText("123456", 10);
+  // Hash no formato better-auth (credencial fica em account.password)
+  const passwordHash = await hashPassword("123456");
 
   const [owner] = await db
     .insert(users)
     .values({
       name: "Carlos Silva",
       email: "owner@smartbarber.com",
-      password: ownerHash.value,
-      cpf: "123.456.789-00",
+      password: passwordHash,
+      cpf: "12345678900",
+      role: "OWNER",
+      emailVerified: true,
     })
     .returning();
 
@@ -43,10 +51,27 @@ async function main() {
     .values({
       name: "João Souza",
       email: "barberman@smartbarber.com",
-      password: ownerHash.value,
-      cpf: "987.654.321-00",
+      password: passwordHash,
+      cpf: "98765432100",
+      role: "BARBER",
+      emailVerified: true,
     })
     .returning();
+
+  await db.insert(account).values([
+    {
+      accountId: owner.id,
+      providerId: "credential",
+      userId: owner.id,
+      password: passwordHash,
+    },
+    {
+      accountId: barberman.id,
+      providerId: "credential",
+      userId: barberman.id,
+      password: passwordHash,
+    },
+  ]);
 
   const [barbershop] = await db
     .insert(barbershops)
@@ -94,11 +119,20 @@ async function main() {
     .values({
       name: "Ana Pereira",
       email: "ana@example.com",
-      password: customerHash.value,
-      cpf: "555.444.333-22",
+      password: passwordHash,
+      cpf: "55544433322",
       phoneNumber: "(11) 99999-1234",
+      role: "CLIENT",
+      emailVerified: true,
     })
     .returning();
+
+  await db.insert(account).values({
+    accountId: customer.id,
+    providerId: "credential",
+    userId: customer.id,
+    password: passwordHash,
+  });
 
   const [service] = await db
     .insert(services)

@@ -38,7 +38,9 @@ export const swaggerDocument = {
     "/api/users/": {
       post: {
         tags: ["Users"],
-        summary: "Create a new user",
+        summary: "Create a new account (auto sign-in)",
+        description:
+          "Creates the account as CLIENT and opens a session. The CPF is stored in canonical form (11 digits) and must be valid. Web clients receive the session cookie via Set-Cookie.",
         requestBody: {
           required: true,
           content: {
@@ -53,12 +55,27 @@ export const swaggerDocument = {
                     format: "email",
                     example: "john@example.com",
                   },
-                  password: { type: "string", example: "secret123" },
-                  cpf: { type: "string", example: "12345678901" },
+                  password: {
+                    type: "string",
+                    minLength: 8,
+                    example: "secret123",
+                  },
+                  cpf: {
+                    type: "string",
+                    example: "529.982.247-25",
+                    description: "Com ou sem máscara; armazenado sem máscara",
+                  },
                   phoneNumber: {
                     type: "string",
                     nullable: true,
                     example: "(11) 99999-9999",
+                  },
+                  callbackURL: {
+                    type: "string",
+                    nullable: true,
+                    example: "/verify-email",
+                    description:
+                      "URL relativa, da origem configurada ou deep link (scheme://) para onde o link de verificação redireciona",
                   },
                 },
               },
@@ -82,9 +99,16 @@ export const swaggerDocument = {
                 },
               },
             },
+            headers: {
+              "Set-Cookie": {
+                description: "Cookie de sessão (clientes web)",
+                schema: { type: "string" },
+              },
+            },
           },
           "400": {
-            description: "Validation error",
+            description:
+              "Validation error (invalid CPF or weak password, min 8 chars)",
             content: {
               "application/json": {
                 schema: {
@@ -112,6 +136,19 @@ export const swaggerDocument = {
               },
             },
           },
+          "429": {
+            description: "Too many requests",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
           "500": {
             description: "Internal server error",
             content: {
@@ -132,6 +169,8 @@ export const swaggerDocument = {
       post: {
         tags: ["Users"],
         summary: "Sign in and get access token",
+        description:
+          "Authenticates e-mail/password. The session TTL follows the account type: CLIENT/BARBER 30 days, OWNER/PLATFORM_ADMIN 8 hours. Web clients also receive the session cookie via Set-Cookie.",
         requestBody: {
           required: true,
           content: {
@@ -146,6 +185,11 @@ export const swaggerDocument = {
                     example: "john@example.com",
                   },
                   password: { type: "string", example: "secret123" },
+                  callbackURL: {
+                    type: "string",
+                    nullable: true,
+                    example: "/verify-email",
+                  },
                 },
               },
             },
@@ -161,10 +205,46 @@ export const swaggerDocument = {
                   properties: {
                     access_token: {
                       type: "string",
+                      description: "Token da sessão (alias de token)",
                       example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    },
+                    token: {
+                      type: "string",
+                      description: "Token da sessão (guardar no SecureStore)",
+                      example: "9f8e7d6c-...",
+                    },
+                    user: {
+                      type: "object",
+                      properties: {
+                        id: { type: "string", format: "uuid" },
+                        name: { type: "string", example: "John Doe" },
+                        email: { type: "string", example: "john@example.com" },
+                        cpf: {
+                          type: "string",
+                          example: "52998224725",
+                          description: "CPF canônico (11 dígitos)",
+                        },
+                        role: {
+                          type: "string",
+                          enum: ["CLIENT", "BARBER", "OWNER", "PLATFORM_ADMIN"],
+                          example: "CLIENT",
+                        },
+                        emailVerified: { type: "boolean" },
+                      },
+                    },
+                    expiresAt: {
+                      type: "string",
+                      format: "date-time",
+                      example: "2026-11-07T18:00:00.000Z",
                     },
                   },
                 },
+              },
+            },
+            headers: {
+              "Set-Cookie": {
+                description: "Cookie de sessão (clientes web)",
+                schema: { type: "string" },
               },
             },
           },
@@ -190,8 +270,21 @@ export const swaggerDocument = {
                   properties: {
                     error: {
                       type: "string",
-                      example: "E-mail ou senha incorreto.",
+                      example: "E-mail ou senha incorretos.",
                     },
+                  },
+                },
+              },
+            },
+          },
+          "429": {
+            description: "Too many requests",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
                   },
                 },
               },
@@ -249,6 +342,17 @@ export const swaggerDocument = {
                           nullable: true,
                           example: "(11) 99999-9999",
                         },
+                        cpf: {
+                          type: "string",
+                          example: "52998224725",
+                          description: "CPF canônico (11 dígitos)",
+                        },
+                        role: {
+                          type: "string",
+                          enum: ["CLIENT", "BARBER", "OWNER", "PLATFORM_ADMIN"],
+                          example: "CLIENT",
+                        },
+                        emailVerified: { type: "boolean" },
                       },
                     },
                   },
@@ -311,6 +415,370 @@ export const swaggerDocument = {
               },
             },
           },
+        },
+      },
+    },
+    "/api/users/sessions/refresh": {
+      post: {
+        tags: ["Users"],
+        summary: "Refresh the current session",
+        description:
+          "Extends the session following the account TTL (30 days for CLIENT/BARBER, 8 hours for OWNER/PLATFORM_ADMIN). Web sends the cookie automatically; native apps may send the token in the body or as Bearer.",
+        requestBody: {
+          required: false,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  token: {
+                    type: "string",
+                    description:
+                      "Token guardado no SecureStore (alternativa ao cookie/Bearer)",
+                    example: "9f8e7d6c-...",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Session refreshed",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    token: { type: "string" },
+                    access_token: { type: "string" },
+                    user: {
+                      type: "object",
+                      properties: {
+                        id: { type: "string", format: "uuid" },
+                        role: {
+                          type: "string",
+                          enum: ["CLIENT", "BARBER", "OWNER", "PLATFORM_ADMIN"],
+                        },
+                      },
+                    },
+                    expiresAt: {
+                      type: "string",
+                      format: "date-time",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": { description: "Missing, invalid or expired session" },
+        },
+      },
+    },
+    "/api/users/sessions/logout": {
+      post: {
+        tags: ["Users"],
+        summary: "Sign out of the current session",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Session closed",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: { status: { type: "boolean", example: true } },
+                },
+              },
+            },
+          },
+          "401": { description: "Missing or invalid session" },
+        },
+      },
+    },
+    "/api/users/sessions/logout-all": {
+      post: {
+        tags: ["Users"],
+        summary: "Sign out of every session of the user",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "All sessions closed",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: { status: { type: "boolean", example: true } },
+                },
+              },
+            },
+          },
+          "401": { description: "Missing or invalid session" },
+        },
+      },
+    },
+    "/api/users/email-verifications/request": {
+      post: {
+        tags: ["Users"],
+        summary: "Request an e-mail verification link",
+        description:
+          "Always answers 200, even when the account does not exist (no account enumeration).",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["email"],
+                properties: {
+                  email: {
+                    type: "string",
+                    format: "email",
+                    example: "john@example.com",
+                  },
+                  callbackURL: {
+                    type: "string",
+                    nullable: true,
+                    example: "/verify-email",
+                    description:
+                      "URL relativa, da origem configurada ou deep link (scheme://)",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Request accepted (generic response)",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: { status: { type: "boolean", example: true } },
+                },
+              },
+            },
+          },
+          "400": { description: "Validation or redirect URL error" },
+          "429": { description: "Too many requests" },
+        },
+      },
+    },
+    "/api/users/email-verifications/confirm": {
+      post: {
+        tags: ["Users"],
+        summary: "Confirm an e-mail verification token",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["token"],
+                properties: {
+                  token: { type: "string", example: "eyJhbGciOi..." },
+                  callbackURL: {
+                    type: "string",
+                    nullable: true,
+                    example: "/verify-email",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "E-mail verified",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: { status: { type: "boolean", example: true } },
+                },
+              },
+            },
+          },
+          "400": { description: "Invalid or expired token" },
+        },
+      },
+    },
+    "/api/users/password-resets/request": {
+      post: {
+        tags: ["Users"],
+        summary: "Request a password reset link",
+        description:
+          "Always answers 200, even when the account does not exist. Only the most recent link stays valid.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["email"],
+                properties: {
+                  email: {
+                    type: "string",
+                    format: "email",
+                    example: "john@example.com",
+                  },
+                  redirectTo: {
+                    type: "string",
+                    nullable: true,
+                    example: "/reset-password",
+                    description:
+                      "URL relativa, da origem configurada ou deep link (scheme://)",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Request accepted (generic response)",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: { status: { type: "boolean", example: true } },
+                },
+              },
+            },
+          },
+          "400": { description: "Validation or redirect URL error" },
+          "429": { description: "Too many requests" },
+        },
+      },
+    },
+    "/api/users/password-resets/confirm": {
+      post: {
+        tags: ["Users"],
+        summary: "Confirm a password reset token and set a new password",
+        description:
+          "Single-use token: after a successful reset (or a new request) previous links stop working. Resets revoke all sessions of the user.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["token", "newPassword"],
+                properties: {
+                  token: { type: "string", example: "ef1c0a4e-..." },
+                  newPassword: {
+                    type: "string",
+                    minLength: 8,
+                    example: "my-new-secret",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Password updated",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: { status: { type: "boolean", example: true } },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid/expired token or weak password",
+          },
+        },
+      },
+    },
+    "/api/users/me/password": {
+      patch: {
+        tags: ["Users"],
+        summary: "Change the password of the authenticated user",
+        security: [{ bearerAuth: [] }],
+        description:
+          "Requires the current password. On success all other sessions and pending reset links are revoked.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["currentPassword", "newPassword"],
+                properties: {
+                  currentPassword: {
+                    type: "string",
+                    example: "current-secret",
+                  },
+                  newPassword: {
+                    type: "string",
+                    minLength: 8,
+                    example: "my-new-secret",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Password changed (other sessions revoked)",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    status: { type: "boolean", example: true },
+                    message: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Weak new password" },
+          "401": {
+            description: "Missing/invalid session or wrong current password",
+          },
+        },
+      },
+    },
+    "/api/users/me/barbershops": {
+      get: {
+        tags: ["Users"],
+        summary: "List the barbershops the authenticated user belongs to",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Barbershop memberships",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    barbershops: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: { type: "string", format: "uuid" },
+                          name: { type: "string", example: "Barbearia do Zé" },
+                          role: {
+                            type: "string",
+                            enum: ["OWNER", "BARBER", "CLIENT"],
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": { description: "Missing or invalid session" },
         },
       },
     },

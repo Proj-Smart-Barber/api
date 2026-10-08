@@ -2,8 +2,11 @@ import "dotenv/config";
 import cors from "cors";
 import express, { type Request, type Response } from "express";
 import swaggerUi from "swagger-ui-express";
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "./infra/auth/auth";
 import { routes } from "./infra/http/routes";
 import { swaggerDocument } from "./infra/http/swagger";
+import { ensureUserIsPlatformAdmin } from "./infra/http/middlewares/ensure-user-is-platform-admin";
 import { runSchemaMigrations } from "./infra/drizzle/migrator";
 import { DemoSeedEngine } from "./infra/drizzle/demo-seed/engine";
 
@@ -13,7 +16,18 @@ const app = express();
 void runSchemaMigrations().catch((err) => {
   console.error("[App] Failed to run schema migrations on startup:", err);
 });
-app.use(cors());
+
+// better-auth (endpoint padrão /api/auth) precisa rodar antes dos parsers de
+// corpo — ele consome o stream da requisição diretamente.
+app.all("/api/auth/*splat", toNodeHandler(auth));
+
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+    exposedHeaders: ["set-auth-token"],
+  }),
+);
 app.use(
   express.json({
     type: ["application/json", "text/plain"],
@@ -37,6 +51,7 @@ app.use("/api", routes);
 
 app.get(
   "/api/system/migrate",
+  ensureUserIsPlatformAdmin,
   async (_request: Request, response: Response) => {
     const result = await runSchemaMigrations();
     return response.status(result.success ? 200 : 500).json(result);
@@ -45,6 +60,7 @@ app.get(
 
 app.get(
   "/api/system/demo-seed",
+  ensureUserIsPlatformAdmin,
   async (_request: Request, response: Response) => {
     try {
       const engine = new DemoSeedEngine();
@@ -64,6 +80,7 @@ app.get(
 
 app.post(
   "/api/system/demo-seed",
+  ensureUserIsPlatformAdmin,
   async (request: Request, response: Response) => {
     const confirm =
       (request.query.confirm as string) || (request.body?.confirm as string);

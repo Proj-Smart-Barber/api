@@ -36,6 +36,9 @@ describe("Get user profile", async () => {
           avatarUrl: undefined,
           email: expect.any(String),
           phoneNumber: undefined,
+          cpf: expect.any(String),
+          role: "CLIENT",
+          emailVerified: false,
         },
       }),
     );

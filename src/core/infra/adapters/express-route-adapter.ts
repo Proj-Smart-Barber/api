@@ -11,7 +11,18 @@ export const adaptRoute = (controller: Controller) => {
       // file: request.file,
     };
 
-    const httpResponse = await controller.handle(requestData);
+    // Cabeçalhos originais (Cookie/Bearer) ficam no contexto: só os
+    // controllers de sessão precisam deles, e assim os schemas `.strict()`
+    // de entrada não são contaminados por chaves inesperadas.
+    const httpResponse = await controller.handle(requestData, {
+      headers: request.headers,
+    });
+
+    if (httpResponse.headers) {
+      for (const [key, value] of Object.entries(httpResponse.headers)) {
+        response.setHeader(key, value);
+      }
+    }
 
     if (httpResponse.statusCode >= 200 && httpResponse.statusCode <= 299) {
       return response.status(httpResponse.statusCode).json(httpResponse.body);

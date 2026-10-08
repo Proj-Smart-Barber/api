@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { hash } from "bcryptjs";
+import { hashPassword } from "better-auth/crypto";
 import type { DemoStaffFixture } from "./types";
 
 const CREDENTIALS_FILE_PATH = resolve(
@@ -34,8 +34,12 @@ export function generateSecurePassword(): string {
   return `Sb!${raw}9$`;
 }
 
+/**
+ * Hash no formato do better-auth (guardado em `account.password`), que é o
+ * que valida as credenciais desde a migração do login unificado.
+ */
 export async function hashPlainText(password: string): Promise<string> {
-  return hash(password, 12);
+  return hashPassword(password);
 }
 
 export async function loadOrCreateStaffCredentials(
@@ -59,22 +63,23 @@ export async function loadOrCreateStaffCredentials(
     const existing = existingCredentials[staff.logicalKey];
 
     if (existing && existing.plainPassword && existing.passwordHash) {
-      credentialsMap[staff.logicalKey] = existing;
-    } else if (staff.defaultPasswordHash) {
+      // Reaproveita a senha já conhecida, mas garante hash no formato do
+      // better-auth (hashes bcrypt antigos de `users.password` são reescritos).
+      const hashIsLegacyBcrypt = existing.passwordHash.startsWith("$2");
       const credential: StaffCredential = {
-        githubUser: staff.githubUser,
-        name: staff.name,
-        email: staff.email,
-        role: staff.role,
-        unit: staff.unitKey,
-        plainPassword: existing?.plainPassword || "",
-        passwordHash: staff.defaultPasswordHash,
+        ...existing,
+        passwordHash: hashIsLegacyBcrypt
+          ? await hashPlainText(existing.plainPassword)
+          : existing.passwordHash,
       };
 
       credentialsMap[staff.logicalKey] = credential;
-      existingCredentials[staff.logicalKey] = credential;
-      modified = true;
+      if (hashIsLegacyBcrypt) {
+        existingCredentials[staff.logicalKey] = credential;
+        modified = true;
+      }
     } else {
+      // Senha conhecida é obrigatória: o fluxo de verificação faz login com ela.
       const plainPassword = generateSecurePassword();
       const passwordHash = await hashPlainText(plainPassword);
 

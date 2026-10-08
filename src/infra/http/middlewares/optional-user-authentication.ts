@@ -1,28 +1,26 @@
 import type { Request, Response, NextFunction } from "express";
-import { verify } from "jsonwebtoken";
-import { env } from "../../env";
+import { authGateway } from "../../auth/better-auth-gateway";
 
-interface Payload {
-  sub: string;
-}
-
+/**
+ * Anexa `request.user` quando existe uma sessão válida; sem sessão o request
+ * segue anônimo (convidado), sem bloquear a rota.
+ */
 export async function optionalUserAuthentication(
   request: Request,
   _reply: Response,
   next: NextFunction,
 ) {
-  const authHeader = request.headers.authorization;
-  const token = authHeader && authHeader.split(" ")[1];
-
-  if (!token) {
-    return next();
-  }
-
   try {
-    const payload = verify(token, env.JWT_SECRET) as Payload;
-    request.user = payload;
+    const session = await authGateway.getSession(request.headers);
+
+    if (session) {
+      request.user = {
+        sub: session.user.id,
+        role: session.user.role,
+      };
+    }
   } catch {
-    // If token is invalid or expired, continue as anonymous/guest
+    // Sessão ausente/inválida → continua como convidado.
   }
 
   return next();
