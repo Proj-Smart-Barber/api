@@ -33,6 +33,26 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const refreshTokens = pgTable(
+  "refresh_tokens",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull().unique(),
+    familyId: uuid("family_id").notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    revokedAt: timestamp("revoked_at"),
+    replacedByTokenId: uuid("replaced_by_token_id"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    index("refresh_tokens_user_id_idx").on(table.userId),
+    index("refresh_tokens_family_id_idx").on(table.familyId),
+  ],
+);
+
 export const membership = pgTable(
   "membership",
   {
@@ -197,6 +217,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   exceptions: many(scheduleExceptions),
   barbermanBookings: many(bookings),
   shoppingCarts: many(shoppingCarts),
+  refreshTokens: many(refreshTokens),
 }));
 
 export const barbershopsRelations = relations(barbershops, ({ one, many }) => ({
