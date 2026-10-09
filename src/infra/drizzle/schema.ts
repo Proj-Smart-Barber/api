@@ -69,6 +69,21 @@ export const emailVerifications = pgTable(
   (table) => [index("email_verifications_user_id_idx").on(table.userId)],
 );
 
+export const passwordRecoveryTokens = pgTable(
+  "password_recovery_tokens",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull().unique(),
+    expiresAt: timestamp("expires_at").notNull(),
+    usedAt: timestamp("used_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [index("password_recovery_tokens_user_id_idx").on(table.userId)],
+);
+
 export const membership = pgTable(
   "membership",
   {
@@ -235,6 +250,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   shoppingCarts: many(shoppingCarts),
   refreshTokens: many(refreshTokens),
   emailVerifications: many(emailVerifications),
+  passwordRecoveryTokens: many(passwordRecoveryTokens),
 }));
 
 export const emailVerificationsRelations = relations(
@@ -242,6 +258,16 @@ export const emailVerificationsRelations = relations(
   ({ one }) => ({
     user: one(users, {
       fields: [emailVerifications.userId],
+      references: [users.id],
+    }),
+  }),
+);
+
+export const passwordRecoveryTokensRelations = relations(
+  passwordRecoveryTokens,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [passwordRecoveryTokens.userId],
       references: [users.id],
     }),
   }),

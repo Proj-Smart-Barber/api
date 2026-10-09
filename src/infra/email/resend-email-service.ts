@@ -1,9 +1,11 @@
 import { Resend } from "resend";
 import type {
   EmailService,
+  SendPasswordRecoveryEmailParams,
   SendVerificationEmailParams,
 } from "../../domain/application/services/email-service";
 import { env } from "../env";
+import { renderPasswordRecoveryEmail } from "./render-password-recovery-email";
 import { renderVerificationEmail } from "./render-verification-email";
 
 export class ResendEmailService implements EmailService {
@@ -22,6 +24,24 @@ export class ResendEmailService implements EmailService {
       from: env.EMAIL_FROM,
       to: params.to,
       subject: "Confirme seu e-mail no SmartBarber",
+      html,
+      text,
+    });
+
+    if (error) {
+      throw new Error(`Falha ao enviar e-mail via Resend: ${error.message}`);
+    }
+  }
+
+  async sendPasswordRecoveryEmail(
+    params: SendPasswordRecoveryEmailParams,
+  ): Promise<void> {
+    const { html, text } = await renderPasswordRecoveryEmail(params);
+
+    const { error } = await this.resend.emails.send({
+      from: env.EMAIL_FROM,
+      to: params.to,
+      subject: "Redefina sua senha no SmartBarber",
       html,
       text,
     });

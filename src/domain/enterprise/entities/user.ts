@@ -51,6 +51,10 @@ export class User extends Entity<UserProps> {
     this.props.emailVerifiedAt = at;
   }
 
+  changePassword(newPassword: Password): void {
+    this.props.password = newPassword;
+  }
+
   get createdAt(): Date | undefined {
     return this.props.createdAt;
   }

@@ -435,6 +435,128 @@ export const swaggerDocument = {
         },
       },
     },
+    "/api/users/password-recovery": {
+      post: {
+        tags: ["Users"],
+        summary:
+          "Send (or resend) a password recovery link for a given email address",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["email"],
+                properties: {
+                  email: {
+                    type: "string",
+                    format: "email",
+                    example: "john@example.com",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description:
+              "Request accepted. The endpoint returns the same response whether the account exists or not, to avoid account enumeration.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    sentTo: {
+                      type: "string",
+                      format: "email",
+                      example: "john@example.com",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+          },
+          "500": {
+            description: "Email send failure",
+          },
+        },
+      },
+    },
+    "/api/users/password-recovery/reset": {
+      post: {
+        tags: ["Users"],
+        summary: "Reset the account password using a recovery token",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["token", "newPassword"],
+                properties: {
+                  token: {
+                    type: "string",
+                    example: "0N8xq5m8Q3v1...",
+                  },
+                  newPassword: {
+                    type: "string",
+                    minLength: 8,
+                    example: "nova-senha-forte",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Password updated successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    userId: {
+                      type: "string",
+                      format: "uuid",
+                    },
+                    email: {
+                      type: "string",
+                      format: "email",
+                    },
+                    passwordUpdatedAt: {
+                      type: "string",
+                      format: "date-time",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description:
+              "Validation error, invalid/expired/used token, or password shorter than 8 characters",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "500": {
+            description: "Internal server error",
+          },
+        },
+      },
+    },
     "/api/users/me": {
       get: {
         tags: ["Users"],

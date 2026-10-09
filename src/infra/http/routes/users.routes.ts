@@ -9,6 +9,8 @@ import { makeGetUserProfileController } from "../factories/make-get-user-profile
 import { makeFetchUserBarbershopsController } from "../factories/make-fetch-user-barbershops-controller";
 import { makeSendEmailVerificationController } from "../factories/make-send-email-verification-controller";
 import { makeVerifyEmailController } from "../factories/make-verify-email-controller";
+import { makeSendPasswordRecoveryController } from "../factories/make-send-password-recovery-controller";
+import { makeResetPasswordController } from "../factories/make-reset-password-controller";
 
 const userRoutes = Router();
 
@@ -26,6 +28,14 @@ userRoutes.post(
 userRoutes.get(
   "/verification-email/confirm",
   adaptRoute(makeVerifyEmailController()),
+);
+userRoutes.post(
+  "/password-recovery",
+  adaptRoute(makeSendPasswordRecoveryController()),
+);
+userRoutes.post(
+  "/password-recovery/reset",
+  adaptRoute(makeResetPasswordController()),
 );
 userRoutes.get(
   "/me",
