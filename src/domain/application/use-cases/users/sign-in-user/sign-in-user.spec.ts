@@ -5,6 +5,7 @@ import { User } from "../../../../enterprise/entities/user";
 import { SignInUserUseCase } from "./sign-in-user";
 import { Password } from "../../../../enterprise/entities/value-objects/password";
 import { InvalidCredentialsError } from "../../_errors/invalid-credentials-error";
+import { EmailNotVerifiedError } from "../../_errors/email-not-verified-error";
 
 let inMemoryUsersRepository: InMemoryUsersRepository;
 let inMemoryRefreshTokensRepository: InMemoryRefreshTokensRepository;
@@ -33,6 +34,7 @@ describe("Sign in user", async () => {
       email: userEmail,
       password: hashedUserPassword,
       cpf: "12345678901",
+      emailVerifiedAt: new Date(),
     });
 
     await inMemoryUsersRepository.save(newUser);
@@ -49,6 +51,28 @@ describe("Sign in user", async () => {
       }),
     );
     expect(inMemoryRefreshTokensRepository.items).toHaveLength(1);
+  });
+
+  it("should not be able to sign in a user whose email is not verified", async () => {
+    const userEmail = faker.internet.email();
+    const userPassword = faker.internet.password();
+
+    const newUser = User.create({
+      name: faker.person.fullName(),
+      email: userEmail,
+      password: await Password.generateHashFromPlainText(userPassword, 12),
+      cpf: "12345678902",
+    });
+
+    await inMemoryUsersRepository.save(newUser);
+
+    const response = await sut.execute({
+      email: userEmail,
+      password: userPassword,
+    });
+
+    expect(response.value).toBeInstanceOf(EmailNotVerifiedError);
+    expect(inMemoryRefreshTokensRepository.items).toHaveLength(0);
   });
 
   it("should not be able to sign in a user with an invalid email", async () => {

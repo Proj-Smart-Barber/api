@@ -9,6 +9,10 @@ const envSchema = z.object({
   PORT: z.coerce.number().optional().default(3333),
   NODE_ENV: z.string(),
   APP_URL: z.url(),
+  FRONTEND_URL: z.url().optional(),
+  RESEND_API_KEY: z.string(),
+  EMAIL_FROM: z.string().min(1),
+  VERIFICATION_TOKEN_EXPIRES_IN: z.string().default("1d"),
 });
 
 export const env = envSchema.parse(process.env);

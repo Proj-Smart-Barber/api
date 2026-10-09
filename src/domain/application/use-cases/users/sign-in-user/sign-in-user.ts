@@ -6,12 +6,13 @@ import {
   createAccessToken,
   createRefreshToken,
 } from "../../../services/auth-token-service";
+import { EmailNotVerifiedError } from "../../_errors/email-not-verified-error";
 import { InvalidCredentialsError } from "../../_errors/invalid-credentials-error";
 import type { SignInUserDTO } from "./sign-in-user-dto";
 import type { SignInUserResponse } from "./sign-in-user-response";
 
 type SignInUserUseCaseResponse = Either<
-  InvalidCredentialsError,
+  InvalidCredentialsError | EmailNotVerifiedError,
   SignInUserResponse
 >;
 
@@ -38,6 +39,10 @@ export class SignInUserUseCase {
 
     if (passwordMatch.isLeft()) {
       return left(new InvalidCredentialsError());
+    }
+
+    if (!user.isEmailVerified) {
+      return left(new EmailNotVerifiedError());
     }
 
     const userId = user.id.toString();

@@ -48,9 +48,28 @@ export class DrizzleUsersRepository implements UsersRepository {
         password: user.password.toString(),
         cpf: user.cpf,
         phoneNumber: user.phoneNumber,
+        emailVerifiedAt: user.emailVerifiedAt ?? null,
       })
       .returning();
 
     return UserMapper.toDomain(createdUser);
+  }
+
+  async update(user: User): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        name: user.name,
+        avatarUrl: user.avatarUrl ?? null,
+        email: user.email,
+        password: user.password.toString(),
+        cpf: user.cpf,
+        phoneNumber: user.phoneNumber ?? null,
+        emailVerifiedAt: user.emailVerifiedAt ?? null,
+      })
+      .where(eq(users.id, user.id.toString()))
+      .returning();
+
+    return UserMapper.toDomain(updatedUser);
   }
 }
