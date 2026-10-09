@@ -30,6 +30,7 @@ export const users = pgTable("users", {
   password: text().notNull(),
   cpf: text().notNull().unique(),
   phoneNumber: text("phone_number"),
+  emailVerifiedAt: timestamp("email_verified_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -51,6 +52,36 @@ export const refreshTokens = pgTable(
     index("refresh_tokens_user_id_idx").on(table.userId),
     index("refresh_tokens_family_id_idx").on(table.familyId),
   ],
+);
+
+export const emailVerifications = pgTable(
+  "email_verifications",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull().unique(),
+    expiresAt: timestamp("expires_at").notNull(),
+    usedAt: timestamp("used_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [index("email_verifications_user_id_idx").on(table.userId)],
+);
+
+export const passwordRecoveryTokens = pgTable(
+  "password_recovery_tokens",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull().unique(),
+    expiresAt: timestamp("expires_at").notNull(),
+    usedAt: timestamp("used_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [index("password_recovery_tokens_user_id_idx").on(table.userId)],
 );
 
 export const membership = pgTable(
@@ -218,7 +249,29 @@ export const usersRelations = relations(users, ({ many }) => ({
   barbermanBookings: many(bookings),
   shoppingCarts: many(shoppingCarts),
   refreshTokens: many(refreshTokens),
+  emailVerifications: many(emailVerifications),
+  passwordRecoveryTokens: many(passwordRecoveryTokens),
 }));
+
+export const emailVerificationsRelations = relations(
+  emailVerifications,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [emailVerifications.userId],
+      references: [users.id],
+    }),
+  }),
+);
+
+export const passwordRecoveryTokensRelations = relations(
+  passwordRecoveryTokens,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [passwordRecoveryTokens.userId],
+      references: [users.id],
+    }),
+  }),
+);
 
 export const barbershopsRelations = relations(barbershops, ({ one, many }) => ({
   owner: one(users, {

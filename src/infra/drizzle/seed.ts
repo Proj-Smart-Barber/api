@@ -35,6 +35,7 @@ async function main() {
       email: "owner@smartbarber.com",
       password: ownerHash.value,
       cpf: "123.456.789-00",
+      emailVerifiedAt: new Date(),
     })
     .returning();
 
@@ -45,6 +46,7 @@ async function main() {
       email: "barberman@smartbarber.com",
       password: ownerHash.value,
       cpf: "987.654.321-00",
+      emailVerifiedAt: new Date(),
     })
     .returning();
 
@@ -97,6 +99,7 @@ async function main() {
       password: customerHash.value,
       cpf: "555.444.333-22",
       phoneNumber: "(11) 99999-1234",
+      emailVerifiedAt: new Date(),
     })
     .returning();
 

@@ -201,6 +201,22 @@ export const swaggerDocument = {
               },
             },
           },
+          "403": {
+            description: "Email not verified",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: {
+                      type: "string",
+                      example: "email_not_verified",
+                    },
+                  },
+                },
+              },
+            },
+          },
           "500": {
             description: "Internal server error",
             content: {
@@ -292,6 +308,248 @@ export const swaggerDocument = {
           },
           "400": {
             description: "Validation error",
+          },
+          "500": {
+            description: "Internal server error",
+          },
+        },
+      },
+    },
+    "/api/users/verification-email": {
+      post: {
+        tags: ["Users"],
+        summary:
+          "Send (or resend) the email verification link for a given email address",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["email"],
+                properties: {
+                  email: {
+                    type: "string",
+                    format: "email",
+                    example: "john@example.com",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description:
+              "Request accepted. The endpoint returns the same response whether the account exists, is already verified, or not, to avoid account enumeration.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    sentTo: {
+                      type: "string",
+                      format: "email",
+                      example: "john@example.com",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+          },
+          "500": {
+            description: "Email send failure",
+          },
+        },
+      },
+    },
+    "/api/users/verification-email/confirm": {
+      get: {
+        tags: ["Users"],
+        summary:
+          "Confirm a user email using a verification token (target of the emailed link)",
+        parameters: [
+          {
+            name: "token",
+            in: "query",
+            required: true,
+            schema: {
+              type: "string",
+              example: "0N8xq5m8Q3v1...",
+            },
+          },
+        ],
+        responses: {
+          "200": {
+            description:
+              "Email verified successfully (`alreadyVerified: true` when it was already verified)",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    verified: {
+                      type: "boolean",
+                      example: true,
+                    },
+                    alreadyVerified: {
+                      type: "boolean",
+                      example: false,
+                    },
+                    userId: {
+                      type: "string",
+                      format: "uuid",
+                    },
+                    email: {
+                      type: "string",
+                      format: "email",
+                    },
+                    emailVerifiedAt: {
+                      type: "string",
+                      format: "date-time",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Missing query parameter or invalid/expired token",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "500": {
+            description: "Internal server error",
+          },
+        },
+      },
+    },
+    "/api/users/password-recovery": {
+      post: {
+        tags: ["Users"],
+        summary:
+          "Send (or resend) a password recovery link for a given email address",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["email"],
+                properties: {
+                  email: {
+                    type: "string",
+                    format: "email",
+                    example: "john@example.com",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description:
+              "Request accepted. The endpoint returns the same response whether the account exists or not, to avoid account enumeration.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    sentTo: {
+                      type: "string",
+                      format: "email",
+                      example: "john@example.com",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+          },
+          "500": {
+            description: "Email send failure",
+          },
+        },
+      },
+    },
+    "/api/users/password-recovery/reset": {
+      post: {
+        tags: ["Users"],
+        summary: "Reset the account password using a recovery token",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["token", "newPassword"],
+                properties: {
+                  token: {
+                    type: "string",
+                    example: "0N8xq5m8Q3v1...",
+                  },
+                  newPassword: {
+                    type: "string",
+                    minLength: 8,
+                    example: "nova-senha-forte",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Password updated successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    userId: {
+                      type: "string",
+                      format: "uuid",
+                    },
+                    email: {
+                      type: "string",
+                      format: "email",
+                    },
+                    passwordUpdatedAt: {
+                      type: "string",
+                      format: "date-time",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description:
+              "Validation error, invalid/expired/used token, or password shorter than 8 characters",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
           },
           "500": {
             description: "Internal server error",
