@@ -163,6 +163,10 @@ export const swaggerDocument = {
                       type: "string",
                       example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
                     },
+                    refresh_token: {
+                      type: "string",
+                      example: "0N8xq5m8Q3v1...",
+                    },
                   },
                 },
               },
@@ -209,6 +213,88 @@ export const swaggerDocument = {
                 },
               },
             },
+          },
+        },
+      },
+    },
+    "/api/users/sessions/refresh": {
+      post: {
+        tags: ["Users"],
+        summary: "Refresh access token using a refresh token",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["refresh_token"],
+                properties: {
+                  refresh_token: {
+                    type: "string",
+                    example: "0N8xq5m8Q3v1...",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Tokens refreshed successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    access_token: { type: "string" },
+                    refresh_token: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+          },
+          "401": {
+            description: "Invalid, expired or reused refresh token",
+          },
+          "500": {
+            description: "Internal server error",
+          },
+        },
+      },
+    },
+    "/api/users/sessions/sign-out": {
+      post: {
+        tags: ["Users"],
+        summary: "Revoke a refresh token (sign out)",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["refresh_token"],
+                properties: {
+                  refresh_token: {
+                    type: "string",
+                    example: "0N8xq5m8Q3v1...",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "204": {
+            description: "Refresh token revoked",
+          },
+          "400": {
+            description: "Validation error",
+          },
+          "500": {
+            description: "Internal server error",
           },
         },
       },

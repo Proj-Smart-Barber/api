@@ -34,9 +34,9 @@ export class SignInUserController implements Controller {
         return unauthorized(error.message);
       }
 
-      const { access_token } = result.value;
+      const { access_token, refresh_token } = result.value;
 
-      return created({ access_token });
+      return created({ access_token, refresh_token });
     } catch (err) {
       if (err instanceof ZodError) {
         return clientError(z.prettifyError(err));
