@@ -20,6 +20,13 @@ export const barbershopStatusEnum = pgEnum("barbershop_status", [
   "INACTIVE",
 ]);
 
+export const invitationStatusEnum = pgEnum("invitation_status", [
+  "PENDING",
+  "ACCEPTED",
+  "DECLINED",
+  "REVOKED",
+]);
+
 // ── Tables ────────────────────────────────────────────────
 
 export const users = pgTable("users", {
@@ -102,6 +109,33 @@ export const membership = pgTable(
       table.barbershopId,
       table.userId,
     ),
+  ],
+);
+
+export const invitations = pgTable(
+  "invitations",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    barbershopId: uuid("barbershop_id")
+      .notNull()
+      .references(() => barbershops.id, { onDelete: "cascade" }),
+    email: text().notNull(),
+    role: roleEnum("role").notNull().default("BARBERMAN"),
+    tokenHash: text("token_hash").notNull().unique(),
+    status: invitationStatusEnum("status").notNull().default("PENDING"),
+    expiresAt: timestamp("expires_at").notNull(),
+    invitedById: uuid("invited_by_id")
+      .notNull()
+      .references(() => users.id),
+    respondedAt: timestamp("responded_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    index("invitations_barbershop_email_idx").on(
+      table.barbershopId,
+      table.email,
+    ),
+    index("invitations_status_idx").on(table.status),
   ],
 );
 
@@ -251,6 +285,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   refreshTokens: many(refreshTokens),
   emailVerifications: many(emailVerifications),
   passwordRecoveryTokens: many(passwordRecoveryTokens),
+  sentInvitations: many(invitations),
 }));
 
 export const emailVerificationsRelations = relations(
@@ -283,6 +318,18 @@ export const barbershopsRelations = relations(barbershops, ({ one, many }) => ({
   schedules: many(barbershopSchedules),
   exceptions: many(scheduleExceptions),
   bookings: many(bookings),
+  invitations: many(invitations),
+}));
+
+export const invitationsRelations = relations(invitations, ({ one }) => ({
+  barbershop: one(barbershops, {
+    fields: [invitations.barbershopId],
+    references: [barbershops.id],
+  }),
+  invitedBy: one(users, {
+    fields: [invitations.invitedById],
+    references: [users.id],
+  }),
 }));
 
 export const membershipRelations = relations(membership, ({ one }) => ({

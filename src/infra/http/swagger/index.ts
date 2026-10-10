@@ -823,6 +823,309 @@ export const swaggerDocument = {
         },
       },
     },
+    "/api/barbershops/{shopId}/invitations": {
+      post: {
+        tags: ["Invitations"],
+        summary: "Invite a barberman by email (owner only)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["email"],
+                properties: {
+                  email: {
+                    type: "string",
+                    format: "email",
+                    example: "barberman@example.com",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Invitation created and email sent",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    invitationId: { type: "string", format: "uuid" },
+                    invitedEmail: { type: "string", format: "email" },
+                    expiresAt: { type: "string", format: "date-time" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description:
+              "Validation error, not the owner, barbershop not found/inactive, already a member, duplicate pending invitation, or email send failure",
+          },
+          "401": { description: "Missing or invalid authentication" },
+          "500": { description: "Internal server error" },
+        },
+      },
+      get: {
+        tags: ["Invitations"],
+        summary: "List invitations of a barbershop (owner only)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Invitations retrieved successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    invitations: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: { type: "string", format: "uuid" },
+                          email: { type: "string", format: "email" },
+                          status: {
+                            type: "string",
+                            enum: [
+                              "PENDING",
+                              "ACCEPTED",
+                              "DECLINED",
+                              "REVOKED",
+                            ],
+                          },
+                          role: {
+                            type: "string",
+                            enum: ["OWNER", "BARBERMAN"],
+                          },
+                          expiresAt: { type: "string", format: "date-time" },
+                          respondedAt: {
+                            type: "string",
+                            format: "date-time",
+                            nullable: true,
+                          },
+                          createdAt: {
+                            type: "string",
+                            format: "date-time",
+                            nullable: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description:
+              "Validation error, not the owner, or barbershop not found",
+          },
+          "401": { description: "Missing or invalid authentication" },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
+    "/api/barbershops/{shopId}/invitations/{invitationId}": {
+      delete: {
+        tags: ["Invitations"],
+        summary: "Revoke a pending invitation (owner only)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "invitationId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Invitation revoked successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    revoked: { type: "boolean", example: true },
+                    invitationId: { type: "string", format: "uuid" },
+                    status: { type: "string", example: "REVOKED" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description:
+              "Validation error, not the owner, invitation not found, or invitation is not pending",
+          },
+          "401": { description: "Missing or invalid authentication" },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
+    "/api/invitations": {
+      get: {
+        tags: ["Invitations"],
+        summary: "List pending invitations for the authenticated user",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Pending invitations retrieved successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    invitations: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: { type: "string", format: "uuid" },
+                          barbershopId: { type: "string", format: "uuid" },
+                          barbershopName: {
+                            type: "string",
+                            nullable: true,
+                          },
+                          status: { type: "string", example: "PENDING" },
+                          role: { type: "string", example: "BARBERMAN" },
+                          expiresAt: { type: "string", format: "date-time" },
+                          createdAt: {
+                            type: "string",
+                            format: "date-time",
+                            nullable: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Validation error or user not found" },
+          "401": { description: "Missing or invalid authentication" },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
+    "/api/invitations/accept": {
+      post: {
+        tags: ["Invitations"],
+        summary: "Accept an invitation (authenticated invitee)",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["token"],
+                properties: {
+                  token: { type: "string", example: "0N8xq5m8Q3v1..." },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Invitation accepted and barberman membership created",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    accepted: { type: "boolean", example: true },
+                    invitationId: { type: "string", format: "uuid" },
+                    barbershopId: { type: "string", format: "uuid" },
+                    barbermanId: { type: "string", format: "uuid" },
+                    status: { type: "string", example: "ACCEPTED" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description:
+              "Validation error, invalid/expired/used token, email mismatch, or already a member",
+          },
+          "401": { description: "Missing or invalid authentication" },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
+    "/api/invitations/decline": {
+      post: {
+        tags: ["Invitations"],
+        summary: "Decline an invitation (authenticated invitee)",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["token"],
+                properties: {
+                  token: { type: "string", example: "0N8xq5m8Q3v1..." },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Invitation declined successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    declined: { type: "boolean", example: true },
+                    invitationId: { type: "string", format: "uuid" },
+                    status: { type: "string", example: "DECLINED" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description:
+              "Validation error, invalid/expired/used token, or email mismatch",
+          },
+          "401": { description: "Missing or invalid authentication" },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
     "/api/bookings/barberman/schedule": {
       get: {
         tags: ["Bookings"],

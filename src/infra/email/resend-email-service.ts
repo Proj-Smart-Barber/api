@@ -1,10 +1,12 @@
 import { Resend } from "resend";
 import type {
   EmailService,
+  SendInvitationEmailParams,
   SendPasswordRecoveryEmailParams,
   SendVerificationEmailParams,
 } from "../../domain/application/services/email-service";
 import { env } from "../env";
+import { renderInvitationEmail } from "./render-invitation-email";
 import { renderPasswordRecoveryEmail } from "./render-password-recovery-email";
 import { renderVerificationEmail } from "./render-verification-email";
 
@@ -42,6 +44,22 @@ export class ResendEmailService implements EmailService {
       from: env.EMAIL_FROM,
       to: params.to,
       subject: "Redefina sua senha no SmartBarber",
+      html,
+      text,
+    });
+
+    if (error) {
+      throw new Error(`Falha ao enviar e-mail via Resend: ${error.message}`);
+    }
+  }
+
+  async sendInvitationEmail(params: SendInvitationEmailParams): Promise<void> {
+    const { html, text } = await renderInvitationEmail(params);
+
+    const { error } = await this.resend.emails.send({
+      from: env.EMAIL_FROM,
+      to: params.to,
+      subject: `Você foi convidado para a barbearia ${params.barbershopName}`,
       html,
       text,
     });

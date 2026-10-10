@@ -143,6 +143,39 @@ export async function runSchemaMigrations() {
       END $$;
     `);
 
+    // 8. Convites de barbeiros
+    await db.execute(sql`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'invitation_status') THEN
+          CREATE TYPE "invitation_status" AS ENUM ('PENDING', 'ACCEPTED', 'DECLINED', 'REVOKED');
+        END IF;
+      END $$;
+    `);
+
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "invitations" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+        "barbershop_id" uuid NOT NULL,
+        "email" text NOT NULL,
+        "role" "role" DEFAULT 'BARBERMAN' NOT NULL,
+        "token_hash" text NOT NULL,
+        "status" "invitation_status" DEFAULT 'PENDING' NOT NULL,
+        "expires_at" timestamp NOT NULL,
+        "invited_by_id" uuid NOT NULL,
+        "responded_at" timestamp,
+        "created_at" timestamp DEFAULT now(),
+        CONSTRAINT "invitations_token_hash_unique" UNIQUE ("token_hash"),
+        CONSTRAINT "invitations_barbershop_id_barbershops_id_fkey" FOREIGN KEY ("barbershop_id") REFERENCES "barbershops"("id") ON DELETE CASCADE,
+        CONSTRAINT "invitations_invited_by_id_users_id_fkey" FOREIGN KEY ("invited_by_id") REFERENCES "users"("id")
+      );
+    `);
+
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS "invitations_barbershop_email_idx" ON "invitations" ("barbershop_id","email");
+      CREATE INDEX IF NOT EXISTS "invitations_status_idx" ON "invitations" ("status");
+    `);
+
     hasMigrated = true;
     console.log("[Migration] Schema migrations completed successfully.");
     return {

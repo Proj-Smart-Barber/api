@@ -1,5 +1,6 @@
 import type {
   EmailService,
+  SendInvitationEmailParams,
   SendPasswordRecoveryEmailParams,
   SendVerificationEmailParams,
 } from "../../src/domain/application/services/email-service";
@@ -7,6 +8,7 @@ import type {
 export class FakeEmailService implements EmailService {
   public sentEmails: SendVerificationEmailParams[] = [];
   public recoveryEmails: SendPasswordRecoveryEmailParams[] = [];
+  public invitationEmails: SendInvitationEmailParams[] = [];
   public failNextSend = false;
 
   async sendVerificationEmail(
@@ -21,6 +23,11 @@ export class FakeEmailService implements EmailService {
   ): Promise<void> {
     this.assertCanSend();
     this.recoveryEmails.push(params);
+  }
+
+  async sendInvitationEmail(params: SendInvitationEmailParams): Promise<void> {
+    this.assertCanSend();
+    this.invitationEmails.push(params);
   }
 
   private assertCanSend(): void {
