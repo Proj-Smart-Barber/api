@@ -1,18 +1,37 @@
 import type {
   BookingsRepository,
+  CreateBookingBundleParams,
   FindManyByBarbermanAndDateParams,
   FindManyByShoppingCartParams,
   FindOverlappingParams,
 } from "../../src/domain/application/repositories/bookings-repository";
 import type { Booking } from "../../src/domain/enterprise/entities/booking";
+import type { ServiceItem } from "../../src/domain/enterprise/entities/service-item";
+import type { ShoppingCart } from "../../src/domain/enterprise/entities/shopping-cart";
 import { BookingDetails } from "../../src/domain/enterprise/entities/booking-details";
 import { UniqueEntityId } from "../../src/core/entities/unique-entity-id";
 
+export interface CreatedBookingBundle {
+  booking: Booking;
+  serviceItem: ServiceItem;
+  cart: ShoppingCart;
+}
+
 export class InMemoryBookingsRepository implements BookingsRepository {
   public items: Booking[] = [];
+  public createdBundles: CreatedBookingBundle[] = [];
 
   async create(booking: Booking): Promise<void> {
     this.items.push(booking);
+  }
+
+  async createWithItemAndCart({
+    booking,
+    serviceItem,
+    cart,
+  }: CreateBookingBundleParams): Promise<void> {
+    this.items.push(booking);
+    this.createdBundles.push({ booking, serviceItem, cart });
   }
 
   async save(booking: Booking): Promise<void> {

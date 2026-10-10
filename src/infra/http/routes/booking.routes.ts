@@ -4,9 +4,15 @@ import { ensureUserIsAuthenticated } from "../middlewares/ensure-user-is-authent
 
 import { makeFetchBarbermanDailyScheduleController } from "../factories/make-fetch-barberman-daily-schedule-controller";
 import { makeCancelBookingController } from "../factories/make-cancel-booking-controller";
+import { makeCreateBookingController } from "../factories/make-create-booking-controller";
 import { makeFetchBarbermanDailyScheduleWithDetailsController } from "../factories/make-fetch-barberman-daily-schedule-with-details-controller";
 const bookingRoutes = Router();
 
+bookingRoutes.post(
+  "/",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeCreateBookingController()),
+);
 bookingRoutes.get(
   "/barberman/schedule",
   ensureUserIsAuthenticated,
