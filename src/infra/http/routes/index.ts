@@ -5,8 +5,6 @@ import { scheduleRoutes } from "./schedule.routes";
 import { barbershopRoutes } from "./barbershop.routes";
 import { barbershopInvitationRoutes } from "./barbershop-invitation.routes";
 import { invitationRoutes } from "./invitation.routes";
-import { serviceItemRoutes } from "./service-item.routes";
-import { shoppingCartRoutes } from "./shopping-cart.routes";
 
 const routes = Router();
 
@@ -15,8 +13,6 @@ routes.use("/staffs", userRoutes);
 routes.use("/invitations", invitationRoutes);
 routes.use("/barbershops", barbershopRoutes);
 routes.use("/bookings", bookingRoutes);
-routes.use("/service-items", serviceItemRoutes);
-routes.use("/carts", shoppingCartRoutes);
 routes.use("/barbershops/:shopId", scheduleRoutes);
 routes.use("/barbershops/:shopId", barbershopInvitationRoutes);
 

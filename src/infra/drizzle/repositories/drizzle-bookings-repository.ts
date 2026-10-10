@@ -10,14 +10,19 @@ import {
 } from "../schema";
 import type {
   BookingsRepository,
+  CreateBookingBundleParams,
   FindManyByBarbermanAndDateParams,
   FindOverlappingParams,
   FindManyByShoppingCartParams,
 } from "../../../domain/application/repositories/bookings-repository";
 import type { Booking } from "../../../domain/enterprise/entities/booking";
 import type { BookingDetails } from "../../../domain/enterprise/entities/booking-details";
+import type { ServiceItem } from "../../../domain/enterprise/entities/service-item";
+import type { ShoppingCart } from "../../../domain/enterprise/entities/shopping-cart";
 import { BookingMapper } from "../../../domain/enterprise/mappers/booking-mapper";
 import { BookingDetailsMapper } from "../../../domain/enterprise/mappers/booking-details-mapper";
+import { ServiceItemMapper } from "../../../domain/enterprise/mappers/service-item-mapper";
+import { ShoppingCartMapper } from "../../../domain/enterprise/mappers/shopping-cart-mapper";
 
 export class DrizzleBookingsRepository implements BookingsRepository {
   async findManyByBarbermanAndDate({
@@ -45,6 +50,22 @@ export class DrizzleBookingsRepository implements BookingsRepository {
   async create(booking: Booking): Promise<void> {
     const data = BookingMapper.toPersistence(booking);
     await db.insert(bookings).values(data);
+  }
+
+  async createWithItemAndCart({
+    booking,
+    serviceItem,
+    cart,
+  }: CreateBookingBundleParams): Promise<void> {
+    const serviceItemData = ServiceItemMapper.toPersistence(serviceItem);
+    const cartData = ShoppingCartMapper.toPersistence(cart);
+    const bookingData = BookingMapper.toPersistence(booking);
+
+    await db.transaction(async (tx) => {
+      await tx.insert(serviceItems).values(serviceItemData);
+      await tx.insert(shoppingCarts).values(cartData);
+      await tx.insert(bookings).values(bookingData);
+    });
   }
 
   async save(booking: Booking): Promise<void> {

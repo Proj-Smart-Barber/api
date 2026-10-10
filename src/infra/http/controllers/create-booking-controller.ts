@@ -5,19 +5,17 @@ import {
   conflict,
   created,
   fail,
-  forbidden,
   notFound,
   type HttpResponse,
 } from "../../../core/infra/http-response";
 import { BookingConflictError } from "../../../domain/application/use-cases/_errors/booking-conflict-error";
-import { NotAllowedError } from "../../../domain/application/use-cases/_errors/not-allowed-error";
 import { ResourceNotFoundError } from "../../../domain/application/use-cases/_errors/resource-not-found-error";
 import type { CreateBookingUseCase } from "../../../domain/application/use-cases/booking/create-booking/create-booking";
 import { BookingMapper } from "../../../domain/enterprise/mappers/booking-mapper";
 
 const createBookingControllerRequest = z.object({
   userId: z.string().uuid(),
-  shoppingCartId: z.string().uuid(),
+  serviceId: z.string().uuid(),
   barbermanId: z.string().uuid(),
   date: z
     .string()
@@ -37,7 +35,7 @@ export class CreateBookingController implements Controller {
     try {
       const {
         userId: customerId,
-        shoppingCartId,
+        serviceId,
         barbermanId,
         date,
         startTime,
@@ -46,7 +44,7 @@ export class CreateBookingController implements Controller {
 
       const result = await this.createBookingUseCase.execute({
         customerId,
-        shoppingCartId,
+        serviceId,
         barbermanId,
         date,
         startTime,
@@ -58,10 +56,6 @@ export class CreateBookingController implements Controller {
 
         if (error instanceof ResourceNotFoundError) {
           return notFound({ error: error.message });
-        }
-
-        if (error instanceof NotAllowedError) {
-          return forbidden({ error: error.message });
         }
 
         if (error instanceof BookingConflictError) {

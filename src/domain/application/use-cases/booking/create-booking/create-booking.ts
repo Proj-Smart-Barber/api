@@ -1,10 +1,11 @@
 import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
 import { type Either, left, right } from "../../../../../core/logic/either";
 import { Booking } from "../../../../enterprise/entities/booking";
+import { ServiceItem } from "../../../../enterprise/entities/service-item";
+import { ShoppingCart } from "../../../../enterprise/entities/shopping-cart";
 import type { BookingsRepository } from "../../../repositories/bookings-repository";
-import type { ShoppingCartsRepository } from "../../../repositories/shopping-carts-repository";
+import type { ServicesRepository } from "../../../repositories/services-repository";
 import { BookingConflictError } from "../../_errors/booking-conflict-error";
-import { NotAllowedError } from "../../_errors/not-allowed-error";
 import { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
 import type { CreateBookingDTO } from "./create-booking-dto";
 import type { CreateBookingResponse } from "./create-booking-response";
@@ -14,31 +15,22 @@ type CreateBookingUseCaseResponse = Either<Error, CreateBookingResponse>;
 export class CreateBookingUseCase {
   constructor(
     private bookingsRepository: BookingsRepository,
-    private shoppingCartsRepository: ShoppingCartsRepository,
+    private servicesRepository: ServicesRepository,
   ) {}
 
   async execute({
     customerId,
     barbermanId,
-    shoppingCartId,
+    serviceId,
     date,
     startTime,
     endTime,
   }: CreateBookingDTO): Promise<CreateBookingUseCaseResponse> {
-    const cartWithBarbershop =
-      await this.shoppingCartsRepository.findByIdWithBarbershop(shoppingCartId);
+    const service = await this.servicesRepository.findById(serviceId);
 
-    if (!cartWithBarbershop) {
+    if (!service || !service.isActive) {
       return left(
-        new ResourceNotFoundError("Carrinho de compras não encontrado."),
-      );
-    }
-
-    if (cartWithBarbershop.cart.userId.toString() !== customerId) {
-      return left(
-        new NotAllowedError(
-          "Este carrinho não pertence ao usuário autenticado.",
-        ),
+        new ResourceNotFoundError("Serviço não encontrado ou inativo."),
       );
     }
 
@@ -60,7 +52,7 @@ export class CreateBookingUseCase {
       return left(new Error("Data ou horários inválidos."));
     }
 
-    const barbershopId = cartWithBarbershop.barbershopId;
+    const barbershopId = service.barbershopId.toString();
 
     const overlappingBooking = await this.bookingsRepository.findOverlapping({
       barbermanId,
@@ -73,16 +65,33 @@ export class CreateBookingUseCase {
       return left(new BookingConflictError());
     }
 
+    const serviceItem = ServiceItem.create({
+      serviceId: new UniqueEntityId(serviceId),
+      titleSnapshot: service.title,
+      priceInCentsSnapshot: service.priceInCents,
+      durationInMinutesSnapshot: service.durationInMinutes,
+    });
+
+    const cart = ShoppingCart.create({
+      serviceItemId: serviceItem.id,
+      userId: new UniqueEntityId(customerId),
+      totalPriceInCents: service.priceInCents,
+    });
+
     const booking = Booking.create({
       barbershopId: new UniqueEntityId(barbershopId),
       barbermanId: new UniqueEntityId(barbermanId),
-      shoppingCartId: new UniqueEntityId(shoppingCartId),
+      shoppingCartId: cart.id,
       date: bookingDate,
       startTime,
       endTime,
     });
 
-    await this.bookingsRepository.create(booking);
+    await this.bookingsRepository.createWithItemAndCart({
+      booking,
+      serviceItem,
+      cart,
+    });
 
     return right({ booking });
   }
