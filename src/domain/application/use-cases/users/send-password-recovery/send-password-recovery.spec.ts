@@ -97,6 +97,23 @@ describe("Send password recovery", () => {
     expect(inMemoryPasswordRecoveryTokensRepository.items).toHaveLength(2);
   });
 
+  it("should send a recovery email regardless of email case", async () => {
+    const user = User.create({
+      name: "Fulano",
+      email: "Fulano@Email.com",
+      password: await Password.generateHashFromPlainText("12345678", 12),
+      cpf: "00000000000",
+    });
+    await inMemoryUsersRepository.save(user);
+
+    const response = await sut.execute({ email: "  FULANO@EMAIL.COM " });
+
+    expect(response.isRight()).toBe(true);
+    expect(response.value).toEqual({ sentTo: "Fulano@Email.com" });
+    expect(fakeEmailService.recoveryEmails).toHaveLength(1);
+    expect(fakeEmailService.recoveryEmails[0].to).toBe("Fulano@Email.com");
+  });
+
   it("should not send or reveal anything for an unknown email", async () => {
     const response = await sut.execute({
       email: "nao-existe@email.com",

@@ -42,6 +42,39 @@ describe("Create a new user", async () => {
     expect(response.value).toBeInstanceOf(CPFOrEmailAlreadyInUseError);
   });
 
+  it("should normalize the email to lowercase when creating a user", async () => {
+    await sut.execute({
+      name: "Fulano",
+      email: "  Fulano@Email.COM ",
+      cpf: "00000000000",
+      password: "12345678",
+    });
+
+    const created =
+      await inMemoryUsersRepository.findByEmail("fulano@email.com");
+
+    expect(created).not.toBeNull();
+    expect(created?.email).toBe("fulano@email.com");
+  });
+
+  it("should not be able to create a user with an existing email in a different case", async () => {
+    await sut.execute({
+      name: "Fulano 1",
+      email: "Fulano1@Email.com",
+      cpf: "00000000000",
+      password: "12345678",
+    });
+
+    const response = await sut.execute({
+      name: "Fulano 2",
+      email: "fulano1@email.com",
+      cpf: "00000000001",
+      password: "12345678",
+    });
+
+    expect(response.value).toBeInstanceOf(CPFOrEmailAlreadyInUseError);
+  });
+
   it("should not be able to create a user with an existing cpf", async () => {
     await sut.execute({
       name: "Fulano 1",

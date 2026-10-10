@@ -75,6 +75,33 @@ describe("Sign in user", async () => {
     expect(inMemoryRefreshTokensRepository.items).toHaveLength(0);
   });
 
+  it("should be able to sign in a user regardless of email case", async () => {
+    const userPassword = faker.internet.password();
+
+    const newUser = User.create({
+      name: faker.person.fullName(),
+      email: "UpperCase@Email.com",
+      password: await Password.generateHashFromPlainText(userPassword, 12),
+      cpf: "12345678903",
+      emailVerifiedAt: new Date(),
+    });
+
+    await inMemoryUsersRepository.save(newUser);
+
+    const response = await sut.execute({
+      email: " uppercase@email.com ",
+      password: userPassword,
+    });
+
+    expect(response.value).toEqual(
+      expect.objectContaining({
+        access_token: expect.any(String),
+        refresh_token: expect.any(String),
+      }),
+    );
+    expect(inMemoryRefreshTokensRepository.items).toHaveLength(1);
+  });
+
   it("should not be able to sign in a user with an invalid email", async () => {
     const userPassword = faker.internet.password();
     const userEmail = faker.internet.email();

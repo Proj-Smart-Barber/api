@@ -15,7 +15,10 @@ export class InMemoryUsersRepository implements UsersRepository {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const user = this.users.find((user) => user.email === email);
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = this.users.find(
+      (user) => user.email.trim().toLowerCase() === normalizedEmail,
+    );
 
     if (!user) {
       return null;
@@ -25,8 +28,10 @@ export class InMemoryUsersRepository implements UsersRepository {
   }
 
   async findByCpfOrEmail(cpf: string, email: string): Promise<User | null> {
+    const normalizedEmail = email.trim().toLowerCase();
     const user = this.users.find(
-      (user) => user.cpf === cpf || user.email === email,
+      (user) =>
+        user.cpf === cpf || user.email.trim().toLowerCase() === normalizedEmail,
     );
 
     if (!user) {

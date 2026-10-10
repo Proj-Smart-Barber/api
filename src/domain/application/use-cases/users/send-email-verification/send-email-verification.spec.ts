@@ -123,6 +123,23 @@ describe("Send email verification", () => {
     expect(fakeEmailService.sentEmails).toHaveLength(0);
   });
 
+  it("should send the verification email regardless of email case or surrounding whitespace", async () => {
+    const user = User.create({
+      name: "Fulano",
+      email: "Fulano@Email.com",
+      password: await Password.generateHashFromPlainText("12345678", 12),
+      cpf: "00000000000",
+    });
+    await inMemoryUsersRepository.save(user);
+
+    const response = await sut.execute({ email: "  FULANO@EMAIL.COM  " });
+
+    expect(response.isRight()).toBe(true);
+    expect(response.value).toEqual({ sentTo: "Fulano@Email.com" });
+    expect(fakeEmailService.sentEmails).toHaveLength(1);
+    expect(fakeEmailService.sentEmails[0].to).toBe("Fulano@Email.com");
+  });
+
   it("should return an email send error when the email service fails", async () => {
     const user = User.create({
       name: "Fulano",
