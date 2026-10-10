@@ -51,12 +51,12 @@ export function InvitationEmail({
         SmartBarber.
       </Text>
       <Text style={textStyle}>
-        Use o botão abaixo para acessar o convite e aceitar ou recusar. O
-        convite é válido por {expiresInDays} dia{expiresInDays > 1 ? "s" : ""}.
+        Abra o aplicativo para ver o convite e aceitar ou recusar. O convite é
+        válido por {expiresInDays} dia{expiresInDays > 1 ? "s" : ""}.
       </Text>
       <Text style={{ ...textStyle, textAlign: "center", margin: "24px 0" }}>
         <Button style={buttonStyle} href={invitationUrl}>
-          Ver convite
+          Abrir o aplicativo
         </Button>
       </Text>
       <Text style={textStyle}>

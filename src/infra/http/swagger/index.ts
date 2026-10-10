@@ -1391,6 +1391,69 @@ export const swaggerDocument = {
         },
       },
     },
+    "/api/notifications": {
+      get: {
+        tags: ["Notifications"],
+        summary: "List notifications for the authenticated user",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Notifications retrieved successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    notifications: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: { type: "string", format: "uuid" },
+                          type: {
+                            type: "string",
+                            example: "INVITATION_RECEIVED",
+                          },
+                          title: { type: "string" },
+                          message: { type: "string" },
+                          referenceType: {
+                            type: "string",
+                            nullable: true,
+                            example: "INVITATION",
+                          },
+                          referenceId: {
+                            type: "string",
+                            format: "uuid",
+                            nullable: true,
+                          },
+                          readAt: {
+                            type: "string",
+                            format: "date-time",
+                            nullable: true,
+                          },
+                          scheduledAt: {
+                            type: "string",
+                            format: "date-time",
+                          },
+                          createdAt: {
+                            type: "string",
+                            format: "date-time",
+                            nullable: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Validation error or user not found" },
+          "401": { description: "Missing or invalid authentication" },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
     "/api/invitations": {
       get: {
         tags: ["Invitations"],

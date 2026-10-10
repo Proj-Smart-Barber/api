@@ -3,19 +3,21 @@ import type { UniqueEntityId } from "../../../core/entities/unique-entity-id";
 import type { Optional } from "../../../core/types/optional";
 
 interface NotificationProps {
-  bookingId: UniqueEntityId;
+  userId: UniqueEntityId;
   type: string;
   title: string;
   message: string;
+  referenceType?: string | null;
+  referenceId?: UniqueEntityId | null;
   scheduledAt: Date;
-  sentAt: Date;
-  readAt: Date;
+  sentAt?: Date | null;
+  readAt?: Date | null;
   createdAt?: Date;
 }
 
 export class Notification extends Entity<NotificationProps> {
-  get bookingId(): UniqueEntityId {
-    return this.props.bookingId;
+  get userId(): UniqueEntityId {
+    return this.props.userId;
   }
 
   get type(): string {
@@ -30,15 +32,23 @@ export class Notification extends Entity<NotificationProps> {
     return this.props.message;
   }
 
+  get referenceType(): string | null | undefined {
+    return this.props.referenceType;
+  }
+
+  get referenceId(): UniqueEntityId | null | undefined {
+    return this.props.referenceId;
+  }
+
   get scheduledAt(): Date {
     return this.props.scheduledAt;
   }
 
-  get sentAt(): Date {
+  get sentAt(): Date | null | undefined {
     return this.props.sentAt;
   }
 
-  get readAt(): Date {
+  get readAt(): Date | null | undefined {
     return this.props.readAt;
   }
 
@@ -46,14 +56,25 @@ export class Notification extends Entity<NotificationProps> {
     return this.props.createdAt;
   }
 
+  markAsRead(at: Date = new Date()): void {
+    this.props.readAt = at;
+  }
+
   static create(
-    props: Optional<NotificationProps, "createdAt">,
+    props: Optional<
+      NotificationProps,
+      "createdAt" | "sentAt" | "readAt" | "referenceType" | "referenceId"
+    >,
     id?: UniqueEntityId,
   ) {
     const notification = new Notification(
       {
         ...props,
-        createdAt: new Date(),
+        referenceType: props.referenceType ?? null,
+        referenceId: props.referenceId ?? null,
+        sentAt: props.sentAt ?? null,
+        readAt: props.readAt ?? null,
+        createdAt: props.createdAt ?? new Date(),
       },
       id,
     );

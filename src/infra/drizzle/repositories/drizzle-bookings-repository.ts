@@ -195,7 +195,12 @@ export class DrizzleBookingsRepository implements BookingsRepository {
     await db.transaction(async (tx) => {
       await tx
         .delete(notifications)
-        .where(eq(notifications.bookingId, bookingId));
+        .where(
+          and(
+            eq(notifications.referenceType, "BOOKING"),
+            eq(notifications.referenceId, bookingId),
+          ),
+        );
       await tx.delete(bookings).where(eq(bookings.id, bookingId));
     });
   }
