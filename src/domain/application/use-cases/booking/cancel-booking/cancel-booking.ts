@@ -40,6 +40,8 @@ export class CancelBookingUseCase {
       return left(new UnauthorizedError());
     }
 
+    await this.bookingsRepository.delete(booking);
+
     if (barbershop) {
       await this.notifyBookingEventUseCase.execute({
         booking,
@@ -47,8 +49,6 @@ export class CancelBookingUseCase {
         eventType: "CANCELLED",
       });
     }
-
-    await this.bookingsRepository.delete(booking);
 
     return right({
       booking,
