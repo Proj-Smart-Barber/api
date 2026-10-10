@@ -3,15 +3,19 @@ import { CancelBookingController } from "../controllers/cancel-booking-controlle
 import { DrizzleBookingsRepository } from "../../drizzle/repositories/drizzle-bookings-repository";
 import { DrizzleBarbershopsRepository } from "../../drizzle/repositories/drizzle-barbershops-repository";
 import { DrizzleNotificationsRepository } from "../../drizzle/repositories/drizzle-notifications-repository";
+import { NotifyBookingEventUseCase } from "../../../domain/application/use-cases/notifications/notify-booking-event/notify-booking-event";
 
 export function makeCancelBookingController() {
   const drizzleBookingsRepository = new DrizzleBookingsRepository();
   const drizzleBarbershopsRepository = new DrizzleBarbershopsRepository();
   const drizzleNotificationsRepository = new DrizzleNotificationsRepository();
+  const notifyBookingEventUseCase = new NotifyBookingEventUseCase(
+    drizzleNotificationsRepository,
+  );
   const cancelBookingUseCase = new CancelBookingUseCase(
     drizzleBookingsRepository,
     drizzleBarbershopsRepository,
-    drizzleNotificationsRepository,
+    notifyBookingEventUseCase,
   );
   return new CancelBookingController(cancelBookingUseCase);
 }

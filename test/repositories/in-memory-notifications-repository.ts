@@ -12,6 +12,10 @@ export class InMemoryNotificationsRepository
     return notification;
   }
 
+  async createMany(notificationsList: Notification[]): Promise<void> {
+    this.items.push(...notificationsList);
+  }
+
   async save(notification: Notification): Promise<Notification> {
     const index = this.items.findIndex(
       (item) => item.id.toString() === notification.id.toString(),

@@ -7,6 +7,7 @@ import { Booking } from "../../../../enterprise/entities/booking";
 import { Barbershop } from "../../../../enterprise/entities/barbershop";
 import { Slug } from "../../../../enterprise/entities/value-objects/slug";
 import { UpdateBookingUseCase } from "./update-booking";
+import { NotifyBookingEventUseCase } from "../../notifications/notify-booking-event/notify-booking-event";
 import { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
 import { UnauthorizedError } from "../../_errors/unauthorized-error";
 import { BookingConflictError } from "../../_errors/booking-conflict-error";
@@ -14,6 +15,7 @@ import { BookingConflictError } from "../../_errors/booking-conflict-error";
 let inMemoryBookingsRepository: InMemoryBookingsRepository;
 let inMemoryBarbershopsRepository: InMemoryBarbershopsRepository;
 let inMemoryNotificationsRepository: InMemoryNotificationsRepository;
+let notifyBookingEventUseCase: NotifyBookingEventUseCase;
 let sut: UpdateBookingUseCase;
 
 describe("Update Booking Use Case", () => {
@@ -21,10 +23,13 @@ describe("Update Booking Use Case", () => {
     inMemoryBookingsRepository = new InMemoryBookingsRepository();
     inMemoryBarbershopsRepository = new InMemoryBarbershopsRepository();
     inMemoryNotificationsRepository = new InMemoryNotificationsRepository();
+    notifyBookingEventUseCase = new NotifyBookingEventUseCase(
+      inMemoryNotificationsRepository,
+    );
     sut = new UpdateBookingUseCase(
       inMemoryBookingsRepository,
       inMemoryBarbershopsRepository,
-      inMemoryNotificationsRepository,
+      notifyBookingEventUseCase,
     );
 
     inMemoryBarbershopsRepository.items.push(

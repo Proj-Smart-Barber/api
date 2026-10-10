@@ -15,6 +15,18 @@ export class DrizzleNotificationsRepository implements NotificationsRepository {
     return DrizzleNotificationMapper.toDomain(created);
   }
 
+  async createMany(notificationsList: Notification[]): Promise<void> {
+    if (notificationsList.length === 0) {
+      return;
+    }
+
+    const data = notificationsList.map((notification) =>
+      DrizzleNotificationMapper.toDrizzle(notification),
+    );
+
+    await db.insert(notifications).values(data);
+  }
+
   async save(notification: Notification): Promise<Notification> {
     const [updated] = await db
       .update(notifications)

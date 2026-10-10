@@ -1,9 +1,7 @@
 import { type Either, left, right } from "../../../../../core/logic/either";
 import type { BookingsRepository } from "../../../repositories/bookings-repository";
 import type { BarbershopsRepository } from "../../../repositories/barbershops-repository";
-import type { NotificationsRepository } from "../../../repositories/notifications-repository";
-import { Notification } from "../../../../enterprise/entities/notification";
-import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
+import type { NotifyBookingEventUseCase } from "../../notifications/notify-booking-event/notify-booking-event";
 import { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
 import { UnauthorizedError } from "../../_errors/unauthorized-error";
 import { BookingConflictError } from "../../_errors/booking-conflict-error";
@@ -19,7 +17,7 @@ export class UpdateBookingUseCase {
   constructor(
     private bookingsRepository: BookingsRepository,
     private barbershopsRepository: BarbershopsRepository,
-    private notificationsRepository: NotificationsRepository,
+    private notifyBookingEventUseCase: NotifyBookingEventUseCase,
   ) {}
 
   async execute({
@@ -89,26 +87,12 @@ export class UpdateBookingUseCase {
 
     await this.bookingsRepository.save(booking);
 
-    const recipients = new Set<string>();
-    recipients.add(booking.barbermanId.toString());
-    if (barbershop?.ownerId) {
-      recipients.add(barbershop.ownerId.toString());
-    }
-
-    const dateStr = targetDate.toLocaleDateString("pt-BR");
-    for (const userId of recipients) {
-      await this.notificationsRepository.create(
-        Notification.create({
-          userId: new UniqueEntityId(userId),
-          type: "BOOKING_UPDATED",
-          title: "Agendamento Atualizado",
-          message: `O atendimento agendado para ${dateStr} foi alterado para ${targetStartTime} - ${targetEndTime}.`,
-          referenceType: "BOOKING",
-          referenceId: booking.id,
-          scheduledAt: new Date(),
-          sentAt: new Date(),
-        }),
-      );
+    if (barbershop) {
+      await this.notifyBookingEventUseCase.execute({
+        booking,
+        barbershop,
+        eventType: "UPDATED",
+      });
     }
 
     return right({
