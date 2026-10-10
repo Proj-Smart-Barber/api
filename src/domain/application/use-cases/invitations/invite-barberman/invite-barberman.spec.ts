@@ -9,6 +9,7 @@ import { FakeEmailService } from "../../../../../../test/fakes/fake-email-servic
 import { InMemoryBarbershopsRepository } from "../../../../../../test/repositories/in-memory-barbershops-repository";
 import { InMemoryInvitationsRepository } from "../../../../../../test/repositories/in-memory-invitations-repository";
 import { InMemoryMembershipsRepository } from "../../../../../../test/repositories/in-memory-memberships-repository";
+import { InMemoryNotificationsRepository } from "../../../../../../test/repositories/in-memory-notifications-repository";
 import { InMemoryUsersRepository } from "../../../../../../test/repositories/in-memory-users-repository";
 import { AlreadyAMemberError } from "../../_errors/already-a-member-error";
 import { EmailSendError } from "../../_errors/email-send-error";
@@ -19,6 +20,7 @@ import { InviteBarbermanUseCase } from "./invite-barberman";
 let inMemoryBarbershopsRepository: InMemoryBarbershopsRepository;
 let inMemoryInvitationsRepository: InMemoryInvitationsRepository;
 let inMemoryMembershipsRepository: InMemoryMembershipsRepository;
+let inMemoryNotificationsRepository: InMemoryNotificationsRepository;
 let inMemoryUsersRepository: InMemoryUsersRepository;
 let fakeEmailService: FakeEmailService;
 let sut: InviteBarbermanUseCase;
@@ -28,6 +30,7 @@ describe("Invite barberman use case", () => {
     inMemoryBarbershopsRepository = new InMemoryBarbershopsRepository();
     inMemoryInvitationsRepository = new InMemoryInvitationsRepository();
     inMemoryMembershipsRepository = new InMemoryMembershipsRepository();
+    inMemoryNotificationsRepository = new InMemoryNotificationsRepository();
     inMemoryUsersRepository = new InMemoryUsersRepository();
     fakeEmailService = new FakeEmailService();
 
@@ -37,6 +40,7 @@ describe("Invite barberman use case", () => {
       inMemoryMembershipsRepository,
       inMemoryUsersRepository,
       fakeEmailService,
+      inMemoryNotificationsRepository,
     );
   });
 
@@ -107,6 +111,52 @@ describe("Invite barberman use case", () => {
     expect(inMemoryInvitationsRepository.items[0].tokenHash).toBe(
       hashToken(plainToken as string),
     );
+    expect(sent.invitationUrl).not.toContain("/invitations/accept");
+  });
+
+  it("should create an in-app notification when the invitee already has an account", async () => {
+    const owner = await createOwner();
+    addBarbershop(owner.id.toString());
+
+    const barberman = User.create({
+      name: "João Souza",
+      email: "barberman@example.com",
+      password: await Password.generateHashFromPlainText("12345678", 12),
+      cpf: "11111111111",
+    });
+    await inMemoryUsersRepository.save(barberman);
+
+    const response = await sut.execute({
+      barbershopId: "shop-1",
+      userId: owner.id.toString(),
+      email: "barberman@example.com",
+    });
+
+    expect(response.isRight()).toBe(true);
+    expect(inMemoryNotificationsRepository.items).toHaveLength(1);
+
+    const notification = inMemoryNotificationsRepository.items[0];
+    expect(notification.userId.toString()).toBe(barberman.id.toString());
+    expect(notification.type).toBe("INVITATION_RECEIVED");
+    expect(notification.title).toContain("Barbearia do Carlos");
+    expect(notification.referenceType).toBe("INVITATION");
+    expect(notification.referenceId?.toString()).toBe(
+      inMemoryInvitationsRepository.items[0].id.toString(),
+    );
+  });
+
+  it("should not create a notification when the invitee has no account", async () => {
+    const owner = await createOwner();
+    addBarbershop(owner.id.toString());
+
+    const response = await sut.execute({
+      barbershopId: "shop-1",
+      userId: owner.id.toString(),
+      email: "barberman@example.com",
+    });
+
+    expect(response.isRight()).toBe(true);
+    expect(inMemoryNotificationsRepository.items).toHaveLength(0);
   });
 
   it("should normalize the invited email to lowercase", async () => {
@@ -236,5 +286,31 @@ describe("Invite barberman use case", () => {
     expect(response.isLeft()).toBe(true);
     expect(response.value).toBeInstanceOf(EmailSendError);
     expect(inMemoryInvitationsRepository.items).toHaveLength(0);
+  });
+
+  it("should rollback the notification when the email fails for an existing user", async () => {
+    const owner = await createOwner();
+    addBarbershop(owner.id.toString());
+
+    const barberman = User.create({
+      name: "João Souza",
+      email: "barberman@example.com",
+      password: await Password.generateHashFromPlainText("12345678", 12),
+      cpf: "11111111111",
+    });
+    await inMemoryUsersRepository.save(barberman);
+
+    fakeEmailService.failNextSend = true;
+
+    const response = await sut.execute({
+      barbershopId: "shop-1",
+      userId: owner.id.toString(),
+      email: "barberman@example.com",
+    });
+
+    expect(response.isLeft()).toBe(true);
+    expect(response.value).toBeInstanceOf(EmailSendError);
+    expect(inMemoryInvitationsRepository.items).toHaveLength(0);
+    expect(inMemoryNotificationsRepository.items).toHaveLength(0);
   });
 });

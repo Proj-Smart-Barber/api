@@ -33,12 +33,9 @@ export function createInvitationToken(
   };
 }
 
-export function buildInvitationUrl(
-  plainToken: string,
-  action: "accept" | "decline" = "accept",
-): string {
+export function buildInvitationUrl(plainToken: string): string {
   const baseUrl = env.FRONTEND_URL ?? env.APP_URL;
-  const url = new URL(`/invitations/${action}`, baseUrl);
+  const url = new URL(baseUrl);
 
   url.searchParams.set("token", plainToken);
 

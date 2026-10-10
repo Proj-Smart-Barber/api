@@ -150,10 +150,12 @@ async function main() {
     .returning();
 
   await db.insert(notifications).values({
-    bookingId: booking.id,
+    userId: customer.id,
     type: "BOOKING_CONFIRMED",
     title: "Agendamento confirmado",
     message: "Seu corte de cabelo foi confirmado.",
+    referenceType: "BOOKING",
+    referenceId: booking.id,
     scheduledAt: new Date(),
   });
 

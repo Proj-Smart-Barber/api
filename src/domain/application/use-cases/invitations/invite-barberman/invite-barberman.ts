@@ -1,9 +1,11 @@
 import { type Either, left, right } from "../../../../../core/logic/either";
 import { Invitation } from "../../../../enterprise/entities/invitation";
 import { Role } from "../../../../enterprise/entities/membership";
+import { Notification } from "../../../../enterprise/entities/notification";
 import type { BarbershopsRepository } from "../../../repositories/barbershops-repository";
 import type { InvitationsRepository } from "../../../repositories/invitations-repository";
 import type { MembershipsRepository } from "../../../repositories/memberships-repository";
+import type { NotificationsRepository } from "../../../repositories/notifications-repository";
 import type { UsersRepository } from "../../../repositories/users-repository";
 import type { EmailService } from "../../../services/email-service";
 import {
@@ -33,6 +35,7 @@ export class InviteBarbermanUseCase {
     private membershipsRepository: MembershipsRepository,
     private usersRepository: UsersRepository,
     private emailService: EmailService,
+    private notificationsRepository: NotificationsRepository,
   ) {}
 
   async execute({
@@ -108,15 +111,40 @@ export class InviteBarbermanUseCase {
       return left(new ResourceNotFoundError());
     }
 
+    let createdNotification: Notification | null = null;
+
+    if (existingUser) {
+      createdNotification = await this.notificationsRepository.create(
+        Notification.create({
+          userId: existingUser.id,
+          type: "INVITATION_RECEIVED",
+          title: `Convite para ${barbershop.name}`,
+          message: `${owner.name} convidou você para fazer parte da ${
+            barbershop.name
+          } no SmartBarber.`,
+          referenceType: "INVITATION",
+          referenceId: invitation.id,
+          scheduledAt: new Date(),
+          sentAt: new Date(),
+        }),
+      );
+    }
+
     try {
       await this.emailService.sendInvitationEmail({
         to: normalizedEmail,
         ownerName: owner.name,
         barbershopName: barbershop.name,
-        invitationUrl: buildInvitationUrl(plainToken, "accept"),
+        invitationUrl: buildInvitationUrl(plainToken),
         expiresInDays,
       });
     } catch {
+      if (createdNotification) {
+        await this.notificationsRepository.delete(
+          createdNotification.id.toString(),
+        );
+      }
+
       await this.invitationsRepository.delete(invitation.id.toString());
       return left(new EmailSendError());
     }

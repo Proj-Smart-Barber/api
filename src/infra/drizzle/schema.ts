@@ -256,12 +256,14 @@ export const scheduleExceptions = pgTable("schedule_exceptions", {
 
 export const notifications = pgTable("notifications", {
   id: uuid().primaryKey().defaultRandom(),
-  bookingId: uuid("booking_id")
+  userId: uuid("user_id")
     .notNull()
-    .references(() => bookings.id),
+    .references(() => users.id),
   type: text().notNull(),
   title: text().notNull(),
   message: text().notNull(),
+  referenceType: text("reference_type"),
+  referenceId: uuid("reference_id"),
   scheduledAt: timestamp("scheduled_at").notNull(),
   sentAt: timestamp("sent_at"),
   readAt: timestamp("read_at"),
@@ -286,6 +288,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   emailVerifications: many(emailVerifications),
   passwordRecoveryTokens: many(passwordRecoveryTokens),
   sentInvitations: many(invitations),
+  notifications: many(notifications),
 }));
 
 export const emailVerificationsRelations = relations(
@@ -397,7 +400,7 @@ export const shoppingCartsRelations = relations(shoppingCarts, ({ one }) => ({
   }),
 }));
 
-export const bookingsRelations = relations(bookings, ({ one, many }) => ({
+export const bookingsRelations = relations(bookings, ({ one }) => ({
   barbershop: one(barbershops, {
     fields: [bookings.barbershopId],
     references: [barbershops.id],
@@ -410,13 +413,12 @@ export const bookingsRelations = relations(bookings, ({ one, many }) => ({
     fields: [bookings.shoppingCartId],
     references: [shoppingCarts.id],
   }),
-  notifications: many(notifications),
 }));
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({
-  booking: one(bookings, {
-    fields: [notifications.bookingId],
-    references: [bookings.id],
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
   }),
 }));
 
