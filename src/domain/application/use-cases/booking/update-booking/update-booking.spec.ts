@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { InMemoryBookingsRepository } from "../../../../../../test/repositories/in-memory-bookings-repository";
 import { InMemoryBarbershopsRepository } from "../../../../../../test/repositories/in-memory-barbershops-repository";
+import { InMemoryNotificationsRepository } from "../../../../../../test/repositories/in-memory-notifications-repository";
 import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
 import { Booking } from "../../../../enterprise/entities/booking";
 import { Barbershop } from "../../../../enterprise/entities/barbershop";
@@ -12,15 +13,18 @@ import { BookingConflictError } from "../../_errors/booking-conflict-error";
 
 let inMemoryBookingsRepository: InMemoryBookingsRepository;
 let inMemoryBarbershopsRepository: InMemoryBarbershopsRepository;
+let inMemoryNotificationsRepository: InMemoryNotificationsRepository;
 let sut: UpdateBookingUseCase;
 
 describe("Update Booking Use Case", () => {
   beforeEach(() => {
     inMemoryBookingsRepository = new InMemoryBookingsRepository();
     inMemoryBarbershopsRepository = new InMemoryBarbershopsRepository();
+    inMemoryNotificationsRepository = new InMemoryNotificationsRepository();
     sut = new UpdateBookingUseCase(
       inMemoryBookingsRepository,
       inMemoryBarbershopsRepository,
+      inMemoryNotificationsRepository,
     );
 
     inMemoryBarbershopsRepository.items.push(
@@ -39,7 +43,7 @@ describe("Update Booking Use Case", () => {
     );
   });
 
-  it("should be able to update booking time as the assigned barberman", async () => {
+  it("should be able to update booking time and create notifications", async () => {
     const bookingDate = new Date("2026-09-15T00:00:00.000Z");
     const newBooking = Booking.create(
       {
@@ -66,6 +70,10 @@ describe("Update Booking Use Case", () => {
     if (result.isRight()) {
       expect(result.value.booking.startTime).toBe("15:00");
       expect(result.value.booking.endTime).toBe("15:30");
+      expect(inMemoryNotificationsRepository.items.length).toBeGreaterThan(0);
+      expect(inMemoryNotificationsRepository.items[0].type).toBe(
+        "BOOKING_UPDATED",
+      );
     }
   });
 
@@ -74,7 +82,7 @@ describe("Update Booking Use Case", () => {
     const newBooking = Booking.create(
       {
         barbershopId: new UniqueEntityId("barbershop-1"),
-        barbermanId: new UniqueEntityId("barberman-1"), // assigned to barberman-1
+        barbermanId: new UniqueEntityId("barberman-1"),
         shoppingCartId: new UniqueEntityId("cart-1"),
         date: bookingDate,
         startTime: "14:00",
@@ -85,7 +93,6 @@ describe("Update Booking Use Case", () => {
 
     await inMemoryBookingsRepository.create(newBooking);
 
-    // executed by owner-1 (not the assigned barberman-1)
     const result = await sut.execute({
       bookingId: "booking-1",
       barbermanId: "owner-1",
