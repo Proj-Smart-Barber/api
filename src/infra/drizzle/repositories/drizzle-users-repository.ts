@@ -4,6 +4,7 @@ import { UserMapper } from "../../../domain/enterprise/mappers/user-mapper";
 import { eq, or, sql } from "drizzle-orm";
 import type { UsersRepository } from "../../../domain/application/repositories/users-repository";
 import type { User } from "../../../domain/enterprise/entities/user";
+import { Cpf } from "../../../domain/enterprise/entities/value-objects/cpf";
 
 export class DrizzleUsersRepository implements UsersRepository {
   async findById(id: string): Promise<User | null> {
@@ -32,11 +33,15 @@ export class DrizzleUsersRepository implements UsersRepository {
 
   async findByCpfOrEmail(cpf: string, email: string): Promise<User | null> {
     const normalizedEmail = email.trim().toLowerCase();
+    const normalizedCpf = Cpf.normalize(cpf);
     const [user] = await db
       .select()
       .from(users)
       .where(
-        or(eq(users.cpf, cpf), eq(sql`lower(${users.email})`, normalizedEmail)),
+        or(
+          eq(users.cpf, normalizedCpf),
+          eq(sql`lower(${users.email})`, normalizedEmail),
+        ),
       );
 
     if (!user) {
