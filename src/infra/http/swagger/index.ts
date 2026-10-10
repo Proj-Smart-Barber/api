@@ -823,6 +823,407 @@ export const swaggerDocument = {
         },
       },
     },
+    "/api/barbershops/{shopId}/services/": {
+      get: {
+        tags: ["Services"],
+        summary: "List services of a barbershop",
+        description:
+          "Public readers only see services of an ACTIVE barbershop and only the active ones. The owner of the barbershop can authenticate and pass `includeInactive=true` to also receive deactivated services.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            description: "Barbershop ID",
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "page",
+            in: "query",
+            required: false,
+            schema: { type: "integer", minimum: 1, default: 1 },
+          },
+          {
+            name: "limit",
+            in: "query",
+            required: false,
+            schema: { type: "integer", minimum: 1, maximum: 100, default: 20 },
+          },
+          {
+            name: "includeInactive",
+            in: "query",
+            required: false,
+            description:
+              'Owner only. Accepts a boolean or the strings "true"/"false".',
+            schema: { type: "boolean", default: false },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Services retrieved successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["items", "total", "page", "limit"],
+                  properties: {
+                    items: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Service" },
+                    },
+                    total: { type: "integer", example: 12 },
+                    page: { type: "integer", example: 1 },
+                    limit: { type: "integer", example: 20 },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "403": {
+            description:
+              "Forbidden - `includeInactive` requested by a non-owner of the barbershop",
+          },
+          "404": { description: "Barbershop not found" },
+          "500": { description: "Internal server error" },
+        },
+      },
+      post: {
+        tags: ["Services"],
+        summary: "Create a service in a barbershop (owner only)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            description: "Barbershop ID",
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["title", "priceInCents", "durationInMinutes"],
+                properties: {
+                  title: {
+                    type: "string",
+                    minLength: 2,
+                    maxLength: 100,
+                    example: "Corte de Cabelo",
+                  },
+                  description: {
+                    type: "string",
+                    maxLength: 500,
+                    nullable: true,
+                    example: "Corte masculino tradicional",
+                  },
+                  priceInCents: {
+                    type: "integer",
+                    minimum: 1,
+                    example: 5000,
+                    description: "Price in cents (must be a positive integer).",
+                  },
+                  durationInMinutes: {
+                    type: "integer",
+                    minimum: 1,
+                    example: 30,
+                    description:
+                      "Duration in minutes (must be a positive integer).",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Service created successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["service"],
+                  properties: {
+                    service: { $ref: "#/components/schemas/Service" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "401": { description: "Missing or invalid authentication" },
+          "403": {
+            description: "Forbidden - authenticated user is not the owner",
+          },
+          "404": {
+            description: "Barbershop not found or inactive",
+          },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
+    "/api/barbershops/{shopId}/services/{serviceId}": {
+      get: {
+        tags: ["Services"],
+        summary: "Get a service by ID",
+        description:
+          "Inactive services are only visible to the owner of the barbershop (requires authentication). Anonymous readers receive 404 for inactive services.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            description: "Barbershop ID",
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "serviceId",
+            in: "path",
+            required: true,
+            description: "Service ID",
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Service retrieved successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["service"],
+                  properties: {
+                    service: { $ref: "#/components/schemas/Service" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "404": {
+            description:
+              "Barbershop not found, service not found, or inactive service requested by a non-owner",
+          },
+          "500": { description: "Internal server error" },
+        },
+      },
+      patch: {
+        tags: ["Services"],
+        summary: "Update a service (owner only)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            description: "Barbershop ID",
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "serviceId",
+            in: "path",
+            required: true,
+            description: "Service ID",
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  title: {
+                    type: "string",
+                    minLength: 2,
+                    maxLength: 100,
+                    example: "Corte de Cabelo Premium",
+                  },
+                  description: {
+                    type: "string",
+                    maxLength: 500,
+                    nullable: true,
+                    example: "Corte masculino com finalização",
+                  },
+                  priceInCents: {
+                    type: "integer",
+                    minimum: 1,
+                    example: 6000,
+                    description: "Price in cents (must be a positive integer).",
+                  },
+                  durationInMinutes: {
+                    type: "integer",
+                    minimum: 1,
+                    example: 45,
+                    description:
+                      "Duration in minutes (must be a positive integer).",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Service updated successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["service"],
+                  properties: {
+                    service: { $ref: "#/components/schemas/Service" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "401": { description: "Missing or invalid authentication" },
+          "403": {
+            description: "Forbidden - authenticated user is not the owner",
+          },
+          "404": {
+            description: "Barbershop or service not found",
+          },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
+    "/api/barbershops/{shopId}/services/{serviceId}/activation": {
+      patch: {
+        tags: ["Services"],
+        summary: "Activate or deactivate a service (owner only)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            description: "Barbershop ID",
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "serviceId",
+            in: "path",
+            required: true,
+            description: "Service ID",
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["isActive"],
+                properties: {
+                  isActive: {
+                    type: "boolean",
+                    example: true,
+                    description:
+                      'Desired activation state. The string "true"/"false" is also accepted.',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Service activation toggled successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["service"],
+                  properties: {
+                    service: { $ref: "#/components/schemas/Service" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "401": { description: "Missing or invalid authentication" },
+          "403": {
+            description: "Forbidden - authenticated user is not the owner",
+          },
+          "404": {
+            description: "Barbershop or service not found",
+          },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
     "/api/barbershops/{shopId}/invitations": {
       post: {
         tags: ["Invitations"],
@@ -1239,6 +1640,567 @@ export const swaggerDocument = {
         },
       },
     },
+    "/api/bookings": {
+      post: {
+        tags: ["Bookings"],
+        summary: "Create a new booking",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: [
+                  "shoppingCartId",
+                  "barbermanId",
+                  "date",
+                  "startTime",
+                  "endTime",
+                ],
+                properties: {
+                  shoppingCartId: {
+                    type: "string",
+                    format: "uuid",
+                    example: "09a90c95-1ef3-4cac-9a0a-ff03aa902022",
+                  },
+                  barbermanId: {
+                    type: "string",
+                    format: "uuid",
+                    example: "4903d18d-ea6e-494e-9be6-ef9f47775034",
+                  },
+                  date: {
+                    type: "string",
+                    format: "date",
+                    example: "2026-09-11",
+                    description: "Date in YYYY-MM-DD format",
+                  },
+                  startTime: { type: "string", example: "14:00" },
+                  endTime: { type: "string", example: "14:30" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Booking created successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    booking: {
+                      type: "object",
+                      properties: {
+                        id: {
+                          type: "string",
+                          format: "uuid",
+                          example: "9e241c16-650f-492e-9cda-320f8c0b16c3",
+                        },
+                        barbershopId: {
+                          type: "string",
+                          format: "uuid",
+                          example: "13d4b8e0-7f42-4b7f-b390-b06bb776701f",
+                        },
+                        barbermanId: {
+                          type: "string",
+                          format: "uuid",
+                          example: "4903d18d-ea6e-494e-9be6-ef9f47775034",
+                        },
+                        shoppingCartId: {
+                          type: "string",
+                          format: "uuid",
+                          example: "09a90c95-1ef3-4cac-9a0a-ff03aa902022",
+                        },
+                        date: {
+                          type: "string",
+                          format: "date-time",
+                          example: "2026-09-11T00:00:00.000Z",
+                        },
+                        startTime: { type: "string", example: "14:00" },
+                        endTime: { type: "string", example: "14:30" },
+                        createdAt: {
+                          type: "string",
+                          format: "date-time",
+                          example: "2026-09-11T13:21:09.915Z",
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Missing or invalid authentication",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "403": {
+            description:
+              "Forbidden - shopping cart does not belong to the authenticated user",
+          },
+          "404": {
+            description: "Shopping cart not found",
+          },
+          "409": {
+            description: "Time slot conflict for the barberman",
+          },
+          "500": {
+            description: "Internal server error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/service-items": {
+      post: {
+        tags: ["Service Items"],
+        summary:
+          "Create a service item from a service (snapshots its price and duration)",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["serviceId"],
+                properties: {
+                  serviceId: {
+                    type: "string",
+                    format: "uuid",
+                    example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Service item created successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    serviceItem: {
+                      type: "object",
+                      properties: {
+                        id: {
+                          type: "string",
+                          format: "uuid",
+                          example: "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+                        },
+                        serviceId: {
+                          type: "string",
+                          format: "uuid",
+                          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                        },
+                        titleSnapshot: {
+                          type: "string",
+                          example: "Corte de Cabelo",
+                        },
+                        priceInCentsSnapshot: {
+                          type: "integer",
+                          example: 5000,
+                        },
+                        durationInMinutesSnapshot: {
+                          type: "integer",
+                          example: 30,
+                        },
+                        createdAt: {
+                          type: "string",
+                          format: "date-time",
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Missing or invalid authentication",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "404": {
+            description: "Service not found or inactive",
+          },
+          "500": {
+            description: "Internal server error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/carts": {
+      post: {
+        tags: ["Shopping Carts"],
+        summary: "Create a shopping cart for the authenticated customer",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["serviceItemId"],
+                properties: {
+                  serviceItemId: {
+                    type: "string",
+                    format: "uuid",
+                    example: "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Shopping cart created successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    cart: {
+                      type: "object",
+                      properties: {
+                        id: {
+                          type: "string",
+                          format: "uuid",
+                          example: "c3d4e5f6-a7b8-9012-cdef-123456789012",
+                        },
+                        serviceItemId: {
+                          type: "string",
+                          format: "uuid",
+                          example: "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+                        },
+                        userId: {
+                          type: "string",
+                          format: "uuid",
+                          example: "d4e5f6a7-b8c9-0123-defa-234567890123",
+                        },
+                        totalPriceInCents: {
+                          type: "integer",
+                          example: 5000,
+                        },
+                        createdAt: {
+                          type: "string",
+                          format: "date-time",
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Missing or invalid authentication",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "404": {
+            description: "Service item not found",
+          },
+          "500": {
+            description: "Internal server error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/carts/me": {
+      get: {
+        tags: ["Shopping Carts"],
+        summary: "Fetch the authenticated customer's shopping carts",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Shopping carts retrieved successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    carts: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: {
+                            type: "string",
+                            format: "uuid",
+                            example: "c3d4e5f6-a7b8-9012-cdef-123456789012",
+                          },
+                          serviceItemId: {
+                            type: "string",
+                            format: "uuid",
+                            example: "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+                          },
+                          userId: {
+                            type: "string",
+                            format: "uuid",
+                            example: "d4e5f6a7-b8c9-0123-defa-234567890123",
+                          },
+                          totalPriceInCents: {
+                            type: "integer",
+                            example: 5000,
+                          },
+                          createdAt: {
+                            type: "string",
+                            format: "date-time",
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Missing or invalid authentication",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "500": {
+            description: "Internal server error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/carts/{cartId}": {
+      delete: {
+        tags: ["Shopping Carts"],
+        summary:
+          "Delete a shopping cart (also deletes its service item). Fails if the cart already has bookings.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "cartId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Shopping cart deleted successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    cart: {
+                      type: "object",
+                      properties: {
+                        id: {
+                          type: "string",
+                          format: "uuid",
+                          example: "c3d4e5f6-a7b8-9012-cdef-123456789012",
+                        },
+                        serviceItemId: {
+                          type: "string",
+                          format: "uuid",
+                          example: "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+                        },
+                        userId: {
+                          type: "string",
+                          format: "uuid",
+                          example: "d4e5f6a7-b8c9-0123-defa-234567890123",
+                        },
+                        totalPriceInCents: {
+                          type: "integer",
+                          example: 5000,
+                        },
+                        createdAt: {
+                          type: "string",
+                          format: "date-time",
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error or cart has bookings",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Missing or invalid authentication",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "403": {
+            description:
+              "Forbidden - cart does not belong to the authenticated user",
+          },
+          "404": {
+            description: "Shopping cart not found",
+          },
+          "500": {
+            description: "Internal server error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     "/api/barbershops/{shopId}/schedules": {
       put: {
         tags: ["Schedules"],
@@ -1543,6 +2505,62 @@ export const swaggerDocument = {
         type: "http",
         scheme: "bearer",
         bearerFormat: "JWT",
+      },
+    },
+    schemas: {
+      Service: {
+        type: "object",
+        required: [
+          "id",
+          "barbershopId",
+          "title",
+          "priceInCents",
+          "durationInMinutes",
+          "isActive",
+        ],
+        properties: {
+          id: {
+            type: "string",
+            format: "uuid",
+            example: "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
+          },
+          barbershopId: {
+            type: "string",
+            format: "uuid",
+            example: "13d4b8e0-7f42-4b7f-b390-b06bb776701f",
+          },
+          title: {
+            type: "string",
+            example: "Corte de Cabelo",
+          },
+          description: {
+            type: "string",
+            nullable: true,
+            example: "Corte masculino tradicional",
+          },
+          priceInCents: {
+            type: "integer",
+            example: 5000,
+          },
+          durationInMinutes: {
+            type: "integer",
+            example: 30,
+          },
+          isActive: {
+            type: "boolean",
+            example: true,
+          },
+          createdAt: {
+            type: "string",
+            format: "date-time",
+            example: "2026-09-24T13:21:09.915Z",
+          },
+          updatedAt: {
+            type: "string",
+            format: "date-time",
+            example: "2026-09-24T13:21:09.915Z",
+          },
+        },
       },
     },
   },

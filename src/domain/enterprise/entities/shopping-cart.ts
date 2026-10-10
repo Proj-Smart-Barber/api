@@ -33,7 +33,7 @@ export class ShoppingCart extends Entity<ShoppingCartProps> {
     const shoppingCart = new ShoppingCart(
       {
         ...props,
-        createdAt: new Date(),
+        createdAt: props.createdAt ?? new Date(),
       },
       id,
     );
