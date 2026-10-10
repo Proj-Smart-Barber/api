@@ -54,7 +54,11 @@ export const swaggerDocument = {
                     example: "john@example.com",
                   },
                   password: { type: "string", example: "secret123" },
-                  cpf: { type: "string", example: "12345678901" },
+                  cpf: {
+                    type: "string",
+                    description: "CPF (com ou sem máscara)",
+                    example: "111.444.777-35",
+                  },
                   phoneNumber: {
                     type: "string",
                     nullable: true,

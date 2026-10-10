@@ -1,5 +1,6 @@
 import type { UsersRepository } from "../../src/domain/application/repositories/users-repository";
 import type { User } from "../../src/domain/enterprise/entities/user";
+import { Cpf } from "../../src/domain/enterprise/entities/value-objects/cpf";
 
 export class InMemoryUsersRepository implements UsersRepository {
   private users: User[] = [];
@@ -29,9 +30,11 @@ export class InMemoryUsersRepository implements UsersRepository {
 
   async findByCpfOrEmail(cpf: string, email: string): Promise<User | null> {
     const normalizedEmail = email.trim().toLowerCase();
+    const normalizedCpf = Cpf.normalize(cpf);
     const user = this.users.find(
       (user) =>
-        user.cpf === cpf || user.email.trim().toLowerCase() === normalizedEmail,
+        user.cpf === normalizedCpf ||
+        user.email.trim().toLowerCase() === normalizedEmail,
     );
 
     if (!user) {
