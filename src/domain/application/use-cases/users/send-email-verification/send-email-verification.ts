@@ -26,12 +26,14 @@ export class SendEmailVerificationUseCase {
   async execute({
     email,
   }: SendEmailVerificationDTO): Promise<SendEmailVerificationUseCaseResponse> {
-    const user = await this.usersRepository.findByEmail(email);
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const user = await this.usersRepository.findByEmail(normalizedEmail);
 
     if (!user || user.isEmailVerified) {
       // Keep the response uniform (no account enumeration) and avoid
       // sending verification links to unknown or already verified accounts.
-      return right({ sentTo: email });
+      return right({ sentTo: normalizedEmail });
     }
 
     await this.emailVerificationsRepository.invalidateActiveByUserId(

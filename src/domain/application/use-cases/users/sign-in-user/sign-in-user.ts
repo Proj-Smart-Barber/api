@@ -26,7 +26,9 @@ export class SignInUserUseCase {
     email,
     password,
   }: SignInUserDTO): Promise<SignInUserUseCaseResponse> {
-    const user = await this.usersRepository.findByEmail(email);
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const user = await this.usersRepository.findByEmail(normalizedEmail);
 
     if (!user) {
       return left(new InvalidCredentialsError());

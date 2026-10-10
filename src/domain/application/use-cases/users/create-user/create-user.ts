@@ -20,9 +20,11 @@ export class CreateUserUseCase {
     password,
     cpf,
   }: CreateUserDTO): Promise<CreateUserUseCaseResponse> {
+    const normalizedEmail = email.trim().toLowerCase();
+
     const userAlreadyExists = await this.usersRepository.findByCpfOrEmail(
       cpf,
-      email,
+      normalizedEmail,
     );
 
     if (userAlreadyExists) {
@@ -31,7 +33,7 @@ export class CreateUserUseCase {
 
     const newUser = User.create({
       name,
-      email,
+      email: normalizedEmail,
       password: await Password.generateHashFromPlainText(password, 12),
       cpf,
     });

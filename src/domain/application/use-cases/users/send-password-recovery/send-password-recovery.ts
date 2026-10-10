@@ -26,11 +26,13 @@ export class SendPasswordRecoveryUseCase {
   async execute({
     email,
   }: SendPasswordRecoveryDTO): Promise<SendPasswordRecoveryUseCaseResponse> {
-    const user = await this.usersRepository.findByEmail(email);
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const user = await this.usersRepository.findByEmail(normalizedEmail);
 
     if (!user) {
       // Keep the response uniform (no account enumeration).
-      return right({ sentTo: email });
+      return right({ sentTo: normalizedEmail });
     }
 
     await this.passwordRecoveryTokensRepository.invalidateActiveByUserId(

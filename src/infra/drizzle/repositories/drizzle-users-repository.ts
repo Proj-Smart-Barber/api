@@ -1,7 +1,7 @@
 import { db } from "..";
 import { users } from "../schema";
 import { UserMapper } from "../../../domain/enterprise/mappers/user-mapper";
-import { eq, or } from "drizzle-orm";
+import { eq, or, sql } from "drizzle-orm";
 import type { UsersRepository } from "../../../domain/application/repositories/users-repository";
 import type { User } from "../../../domain/enterprise/entities/user";
 
@@ -17,7 +17,11 @@ export class DrizzleUsersRepository implements UsersRepository {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
+    const normalizedEmail = email.trim().toLowerCase();
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(sql`lower(${users.email})`, normalizedEmail));
 
     if (!user) {
       return null;
@@ -27,10 +31,13 @@ export class DrizzleUsersRepository implements UsersRepository {
   }
 
   async findByCpfOrEmail(cpf: string, email: string): Promise<User | null> {
+    const normalizedEmail = email.trim().toLowerCase();
     const [user] = await db
       .select()
       .from(users)
-      .where(or(eq(users.cpf, cpf), eq(users.email, email)));
+      .where(
+        or(eq(users.cpf, cpf), eq(sql`lower(${users.email})`, normalizedEmail)),
+      );
 
     if (!user) {
       return null;
