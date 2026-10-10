@@ -17,8 +17,6 @@ import type {
 } from "../../../domain/application/repositories/bookings-repository";
 import type { Booking } from "../../../domain/enterprise/entities/booking";
 import type { BookingDetails } from "../../../domain/enterprise/entities/booking-details";
-import type { ServiceItem } from "../../../domain/enterprise/entities/service-item";
-import type { ShoppingCart } from "../../../domain/enterprise/entities/shopping-cart";
 import { BookingMapper } from "../../../domain/enterprise/mappers/booking-mapper";
 import { BookingDetailsMapper } from "../../../domain/enterprise/mappers/booking-details-mapper";
 import { ServiceItemMapper } from "../../../domain/enterprise/mappers/service-item-mapper";
@@ -149,10 +147,32 @@ export class DrizzleBookingsRepository implements BookingsRepository {
     const endOfDay = new Date(`${dateStr}T23:59:59.999Z`);
     const result = await db
       .select({
-        booking: bookings,
-        customer: users,
-        service: services,
-        serviceItem: serviceItems,
+        booking: {
+          id: bookings.id,
+          barbershopId: bookings.barbershopId,
+          barbermanId: bookings.barbermanId,
+          shoppingCartId: bookings.shoppingCartId,
+          date: bookings.date,
+          startTime: bookings.startTime,
+          endTime: bookings.endTime,
+          createdAt: bookings.createdAt,
+        },
+        customer: {
+          id: users.id,
+          name: users.name,
+          phoneNumber: users.phoneNumber,
+        },
+        service: {
+          id: services.id,
+          title: services.title,
+          priceInCents: services.priceInCents,
+          durationInMinutes: services.durationInMinutes,
+        },
+        serviceItem: {
+          titleSnapshot: serviceItems.titleSnapshot,
+          priceInCentsSnapshot: serviceItems.priceInCentsSnapshot,
+          durationInMinutesSnapshot: serviceItems.durationInMinutesSnapshot,
+        },
       })
       .from(bookings)
       .innerJoin(shoppingCarts, eq(bookings.shoppingCartId, shoppingCarts.id))
