@@ -311,6 +311,13 @@ export const passwordRecoveryTokensRelations = relations(
   }),
 );
 
+export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [refreshTokens.userId],
+    references: [users.id],
+  }),
+}));
+
 export const barbershopsRelations = relations(barbershops, ({ one, many }) => ({
   owner: one(users, {
     fields: [barbershops.ownerId],
