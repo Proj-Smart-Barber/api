@@ -12,9 +12,18 @@ export interface SendPasswordRecoveryEmailParams {
   expiresInHours: number;
 }
 
+export interface SendInvitationEmailParams {
+  to: string;
+  ownerName: string;
+  barbershopName: string;
+  invitationUrl: string;
+  expiresInDays: number;
+}
+
 export interface EmailService {
   sendVerificationEmail(params: SendVerificationEmailParams): Promise<void>;
   sendPasswordRecoveryEmail(
     params: SendPasswordRecoveryEmailParams,
   ): Promise<void>;
+  sendInvitationEmail(params: SendInvitationEmailParams): Promise<void>;
 }
