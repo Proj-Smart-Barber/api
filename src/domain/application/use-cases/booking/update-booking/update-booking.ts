@@ -61,7 +61,7 @@ export class UpdateBookingUseCase {
       endAt.setUTCHours(endHour, endMin, 0, 0);
 
       const overlappingBooking = await this.bookingsRepository.findOverlapping({
-        barbermanId,
+        barbermanId: booking.barbermanId.toString(),
         barbershopId: booking.barbershopId.toString(),
         startAt,
         endAt,
