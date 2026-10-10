@@ -164,6 +164,7 @@ export class DemoSeedEngine {
                 email: staffFixture.email,
                 password: cred.passwordHash,
                 cpf: staffFixture.cpf,
+                emailVerifiedAt: new Date(),
               })
               .returning({ id: users.id });
             staffId = created.id;
@@ -402,6 +403,7 @@ export class DemoSeedEngine {
                 password: customerPasswordHash,
                 cpf: customerFixture.cpf,
                 phoneNumber: customerFixture.phoneNumber,
+                emailVerifiedAt: new Date(),
               })
               .returning({ id: users.id });
             customerId = created.id;

@@ -54,7 +54,11 @@ export const swaggerDocument = {
                     example: "john@example.com",
                   },
                   password: { type: "string", example: "secret123" },
-                  cpf: { type: "string", example: "12345678901" },
+                  cpf: {
+                    type: "string",
+                    description: "CPF (com ou sem máscara)",
+                    example: "111.444.777-35",
+                  },
                   phoneNumber: {
                     type: "string",
                     nullable: true,
@@ -163,6 +167,10 @@ export const swaggerDocument = {
                       type: "string",
                       example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
                     },
+                    refresh_token: {
+                      type: "string",
+                      example: "0N8xq5m8Q3v1...",
+                    },
                   },
                 },
               },
@@ -197,6 +205,22 @@ export const swaggerDocument = {
               },
             },
           },
+          "403": {
+            description: "Email not verified",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: {
+                      type: "string",
+                      example: "email_not_verified",
+                    },
+                  },
+                },
+              },
+            },
+          },
           "500": {
             description: "Internal server error",
             content: {
@@ -209,6 +233,330 @@ export const swaggerDocument = {
                 },
               },
             },
+          },
+        },
+      },
+    },
+    "/api/users/sessions/refresh": {
+      post: {
+        tags: ["Users"],
+        summary: "Refresh access token using a refresh token",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["refresh_token"],
+                properties: {
+                  refresh_token: {
+                    type: "string",
+                    example: "0N8xq5m8Q3v1...",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Tokens refreshed successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    access_token: { type: "string" },
+                    refresh_token: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+          },
+          "401": {
+            description: "Invalid, expired or reused refresh token",
+          },
+          "500": {
+            description: "Internal server error",
+          },
+        },
+      },
+    },
+    "/api/users/sessions/sign-out": {
+      post: {
+        tags: ["Users"],
+        summary: "Revoke a refresh token (sign out)",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["refresh_token"],
+                properties: {
+                  refresh_token: {
+                    type: "string",
+                    example: "0N8xq5m8Q3v1...",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "204": {
+            description: "Refresh token revoked",
+          },
+          "400": {
+            description: "Validation error",
+          },
+          "500": {
+            description: "Internal server error",
+          },
+        },
+      },
+    },
+    "/api/users/verification-email": {
+      post: {
+        tags: ["Users"],
+        summary:
+          "Send (or resend) the email verification link for a given email address",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["email"],
+                properties: {
+                  email: {
+                    type: "string",
+                    format: "email",
+                    example: "john@example.com",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description:
+              "Request accepted. The endpoint returns the same response whether the account exists, is already verified, or not, to avoid account enumeration.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    sentTo: {
+                      type: "string",
+                      format: "email",
+                      example: "john@example.com",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+          },
+          "500": {
+            description: "Email send failure",
+          },
+        },
+      },
+    },
+    "/api/users/verification-email/confirm": {
+      get: {
+        tags: ["Users"],
+        summary:
+          "Confirm a user email using a verification token (target of the emailed link)",
+        parameters: [
+          {
+            name: "token",
+            in: "query",
+            required: true,
+            schema: {
+              type: "string",
+              example: "0N8xq5m8Q3v1...",
+            },
+          },
+        ],
+        responses: {
+          "200": {
+            description:
+              "Email verified successfully (`alreadyVerified: true` when it was already verified)",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    verified: {
+                      type: "boolean",
+                      example: true,
+                    },
+                    alreadyVerified: {
+                      type: "boolean",
+                      example: false,
+                    },
+                    userId: {
+                      type: "string",
+                      format: "uuid",
+                    },
+                    email: {
+                      type: "string",
+                      format: "email",
+                    },
+                    emailVerifiedAt: {
+                      type: "string",
+                      format: "date-time",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Missing query parameter or invalid/expired token",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "500": {
+            description: "Internal server error",
+          },
+        },
+      },
+    },
+    "/api/users/password-recovery": {
+      post: {
+        tags: ["Users"],
+        summary:
+          "Send (or resend) a password recovery link for a given email address",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["email"],
+                properties: {
+                  email: {
+                    type: "string",
+                    format: "email",
+                    example: "john@example.com",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description:
+              "Request accepted. The endpoint returns the same response whether the account exists or not, to avoid account enumeration.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    sentTo: {
+                      type: "string",
+                      format: "email",
+                      example: "john@example.com",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+          },
+          "500": {
+            description: "Email send failure",
+          },
+        },
+      },
+    },
+    "/api/users/password-recovery/reset": {
+      post: {
+        tags: ["Users"],
+        summary: "Reset the account password using a recovery token",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["token", "newPassword"],
+                properties: {
+                  token: {
+                    type: "string",
+                    example: "0N8xq5m8Q3v1...",
+                  },
+                  newPassword: {
+                    type: "string",
+                    minLength: 8,
+                    example: "nova-senha-forte",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Password updated successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    userId: {
+                      type: "string",
+                      format: "uuid",
+                    },
+                    email: {
+                      type: "string",
+                      format: "email",
+                    },
+                    passwordUpdatedAt: {
+                      type: "string",
+                      format: "date-time",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description:
+              "Validation error, invalid/expired/used token, or password shorter than 8 characters",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "500": {
+            description: "Internal server error",
           },
         },
       },
@@ -479,6 +827,773 @@ export const swaggerDocument = {
         },
       },
     },
+    "/api/barbershops/{shopId}/services/": {
+      get: {
+        tags: ["Services"],
+        summary: "List services of a barbershop",
+        description:
+          "Public readers only see services of an ACTIVE barbershop and only the active ones. The owner of the barbershop can authenticate and pass `includeInactive=true` to also receive deactivated services.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            description: "Barbershop ID",
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "page",
+            in: "query",
+            required: false,
+            schema: { type: "integer", minimum: 1, default: 1 },
+          },
+          {
+            name: "limit",
+            in: "query",
+            required: false,
+            schema: { type: "integer", minimum: 1, maximum: 100, default: 20 },
+          },
+          {
+            name: "includeInactive",
+            in: "query",
+            required: false,
+            description:
+              'Owner only. Accepts a boolean or the strings "true"/"false".',
+            schema: { type: "boolean", default: false },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Services retrieved successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["items", "total", "page", "limit"],
+                  properties: {
+                    items: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Service" },
+                    },
+                    total: { type: "integer", example: 12 },
+                    page: { type: "integer", example: 1 },
+                    limit: { type: "integer", example: 20 },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "403": {
+            description:
+              "Forbidden - `includeInactive` requested by a non-owner of the barbershop",
+          },
+          "404": { description: "Barbershop not found" },
+          "500": { description: "Internal server error" },
+        },
+      },
+      post: {
+        tags: ["Services"],
+        summary: "Create a service in a barbershop (owner only)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            description: "Barbershop ID",
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["title", "priceInCents", "durationInMinutes"],
+                properties: {
+                  title: {
+                    type: "string",
+                    minLength: 2,
+                    maxLength: 100,
+                    example: "Corte de Cabelo",
+                  },
+                  description: {
+                    type: "string",
+                    maxLength: 500,
+                    nullable: true,
+                    example: "Corte masculino tradicional",
+                  },
+                  priceInCents: {
+                    type: "integer",
+                    minimum: 1,
+                    example: 5000,
+                    description: "Price in cents (must be a positive integer).",
+                  },
+                  durationInMinutes: {
+                    type: "integer",
+                    minimum: 1,
+                    example: 30,
+                    description:
+                      "Duration in minutes (must be a positive integer).",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Service created successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["service"],
+                  properties: {
+                    service: { $ref: "#/components/schemas/Service" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "401": { description: "Missing or invalid authentication" },
+          "403": {
+            description: "Forbidden - authenticated user is not the owner",
+          },
+          "404": {
+            description: "Barbershop not found or inactive",
+          },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
+    "/api/barbershops/{shopId}/services/{serviceId}": {
+      get: {
+        tags: ["Services"],
+        summary: "Get a service by ID",
+        description:
+          "Inactive services are only visible to the owner of the barbershop (requires authentication). Anonymous readers receive 404 for inactive services.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            description: "Barbershop ID",
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "serviceId",
+            in: "path",
+            required: true,
+            description: "Service ID",
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Service retrieved successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["service"],
+                  properties: {
+                    service: { $ref: "#/components/schemas/Service" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "404": {
+            description:
+              "Barbershop not found, service not found, or inactive service requested by a non-owner",
+          },
+          "500": { description: "Internal server error" },
+        },
+      },
+      patch: {
+        tags: ["Services"],
+        summary: "Update a service (owner only)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            description: "Barbershop ID",
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "serviceId",
+            in: "path",
+            required: true,
+            description: "Service ID",
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  title: {
+                    type: "string",
+                    minLength: 2,
+                    maxLength: 100,
+                    example: "Corte de Cabelo Premium",
+                  },
+                  description: {
+                    type: "string",
+                    maxLength: 500,
+                    nullable: true,
+                    example: "Corte masculino com finalização",
+                  },
+                  priceInCents: {
+                    type: "integer",
+                    minimum: 1,
+                    example: 6000,
+                    description: "Price in cents (must be a positive integer).",
+                  },
+                  durationInMinutes: {
+                    type: "integer",
+                    minimum: 1,
+                    example: 45,
+                    description:
+                      "Duration in minutes (must be a positive integer).",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Service updated successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["service"],
+                  properties: {
+                    service: { $ref: "#/components/schemas/Service" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "401": { description: "Missing or invalid authentication" },
+          "403": {
+            description: "Forbidden - authenticated user is not the owner",
+          },
+          "404": {
+            description: "Barbershop or service not found",
+          },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
+    "/api/barbershops/{shopId}/services/{serviceId}/activation": {
+      patch: {
+        tags: ["Services"],
+        summary: "Activate or deactivate a service (owner only)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            description: "Barbershop ID",
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "serviceId",
+            in: "path",
+            required: true,
+            description: "Service ID",
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["isActive"],
+                properties: {
+                  isActive: {
+                    type: "boolean",
+                    example: true,
+                    description:
+                      'Desired activation state. The string "true"/"false" is also accepted.',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Service activation toggled successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["service"],
+                  properties: {
+                    service: { $ref: "#/components/schemas/Service" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "401": { description: "Missing or invalid authentication" },
+          "403": {
+            description: "Forbidden - authenticated user is not the owner",
+          },
+          "404": {
+            description: "Barbershop or service not found",
+          },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
+    "/api/barbershops/{shopId}/invitations": {
+      post: {
+        tags: ["Invitations"],
+        summary: "Invite a barberman by email (owner only)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["email"],
+                properties: {
+                  email: {
+                    type: "string",
+                    format: "email",
+                    example: "barberman@example.com",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Invitation created and email sent",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    invitationId: { type: "string", format: "uuid" },
+                    invitedEmail: { type: "string", format: "email" },
+                    expiresAt: { type: "string", format: "date-time" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description:
+              "Validation error, not the owner, barbershop not found/inactive, already a member, duplicate pending invitation, or email send failure",
+          },
+          "401": { description: "Missing or invalid authentication" },
+          "500": { description: "Internal server error" },
+        },
+      },
+      get: {
+        tags: ["Invitations"],
+        summary: "List invitations of a barbershop (owner only)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Invitations retrieved successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    invitations: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: { type: "string", format: "uuid" },
+                          email: { type: "string", format: "email" },
+                          status: {
+                            type: "string",
+                            enum: [
+                              "PENDING",
+                              "ACCEPTED",
+                              "DECLINED",
+                              "REVOKED",
+                            ],
+                          },
+                          role: {
+                            type: "string",
+                            enum: ["OWNER", "BARBERMAN"],
+                          },
+                          expiresAt: { type: "string", format: "date-time" },
+                          respondedAt: {
+                            type: "string",
+                            format: "date-time",
+                            nullable: true,
+                          },
+                          createdAt: {
+                            type: "string",
+                            format: "date-time",
+                            nullable: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description:
+              "Validation error, not the owner, or barbershop not found",
+          },
+          "401": { description: "Missing or invalid authentication" },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
+    "/api/barbershops/{shopId}/invitations/{invitationId}": {
+      delete: {
+        tags: ["Invitations"],
+        summary: "Revoke a pending invitation (owner only)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "invitationId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Invitation revoked successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    revoked: { type: "boolean", example: true },
+                    invitationId: { type: "string", format: "uuid" },
+                    status: { type: "string", example: "REVOKED" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description:
+              "Validation error, not the owner, invitation not found, or invitation is not pending",
+          },
+          "401": { description: "Missing or invalid authentication" },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
+    "/api/notifications": {
+      get: {
+        tags: ["Notifications"],
+        summary: "List notifications for the authenticated user",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Notifications retrieved successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    notifications: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: { type: "string", format: "uuid" },
+                          type: {
+                            type: "string",
+                            example: "INVITATION_RECEIVED",
+                          },
+                          title: { type: "string" },
+                          message: { type: "string" },
+                          referenceType: {
+                            type: "string",
+                            nullable: true,
+                            example: "INVITATION",
+                          },
+                          referenceId: {
+                            type: "string",
+                            format: "uuid",
+                            nullable: true,
+                          },
+                          readAt: {
+                            type: "string",
+                            format: "date-time",
+                            nullable: true,
+                          },
+                          scheduledAt: {
+                            type: "string",
+                            format: "date-time",
+                          },
+                          createdAt: {
+                            type: "string",
+                            format: "date-time",
+                            nullable: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Validation error or user not found" },
+          "401": { description: "Missing or invalid authentication" },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
+    "/api/invitations": {
+      get: {
+        tags: ["Invitations"],
+        summary: "List pending invitations for the authenticated user",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Pending invitations retrieved successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    invitations: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: { type: "string", format: "uuid" },
+                          barbershopId: { type: "string", format: "uuid" },
+                          barbershopName: {
+                            type: "string",
+                            nullable: true,
+                          },
+                          status: { type: "string", example: "PENDING" },
+                          role: { type: "string", example: "BARBERMAN" },
+                          expiresAt: { type: "string", format: "date-time" },
+                          createdAt: {
+                            type: "string",
+                            format: "date-time",
+                            nullable: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Validation error or user not found" },
+          "401": { description: "Missing or invalid authentication" },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
+    "/api/invitations/accept": {
+      post: {
+        tags: ["Invitations"],
+        summary: "Accept an invitation (authenticated invitee)",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["token"],
+                properties: {
+                  token: { type: "string", example: "0N8xq5m8Q3v1..." },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Invitation accepted and barberman membership created",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    accepted: { type: "boolean", example: true },
+                    invitationId: { type: "string", format: "uuid" },
+                    barbershopId: { type: "string", format: "uuid" },
+                    barbermanId: { type: "string", format: "uuid" },
+                    status: { type: "string", example: "ACCEPTED" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description:
+              "Validation error, invalid/expired/used token, email mismatch, or already a member",
+          },
+          "401": { description: "Missing or invalid authentication" },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
+    "/api/invitations/decline": {
+      post: {
+        tags: ["Invitations"],
+        summary: "Decline an invitation (authenticated invitee)",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["token"],
+                properties: {
+                  token: { type: "string", example: "0N8xq5m8Q3v1..." },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Invitation declined successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    declined: { type: "boolean", example: true },
+                    invitationId: { type: "string", format: "uuid" },
+                    status: { type: "string", example: "DECLINED" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description:
+              "Validation error, invalid/expired/used token, or email mismatch",
+          },
+          "401": { description: "Missing or invalid authentication" },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
     "/api/bookings/barberman/schedule": {
       get: {
         tags: ["Bookings"],
@@ -575,6 +1690,146 @@ export const swaggerDocument = {
                 },
               },
             },
+          },
+          "500": {
+            description: "Internal server error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/bookings": {
+      post: {
+        tags: ["Bookings"],
+        summary: "Create a new booking",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: [
+                  "serviceId",
+                  "barbermanId",
+                  "date",
+                  "startTime",
+                  "endTime",
+                ],
+                properties: {
+                  serviceId: {
+                    type: "string",
+                    format: "uuid",
+                    example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                  },
+                  barbermanId: {
+                    type: "string",
+                    format: "uuid",
+                    example: "4903d18d-ea6e-494e-9be6-ef9f47775034",
+                  },
+                  date: {
+                    type: "string",
+                    format: "date",
+                    example: "2026-09-11",
+                    description: "Date in YYYY-MM-DD format",
+                  },
+                  startTime: { type: "string", example: "14:00" },
+                  endTime: { type: "string", example: "14:30" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Booking created successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    booking: {
+                      type: "object",
+                      properties: {
+                        id: {
+                          type: "string",
+                          format: "uuid",
+                          example: "9e241c16-650f-492e-9cda-320f8c0b16c3",
+                        },
+                        barbershopId: {
+                          type: "string",
+                          format: "uuid",
+                          example: "13d4b8e0-7f42-4b7f-b390-b06bb776701f",
+                        },
+                        barbermanId: {
+                          type: "string",
+                          format: "uuid",
+                          example: "4903d18d-ea6e-494e-9be6-ef9f47775034",
+                        },
+                        shoppingCartId: {
+                          type: "string",
+                          format: "uuid",
+                          example: "09a90c95-1ef3-4cac-9a0a-ff03aa902022",
+                        },
+                        date: {
+                          type: "string",
+                          format: "date-time",
+                          example: "2026-09-11T00:00:00.000Z",
+                        },
+                        startTime: { type: "string", example: "14:00" },
+                        endTime: { type: "string", example: "14:30" },
+                        createdAt: {
+                          type: "string",
+                          format: "date-time",
+                          example: "2026-09-11T13:21:09.915Z",
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "401": {
+            description: "Missing or invalid authentication",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "404": {
+            description: "Service not found or inactive",
+          },
+          "409": {
+            description: "Time slot conflict for the barberman",
           },
           "500": {
             description: "Internal server error",
@@ -990,6 +2245,62 @@ export const swaggerDocument = {
         type: "http",
         scheme: "bearer",
         bearerFormat: "JWT",
+      },
+    },
+    schemas: {
+      Service: {
+        type: "object",
+        required: [
+          "id",
+          "barbershopId",
+          "title",
+          "priceInCents",
+          "durationInMinutes",
+          "isActive",
+        ],
+        properties: {
+          id: {
+            type: "string",
+            format: "uuid",
+            example: "f1e2d3c4-b5a6-7890-abcd-ef1234567890",
+          },
+          barbershopId: {
+            type: "string",
+            format: "uuid",
+            example: "13d4b8e0-7f42-4b7f-b390-b06bb776701f",
+          },
+          title: {
+            type: "string",
+            example: "Corte de Cabelo",
+          },
+          description: {
+            type: "string",
+            nullable: true,
+            example: "Corte masculino tradicional",
+          },
+          priceInCents: {
+            type: "integer",
+            example: 5000,
+          },
+          durationInMinutes: {
+            type: "integer",
+            example: 30,
+          },
+          isActive: {
+            type: "boolean",
+            example: true,
+          },
+          createdAt: {
+            type: "string",
+            format: "date-time",
+            example: "2026-09-24T13:21:09.915Z",
+          },
+          updatedAt: {
+            type: "string",
+            format: "date-time",
+            example: "2026-09-24T13:21:09.915Z",
+          },
+        },
       },
     },
   },

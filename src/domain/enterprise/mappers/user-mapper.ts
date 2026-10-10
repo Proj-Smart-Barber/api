@@ -17,6 +17,7 @@ export class UserMapper {
         email: raw.email,
         cpf: raw.cpf,
         phoneNumber: raw.phoneNumber ?? undefined,
+        emailVerifiedAt: raw.emailVerifiedAt,
         createdAt: raw.createdAt ?? new Date(),
       },
       new UniqueEntityId(raw.id),
@@ -31,6 +32,7 @@ export class UserMapper {
       email: user.email,
       cpf: user.cpf,
       phoneNumber: user.phoneNumber,
+      emailVerifiedAt: user.emailVerifiedAt ?? null,
       createdAt: user.createdAt ?? new Date(),
     };
   }

@@ -4,10 +4,12 @@ import {
   clientError,
   created,
   fail,
+  forbidden,
   unauthorized,
   type HttpResponse,
 } from "../../../core/infra/http-response";
 import type { SignInUserUseCase } from "../../../domain/application/use-cases/users/sign-in-user/sign-in-user";
+import { EmailNotVerifiedError } from "../../../domain/application/use-cases/_errors/email-not-verified-error";
 
 const signInUserControllerRequest = z.object({
   email: z.email(),
@@ -31,12 +33,19 @@ export class SignInUserController implements Controller {
       if (result.isLeft()) {
         const error = result.value;
 
+        if (error instanceof EmailNotVerifiedError) {
+          return forbidden({
+            error: "email_not_verified",
+            message: error.message,
+          });
+        }
+
         return unauthorized(error.message);
       }
 
-      const { access_token } = result.value;
+      const { access_token, refresh_token } = result.value;
 
-      return created({ access_token });
+      return created({ access_token, refresh_token });
     } catch (err) {
       if (err instanceof ZodError) {
         return clientError(z.prettifyError(err));

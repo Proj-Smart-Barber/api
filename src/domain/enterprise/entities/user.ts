@@ -10,6 +10,7 @@ interface UserProps {
   password: Password;
   cpf: string;
   phoneNumber?: string;
+  emailVerifiedAt?: Date | null;
   createdAt?: Date;
 }
 
@@ -36,6 +37,22 @@ export class User extends Entity<UserProps> {
 
   get phoneNumber(): string | undefined {
     return this.props.phoneNumber;
+  }
+
+  get emailVerifiedAt(): Date | null | undefined {
+    return this.props.emailVerifiedAt;
+  }
+
+  get isEmailVerified(): boolean {
+    return this.props.emailVerifiedAt != null;
+  }
+
+  verifyEmail(at: Date = new Date()): void {
+    this.props.emailVerifiedAt = at;
+  }
+
+  changePassword(newPassword: Password): void {
+    this.props.password = newPassword;
   }
 
   get createdAt(): Date | undefined {

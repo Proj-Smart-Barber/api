@@ -20,6 +20,13 @@ export const barbershopStatusEnum = pgEnum("barbershop_status", [
   "INACTIVE",
 ]);
 
+export const invitationStatusEnum = pgEnum("invitation_status", [
+  "PENDING",
+  "ACCEPTED",
+  "DECLINED",
+  "REVOKED",
+]);
+
 // ── Tables ────────────────────────────────────────────────
 
 export const users = pgTable("users", {
@@ -30,8 +37,59 @@ export const users = pgTable("users", {
   password: text().notNull(),
   cpf: text().notNull().unique(),
   phoneNumber: text("phone_number"),
+  emailVerifiedAt: timestamp("email_verified_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+export const refreshTokens = pgTable(
+  "refresh_tokens",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull().unique(),
+    familyId: uuid("family_id").notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    revokedAt: timestamp("revoked_at"),
+    replacedByTokenId: uuid("replaced_by_token_id"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    index("refresh_tokens_user_id_idx").on(table.userId),
+    index("refresh_tokens_family_id_idx").on(table.familyId),
+  ],
+);
+
+export const emailVerifications = pgTable(
+  "email_verifications",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull().unique(),
+    expiresAt: timestamp("expires_at").notNull(),
+    usedAt: timestamp("used_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [index("email_verifications_user_id_idx").on(table.userId)],
+);
+
+export const passwordRecoveryTokens = pgTable(
+  "password_recovery_tokens",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull().unique(),
+    expiresAt: timestamp("expires_at").notNull(),
+    usedAt: timestamp("used_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [index("password_recovery_tokens_user_id_idx").on(table.userId)],
+);
 
 export const membership = pgTable(
   "membership",
@@ -51,6 +109,33 @@ export const membership = pgTable(
       table.barbershopId,
       table.userId,
     ),
+  ],
+);
+
+export const invitations = pgTable(
+  "invitations",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    barbershopId: uuid("barbershop_id")
+      .notNull()
+      .references(() => barbershops.id, { onDelete: "cascade" }),
+    email: text().notNull(),
+    role: roleEnum("role").notNull().default("BARBERMAN"),
+    tokenHash: text("token_hash").notNull().unique(),
+    status: invitationStatusEnum("status").notNull().default("PENDING"),
+    expiresAt: timestamp("expires_at").notNull(),
+    invitedById: uuid("invited_by_id")
+      .notNull()
+      .references(() => users.id),
+    respondedAt: timestamp("responded_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    index("invitations_barbershop_email_idx").on(
+      table.barbershopId,
+      table.email,
+    ),
+    index("invitations_status_idx").on(table.status),
   ],
 );
 
@@ -171,12 +256,14 @@ export const scheduleExceptions = pgTable("schedule_exceptions", {
 
 export const notifications = pgTable("notifications", {
   id: uuid().primaryKey().defaultRandom(),
-  bookingId: uuid("booking_id")
+  userId: uuid("user_id")
     .notNull()
-    .references(() => bookings.id),
+    .references(() => users.id),
   type: text().notNull(),
   title: text().notNull(),
   message: text().notNull(),
+  referenceType: text("reference_type"),
+  referenceId: uuid("reference_id"),
   scheduledAt: timestamp("scheduled_at").notNull(),
   sentAt: timestamp("sent_at"),
   readAt: timestamp("read_at"),
@@ -197,6 +284,38 @@ export const usersRelations = relations(users, ({ many }) => ({
   exceptions: many(scheduleExceptions),
   barbermanBookings: many(bookings),
   shoppingCarts: many(shoppingCarts),
+  refreshTokens: many(refreshTokens),
+  emailVerifications: many(emailVerifications),
+  passwordRecoveryTokens: many(passwordRecoveryTokens),
+  sentInvitations: many(invitations),
+  notifications: many(notifications),
+}));
+
+export const emailVerificationsRelations = relations(
+  emailVerifications,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [emailVerifications.userId],
+      references: [users.id],
+    }),
+  }),
+);
+
+export const passwordRecoveryTokensRelations = relations(
+  passwordRecoveryTokens,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [passwordRecoveryTokens.userId],
+      references: [users.id],
+    }),
+  }),
+);
+
+export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [refreshTokens.userId],
+    references: [users.id],
+  }),
 }));
 
 export const barbershopsRelations = relations(barbershops, ({ one, many }) => ({
@@ -209,6 +328,18 @@ export const barbershopsRelations = relations(barbershops, ({ one, many }) => ({
   schedules: many(barbershopSchedules),
   exceptions: many(scheduleExceptions),
   bookings: many(bookings),
+  invitations: many(invitations),
+}));
+
+export const invitationsRelations = relations(invitations, ({ one }) => ({
+  barbershop: one(barbershops, {
+    fields: [invitations.barbershopId],
+    references: [barbershops.id],
+  }),
+  invitedBy: one(users, {
+    fields: [invitations.invitedById],
+    references: [users.id],
+  }),
 }));
 
 export const membershipRelations = relations(membership, ({ one }) => ({
@@ -276,7 +407,7 @@ export const shoppingCartsRelations = relations(shoppingCarts, ({ one }) => ({
   }),
 }));
 
-export const bookingsRelations = relations(bookings, ({ one, many }) => ({
+export const bookingsRelations = relations(bookings, ({ one }) => ({
   barbershop: one(barbershops, {
     fields: [bookings.barbershopId],
     references: [barbershops.id],
@@ -289,13 +420,12 @@ export const bookingsRelations = relations(bookings, ({ one, many }) => ({
     fields: [bookings.shoppingCartId],
     references: [shoppingCarts.id],
   }),
-  notifications: many(notifications),
 }));
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({
-  booking: one(bookings, {
-    fields: [notifications.bookingId],
-    references: [bookings.id],
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
   }),
 }));
 

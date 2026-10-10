@@ -10,6 +10,7 @@ import {
 } from "../schema";
 import type {
   BookingsRepository,
+  CreateBookingBundleParams,
   FindManyByBarbermanAndDateParams,
   FindOverlappingParams,
   FindManyByShoppingCartParams,
@@ -18,6 +19,8 @@ import type { Booking } from "../../../domain/enterprise/entities/booking";
 import type { BookingDetails } from "../../../domain/enterprise/entities/booking-details";
 import { BookingMapper } from "../../../domain/enterprise/mappers/booking-mapper";
 import { BookingDetailsMapper } from "../../../domain/enterprise/mappers/booking-details-mapper";
+import { ServiceItemMapper } from "../../../domain/enterprise/mappers/service-item-mapper";
+import { ShoppingCartMapper } from "../../../domain/enterprise/mappers/shopping-cart-mapper";
 
 export class DrizzleBookingsRepository implements BookingsRepository {
   async findManyByBarbermanAndDate({
@@ -45,6 +48,22 @@ export class DrizzleBookingsRepository implements BookingsRepository {
   async create(booking: Booking): Promise<void> {
     const data = BookingMapper.toPersistence(booking);
     await db.insert(bookings).values(data);
+  }
+
+  async createWithItemAndCart({
+    booking,
+    serviceItem,
+    cart,
+  }: CreateBookingBundleParams): Promise<void> {
+    const serviceItemData = ServiceItemMapper.toPersistence(serviceItem);
+    const cartData = ShoppingCartMapper.toPersistence(cart);
+    const bookingData = BookingMapper.toPersistence(booking);
+
+    await db.transaction(async (tx) => {
+      await tx.insert(serviceItems).values(serviceItemData);
+      await tx.insert(shoppingCarts).values(cartData);
+      await tx.insert(bookings).values(bookingData);
+    });
   }
 
   async save(booking: Booking): Promise<void> {
@@ -128,10 +147,32 @@ export class DrizzleBookingsRepository implements BookingsRepository {
     const endOfDay = new Date(`${dateStr}T23:59:59.999Z`);
     const result = await db
       .select({
-        booking: bookings,
-        customer: users,
-        service: services,
-        serviceItem: serviceItems,
+        booking: {
+          id: bookings.id,
+          barbershopId: bookings.barbershopId,
+          barbermanId: bookings.barbermanId,
+          shoppingCartId: bookings.shoppingCartId,
+          date: bookings.date,
+          startTime: bookings.startTime,
+          endTime: bookings.endTime,
+          createdAt: bookings.createdAt,
+        },
+        customer: {
+          id: users.id,
+          name: users.name,
+          phoneNumber: users.phoneNumber,
+        },
+        service: {
+          id: services.id,
+          title: services.title,
+          priceInCents: services.priceInCents,
+          durationInMinutes: services.durationInMinutes,
+        },
+        serviceItem: {
+          titleSnapshot: serviceItems.titleSnapshot,
+          priceInCentsSnapshot: serviceItems.priceInCentsSnapshot,
+          durationInMinutesSnapshot: serviceItems.durationInMinutesSnapshot,
+        },
       })
       .from(bookings)
       .innerJoin(shoppingCarts, eq(bookings.shoppingCartId, shoppingCarts.id))
@@ -154,7 +195,12 @@ export class DrizzleBookingsRepository implements BookingsRepository {
     await db.transaction(async (tx) => {
       await tx
         .delete(notifications)
-        .where(eq(notifications.bookingId, bookingId));
+        .where(
+          and(
+            eq(notifications.referenceType, "BOOKING"),
+            eq(notifications.referenceId, bookingId),
+          ),
+        );
       await tx.delete(bookings).where(eq(bookings.id, bookingId));
     });
   }

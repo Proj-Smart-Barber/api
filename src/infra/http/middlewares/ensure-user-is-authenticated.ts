@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { verify } from "jsonwebtoken";
+import { JsonWebTokenError, TokenExpiredError, verify } from "jsonwebtoken";
 import { DrizzleUsersRepository } from "../../drizzle/repositories/drizzle-users-repository";
 import { env } from "../../env";
 
@@ -39,6 +39,14 @@ export async function ensureUserIsAuthenticated(
     request.user = payload;
     next();
   } catch (error) {
+    if (error instanceof TokenExpiredError) {
+      return reply.status(401).json({ error: "token_expired" });
+    }
+
+    if (error instanceof JsonWebTokenError) {
+      return reply.status(401).json({ error: "invalid_token" });
+    }
+
     console.error("[ensureUserIsAuthenticated] Error:", error);
     return reply.status(500).json({ error });
   }

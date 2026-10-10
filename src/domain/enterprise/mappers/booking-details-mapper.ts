@@ -16,7 +16,7 @@ export interface PersistenceBookingDetails {
   customer: {
     id: string;
     name: string;
-    phoneNumber: string;
+    phoneNumber: string | null;
   };
   service: {
     id: string;
@@ -41,7 +41,7 @@ export class BookingDetailsMapper {
       customer: {
         id: new UniqueEntityId(raw.customer.id),
         name: raw.customer.name,
-        phoneNumber: raw.customer.phoneNumber,
+        phoneNumber: raw.customer.phoneNumber ?? "",
       },
       services: [
         {

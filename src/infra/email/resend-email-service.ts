@@ -1,0 +1,71 @@
+import { Resend } from "resend";
+import type {
+  EmailService,
+  SendInvitationEmailParams,
+  SendPasswordRecoveryEmailParams,
+  SendVerificationEmailParams,
+} from "../../domain/application/services/email-service";
+import { env } from "../env";
+import { renderInvitationEmail } from "./render-invitation-email";
+import { renderPasswordRecoveryEmail } from "./render-password-recovery-email";
+import { renderVerificationEmail } from "./render-verification-email";
+
+export class ResendEmailService implements EmailService {
+  private resend: Resend;
+
+  constructor() {
+    this.resend = new Resend(env.RESEND_API_KEY);
+  }
+
+  async sendVerificationEmail(
+    params: SendVerificationEmailParams,
+  ): Promise<void> {
+    const { html, text } = await renderVerificationEmail(params);
+
+    const { error } = await this.resend.emails.send({
+      from: env.EMAIL_FROM,
+      to: params.to,
+      subject: "Confirme seu e-mail no SmartBarber",
+      html,
+      text,
+    });
+
+    if (error) {
+      throw new Error(`Falha ao enviar e-mail via Resend: ${error.message}`);
+    }
+  }
+
+  async sendPasswordRecoveryEmail(
+    params: SendPasswordRecoveryEmailParams,
+  ): Promise<void> {
+    const { html, text } = await renderPasswordRecoveryEmail(params);
+
+    const { error } = await this.resend.emails.send({
+      from: env.EMAIL_FROM,
+      to: params.to,
+      subject: "Redefina sua senha no SmartBarber",
+      html,
+      text,
+    });
+
+    if (error) {
+      throw new Error(`Falha ao enviar e-mail via Resend: ${error.message}`);
+    }
+  }
+
+  async sendInvitationEmail(params: SendInvitationEmailParams): Promise<void> {
+    const { html, text } = await renderInvitationEmail(params);
+
+    const { error } = await this.resend.emails.send({
+      from: env.EMAIL_FROM,
+      to: params.to,
+      subject: `Você foi convidado para a barbearia ${params.barbershopName}`,
+      html,
+      text,
+    });
+
+    if (error) {
+      throw new Error(`Falha ao enviar e-mail via Resend: ${error.message}`);
+    }
+  }
+}

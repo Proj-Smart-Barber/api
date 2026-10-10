@@ -1,11 +1,16 @@
 import type { Controller } from "../../../core/infra/controller";
 import { SignInUserUseCase } from "../../../domain/application/use-cases/users/sign-in-user/sign-in-user";
+import { DrizzleRefreshTokensRepository } from "../../drizzle/repositories/drizzle-refresh-tokens-repository";
 import { DrizzleUsersRepository } from "../../drizzle/repositories/drizzle-users-repository";
 import { SignInUserController } from "../controllers/sign-in-user-controller";
 
 export function makeSignInUserController(): Controller {
   const usersRepository = new DrizzleUsersRepository();
-  const signInUserUseCase = new SignInUserUseCase(usersRepository);
+  const refreshTokensRepository = new DrizzleRefreshTokensRepository();
+  const signInUserUseCase = new SignInUserUseCase(
+    usersRepository,
+    refreshTokensRepository,
+  );
   const signInUserController = new SignInUserController(signInUserUseCase);
 
   return signInUserController;

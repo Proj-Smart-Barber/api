@@ -7,13 +7,20 @@ import {
   fail,
   type HttpResponse,
 } from "../../../core/infra/http-response";
+import { Cpf } from "../../../domain/enterprise/entities/value-objects/cpf";
+import { InvalidCpfError } from "../../../domain/enterprise/errors/invalid-cpf-error";
 import type { CreateUserUseCase } from "../../../domain/application/use-cases/users/create-user/create-user";
+
+const cpfSchema = z
+  .string()
+  .transform(Cpf.normalize)
+  .refine(Cpf.isValid, { message: "CPF inválido." });
 
 const createUserControllerRequest = z.object({
   name: z.string(),
   email: z.email(),
   password: z.string(),
-  cpf: z.string(),
+  cpf: cpfSchema,
 });
 
 type CreateUserControllerRequest = z.infer<typeof createUserControllerRequest>;
@@ -35,6 +42,10 @@ export class CreateUserController implements Controller {
 
       if (result.isLeft()) {
         const error = result.value;
+
+        if (error instanceof InvalidCpfError) {
+          return clientError(error.message);
+        }
 
         return conflict(error.message);
       }
