@@ -9,6 +9,8 @@ export const adaptRoute = (controller: Controller) => {
       ...request.params,
       ...request.query,
       userId: request.user?.sub as string,
+      _body: request.body,
+      _query: request.query,
     };
 
     if (isWebClient && !requestData.refresh_token && request.headers.cookie) {

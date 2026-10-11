@@ -12,4 +12,6 @@ export interface UserNotificationItem {
 
 export interface FetchUserNotificationsResponse {
   notifications: UserNotificationItem[];
+  nextCursor: string | null;
+  unreadCount: number;
 }

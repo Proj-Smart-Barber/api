@@ -18,6 +18,8 @@ export class FetchUserNotificationsUseCase {
 
   async execute({
     userId,
+    cursor,
+    limit = 20,
   }: FetchUserNotificationsDTO): Promise<FetchUserNotificationsUseCaseResponse> {
     const user = await this.usersRepository.findById(userId);
 
@@ -25,8 +27,20 @@ export class FetchUserNotificationsUseCase {
       return left(new ResourceNotFoundError());
     }
 
-    const notifications =
-      await this.notificationsRepository.findManyByUserId(userId);
+    const effectiveLimit = Math.min(Math.max(limit, 1), 100);
+
+    const notifications = await this.notificationsRepository.findManyByUserId(
+      userId,
+      { cursor, limit: effectiveLimit },
+    );
+
+    const unreadCount =
+      await this.notificationsRepository.countUnreadByUserId(userId);
+
+    const nextCursor =
+      notifications.length === effectiveLimit
+        ? notifications[notifications.length - 1].id.toString()
+        : null;
 
     return right({
       notifications: notifications.map((notification) => ({
@@ -40,6 +54,8 @@ export class FetchUserNotificationsUseCase {
         scheduledAt: notification.scheduledAt,
         createdAt: notification.createdAt ?? null,
       })),
+      nextCursor,
+      unreadCount,
     });
   }
 }

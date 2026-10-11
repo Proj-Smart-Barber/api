@@ -10,6 +10,8 @@ import type { FetchUserNotificationsUseCase } from "../../../../domain/applicati
 
 const fetchNotificationsSchema = z.object({
   userId: z.string().uuid({ message: "ID do usuário inválido." }),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().min(1).max(100).optional(),
 });
 
 export class FetchNotificationsController implements Controller {
@@ -23,13 +25,19 @@ export class FetchNotificationsController implements Controller {
 
       const result = await this.fetchUserNotificationsUseCase.execute({
         userId: parsed.userId,
+        cursor: parsed.cursor,
+        limit: parsed.limit,
       });
 
       if (result.isLeft()) {
         return clientError(result.value.message);
       }
 
-      return ok({ notifications: result.value.notifications });
+      return ok({
+        notifications: result.value.notifications,
+        nextCursor: result.value.nextCursor,
+        unreadCount: result.value.unreadCount,
+      });
     } catch (err) {
       if (err instanceof ZodError) {
         return clientError({ errors: err.issues });
