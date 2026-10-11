@@ -176,6 +176,104 @@ export async function runSchemaMigrations() {
       CREATE INDEX IF NOT EXISTS "invitations_status_idx" ON "invitations" ("status");
     `);
 
+    // 9. Verificação de e-mail e recuperação de senha
+    await db.execute(sql`
+      ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "email_verified_at" timestamp;
+    `);
+
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "email_verifications" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+        "user_id" uuid NOT NULL,
+        "token_hash" text NOT NULL UNIQUE,
+        "expires_at" timestamp NOT NULL,
+        "used_at" timestamp,
+        "created_at" timestamp DEFAULT now(),
+        CONSTRAINT "email_verifications_user_id_users_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS "email_verifications_user_id_idx" ON "email_verifications" ("user_id");
+    `);
+
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "password_recovery_tokens" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+        "user_id" uuid NOT NULL,
+        "token_hash" text NOT NULL UNIQUE,
+        "expires_at" timestamp NOT NULL,
+        "used_at" timestamp,
+        "created_at" timestamp DEFAULT now(),
+        CONSTRAINT "password_recovery_tokens_user_id_users_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS "password_recovery_tokens_user_id_idx" ON "password_recovery_tokens" ("user_id");
+    `);
+
+    // 10. Atualização de esquema de notificações
+    await db.execute(sql`
+      DO $$
+      BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'notifications') THEN
+          ALTER TABLE "notifications" ADD COLUMN IF NOT EXISTS "user_id" uuid;
+          ALTER TABLE "notifications" ADD COLUMN IF NOT EXISTS "reference_type" text;
+          ALTER TABLE "notifications" ADD COLUMN IF NOT EXISTS "reference_id" uuid;
+
+          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'notifications' AND column_name = 'booking_id') THEN
+            UPDATE "notifications" AS n
+            SET
+              "user_id" = COALESCE(sc."user_id", b."barberman_id"),
+              "reference_type" = 'BOOKING',
+              "reference_id" = n."booking_id"
+            FROM "bookings" AS b
+            LEFT JOIN "shopping_carts" AS sc ON sc."id" = b."shopping_cart_id"
+            WHERE n."booking_id" IS NOT NULL AND b."id" = n."booking_id" AND n."user_id" IS NULL;
+
+            ALTER TABLE "notifications" DROP CONSTRAINT IF EXISTS "notifications_booking_id_bookings_id_fkey";
+            ALTER TABLE "notifications" ALTER COLUMN "booking_id" DROP NOT NULL;
+          END IF;
+
+          IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'notifications_user_id_users_id_fkey') THEN
+            ALTER TABLE "notifications" ADD CONSTRAINT "notifications_user_id_users_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE;
+          END IF;
+        END IF;
+      END $$;
+    `);
+
+    // 11. Novas colunas de bookings (reserva múltipla e status)
+    await db.execute(sql`
+      ALTER TABLE "bookings" ADD COLUMN IF NOT EXISTS "client_request_id" text;
+      ALTER TABLE "bookings" ADD COLUMN IF NOT EXISTS "status" text;
+      ALTER TABLE "bookings" ADD COLUMN IF NOT EXISTS "payment_status" text;
+    `);
+
+    // 12. Extensões de usuário e registro de barbeiros
+    await db.execute(sql`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'account_type') THEN
+          CREATE TYPE "account_type" AS ENUM ('CLIENT', 'BARBER', 'OWNER', 'PLATFORM_ADMIN');
+        END IF;
+      END $$;
+
+      ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "account_type" "account_type" DEFAULT 'CLIENT' NOT NULL;
+      ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "credential_version" integer DEFAULT 1 NOT NULL;
+      ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "onboarding_intent" text;
+
+      CREATE TABLE IF NOT EXISTS "barber_registrations" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+        "barbershop_id" uuid NOT NULL,
+        "invitation_id" uuid NOT NULL,
+        "name" text NOT NULL,
+        "cpf" text NOT NULL,
+        "email" text NOT NULL,
+        "token_hash" text NOT NULL UNIQUE,
+        "status" "invitation_status" DEFAULT 'PENDING' NOT NULL,
+        "expires_at" timestamp NOT NULL,
+        "responded_at" timestamp,
+        "created_at" timestamp DEFAULT now(),
+        CONSTRAINT "barber_registrations_barbershop_id_barbershops_id_fkey" FOREIGN KEY ("barbershop_id") REFERENCES "barbershops"("id") ON DELETE CASCADE,
+        CONSTRAINT "barber_registrations_invitation_id_invitations_id_fkey" FOREIGN KEY ("invitation_id") REFERENCES "invitations"("id") ON DELETE CASCADE
+      );
+    `);
+
     hasMigrated = true;
     console.log("[Migration] Schema migrations completed successfully.");
     return {

@@ -347,7 +347,12 @@ async function runVerification() {
 
       if (!existingBooking) {
         const engine = new DemoSeedEngine();
-        await engine.run({ forceReplenishDisposables: true });
+        await engine.run({
+          forceReplenishDisposables: true,
+          confirmSecret:
+            process.env.DEMO_SEED_CONFIRM_SECRET ||
+            "CONFIRMAR_SEED_DEMO_PRODUCAO",
+        });
 
         const updatedManifestRaw = readFileSync(
           resolve(process.cwd(), ".demo-seed-manifest.json"),
