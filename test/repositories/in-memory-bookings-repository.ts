@@ -140,6 +140,80 @@ export class InMemoryBookingsRepository implements BookingsRepository {
     });
   }
 
+  async findManyByCustomerId(
+    customerId: string,
+    _options?: { page?: number },
+  ): Promise<BookingDetails[]> {
+    const carts = this.createdBundles
+      .filter((b) => b.cart.userId.toString() === customerId)
+      .map((b) => b.booking);
+
+    return carts.map((booking) => {
+      const bundle = this.createdBundles.find(
+        (b) => b.booking.id.toString() === booking.id.toString(),
+      );
+      return BookingDetails.create({
+        bookingId: booking.id,
+        barbershopId: booking.barbershopId,
+        barbermanId: booking.barbermanId,
+        shoppingCartId: booking.shoppingCartId,
+        customer: {
+          id: new UniqueEntityId(customerId),
+          name: "Cliente Teste",
+          phoneNumber: "(11) 99999-9999",
+        },
+        services: [
+          {
+            id:
+              bundle?.serviceItem.serviceId ?? new UniqueEntityId("service-1"),
+            title: bundle?.serviceItem.titleSnapshot ?? "Serviço",
+            priceInCents: bundle?.serviceItem.priceInCentsSnapshot ?? 5000,
+            durationInMinutes:
+              bundle?.serviceItem.durationInMinutesSnapshot ?? 30,
+          },
+        ],
+        date: booking.date,
+        startTime: booking.startTime,
+        endTime: booking.endTime,
+        createdAt: booking.createdAt,
+      });
+    });
+  }
+
+  async findByIdWithDetails(bookingId: string): Promise<BookingDetails | null> {
+    const booking = this.items.find((b) => b.id.toString() === bookingId);
+    if (!booking) return null;
+
+    const bundle = this.createdBundles.find(
+      (b) => b.booking.id.toString() === bookingId,
+    );
+
+    return BookingDetails.create({
+      bookingId: booking.id,
+      barbershopId: booking.barbershopId,
+      barbermanId: booking.barbermanId,
+      shoppingCartId: booking.shoppingCartId,
+      customer: {
+        id: bundle?.cart.userId ?? new UniqueEntityId("customer-1"),
+        name: "Cliente Teste",
+        phoneNumber: "(11) 99999-9999",
+      },
+      services: [
+        {
+          id: bundle?.serviceItem.serviceId ?? new UniqueEntityId("service-1"),
+          title: bundle?.serviceItem.titleSnapshot ?? "Serviço",
+          priceInCents: bundle?.serviceItem.priceInCentsSnapshot ?? 5000,
+          durationInMinutes:
+            bundle?.serviceItem.durationInMinutesSnapshot ?? 30,
+        },
+      ],
+      date: booking.date,
+      startTime: booking.startTime,
+      endTime: booking.endTime,
+      createdAt: booking.createdAt,
+    });
+  }
+
   async delete(booking: Booking): Promise<void> {
     const itemIndex = this.items.findIndex(
       (item) => item.id.toString() === booking.id.toString(),

@@ -24,6 +24,12 @@ export class InMemoryMembershipsRepository implements MembershipsRepository {
     return membership ?? null;
   }
 
+  async findManyByBarbershopId(barbershopId: string): Promise<Membership[]> {
+    return this.items.filter(
+      (item) => item.barbershopId.toString() === barbershopId,
+    );
+  }
+
   async acceptInvitation(
     _invitation: Invitation,
     membership: Membership,

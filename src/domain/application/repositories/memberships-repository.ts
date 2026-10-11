@@ -7,6 +7,7 @@ export interface MembershipsRepository {
     barbershopId: string,
     userId: string,
   ): Promise<Membership | null>;
+  findManyByBarbershopId(barbershopId: string): Promise<Membership[]>;
   /**
    * Atomically creates the membership and marks its invitation as accepted.
    * The invitation entity is expected to be already mutated (markAccepted).
