@@ -38,8 +38,8 @@ describe("MarkNotificationAsReadController", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.body.notification.id).toBe(notifId);
-    expect(response.body.notification.readAt).toBeDefined();
+    expect((response.body as any).notification.id).toBe(notifId);
+    expect((response.body as any).notification.readAt).toBeDefined();
   });
 
   it("reject_body_query_homonyms: rejeita 400 se userId ou notificationId forem forjados no body ou query", async () => {
@@ -50,7 +50,7 @@ describe("MarkNotificationAsReadController", () => {
     });
 
     expect(response.statusCode).toBe(400);
-    expect(response.body.error).toContain("Parâmetros homônimos");
+    expect((response.body as any).error).toContain("Parâmetros homônimos");
   });
 
   it("foreign_notification_is_not_readable: retorna 403 quando pertence a outro usuário", async () => {

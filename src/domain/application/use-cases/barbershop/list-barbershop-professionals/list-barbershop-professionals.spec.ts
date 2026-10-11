@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
 import { Barbershop } from "../../../../enterprise/entities/barbershop";
+import { Slug } from "../../../../enterprise/entities/value-objects/slug";
 import { User } from "../../../../enterprise/entities/user";
-import { Membership } from "../../../../enterprise/entities/membership";
+import { Membership, Role } from "../../../../enterprise/entities/membership";
 import { Password } from "../../../../enterprise/entities/value-objects/password";
 import { InMemoryBarbershopsRepository } from "../../../../../../test/repositories/in-memory-barbershops-repository";
 import { InMemoryMembershipsRepository } from "../../../../../../test/repositories/in-memory-memberships-repository";
@@ -31,10 +32,12 @@ describe("ListBarbershopProfessionalsUseCase", () => {
     const shop = Barbershop.create(
       {
         name: "Barbearia Central",
-        phone: "11999999999",
-        street: "Rua A",
-        city: "São Paulo",
-        state: "SP",
+        ownerId: new UniqueEntityId("owner-1"),
+        slug: Slug.create("barbearia-central"),
+        cnpj: "11222333000144",
+        location: "Rua A, São Paulo - SP",
+        timezone: "America/Sao_Paulo",
+        status: "ACTIVE",
       },
       new UniqueEntityId("shop-1"),
     );
@@ -57,8 +60,7 @@ describe("ListBarbershopProfessionalsUseCase", () => {
     const member = Membership.create({
       barbershopId: new UniqueEntityId("shop-1"),
       userId: new UniqueEntityId("user-barber-1"),
-      role: "BARBERMAN",
-      status: "ACTIVE",
+      role: Role.BARBERMAN,
     });
     await membershipsRepository.create(member);
 

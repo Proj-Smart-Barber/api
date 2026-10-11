@@ -1,12 +1,12 @@
 import { z, ZodError } from "zod";
-import type { Controller } from "../../../core/infra/controller";
+import type { Controller } from "../../../../core/infra/controller";
 import {
   clientError,
   fail,
   ok,
   type HttpResponse,
-} from "../../../core/infra/http-response";
-import type { BookingsRepository } from "../../../domain/application/repositories/bookings-repository";
+} from "../../../../core/infra/http-response";
+import type { BookingsRepository } from "../../../../domain/application/repositories/bookings-repository";
 
 const fetchMyBookingsSchema = z.object({
   userId: z.string().uuid({ message: "ID do usuário inválido." }),

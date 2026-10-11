@@ -34,7 +34,7 @@ async function main() {
       name: "Carlos Silva",
       email: "owner@smartbarber.com",
       password: ownerHash.value,
-      cpf: "12345678900",
+      cpf: "12345678909",
       emailVerifiedAt: new Date(),
     })
     .returning();
@@ -97,7 +97,7 @@ async function main() {
       name: "Ana Pereira",
       email: "ana@example.com",
       password: customerHash.value,
-      cpf: "55544433322",
+      cpf: "55544433208",
       phoneNumber: "(11) 99999-1234",
       emailVerifiedAt: new Date(),
     })

@@ -29,10 +29,7 @@ export class ListBarbershopProfessionalsController implements Controller {
 
       if (result.isLeft()) {
         const error = result.value;
-        if (error instanceof ResourceNotFoundError) {
-          return notFound({ error: error.message });
-        }
-        return clientError({ error: error.message });
+        return notFound({ error: error.message });
       }
 
       return ok({ professionals: result.value.professionals });

@@ -47,15 +47,12 @@ export class MarkNotificationAsReadController implements Controller {
 
       if (result.isLeft()) {
         const error = result.value;
-        if (error instanceof ResourceNotFoundError) {
-          return notFound({ error: "Notificação não encontrada." });
-        }
         if (error instanceof NotAllowedError) {
           return forbidden({
             error: "Acesso não autorizado a esta notificação.",
           });
         }
-        return clientError({ error: error.message });
+        return notFound({ error: "Notificação não encontrada." });
       }
 
       return ok({

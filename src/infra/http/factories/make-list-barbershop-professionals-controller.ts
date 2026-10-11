@@ -1,7 +1,7 @@
-import { ListBarbershopProfessionalsUseCase } from "../../domain/application/use-cases/barbershop/list-barbershop-professionals/list-barbershop-professionals";
-import { DrizzleBarbershopsRepository } from "../drizzle/repositories/drizzle-barbershops-repository";
-import { DrizzleMembershipsRepository } from "../drizzle/repositories/drizzle-memberships-repository";
-import { DrizzleUsersRepository } from "../drizzle/repositories/drizzle-users-repository";
+import { ListBarbershopProfessionalsUseCase } from "../../../domain/application/use-cases/barbershop/list-barbershop-professionals/list-barbershop-professionals";
+import { DrizzleBarbershopsRepository } from "../../drizzle/repositories/drizzle-barbershops-repository";
+import { DrizzleMembershipsRepository } from "../../drizzle/repositories/drizzle-memberships-repository";
+import { DrizzleUsersRepository } from "../../drizzle/repositories/drizzle-users-repository";
 import { ListBarbershopProfessionalsController } from "../controllers/barbershop/list-barbershop-professionals.controller";
 
 export function makeListBarbershopProfessionalsController(): ListBarbershopProfessionalsController {

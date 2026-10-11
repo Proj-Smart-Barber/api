@@ -20,6 +20,44 @@ export class SeedRegistryManager {
     );
   }
 
+  async getExistingRecordsReadOnly(
+    namespace: string,
+  ): Promise<Map<string, SeedRegistryRecord> | null> {
+    try {
+      const checkTable = await db.execute(
+        sql.raw(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_name = 'demo_seed_registry'
+        );
+      `),
+      );
+      const exists = (checkTable.rows?.[0] as any)?.exists;
+      if (!exists) {
+        return null;
+      }
+
+      const result = await db.execute(
+        sql.raw(`
+        SELECT id, namespace, logical_key as "logicalKey", table_name as "tableName", record_id as "recordId", created_at as "createdAt"
+        FROM demo_seed_registry
+        WHERE namespace = '${namespace.replace(/'/g, "''")}'
+      `),
+      );
+
+      const map = new Map<string, SeedRegistryRecord>();
+      const rows = (result.rows || []) as unknown as SeedRegistryRecord[];
+
+      for (const row of rows) {
+        map.set(row.logicalKey, row);
+      }
+
+      return map;
+    } catch {
+      return null;
+    }
+  }
+
   async getExistingRecords(
     namespace: string,
   ): Promise<Map<string, SeedRegistryRecord>> {
