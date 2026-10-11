@@ -15,6 +15,13 @@ import {
 
 export const roleEnum = pgEnum("role", ["OWNER", "BARBERMAN"]);
 
+export const accountTypeEnum = pgEnum("account_type", [
+  "CLIENT",
+  "BARBER",
+  "OWNER",
+  "PLATFORM_ADMIN",
+]);
+
 export const barbershopStatusEnum = pgEnum("barbershop_status", [
   "ACTIVE",
   "INACTIVE",
@@ -38,6 +45,9 @@ export const users = pgTable("users", {
   cpf: text().notNull().unique(),
   phoneNumber: text("phone_number"),
   emailVerifiedAt: timestamp("email_verified_at"),
+  accountType: accountTypeEnum("account_type").notNull().default("CLIENT"),
+  credentialVersion: integer("credential_version").notNull().default(1),
+  onboardingIntent: text("onboarding_intent"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -238,6 +248,27 @@ export const bookings = pgTable("bookings", {
   date: timestamp("date").notNull(),
   startTime: text("start_time").notNull(),
   endTime: text("end_time").notNull(),
+  clientRequestId: text("client_request_id"),
+  status: text("status"),
+  paymentStatus: text("payment_status"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const barberRegistrations = pgTable("barber_registrations", {
+  id: uuid().primaryKey().defaultRandom(),
+  barbershopId: uuid("barbershop_id")
+    .notNull()
+    .references(() => barbershops.id, { onDelete: "cascade" }),
+  invitationId: uuid("invitation_id")
+    .notNull()
+    .references(() => invitations.id, { onDelete: "cascade" }),
+  name: text().notNull(),
+  cpf: text().notNull(),
+  email: text().notNull(),
+  tokenHash: text("token_hash").notNull().unique(),
+  status: invitationStatusEnum("status").notNull().default("PENDING"),
+  expiresAt: timestamp("expires_at").notNull(),
+  respondedAt: timestamp("responded_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

@@ -3,4 +3,5 @@ export interface CreateUserDTO {
   email: string;
   password: string;
   cpf: string;
+  onboardingIntent?: "OWNER" | "CLIENT" | null;
 }

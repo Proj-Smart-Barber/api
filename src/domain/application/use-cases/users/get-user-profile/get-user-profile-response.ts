@@ -1,9 +1,18 @@
+import type { AccountType } from "../../../../enterprise/entities/user";
+
+export interface UserProfileDto {
+  id: string;
+  name: string;
+  email: string;
+  accountType: AccountType;
+  emailVerifiedAt: string | null;
+  avatarUrl?: string;
+  phoneNumber?: string;
+  onboardingIntent?: "OWNER" | "CLIENT" | null;
+}
+
 export interface GetUserProfileResponse {
-  user: {
-    id: string;
-    name: string;
-    avatarUrl?: string;
-    email: string;
-    phoneNumber?: string;
-  };
+  user: UserProfileDto;
+  staff: UserProfileDto;
+  serverTime: string;
 }

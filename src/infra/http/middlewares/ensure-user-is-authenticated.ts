@@ -5,6 +5,7 @@ import { env } from "../../env";
 
 interface Payload {
   sub: string;
+  version?: number;
 }
 
 declare module "express-serve-static-core" {
@@ -34,6 +35,16 @@ export async function ensureUserIsAuthenticated(
 
     if (!user) {
       return reply.status(401).json({ message: "Usuário não encontrado." });
+    }
+
+    if (
+      payload.version !== undefined &&
+      user.credentialVersion !== payload.version
+    ) {
+      return reply.status(401).json({
+        error: "token_revoked",
+        message: "Sessão revogada. Faça login novamente.",
+      });
     }
 
     request.user = payload;
