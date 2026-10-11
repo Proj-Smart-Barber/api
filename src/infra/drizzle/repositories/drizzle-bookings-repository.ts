@@ -190,6 +190,94 @@ export class DrizzleBookingsRepository implements BookingsRepository {
     return result.map((row) => BookingDetailsMapper.toDomain(row));
   }
 
+  async findManyByCustomerId(
+    customerId: string,
+    options?: { page?: number },
+  ): Promise<BookingDetails[]> {
+    const page = options?.page ?? 1;
+    const result = await db
+      .select({
+        booking: {
+          id: bookings.id,
+          barbershopId: bookings.barbershopId,
+          barbermanId: bookings.barbermanId,
+          shoppingCartId: bookings.shoppingCartId,
+          date: bookings.date,
+          startTime: bookings.startTime,
+          endTime: bookings.endTime,
+          createdAt: bookings.createdAt,
+        },
+        customer: {
+          id: users.id,
+          name: users.name,
+          phoneNumber: users.phoneNumber,
+        },
+        service: {
+          id: services.id,
+          title: services.title,
+          priceInCents: services.priceInCents,
+          durationInMinutes: services.durationInMinutes,
+        },
+        serviceItem: {
+          titleSnapshot: serviceItems.titleSnapshot,
+          priceInCentsSnapshot: serviceItems.priceInCentsSnapshot,
+          durationInMinutesSnapshot: serviceItems.durationInMinutesSnapshot,
+        },
+      })
+      .from(bookings)
+      .innerJoin(shoppingCarts, eq(bookings.shoppingCartId, shoppingCarts.id))
+      .innerJoin(users, eq(shoppingCarts.userId, users.id))
+      .innerJoin(serviceItems, eq(shoppingCarts.serviceItemId, serviceItems.id))
+      .innerJoin(services, eq(serviceItems.serviceId, services.id))
+      .where(eq(shoppingCarts.userId, customerId))
+      .limit(20)
+      .offset((page - 1) * 20);
+
+    return result.map((row) => BookingDetailsMapper.toDomain(row));
+  }
+
+  async findByIdWithDetails(bookingId: string): Promise<BookingDetails | null> {
+    const [row] = await db
+      .select({
+        booking: {
+          id: bookings.id,
+          barbershopId: bookings.barbershopId,
+          barbermanId: bookings.barbermanId,
+          shoppingCartId: bookings.shoppingCartId,
+          date: bookings.date,
+          startTime: bookings.startTime,
+          endTime: bookings.endTime,
+          createdAt: bookings.createdAt,
+        },
+        customer: {
+          id: users.id,
+          name: users.name,
+          phoneNumber: users.phoneNumber,
+        },
+        service: {
+          id: services.id,
+          title: services.title,
+          priceInCents: services.priceInCents,
+          durationInMinutes: services.durationInMinutes,
+        },
+        serviceItem: {
+          titleSnapshot: serviceItems.titleSnapshot,
+          priceInCentsSnapshot: serviceItems.priceInCentsSnapshot,
+          durationInMinutesSnapshot: serviceItems.durationInMinutesSnapshot,
+        },
+      })
+      .from(bookings)
+      .innerJoin(shoppingCarts, eq(bookings.shoppingCartId, shoppingCarts.id))
+      .innerJoin(users, eq(shoppingCarts.userId, users.id))
+      .innerJoin(serviceItems, eq(shoppingCarts.serviceItemId, serviceItems.id))
+      .innerJoin(services, eq(serviceItems.serviceId, services.id))
+      .where(eq(bookings.id, bookingId));
+
+    if (!row) return null;
+
+    return BookingDetailsMapper.toDomain(row);
+  }
+
   async delete(booking: Booking): Promise<void> {
     const bookingId = booking.id.toString();
     await db.transaction(async (tx) => {

@@ -21,14 +21,23 @@ export class GetUserProfileUseCase {
       return left(new ResourceNotFoundError());
     }
 
+    const profile = {
+      id: user.id.toString(),
+      name: user.name,
+      email: user.email,
+      accountType: user.accountType,
+      emailVerifiedAt: user.emailVerifiedAt
+        ? user.emailVerifiedAt.toISOString()
+        : null,
+      avatarUrl: user.avatarUrl,
+      phoneNumber: user.phoneNumber,
+      onboardingIntent: user.onboardingIntent,
+    };
+
     return right({
-      user: {
-        id: user.id.toString(),
-        name: user.name,
-        email: user.email,
-        avatarUrl: user.avatarUrl,
-        phoneNumber: user.phoneNumber,
-      },
+      user: profile,
+      staff: profile,
+      serverTime: new Date().toISOString(),
     });
   }
 }

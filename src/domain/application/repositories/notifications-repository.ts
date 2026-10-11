@@ -5,5 +5,9 @@ export interface NotificationsRepository {
   save(notification: Notification): Promise<Notification>;
   delete(id: string): Promise<void>;
   findById(id: string): Promise<Notification | null>;
-  findManyByUserId(userId: string): Promise<Notification[]>;
+  findManyByUserId(
+    userId: string,
+    options?: { limit?: number; cursor?: string },
+  ): Promise<Notification[]>;
+  countUnreadByUserId(userId: string): Promise<number>;
 }

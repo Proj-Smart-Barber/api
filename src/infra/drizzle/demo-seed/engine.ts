@@ -1,6 +1,6 @@
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { db } from "../index";
 import { env } from "../../env";
 import {
@@ -87,6 +87,20 @@ export class DemoSeedEngine {
 
     // ── Rollback ────────────────────────────────────────────────
     if (options.rollback) {
+      if (isDryRun) {
+        console.log(
+          `[DemoSeed] Dry-run ativo para rollback: nenhuma exclusão será realizada no banco.`,
+        );
+        return {
+          namespace: DEMO_SEED_NAMESPACE,
+          baseDateSP: this.getTodayDateSP(),
+          targetDatabase: targetInfo,
+          dryRun: true,
+          counts: {},
+          createdIds: {},
+        };
+      }
+
       console.log(
         `[DemoSeed] Iniciando rollback cirúrgico do namespace '${DEMO_SEED_NAMESPACE}'...`,
       );
@@ -136,13 +150,29 @@ export class DemoSeedEngine {
     const resolvedIds: Record<string, string> = {};
 
     // ── 1. Staffs e Credenciais ─────────────────────────────────
-    const staffCredentials = await loadOrCreateStaffCredentials(DEMO_STAFFS);
+    const staffCredentials = !isDryRun
+      ? await loadOrCreateStaffCredentials(DEMO_STAFFS)
+      : ({} as Record<string, { passwordHash: string }>);
 
     for (const staffFixture of DEMO_STAFFS) {
       const reg = existingRegistry.get(staffFixture.logicalKey);
       if (reg) {
         resolvedIds[staffFixture.logicalKey] = reg.recordId;
         counts.staffs.reused++;
+
+        if (!isDryRun) {
+          // Preenche verificação se for conta gerenciada antiga com emailVerifiedAt nulo
+          await db
+            .update(users)
+            .set({ emailVerifiedAt: sql`NOW()` })
+            .where(
+              and(
+                eq(users.id, reg.recordId),
+                eq(users.email, staffFixture.email),
+                isNull(users.emailVerifiedAt),
+              ),
+            );
+        }
       } else {
         counts.staffs.created++;
         if (!isDryRun) {
@@ -155,6 +185,16 @@ export class DemoSeedEngine {
           let staffId: string;
           if (existingByEmail.length > 0) {
             staffId = existingByEmail[0].id;
+            await db
+              .update(users)
+              .set({ emailVerifiedAt: sql`NOW()` })
+              .where(
+                and(
+                  eq(users.id, staffId),
+                  eq(users.email, staffFixture.email),
+                  isNull(users.emailVerifiedAt),
+                ),
+              );
           } else {
             const cred = staffCredentials[staffFixture.logicalKey];
             const [created] = await db
@@ -383,6 +423,19 @@ export class DemoSeedEngine {
       if (reg) {
         resolvedIds[customerFixture.logicalKey] = reg.recordId;
         counts.customers.reused++;
+
+        if (!isDryRun) {
+          await db
+            .update(users)
+            .set({ emailVerifiedAt: sql`NOW()` })
+            .where(
+              and(
+                eq(users.id, reg.recordId),
+                eq(users.email, customerFixture.email),
+                isNull(users.emailVerifiedAt),
+              ),
+            );
+        }
       } else {
         counts.customers.created++;
         if (!isDryRun) {
@@ -394,6 +447,16 @@ export class DemoSeedEngine {
           let customerId: string;
           if (existingByEmail.length > 0) {
             customerId = existingByEmail[0].id;
+            await db
+              .update(users)
+              .set({ emailVerifiedAt: sql`NOW()` })
+              .where(
+                and(
+                  eq(users.id, customerId),
+                  eq(users.email, customerFixture.email),
+                  isNull(users.emailVerifiedAt),
+                ),
+              );
           } else {
             const [created] = await db
               .insert(users)
@@ -653,7 +716,8 @@ export class DemoSeedEngine {
 
   private async safeGetRegistryMap(namespace: string) {
     try {
-      return await this.registry.getExistingRecords(namespace);
+      const records = await this.registry.getExistingRecordsReadOnly(namespace);
+      return records ?? new Map();
     } catch {
       return new Map();
     }

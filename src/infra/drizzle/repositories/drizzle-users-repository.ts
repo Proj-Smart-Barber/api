@@ -61,6 +61,9 @@ export class DrizzleUsersRepository implements UsersRepository {
         cpf: user.cpf,
         phoneNumber: user.phoneNumber,
         emailVerifiedAt: user.emailVerifiedAt ?? null,
+        accountType: user.accountType,
+        credentialVersion: user.credentialVersion,
+        onboardingIntent: user.onboardingIntent ?? null,
       })
       .returning();
 
@@ -78,6 +81,9 @@ export class DrizzleUsersRepository implements UsersRepository {
         cpf: user.cpf,
         phoneNumber: user.phoneNumber ?? null,
         emailVerifiedAt: user.emailVerifiedAt ?? null,
+        accountType: user.accountType,
+        credentialVersion: user.credentialVersion,
+        onboardingIntent: user.onboardingIntent ?? null,
       })
       .where(eq(users.id, user.id.toString()))
       .returning();

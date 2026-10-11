@@ -197,4 +197,46 @@ describe("Create Booking Use Case", () => {
     expect(result.value).toBeInstanceOf(Error);
     expect(inMemoryBookingsRepository.items).toHaveLength(0);
   });
+
+  it("multiple_services_use_one_post: deve calcular duração combinada e preço total para múltiplos serviços", async () => {
+    const service2 = Service.create(
+      {
+        barbershopId: new UniqueEntityId("barbershop-1"),
+        title: "Barba Terapia",
+        priceInCents: 3500,
+        durationInMinutes: 20,
+        isActive: true,
+      },
+      new UniqueEntityId("service-2"),
+    );
+    await inMemoryServicesRepository.create(service2);
+
+    const result = await sut.execute({
+      customerId: "customer-1",
+      barbermanId: "barberman-1",
+      serviceIds: ["service-1", "service-2"],
+      date: "2026-09-11",
+      startTime: "14:00",
+    });
+
+    expect(result.isRight()).toBe(true);
+    if (result.isRight()) {
+      expect(result.value.booking.startTime).toBe("14:00");
+      expect(result.value.booking.endTime).toBe("14:50"); // 30min + 20min = 50min
+    }
+  });
+
+  it("quote_change_rejects_booking: rejeita com BookingConflictError se preço esperado diferir do calculado", async () => {
+    const result = await sut.execute({
+      customerId: "customer-1",
+      barbermanId: "barberman-1",
+      serviceIds: ["service-1"],
+      date: "2026-09-11",
+      startTime: "14:00",
+      expectedTotalPriceInCents: 9999, // diferente de 5000
+    });
+
+    expect(result.isLeft()).toBe(true);
+    expect(result.value).toBeInstanceOf(BookingConflictError);
+  });
 });

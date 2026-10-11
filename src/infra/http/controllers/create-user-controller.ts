@@ -11,6 +11,8 @@ import { Cpf } from "../../../domain/enterprise/entities/value-objects/cpf";
 import { InvalidCpfError } from "../../../domain/enterprise/errors/invalid-cpf-error";
 import type { CreateUserUseCase } from "../../../domain/application/use-cases/users/create-user/create-user";
 
+import { validateNewPassword } from "../../../core/security/password-policy";
+
 const cpfSchema = z
   .string()
   .transform(Cpf.normalize)
@@ -19,8 +21,11 @@ const cpfSchema = z
 const createUserControllerRequest = z.object({
   name: z.string(),
   email: z.email(),
-  password: z.string(),
+  password: z.string().refine((val) => validateNewPassword(val).valid, {
+    message: "A senha deve ter pelo menos 15 caracteres e no máximo 72 bytes.",
+  }),
   cpf: cpfSchema,
+  onboardingIntent: z.enum(["OWNER", "CLIENT"]).optional(),
 });
 
 type CreateUserControllerRequest = z.infer<typeof createUserControllerRequest>;
@@ -30,7 +35,7 @@ export class CreateUserController implements Controller {
 
   async handle(request: CreateUserControllerRequest): Promise<HttpResponse> {
     try {
-      const { name, email, password, cpf } =
+      const { name, email, password, cpf, onboardingIntent } =
         createUserControllerRequest.parse(request);
 
       const result = await this.createUserUseCase.execute({
@@ -38,6 +43,7 @@ export class CreateUserController implements Controller {
         email,
         password,
         cpf,
+        onboardingIntent,
       });
 
       if (result.isLeft()) {

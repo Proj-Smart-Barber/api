@@ -30,13 +30,14 @@ describe("Get user profile", async () => {
 
     expect(result.value).toEqual(
       expect.objectContaining({
-        user: {
+        user: expect.objectContaining({
           id: expect.any(String),
           name: expect.any(String),
-          avatarUrl: undefined,
           email: expect.any(String),
-          phoneNumber: undefined,
-        },
+          accountType: "CLIENT",
+          emailVerifiedAt: null,
+        }),
+        serverTime: expect.any(String),
       }),
     );
   });

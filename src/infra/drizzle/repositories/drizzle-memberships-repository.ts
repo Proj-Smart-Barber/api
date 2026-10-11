@@ -38,6 +38,15 @@ export class DrizzleMembershipsRepository implements MembershipsRepository {
     return DrizzleMembershipMapper.toDomain(row);
   }
 
+  async findManyByBarbershopId(barbershopId: string): Promise<Membership[]> {
+    const rows = await db
+      .select()
+      .from(membership)
+      .where(eq(membership.barbershopId, barbershopId));
+
+    return rows.map(DrizzleMembershipMapper.toDomain);
+  }
+
   async acceptInvitation(
     invitation: Invitation,
     membershipEntity: Membership,

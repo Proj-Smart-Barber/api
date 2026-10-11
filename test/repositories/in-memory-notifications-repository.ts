@@ -34,7 +34,37 @@ export class InMemoryNotificationsRepository
     return notification ?? null;
   }
 
-  async findManyByUserId(userId: string): Promise<Notification[]> {
-    return this.items.filter((item) => item.userId.toString() === userId);
+  async findManyByUserId(
+    userId: string,
+    options?: { limit?: number; cursor?: string },
+  ): Promise<Notification[]> {
+    let items = this.items.filter((item) => item.userId.toString() === userId);
+
+    items = items.sort((a, b) => {
+      const aTime = a.createdAt?.getTime() ?? 0;
+      const bTime = b.createdAt?.getTime() ?? 0;
+      return bTime - aTime;
+    });
+
+    if (options?.cursor) {
+      const cursorIndex = items.findIndex(
+        (i) => i.id.toString() === options.cursor,
+      );
+      if (cursorIndex >= 0) {
+        items = items.slice(cursorIndex + 1);
+      }
+    }
+
+    if (options?.limit) {
+      items = items.slice(0, options.limit);
+    }
+
+    return items;
+  }
+
+  async countUnreadByUserId(userId: string): Promise<number> {
+    return this.items.filter(
+      (item) => item.userId.toString() === userId && !item.readAt,
+    ).length;
   }
 }

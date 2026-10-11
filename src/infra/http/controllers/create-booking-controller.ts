@@ -15,13 +15,19 @@ import { BookingMapper } from "../../../domain/enterprise/mappers/booking-mapper
 
 const createBookingControllerRequest = z.object({
   userId: z.string().uuid(),
-  serviceId: z.string().uuid(),
+  serviceId: z.string().uuid().optional(),
+  serviceIds: z.array(z.string().uuid()).min(1).optional(),
   barbermanId: z.string().uuid(),
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Data deve estar no formato YYYY-MM-DD."),
   startTime: z.string().regex(/^\d{2}:\d{2}$/, "Horário de início inválido."),
-  endTime: z.string().regex(/^\d{2}:\d{2}$/, "Horário de fim inválido."),
+  endTime: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/, "Horário de fim inválido.")
+    .optional(),
+  expectedTotalPriceInCents: z.number().int().positive().optional(),
+  expectedDurationInMinutes: z.number().int().positive().optional(),
 });
 
 type CreateBookingControllerRequest = z.infer<
@@ -31,24 +37,20 @@ type CreateBookingControllerRequest = z.infer<
 export class CreateBookingController implements Controller {
   constructor(private createBookingUseCase: CreateBookingUseCase) {}
 
-  async handle(request: CreateBookingControllerRequest): Promise<HttpResponse> {
+  async handle(request: any): Promise<HttpResponse> {
     try {
-      const {
-        userId: customerId,
-        serviceId,
-        barbermanId,
-        date,
-        startTime,
-        endTime,
-      } = createBookingControllerRequest.parse(request);
+      const parsed = createBookingControllerRequest.parse(request);
 
       const result = await this.createBookingUseCase.execute({
-        customerId,
-        serviceId,
-        barbermanId,
-        date,
-        startTime,
-        endTime,
+        customerId: parsed.userId,
+        serviceId: parsed.serviceId,
+        serviceIds: parsed.serviceIds,
+        barbermanId: parsed.barbermanId,
+        date: parsed.date,
+        startTime: parsed.startTime,
+        endTime: parsed.endTime,
+        expectedTotalPriceInCents: parsed.expectedTotalPriceInCents,
+        expectedDurationInMinutes: parsed.expectedDurationInMinutes,
       });
 
       if (result.isLeft()) {

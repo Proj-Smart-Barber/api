@@ -43,4 +43,9 @@ export interface BookingsRepository {
   findManyWithDetailsByBarbermanAndDate(
     params: FindManyByBarbermanAndDateParams,
   ): Promise<BookingDetails[]>;
+  findManyByCustomerId(
+    customerId: string,
+    options?: { page?: number },
+  ): Promise<BookingDetails[]>;
+  findByIdWithDetails(bookingId: string): Promise<BookingDetails | null>;
 }

@@ -48,14 +48,33 @@ export class SignInUserUseCase {
     }
 
     const userId = user.id.toString();
-    const access_token = createAccessToken(userId);
-    const { plainToken, refreshToken } = createRefreshToken(userId);
+    const isAdmin = user.accountType === "PLATFORM_ADMIN";
+    const accessTtlMs = isAdmin ? 5 * 60 * 1000 : 15 * 60 * 1000;
+    const sessionTtlMs = isAdmin
+      ? 8 * 60 * 60 * 1000
+      : 30 * 24 * 60 * 60 * 1000;
+    const accessExpiresIn = isAdmin ? "5m" : "15m";
+
+    const access_token = createAccessToken(
+      userId,
+      user.credentialVersion,
+      accessExpiresIn,
+    );
+    const { plainToken, refreshToken } = createRefreshToken(
+      userId,
+      undefined,
+      sessionTtlMs,
+    );
 
     await this.refreshTokensRepository.create(refreshToken);
 
+    const now = new Date();
     return right({
       access_token,
       refresh_token: plainToken,
+      accessExpiresAt: new Date(now.getTime() + accessTtlMs).toISOString(),
+      sessionExpiresAt: refreshToken.expiresAt.toISOString(),
+      serverTime: now.toISOString(),
     });
   }
 }

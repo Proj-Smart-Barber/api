@@ -21,6 +21,7 @@ export class CreateUserUseCase {
     email,
     password,
     cpf,
+    onboardingIntent,
   }: CreateUserDTO): Promise<CreateUserUseCaseResponse> {
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -46,6 +47,8 @@ export class CreateUserUseCase {
       email: normalizedEmail,
       password: await Password.generateHashFromPlainText(password, 12),
       cpf: normalizedCpf,
+      accountType: "CLIENT",
+      onboardingIntent: onboardingIntent ?? null,
     });
 
     const user = await this.usersRepository.save(newUser);

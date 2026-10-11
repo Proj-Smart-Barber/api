@@ -9,13 +9,18 @@ import { InvalidRefreshTokenError } from "../../_errors/invalid-refresh-token-er
 import type { RefreshSessionDTO } from "./refresh-session-dto";
 import type { RefreshSessionResponse } from "./refresh-session-response";
 
+import type { UsersRepository } from "../../../repositories/users-repository";
+
 type RefreshSessionUseCaseResponse = Either<
   InvalidRefreshTokenError,
   RefreshSessionResponse
 >;
 
 export class RefreshSessionUseCase {
-  constructor(private refreshTokensRepository: RefreshTokensRepository) {}
+  constructor(
+    private refreshTokensRepository: RefreshTokensRepository,
+    private usersRepository?: UsersRepository,
+  ) {}
 
   async execute({
     refresh_token,
@@ -44,9 +49,20 @@ export class RefreshSessionUseCase {
     }
 
     const userId = storedToken.userId.toString();
+    const user = this.usersRepository
+      ? await this.usersRepository.findById(userId)
+      : null;
+    const isAdmin = user?.accountType === "PLATFORM_ADMIN";
+    const accessTtlMs = isAdmin ? 5 * 60 * 1000 : 15 * 60 * 1000;
+    const sessionTtlMs = isAdmin
+      ? 8 * 60 * 60 * 1000
+      : 30 * 24 * 60 * 60 * 1000;
+    const accessExpiresIn = isAdmin ? "5m" : "15m";
+
     const { plainToken, refreshToken } = createRefreshToken(
       userId,
       storedToken.familyId.toString(),
+      sessionTtlMs,
     );
 
     const newRefreshToken =
@@ -55,9 +71,17 @@ export class RefreshSessionUseCase {
     storedToken.revoke(newRefreshToken.id);
     await this.refreshTokensRepository.save(storedToken);
 
+    const now = new Date();
     return right({
-      access_token: createAccessToken(userId),
+      access_token: createAccessToken(
+        userId,
+        user?.credentialVersion,
+        accessExpiresIn,
+      ),
       refresh_token: plainToken,
+      accessExpiresAt: new Date(now.getTime() + accessTtlMs).toISOString(),
+      sessionExpiresAt: refreshToken.expiresAt.toISOString(),
+      serverTime: now.toISOString(),
     });
   }
 }

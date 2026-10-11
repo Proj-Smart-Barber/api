@@ -103,3 +103,41 @@ export interface DemoSeedExecutionSummary {
   counts: Record<string, { planned: number; created: number; reused: number }>;
   createdIds: Record<string, string>; // logicalKey -> UUID
 }
+
+export interface SeedCandidate {
+  logicalKey: string;
+  name: string;
+  email: string;
+  cpf: string;
+  role?: string;
+  accountType?: string;
+  isNew: boolean;
+  existingUserId?: string;
+  needsVerificationUpdate: boolean;
+  emailVerifiedAtAlreadySet: boolean;
+}
+
+export interface SeedConflict {
+  logicalKey: string;
+  email: string;
+  reason: string;
+  blockedAction: string;
+}
+
+export interface SeedUserPlan {
+  namespace: string;
+  candidates: SeedCandidate[];
+  newUsers: SeedCandidate[];
+  reusedUsers: SeedCandidate[];
+  verificationUpdates: SeedCandidate[];
+  alreadyVerified: SeedCandidate[];
+  conflicts: SeedConflict[];
+  summary: {
+    totalPlanned: number;
+    newCount: number;
+    reusedCount: number;
+    verificationUpdatesCount: number;
+    alreadyVerifiedCount: number;
+    conflictsCount: number;
+  };
+}

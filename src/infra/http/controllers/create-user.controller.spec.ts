@@ -16,7 +16,7 @@ describe("CreateUserController", () => {
     const response = await controller.handle({
       name: "Fulano",
       email: "fulano@email.com",
-      password: "12345678",
+      password: "valid-password-15ch",
       cpf: "111.444.777-35",
     });
 
@@ -31,7 +31,7 @@ describe("CreateUserController", () => {
     const response = await controller.handle({
       name: "Fulano",
       email: "fulano@email.com",
-      password: "12345678",
+      password: "valid-password-15ch",
       cpf: "11144477735",
     });
 
@@ -42,11 +42,22 @@ describe("CreateUserController", () => {
     const response = await controller.handle({
       name: "Fulano",
       email: "fulano@email.com",
-      password: "12345678",
+      password: "valid-password-15ch",
       cpf: "00000000000",
     });
 
     expect(response.statusCode).toBe(400);
     expect(await usersRepository.findByEmail("fulano@email.com")).toBeNull();
+  });
+
+  it("should reject a password with fewer than 15 characters", async () => {
+    const response = await controller.handle({
+      name: "Fulano",
+      email: "fulano@email.com",
+      password: "short-pass",
+      cpf: "11144477735",
+    });
+
+    expect(response.statusCode).toBe(400);
   });
 });

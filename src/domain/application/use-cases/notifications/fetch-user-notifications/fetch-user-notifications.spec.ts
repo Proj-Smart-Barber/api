@@ -91,6 +91,25 @@ describe("Fetch user notifications use case", () => {
     }
   });
 
+  it("unread_count_is_not_page_count: unreadCount reflete total não lido mesmo com paginação", async () => {
+    const user = await createUser();
+    for (let i = 0; i < 5; i++) {
+      addNotification(user.id.toString());
+    }
+
+    const response = await sut.execute({
+      userId: user.id.toString(),
+      limit: 2,
+    });
+
+    expect(response.isRight()).toBe(true);
+    if (response.isRight()) {
+      expect(response.value.notifications).toHaveLength(2);
+      expect(response.value.unreadCount).toBe(5);
+      expect(response.value.nextCursor).toBeDefined();
+    }
+  });
+
   it("should return an error when the user does not exist", async () => {
     const response = await sut.execute({
       userId: "non-existent-user",

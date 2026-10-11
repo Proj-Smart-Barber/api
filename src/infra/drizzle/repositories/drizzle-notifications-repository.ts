@@ -42,13 +42,29 @@ export class DrizzleNotificationsRepository implements NotificationsRepository {
     return DrizzleNotificationMapper.toDomain(notification);
   }
 
-  async findManyByUserId(userId: string): Promise<Notification[]> {
-    const results = await db
+  async findManyByUserId(
+    userId: string,
+    options?: { limit?: number; cursor?: string },
+  ): Promise<Notification[]> {
+    const limit = Math.min(options?.limit ?? 20, 100);
+
+    const query = db
       .select()
       .from(notifications)
       .where(eq(notifications.userId, userId))
-      .orderBy(desc(notifications.createdAt));
+      .orderBy(desc(notifications.createdAt))
+      .limit(limit);
 
+    const results = await query;
     return results.map(DrizzleNotificationMapper.toDomain);
+  }
+
+  async countUnreadByUserId(userId: string): Promise<number> {
+    const results = await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId));
+
+    return results.filter((n) => !n.readAt).length;
   }
 }
