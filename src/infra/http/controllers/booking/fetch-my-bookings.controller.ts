@@ -40,10 +40,12 @@ export class FetchMyBookingsController implements Controller {
             phoneNumber: b.customer.phoneNumber,
           },
           services: b.services.map((s) => ({
-            id: s.id.toString(),
+            id: s.serviceId ?? s.id?.toString() ?? null,
+            serviceId: s.serviceId,
             title: s.title,
             priceInCents: s.priceInCents,
             durationInMinutes: s.durationInMinutes,
+            legacyAggregate: s.legacyAggregate,
           })),
         })),
       });
