@@ -89,7 +89,7 @@ describe("Create Booking Use Case", () => {
       expect(serviceItem.durationInMinutesSnapshot).toBe(30);
       expect(cart.userId.toString()).toBe("customer-1");
       expect(cart.totalPriceInCents).toBe(5000);
-      expect(booking.shoppingCartId.toString()).toBe(cart.id.toString());
+      expect(booking.shoppingCartId?.toString()).toBe(cart.id.toString());
     }
   });
 

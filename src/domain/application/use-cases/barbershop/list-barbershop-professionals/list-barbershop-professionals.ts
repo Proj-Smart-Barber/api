@@ -44,9 +44,11 @@ export class ListBarbershopProfessionalsUseCase {
     const memberships =
       await this.membershipsRepository.findManyByBarbershopId(shopId);
 
-    // Filtrar membros elegíveis para atendimento (BARBERMAN e OWNER conforme spec D10/D11)
+    // Filtrar membros elegíveis para atendimento (BARBERMAN e OWNER conforme spec D10/D11) com vínculo ativo
     const eligibleMemberships = memberships.filter(
-      (m) => m.role === Role.BARBERMAN || m.role === Role.OWNER,
+      (m) =>
+        (m.role === Role.BARBERMAN || m.role === Role.OWNER) &&
+        m.state === "ACTIVE",
     );
 
     const professionals: BarbershopProfessionalItem[] = [];

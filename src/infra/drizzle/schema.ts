@@ -34,6 +34,24 @@ export const invitationStatusEnum = pgEnum("invitation_status", [
   "REVOKED",
 ]);
 
+export const membershipStateEnum = pgEnum("membership_state", [
+  "ACTIVE",
+  "INACTIVE",
+]);
+
+export const operationAttemptStateEnum = pgEnum("operation_attempt_state", [
+  "PENDING",
+  "APPLIED",
+  "NOT_APPLIED",
+]);
+
+export const operationResourceKindEnum = pgEnum("operation_resource_kind", [
+  "BOOKING",
+  "MEMBERSHIP",
+  "REGISTRATION",
+  "INVITATION",
+]);
+
 // ── Tables ────────────────────────────────────────────────
 
 export const users = pgTable("users", {
@@ -112,12 +130,21 @@ export const membership = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    state: membershipStateEnum("state").notNull().default("ACTIVE"),
+    version: integer("version").notNull().default(1),
+    endedAt: timestamp("ended_at", { withTimezone: true }),
     createdAt: timestamp("created_at").defaultNow(),
   },
   (table) => [
     unique("membership_barbershop_user_unique").on(
       table.barbershopId,
       table.userId,
+    ),
+    index("membership_barbershop_state_created_idx").on(
+      table.barbershopId,
+      table.state,
+      table.createdAt,
+      table.id,
     ),
   ],
 );
@@ -234,25 +261,99 @@ export const shoppingCarts = pgTable("shopping_carts", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const bookings = pgTable("bookings", {
-  id: uuid().primaryKey().defaultRandom(),
-  barbershopId: uuid("barbershop_id")
-    .notNull()
-    .references(() => barbershops.id),
-  barbermanId: uuid("barberman_id")
-    .notNull()
-    .references(() => users.id),
-  shoppingCartId: uuid("shopping_cart_id")
-    .notNull()
-    .references(() => shoppingCarts.id),
-  date: timestamp("date").notNull(),
-  startTime: text("start_time").notNull(),
-  endTime: text("end_time").notNull(),
-  clientRequestId: text("client_request_id"),
-  status: text("status"),
-  paymentStatus: text("payment_status"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+export const bookings = pgTable(
+  "bookings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    barbershopId: uuid("barbershop_id")
+      .notNull()
+      .references(() => barbershops.id),
+    barbermanId: uuid("barberman_id")
+      .notNull()
+      .references(() => users.id),
+    customerId: uuid("customer_id").references(() => users.id),
+    shoppingCartId: uuid("shopping_cart_id").references(() => shoppingCarts.id),
+    startsAt: timestamp("starts_at", { withTimezone: true }),
+    endsAt: timestamp("ends_at", { withTimezone: true }),
+    timezone: text("timezone").notNull().default("America/Sao_Paulo"),
+    version: integer("version").notNull().default(1),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id),
+    totalPriceInCents: integer("total_price_in_cents"),
+    totalDurationInMinutes: integer("total_duration_in_minutes"),
+    date: timestamp("date").notNull(),
+    startTime: text("start_time").notNull(),
+    endTime: text("end_time").notNull(),
+    clientRequestId: text("client_request_id"),
+    status: text("status"),
+    paymentStatus: text("payment_status"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    index("bookings_barbershop_starts_at_id_idx").on(
+      table.barbershopId,
+      table.startsAt,
+      table.id,
+    ),
+    index("bookings_barberman_starts_ends_idx").on(
+      table.barbermanId,
+      table.startsAt,
+      table.endsAt,
+    ),
+    index("bookings_customer_id_idx").on(table.customerId),
+  ],
+);
+
+export const bookingServiceItems = pgTable(
+  "booking_service_items",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    bookingId: uuid("booking_id")
+      .notNull()
+      .references(() => bookings.id, { onDelete: "cascade" }),
+    serviceId: uuid("service_id").references(() => services.id, {
+      onDelete: "set null",
+    }),
+    title: text().notNull(),
+    priceInCents: integer("price_in_cents"),
+    durationInMinutes: integer("duration_in_minutes"),
+    legacyAggregate: boolean("legacy_aggregate").notNull().default(false),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    index("booking_service_items_booking_id_idx").on(table.bookingId),
+    index("booking_service_items_service_id_idx").on(table.serviceId),
+  ],
+);
+
+export const bookingEvents = pgTable(
+  "booking_events",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    bookingId: uuid("booking_id")
+      .notNull()
+      .references(() => bookings.id, { onDelete: "cascade" }),
+    actorId: uuid("actor_id").references(() => users.id),
+    eventType: text("event_type").notNull(),
+    previousVersion: integer("previous_version"),
+    newVersion: integer("new_version").notNull(),
+    previousStatus: text("previous_status"),
+    newStatus: text("new_status"),
+    reason: text("reason"),
+    metadata: text("metadata"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("booking_events_booking_id_created_at_idx").on(
+      table.bookingId,
+      table.createdAt,
+    ),
+  ],
+);
 
 export const barberRegistrations = pgTable("barber_registrations", {
   id: uuid().primaryKey().defaultRandom(),
@@ -301,6 +402,43 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const operationAttempts = pgTable(
+  "operation_attempts",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    actorId: uuid("actor_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    requestId: text("request_id").notNull(),
+    operation: text("operation").notNull(),
+    payloadHash: text("payload_hash").notNull(),
+    state: operationAttemptStateEnum("state").notNull().default("PENDING"),
+    resourceKind: operationResourceKindEnum("resource_kind"),
+    resourceId: text("resource_id"),
+    resourceVersion: integer("resource_version"),
+    responsePayload: text("response_payload"),
+    terminalReason: text("terminal_reason"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    unique("operation_attempts_actor_request_unique").on(
+      table.actorId,
+      table.requestId,
+    ),
+    index("operation_attempts_actor_request_idx").on(
+      table.actorId,
+      table.requestId,
+    ),
+    index("operation_attempts_expires_at_idx").on(table.expiresAt),
+  ],
+);
+
 // ── Relations ─────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -320,7 +458,18 @@ export const usersRelations = relations(users, ({ many }) => ({
   passwordRecoveryTokens: many(passwordRecoveryTokens),
   sentInvitations: many(invitations),
   notifications: many(notifications),
+  operationAttempts: many(operationAttempts),
 }));
+
+export const operationAttemptsRelations = relations(
+  operationAttempts,
+  ({ one }) => ({
+    actor: one(users, {
+      fields: [operationAttempts.actorId],
+      references: [users.id],
+    }),
+  }),
+);
 
 export const emailVerificationsRelations = relations(
   emailVerifications,
@@ -438,7 +587,7 @@ export const shoppingCartsRelations = relations(shoppingCarts, ({ one }) => ({
   }),
 }));
 
-export const bookingsRelations = relations(bookings, ({ one }) => ({
+export const bookingsRelations = relations(bookings, ({ one, many }) => ({
   barbershop: one(barbershops, {
     fields: [bookings.barbershopId],
     references: [barbershops.id],
@@ -446,10 +595,48 @@ export const bookingsRelations = relations(bookings, ({ one }) => ({
   barberman: one(users, {
     fields: [bookings.barbermanId],
     references: [users.id],
+    relationName: "barberman",
+  }),
+  customer: one(users, {
+    fields: [bookings.customerId],
+    references: [users.id],
+    relationName: "customer",
+  }),
+  createdByUser: one(users, {
+    fields: [bookings.createdByUserId],
+    references: [users.id],
+    relationName: "createdByUser",
   }),
   shoppingCart: one(shoppingCarts, {
     fields: [bookings.shoppingCartId],
     references: [shoppingCarts.id],
+  }),
+  serviceItems: many(bookingServiceItems),
+  events: many(bookingEvents),
+}));
+
+export const bookingServiceItemsRelations = relations(
+  bookingServiceItems,
+  ({ one }) => ({
+    booking: one(bookings, {
+      fields: [bookingServiceItems.bookingId],
+      references: [bookings.id],
+    }),
+    service: one(services, {
+      fields: [bookingServiceItems.serviceId],
+      references: [services.id],
+    }),
+  }),
+);
+
+export const bookingEventsRelations = relations(bookingEvents, ({ one }) => ({
+  booking: one(bookings, {
+    fields: [bookingEvents.bookingId],
+    references: [bookings.id],
+  }),
+  actor: one(users, {
+    fields: [bookingEvents.actorId],
+    references: [users.id],
   }),
 }));
 
