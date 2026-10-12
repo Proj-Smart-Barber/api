@@ -1,9 +1,17 @@
 import { randomUUID } from "node:crypto";
+import {
+  extractUuidV7Timestamp,
+  isValidUuidV7,
+} from "../../../core/security/uuidv7";
 import type {
   OperationAttemptRecord,
   OperationAttemptsRepository,
 } from "../repositories/operation-attempts-repository";
-import type { ProfessionalMembershipUnitOfWork } from "./professional-membership-unit-of-work";
+import type {
+  LockResources,
+  ProfessionalMembershipUnitOfWork,
+} from "./professional-membership-unit-of-work";
+import type { ResourceAccessValidator } from "./resource-access-validator";
 
 export type OperationResourceKind =
   | "BOOKING"
@@ -11,7 +19,26 @@ export type OperationResourceKind =
   | "REGISTRATION"
   | "INVITATION";
 
-export type OperationAttemptState = "PENDING" | "APPLIED" | "NOT_APPLIED";
+export type OperationAttemptState =
+  | "PENDING"
+  | "APPLIED"
+  | "NOT_APPLIED"
+  | "UNKNOWN";
+
+export class IdempotencyKeyError extends Error {
+  constructor(
+    public code:
+      | "INVALID_IDEMPOTENCY_KEY"
+      | "IDEMPOTENCY_KEY_FUTURE_TIMESTAMP"
+      | "IDEMPOTENCY_KEY_EXPIRED"
+      | "IDEMPOTENCY_PAYLOAD_MISMATCH"
+      | "OPERATION_ALREADY_CLOSED",
+    message: string,
+  ) {
+    super(message);
+    this.name = "IdempotencyKeyError";
+  }
+}
 
 export interface OperationAttemptResource<T = any> {
   kind?: OperationResourceKind | null;
@@ -34,6 +61,7 @@ export interface ExecuteOnceParams {
   requestId: string;
   payloadHash: string;
   resourceKind?: OperationResourceKind;
+  lockResources?: Omit<LockResources, "attempt">;
 }
 
 export interface CommandSuccessResult<T = any> {
@@ -47,7 +75,29 @@ export class OperationAttemptService {
   constructor(
     private attemptsRepository: OperationAttemptsRepository,
     private unitOfWork: ProfessionalMembershipUnitOfWork,
+    private accessValidator?: ResourceAccessValidator,
   ) {}
+
+  private async checkAccess(
+    actorId: string,
+    resourceKind?: OperationResourceKind | null,
+    resourceId?: string | null,
+    tx?: any,
+  ): Promise<boolean> {
+    if (!this.accessValidator || !resourceKind || !resourceId) {
+      return true;
+    }
+    try {
+      return await this.accessValidator.canAccess(
+        actorId,
+        resourceKind,
+        resourceId,
+        tx,
+      );
+    } catch {
+      return true;
+    }
+  }
 
   async executeOnce<T>(
     params: ExecuteOnceParams,
@@ -56,11 +106,28 @@ export class OperationAttemptService {
       context: { serverTime: Date },
     ) => Promise<CommandSuccessResult<T>>,
   ): Promise<OperationAttemptResult<T>> {
+    const timeMs = extractUuidV7Timestamp(params.requestId);
+    if (timeMs === null) {
+      throw new IdempotencyKeyError(
+        "INVALID_IDEMPOTENCY_KEY",
+        "Chave de idempotência inválida. Deve ser UUIDv7 com timestamp válido.",
+      );
+    }
+
     return await this.unitOfWork.withLocks(
       {
         attempt: { actorId: params.actorId, requestId: params.requestId },
+        ...params.lockResources,
       },
       async (tx, { serverTime }) => {
+        // Tolerância de futuro estrita: máximo 5 minutos em relação à autoridade PG
+        if (timeMs > serverTime.getTime() + 5 * 60 * 1000) {
+          throw new IdempotencyKeyError(
+            "IDEMPOTENCY_KEY_FUTURE_TIMESTAMP",
+            "Chave de idempotência com timestamp no futuro superior a 5 minutos.",
+          );
+        }
+
         const existing = await this.attemptsRepository.lockByActorAndRequestId(
           params.actorId,
           params.requestId,
@@ -72,10 +139,20 @@ export class OperationAttemptService {
             existing.payloadHash &&
             existing.payloadHash !== params.payloadHash
           ) {
-            throw new Error("IDEMPOTENCY_PAYLOAD_MISMATCH");
+            throw new IdempotencyKeyError(
+              "IDEMPOTENCY_PAYLOAD_MISMATCH",
+              "Payload incompatível com a chave de tentativa.",
+            );
           }
 
           if (existing.state === "APPLIED") {
+            const hasAccess = await this.checkAccess(
+              params.actorId,
+              existing.resourceKind,
+              existing.resourceId,
+              tx,
+            );
+
             return {
               state: "APPLIED",
               operation: existing.operation,
@@ -83,16 +160,21 @@ export class OperationAttemptService {
                 kind: existing.resourceKind,
                 id: existing.resourceId,
                 version: existing.resourceVersion,
-                data: existing.responsePayload
-                  ? JSON.parse(existing.responsePayload)
-                  : undefined,
+                data:
+                  hasAccess && existing.responsePayload
+                    ? JSON.parse(existing.responsePayload)
+                    : undefined,
               },
+              accessChanged: !hasAccess,
               serverTime: serverTime.toISOString(),
             };
           }
 
           if (existing.state === "NOT_APPLIED") {
-            throw new Error("OPERATION_ALREADY_CLOSED");
+            throw new IdempotencyKeyError(
+              "OPERATION_ALREADY_CLOSED",
+              "Operação já encerrada anteriormente.",
+            );
           }
 
           if (existing.state === "PENDING") {
@@ -102,6 +184,14 @@ export class OperationAttemptService {
               serverTime: serverTime.toISOString(),
             };
           }
+        }
+
+        // Se nova tentativa, validar expiração da janela de 24 horas
+        if (timeMs < serverTime.getTime() - 24 * 60 * 60 * 1000) {
+          throw new IdempotencyKeyError(
+            "IDEMPOTENCY_KEY_EXPIRED",
+            "Chave de idempotência expirada (janela superior a 24 horas).",
+          );
         }
 
         // Record new attempt as PENDING
@@ -125,7 +215,7 @@ export class OperationAttemptService {
 
         await this.attemptsRepository.create(attempt, tx);
 
-        // Execute command inside transaction
+        // Execute command inside shared transaction
         const result = await command(tx, { serverTime });
 
         // Update attempt to APPLIED
@@ -149,6 +239,7 @@ export class OperationAttemptService {
             version: result.resourceVersion,
             data: result.data,
           },
+          accessChanged: false,
           serverTime: serverTime.toISOString(),
         };
       },
@@ -168,6 +259,12 @@ export class OperationAttemptService {
       return null;
     }
 
+    const hasAccess = await this.checkAccess(
+      actorId,
+      attempt.resourceKind,
+      attempt.resourceId,
+    );
+
     return {
       state: attempt.state,
       operation: attempt.operation,
@@ -175,10 +272,12 @@ export class OperationAttemptService {
         kind: attempt.resourceKind,
         id: attempt.resourceId,
         version: attempt.resourceVersion,
-        data: attempt.responsePayload
-          ? JSON.parse(attempt.responsePayload)
-          : undefined,
+        data:
+          hasAccess && attempt.responsePayload
+            ? JSON.parse(attempt.responsePayload)
+            : undefined,
       },
+      accessChanged: !hasAccess,
       serverTime: new Date().toISOString(),
     };
   }
@@ -200,6 +299,13 @@ export class OperationAttemptService {
 
         if (existing) {
           if (existing.state === "APPLIED") {
+            const hasAccess = await this.checkAccess(
+              actorId,
+              existing.resourceKind,
+              existing.resourceId,
+              tx,
+            );
+
             return {
               state: "APPLIED",
               operation: existing.operation,
@@ -207,10 +313,12 @@ export class OperationAttemptService {
                 kind: existing.resourceKind,
                 id: existing.resourceId,
                 version: existing.resourceVersion,
-                data: existing.responsePayload
-                  ? JSON.parse(existing.responsePayload)
-                  : undefined,
+                data:
+                  hasAccess && existing.responsePayload
+                    ? JSON.parse(existing.responsePayload)
+                    : undefined,
               },
+              accessChanged: !hasAccess,
               serverTime: serverTime.toISOString(),
             };
           }

@@ -1,5 +1,6 @@
 import type { NotificationsRepository } from "../../src/domain/application/repositories/notifications-repository";
-import type { Notification } from "../../src/domain/enterprise/entities/notification";
+import { Notification } from "../../src/domain/enterprise/entities/notification";
+import { UniqueEntityId } from "../../src/core/entities/unique-entity-id";
 
 export class InMemoryNotificationsRepository
   implements NotificationsRepository
@@ -10,6 +11,38 @@ export class InMemoryNotificationsRepository
     this.items.push(notification);
 
     return notification;
+  }
+
+  async createManyWithTx(
+    items: Array<{
+      userId: string;
+      eventId?: string | null;
+      type: string;
+      title: string;
+      message: string;
+      referenceType?: string | null;
+      referenceId?: string | null;
+      scheduledAt: Date;
+      sentAt?: Date | null;
+    }>,
+    _tx?: any,
+  ): Promise<void> {
+    for (const item of items) {
+      this.items.push(
+        Notification.create({
+          userId: new UniqueEntityId(item.userId),
+          type: item.type,
+          title: item.title,
+          message: item.message,
+          referenceType: item.referenceType,
+          referenceId: item.referenceId
+            ? new UniqueEntityId(item.referenceId)
+            : null,
+          scheduledAt: item.scheduledAt,
+          sentAt: item.sentAt,
+        }),
+      );
+    }
   }
 
   async save(notification: Notification): Promise<Notification> {

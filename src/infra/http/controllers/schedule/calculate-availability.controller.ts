@@ -43,6 +43,7 @@ export class CalculateAvailabilityController implements Controller {
 
       return ok({
         slots: result.value.availableSlots,
+        serverTime: new Date().toISOString(),
       });
     } catch (err: unknown) {
       if (err instanceof z.ZodError) {

@@ -159,6 +159,45 @@ export class Booking extends Entity<BookingProps> {
     return this.props.updatedAt;
   }
 
+  cancel(newVersion: number) {
+    this.props.status = "CANCELLED";
+    this.props.version = newVersion;
+    this.props.updatedAt = new Date();
+  }
+
+  reschedule(params: {
+    barbermanId?: UniqueEntityId;
+    date: Date;
+    startTime: string;
+    endTime: string;
+    startsAt: Date;
+    endsAt: Date;
+    services?: BookingServiceSnapshot[];
+    totalPriceInCents?: number | null;
+    totalDurationInMinutes?: number | null;
+    newVersion: number;
+  }) {
+    if (params.barbermanId) this.props.barbermanId = params.barbermanId;
+    this.props.date = params.date;
+    this.props.startTime = params.startTime;
+    this.props.endTime = params.endTime;
+    this.props.startsAt = params.startsAt;
+    this.props.endsAt = params.endsAt;
+    if (params.services) this.props.services = params.services;
+    if (params.totalPriceInCents !== undefined)
+      this.props.totalPriceInCents = params.totalPriceInCents;
+    if (params.totalDurationInMinutes !== undefined)
+      this.props.totalDurationInMinutes = params.totalDurationInMinutes;
+    this.props.version = params.newVersion;
+    this.props.updatedAt = new Date();
+  }
+
+  transitionStatus(newStatus: "COMPLETED" | "NO_SHOW", newVersion: number) {
+    this.props.status = newStatus;
+    this.props.version = newVersion;
+    this.props.updatedAt = new Date();
+  }
+
   toRecord(): BookingRecord {
     return {
       id: this.id.toString(),

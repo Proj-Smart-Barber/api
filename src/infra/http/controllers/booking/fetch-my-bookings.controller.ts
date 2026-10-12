@@ -8,6 +8,8 @@ import {
 } from "../../../../core/infra/http-response";
 import type { BookingsRepository } from "../../../../domain/application/repositories/bookings-repository";
 
+import { BookingDetailsMapper } from "../../../../domain/enterprise/mappers/booking-details-mapper";
+
 const fetchMyBookingsSchema = z.object({
   userId: z.string().uuid({ message: "ID do usuário inválido." }),
   page: z.coerce.number().min(1).optional(),
@@ -26,28 +28,12 @@ export class FetchMyBookingsController implements Controller {
       );
 
       return ok({
-        bookings: bookings.map((b) => ({
-          id: b.bookingId.toString(),
-          barbershopId: b.barbershopId.toString(),
-          barbermanId: b.barbermanId.toString(),
-          date: b.date.toISOString(),
-          startTime: b.startTime,
-          endTime: b.endTime,
-          createdAt: b.createdAt ? b.createdAt.toISOString() : null,
-          customer: {
-            id: b.customer.id.toString(),
-            name: b.customer.name,
-            phoneNumber: b.customer.phoneNumber,
-          },
-          services: b.services.map((s) => ({
-            id: s.serviceId ?? s.id?.toString() ?? null,
-            serviceId: s.serviceId,
-            title: s.title,
-            priceInCents: s.priceInCents,
-            durationInMinutes: s.durationInMinutes,
-            legacyAggregate: s.legacyAggregate,
-          })),
-        })),
+        bookings: bookings.map((b) =>
+          BookingDetailsMapper.toHTTP(b, {
+            actorId: parsed.userId,
+            scope: "PERSONAL",
+          }),
+        ),
       });
     } catch (err) {
       if (err instanceof ZodError) {

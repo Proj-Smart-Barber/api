@@ -27,7 +27,11 @@ export class GetOperationAttemptController implements Controller {
       );
 
       if (!attempt) {
-        return notFound({ error: "Tentativa de operação não encontrada." });
+        return notFound({
+          state: "UNKNOWN",
+          error: "Tentativa de operação não encontrada.",
+          message: "Tentativa de operação não encontrada.",
+        });
       }
 
       return ok({

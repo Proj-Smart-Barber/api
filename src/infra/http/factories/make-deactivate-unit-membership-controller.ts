@@ -6,6 +6,7 @@ import { DrizzleMembershipsRepository } from "../../drizzle/repositories/drizzle
 import { DrizzleOperationAttemptsRepository } from "../../drizzle/repositories/drizzle-operation-attempts-repository";
 import { DrizzleUsersRepository } from "../../drizzle/repositories/drizzle-users-repository";
 import { DrizzleProfessionalMembershipUnitOfWork } from "../../drizzle/services/drizzle-professional-membership-unit-of-work";
+import { DrizzleResourceAccessValidator } from "../../drizzle/services/drizzle-resource-access-validator";
 import { DeactivateUnitMembershipController } from "../controllers/barbershop/deactivate-unit-membership.controller";
 
 export function makeDeactivateUnitMembershipController() {
@@ -14,6 +15,7 @@ export function makeDeactivateUnitMembershipController() {
   const bookingsRepository = new DrizzleBookingsRepository();
   const usersRepository = new DrizzleUsersRepository();
   const unitOfWork = new DrizzleProfessionalMembershipUnitOfWork();
+  const accessValidator = new DrizzleResourceAccessValidator();
 
   const useCase = new DeactivateUnitMembershipUseCase(
     membershipsRepository,
@@ -27,7 +29,12 @@ export function makeDeactivateUnitMembershipController() {
   const attemptService = new OperationAttemptService(
     attemptsRepository,
     unitOfWork,
+    accessValidator,
   );
 
-  return new DeactivateUnitMembershipController(useCase, attemptService);
+  return new DeactivateUnitMembershipController(
+    useCase,
+    attemptService,
+    membershipsRepository,
+  );
 }

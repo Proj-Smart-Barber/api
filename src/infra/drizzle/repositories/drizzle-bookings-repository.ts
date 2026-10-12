@@ -9,6 +9,7 @@ import {
   isNull,
   notInArray,
   or,
+  asc,
 } from "drizzle-orm";
 import { db } from "../index";
 import {
@@ -54,6 +55,7 @@ export class DrizzleBookingsRepository implements BookingsRepository {
           eq(bookings.barbermanId, barbermanId),
           gte(bookings.date, startOfDay),
           lte(bookings.date, endOfDay),
+          or(ne(bookings.status, "CANCELLED"), isNull(bookings.status)),
         ),
       );
 
@@ -84,6 +86,7 @@ export class DrizzleBookingsRepository implements BookingsRepository {
   async createWithItems({
     booking,
     items,
+    tx,
   }: CreateBookingWithItemsParams): Promise<void> {
     const bookingData = BookingMapper.toPersistence(booking);
 
@@ -111,8 +114,8 @@ export class DrizzleBookingsRepository implements BookingsRepository {
       }
     }
 
-    await db.transaction(async (tx) => {
-      await tx.insert(bookings).values(bookingData);
+    const runOperations = async (client: any) => {
+      await client.insert(bookings).values(bookingData);
 
       if (items.length > 0) {
         const itemsData = items.map((item) => ({
@@ -126,10 +129,10 @@ export class DrizzleBookingsRepository implements BookingsRepository {
           createdAt: item.createdAt,
         }));
 
-        await tx.insert(bookingServiceItems).values(itemsData);
+        await client.insert(bookingServiceItems).values(itemsData);
       }
 
-      await tx.insert(bookingEvents).values({
+      await client.insert(bookingEvents).values({
         bookingId: booking.id.toString(),
         actorId: booking.createdByUserId
           ? booking.createdByUserId.toString()
@@ -149,15 +152,75 @@ export class DrizzleBookingsRepository implements BookingsRepository {
           itemsCount: items.length,
         }),
       });
-    });
+    };
+
+    if (tx) {
+      await runOperations(tx);
+    } else {
+      await db.transaction(runOperations);
+    }
   }
 
-  async save(booking: Booking): Promise<void> {
+  async save(
+    booking: Booking,
+    tx?: any,
+    options?: {
+      event?: {
+        actorId?: string | null;
+        eventType: string;
+        previousVersion?: number | null;
+        newVersion: number;
+        previousStatus?: string | null;
+        newStatus?: string | null;
+        reason?: string | null;
+        metadata?: any;
+      };
+      updateItems?: boolean;
+    },
+  ): Promise<void> {
     const data = BookingMapper.toPersistence(booking);
-    await db
+    const client = tx ?? db;
+    await client
       .update(bookings)
       .set(data)
       .where(eq(bookings.id, booking.id.toString()));
+
+    if (
+      options?.updateItems &&
+      booking.services &&
+      booking.services.length > 0
+    ) {
+      await client
+        .delete(bookingServiceItems)
+        .where(eq(bookingServiceItems.bookingId, booking.id.toString()));
+
+      const itemsData = booking.services.map((item) => ({
+        bookingId: booking.id.toString(),
+        serviceId: item.serviceId ?? null,
+        title: item.title,
+        priceInCents: item.priceInCents,
+        durationInMinutes: item.durationInMinutes,
+        legacyAggregate: false,
+      }));
+
+      await client.insert(bookingServiceItems).values(itemsData);
+    }
+
+    if (options?.event) {
+      await client.insert(bookingEvents).values({
+        bookingId: booking.id.toString(),
+        actorId: options.event.actorId ?? null,
+        eventType: options.event.eventType,
+        previousVersion: options.event.previousVersion ?? null,
+        newVersion: options.event.newVersion,
+        previousStatus: options.event.previousStatus ?? null,
+        newStatus: options.event.newStatus ?? null,
+        reason: options.event.reason ?? null,
+        metadata: options.event.metadata
+          ? JSON.stringify(options.event.metadata)
+          : null,
+      });
+    }
   }
 
   async findById(id: string): Promise<Booking | null> {
@@ -173,11 +236,13 @@ export class DrizzleBookingsRepository implements BookingsRepository {
 
   async findOverlapping({
     barbermanId,
-    barbershopId,
+    barbershopId: _barbershopId,
     startAt,
     endAt,
     excludeBookingId,
+    tx,
   }: FindOverlappingParams): Promise<Booking | null> {
+    const client = tx ?? db;
     const targetDateStr = startAt.toISOString().split("T")[0];
     const targetStartOfDay = new Date(`${targetDateStr}T00:00:00.000Z`);
 
@@ -191,17 +256,25 @@ export class DrizzleBookingsRepository implements BookingsRepository {
 
     const filters = [
       eq(bookings.barbermanId, barbermanId),
-      eq(bookings.barbershopId, barbershopId),
-      eq(bookings.date, targetStartOfDay),
-      lt(bookings.startTime, targetEndTime),
-      gt(bookings.endTime, targetStartTime),
+      or(ne(bookings.status, "CANCELLED"), isNull(bookings.status)),
+      or(
+        and(
+          bookings.startsAt ? lt(bookings.startsAt, endAt) : undefined,
+          bookings.endsAt ? gt(bookings.endsAt, startAt) : undefined,
+        ),
+        and(
+          eq(bookings.date, targetStartOfDay),
+          lt(bookings.startTime, targetEndTime),
+          gt(bookings.endTime, targetStartTime),
+        ),
+      ),
     ];
 
     if (excludeBookingId) {
       filters.push(ne(bookings.id, excludeBookingId));
     }
 
-    const [result] = await db
+    const [result] = await client
       .select()
       .from(bookings)
       .where(and(...filters));
@@ -225,8 +298,12 @@ export class DrizzleBookingsRepository implements BookingsRepository {
     return result.map((row) => BookingMapper.toDomain(row));
   }
 
-  async getDetails(bookingId: string): Promise<BookingDetails | null> {
-    const [bookingRow] = await db
+  async getDetails(
+    bookingId: string,
+    tx?: any,
+  ): Promise<BookingDetails | null> {
+    const client = tx ?? db;
+    const [bookingRow] = await client
       .select()
       .from(bookings)
       .where(eq(bookings.id, bookingId));
@@ -240,7 +317,7 @@ export class DrizzleBookingsRepository implements BookingsRepository {
       phoneNumber: string | null;
     } | null = null;
     if (bookingRow.customerId) {
-      const [user] = await db
+      const [user] = await client
         .select({
           id: users.id,
           name: users.name,
@@ -252,7 +329,7 @@ export class DrizzleBookingsRepository implements BookingsRepository {
     }
 
     if (!customerRow && bookingRow.shoppingCartId) {
-      const [cartUser] = await db
+      const [cartUser] = await client
         .select({
           id: users.id,
           name: users.name,
@@ -271,7 +348,7 @@ export class DrizzleBookingsRepository implements BookingsRepository {
     };
 
     // Load booking service items
-    const itemRows = await db
+    const itemRows = await client
       .select()
       .from(bookingServiceItems)
       .where(eq(bookingServiceItems.bookingId, bookingId));
@@ -299,7 +376,7 @@ export class DrizzleBookingsRepository implements BookingsRepository {
           createdAt: bookingRow.createdAt,
         },
         customer: fallbackCustomer,
-        services: itemRows.map((item) => ({
+        services: itemRows.map((item: any) => ({
           id: item.serviceId ?? undefined,
           serviceId: item.serviceId,
           title: item.title,
@@ -404,8 +481,11 @@ export class DrizzleBookingsRepository implements BookingsRepository {
     });
   }
 
-  async findByIdWithDetails(bookingId: string): Promise<BookingDetails | null> {
-    return this.getDetails(bookingId);
+  async findByIdWithDetails(
+    bookingId: string,
+    tx?: any,
+  ): Promise<BookingDetails | null> {
+    return this.getDetails(bookingId, tx);
   }
 
   async findManyWithDetailsByBarbermanAndDate({
@@ -520,5 +600,108 @@ export class DrizzleBookingsRepository implements BookingsRepository {
       );
 
     return rows.map(BookingMapper.toDomain);
+  }
+
+  async findUnitBookings({
+    barbershopId,
+    barbermanId,
+    date,
+    status,
+    page = 1,
+    limit = 20,
+  }: {
+    barbershopId: string;
+    barbermanId?: string;
+    date?: string;
+    status?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    const filters = [eq(bookings.barbershopId, barbershopId)];
+
+    if (barbermanId) {
+      filters.push(eq(bookings.barbermanId, barbermanId));
+    }
+
+    if (status) {
+      filters.push(eq(bookings.status, status));
+    }
+
+    if (date) {
+      const dateStr = date.split("T")[0];
+      const startOfDay = new Date(`${dateStr}T00:00:00.000Z`);
+      const endOfDay = new Date(`${dateStr}T23:59:59.999Z`);
+      filters.push(
+        or(
+          and(
+            gte(bookings.startsAt, startOfDay),
+            lte(bookings.startsAt, endOfDay),
+          ),
+          and(gte(bookings.date, startOfDay), lte(bookings.date, endOfDay)),
+        )!,
+      );
+    }
+
+    const whereClause = and(...filters);
+
+    const summaryRows = await db
+      .select({
+        id: bookings.id,
+        totalPriceInCents: bookings.totalPriceInCents,
+        status: bookings.status,
+      })
+      .from(bookings)
+      .where(whereClause);
+
+    const total = summaryRows.length;
+    let totalAmountInCents = 0;
+    let hasIncompleteData = false;
+    const statusCounts: Record<string, number> = {};
+
+    for (const r of summaryRows) {
+      if (r.totalPriceInCents === null || r.totalPriceInCents === undefined) {
+        hasIncompleteData = true;
+      } else {
+        totalAmountInCents += r.totalPriceInCents;
+      }
+
+      const st = r.status ?? "UNKNOWN";
+      statusCounts[st] = (statusCounts[st] ?? 0) + 1;
+    }
+
+    const pageLimit = Math.min(Math.max(1, limit), 100);
+    const offset = (Math.max(1, page) - 1) * pageLimit;
+
+    const pageRows = await db
+      .select({ id: bookings.id })
+      .from(bookings)
+      .where(whereClause)
+      .orderBy(asc(bookings.startsAt), asc(bookings.id))
+      .limit(pageLimit)
+      .offset(offset);
+
+    const items: BookingDetails[] = [];
+    for (const row of pageRows) {
+      const details = await this.getDetails(row.id);
+      if (details) {
+        items.push(details);
+      }
+    }
+
+    const hasNext = offset + pageRows.length < total;
+
+    return {
+      items,
+      page: Math.max(1, page),
+      limit: pageLimit,
+      total,
+      hasNext,
+      summary: {
+        totalBookings: total,
+        totalAmountInCents,
+        statusCounts,
+        hasIncompleteData,
+      },
+    };
   }
 }

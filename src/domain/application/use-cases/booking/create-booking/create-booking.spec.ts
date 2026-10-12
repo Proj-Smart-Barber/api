@@ -5,6 +5,10 @@ import { InMemoryServicesRepository } from "../../../../../../test/repositories/
 import { Booking } from "../../../../enterprise/entities/booking";
 import { Service } from "../../../../enterprise/entities/service";
 import { BookingConflictError } from "../../_errors/booking-conflict-error";
+import {
+  QuoteChangedError,
+  SlotUnavailableError,
+} from "../../_errors/booking-errors";
 import { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
 import { CreateBookingUseCase } from "./create-booking";
 
@@ -28,19 +32,25 @@ function makeService(
   );
 }
 
+const FUTURE_TEST_DATE = "2027-09-11";
+
 function makeBooking({
   startTime = "14:00",
   endTime = "14:30",
-  date = "2026-09-11",
+  date = FUTURE_TEST_DATE,
 }: {
   startTime?: string;
   endTime?: string;
   date?: string;
 } = {}): Booking {
+  const startsAt = new Date(`${date}T${startTime}:00-03:00`);
+  const endsAt = new Date(`${date}T${endTime}:00-03:00`);
   return Booking.create({
     barbershopId: new UniqueEntityId("barbershop-1"),
     barbermanId: new UniqueEntityId("barberman-1"),
     shoppingCartId: new UniqueEntityId("cart-1"),
+    startsAt,
+    endsAt,
     date: new Date(`${date}T00:00:00.000Z`),
     startTime,
     endTime,
@@ -64,7 +74,7 @@ describe("Create Booking Use Case", () => {
       customerId: "customer-1",
       barbermanId: "barberman-1",
       serviceId: "service-1",
-      date: "2026-09-11",
+      date: FUTURE_TEST_DATE,
       startTime: "14:00",
       endTime: "14:30",
     });
@@ -74,22 +84,26 @@ describe("Create Booking Use Case", () => {
     if (result.isRight()) {
       const booking = result.value.booking;
       expect(inMemoryBookingsRepository.items).toHaveLength(1);
-      expect(inMemoryBookingsRepository.createdBundles).toHaveLength(1);
+      const items = inMemoryBookingsRepository.bookingItems.get(
+        booking.id.toString(),
+      );
+      expect(items).toBeDefined();
+      expect(items).toHaveLength(1);
       expect(booking.barbershopId.toString()).toBe("barbershop-1");
       expect(booking.barbermanId.toString()).toBe("barberman-1");
-      expect(booking.date.toISOString()).toBe("2026-09-11T00:00:00.000Z");
+      expect(booking.date.toISOString()).toBe(
+        `${FUTURE_TEST_DATE}T00:00:00.000Z`,
+      );
       expect(booking.startTime).toBe("14:00");
       expect(booking.endTime).toBe("14:30");
 
-      const { serviceItem, cart } =
-        inMemoryBookingsRepository.createdBundles[0];
-      expect(serviceItem.serviceId.toString()).toBe("service-1");
-      expect(serviceItem.titleSnapshot).toBe("Corte de Cabelo");
-      expect(serviceItem.priceInCentsSnapshot).toBe(5000);
-      expect(serviceItem.durationInMinutesSnapshot).toBe(30);
-      expect(cart.userId.toString()).toBe("customer-1");
-      expect(cart.totalPriceInCents).toBe(5000);
-      expect(booking.shoppingCartId?.toString()).toBe(cart.id.toString());
+      const serviceItem = items![0];
+      expect(serviceItem.serviceId?.toString()).toBe("service-1");
+      expect(serviceItem.title).toBe("Corte de Cabelo");
+      expect(serviceItem.priceInCents).toBe(5000);
+      expect(serviceItem.durationInMinutes).toBe(30);
+      expect(booking.totalPriceInCents).toBe(5000);
+      expect(booking.totalDurationInMinutes).toBe(30);
     }
   });
 
@@ -102,15 +116,14 @@ describe("Create Booking Use Case", () => {
       customerId: "customer-1",
       barbermanId: "barberman-1",
       serviceId: "service-1",
-      date: "2026-09-11",
+      date: FUTURE_TEST_DATE,
       startTime: "14:00",
       endTime: "14:30",
     });
 
     expect(result.isLeft()).toBe(true);
-    expect(result.value).toBeInstanceOf(BookingConflictError);
+    expect(result.value).toBeInstanceOf(SlotUnavailableError);
     expect(inMemoryBookingsRepository.items).toHaveLength(1);
-    expect(inMemoryBookingsRepository.createdBundles).toHaveLength(0);
   });
 
   it("should be able to create a booking in an adjacent non-overlapping slot", async () => {
@@ -120,7 +133,7 @@ describe("Create Booking Use Case", () => {
       customerId: "customer-1",
       barbermanId: "barberman-1",
       serviceId: "service-1",
-      date: "2026-09-11",
+      date: FUTURE_TEST_DATE,
       startTime: "14:30",
       endTime: "15:00",
     });
@@ -138,7 +151,7 @@ describe("Create Booking Use Case", () => {
       customerId: "customer-1",
       barbermanId: "barberman-1",
       serviceId: "service-2",
-      date: "2026-09-11",
+      date: FUTURE_TEST_DATE,
       startTime: "14:00",
       endTime: "14:30",
     });
@@ -155,7 +168,7 @@ describe("Create Booking Use Case", () => {
       customerId: "customer-1",
       barbermanId: "barberman-1",
       serviceId: "non-existing-service",
-      date: "2026-09-11",
+      date: FUTURE_TEST_DATE,
       startTime: "14:00",
       endTime: "14:30",
     });
@@ -173,7 +186,7 @@ describe("Create Booking Use Case", () => {
       customerId: "customer-1",
       barbermanId: "barberman-1",
       serviceId: "service-inactive",
-      date: "2026-09-11",
+      date: FUTURE_TEST_DATE,
       startTime: "14:00",
       endTime: "14:30",
     });
@@ -188,7 +201,7 @@ describe("Create Booking Use Case", () => {
       customerId: "customer-1",
       barbermanId: "barberman-1",
       serviceId: "service-1",
-      date: "2026-09-11",
+      date: FUTURE_TEST_DATE,
       startTime: "14:30",
       endTime: "14:30",
     });
@@ -215,7 +228,7 @@ describe("Create Booking Use Case", () => {
       customerId: "customer-1",
       barbermanId: "barberman-1",
       serviceIds: ["service-1", "service-2"],
-      date: "2026-09-11",
+      date: FUTURE_TEST_DATE,
       startTime: "14:00",
     });
 
@@ -231,12 +244,12 @@ describe("Create Booking Use Case", () => {
       customerId: "customer-1",
       barbermanId: "barberman-1",
       serviceIds: ["service-1"],
-      date: "2026-09-11",
+      date: FUTURE_TEST_DATE,
       startTime: "14:00",
       expectedTotalPriceInCents: 9999, // diferente de 5000
     });
 
     expect(result.isLeft()).toBe(true);
-    expect(result.value).toBeInstanceOf(BookingConflictError);
+    expect(result.value).toBeInstanceOf(QuoteChangedError);
   });
 });
