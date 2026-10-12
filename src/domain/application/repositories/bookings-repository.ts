@@ -56,4 +56,10 @@ export interface BookingsRepository {
   ): Promise<BookingDetails[]>;
   findByIdWithDetails(bookingId: string): Promise<BookingDetails | null>;
   getDetails(bookingId: string): Promise<BookingDetails | null>;
+  findActiveAndFutureBookingsForBarberman(
+    barbershopId: string,
+    barbermanId: string,
+    now: Date,
+    tx?: any,
+  ): Promise<Booking[]>;
 }

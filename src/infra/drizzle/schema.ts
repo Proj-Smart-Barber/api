@@ -34,6 +34,24 @@ export const invitationStatusEnum = pgEnum("invitation_status", [
   "REVOKED",
 ]);
 
+export const membershipStateEnum = pgEnum("membership_state", [
+  "ACTIVE",
+  "INACTIVE",
+]);
+
+export const operationAttemptStateEnum = pgEnum("operation_attempt_state", [
+  "PENDING",
+  "APPLIED",
+  "NOT_APPLIED",
+]);
+
+export const operationResourceKindEnum = pgEnum("operation_resource_kind", [
+  "BOOKING",
+  "MEMBERSHIP",
+  "REGISTRATION",
+  "INVITATION",
+]);
+
 // ── Tables ────────────────────────────────────────────────
 
 export const users = pgTable("users", {
@@ -112,12 +130,21 @@ export const membership = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    state: membershipStateEnum("state").notNull().default("ACTIVE"),
+    version: integer("version").notNull().default(1),
+    endedAt: timestamp("ended_at", { withTimezone: true }),
     createdAt: timestamp("created_at").defaultNow(),
   },
   (table) => [
     unique("membership_barbershop_user_unique").on(
       table.barbershopId,
       table.userId,
+    ),
+    index("membership_barbershop_state_created_idx").on(
+      table.barbershopId,
+      table.state,
+      table.createdAt,
+      table.id,
     ),
   ],
 );
@@ -237,7 +264,7 @@ export const shoppingCarts = pgTable("shopping_carts", {
 export const bookings = pgTable(
   "bookings",
   {
-    id: uuid().primaryKey().defaultRandom(),
+    id: uuid("id").primaryKey().defaultRandom(),
     barbershopId: uuid("barbershop_id")
       .notNull()
       .references(() => barbershops.id),
@@ -375,6 +402,43 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const operationAttempts = pgTable(
+  "operation_attempts",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    actorId: uuid("actor_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    requestId: text("request_id").notNull(),
+    operation: text("operation").notNull(),
+    payloadHash: text("payload_hash").notNull(),
+    state: operationAttemptStateEnum("state").notNull().default("PENDING"),
+    resourceKind: operationResourceKindEnum("resource_kind"),
+    resourceId: text("resource_id"),
+    resourceVersion: integer("resource_version"),
+    responsePayload: text("response_payload"),
+    terminalReason: text("terminal_reason"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    unique("operation_attempts_actor_request_unique").on(
+      table.actorId,
+      table.requestId,
+    ),
+    index("operation_attempts_actor_request_idx").on(
+      table.actorId,
+      table.requestId,
+    ),
+    index("operation_attempts_expires_at_idx").on(table.expiresAt),
+  ],
+);
+
 // ── Relations ─────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -394,7 +458,18 @@ export const usersRelations = relations(users, ({ many }) => ({
   passwordRecoveryTokens: many(passwordRecoveryTokens),
   sentInvitations: many(invitations),
   notifications: many(notifications),
+  operationAttempts: many(operationAttempts),
 }));
+
+export const operationAttemptsRelations = relations(
+  operationAttempts,
+  ({ one }) => ({
+    actor: one(users, {
+      fields: [operationAttempts.actorId],
+      references: [users.id],
+    }),
+  }),
+);
 
 export const emailVerificationsRelations = relations(
   emailVerifications,

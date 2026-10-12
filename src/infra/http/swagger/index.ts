@@ -2144,6 +2144,263 @@ export const swaggerDocument = {
         },
       },
     },
+    "/api/barbershops/{shopId}/team": {
+      get: {
+        tags: ["Team"],
+        summary: "List unit team members (owner only)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+            description: "Barbershop unit ID",
+          },
+          {
+            name: "state",
+            in: "query",
+            required: false,
+            schema: { type: "string", enum: ["ACTIVE", "INACTIVE"] },
+            description: "Filter by membership state",
+          },
+          {
+            name: "page",
+            in: "query",
+            required: false,
+            schema: { type: "integer", default: 1, minimum: 1 },
+            description: "Page number",
+          },
+          {
+            name: "limit",
+            in: "query",
+            required: false,
+            schema: { type: "integer", default: 20, minimum: 1, maximum: 100 },
+            description: "Items per page (max 100)",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Unit team members retrieved successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    members: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          membershipId: { type: "string", format: "uuid" },
+                          barbershopId: { type: "string", format: "uuid" },
+                          userId: { type: "string", format: "uuid" },
+                          name: { type: "string" },
+                          email: { type: "string", format: "email" },
+                          role: { type: "string", example: "BARBER" },
+                          state: {
+                            type: "string",
+                            enum: ["ACTIVE", "INACTIVE"],
+                          },
+                          version: { type: "integer", example: 1 },
+                          joinedAt: { type: "string", format: "date-time" },
+                          endedAt: {
+                            type: "string",
+                            format: "date-time",
+                            nullable: true,
+                          },
+                        },
+                      },
+                    },
+                    total: { type: "integer", example: 1 },
+                    page: { type: "integer", example: 1 },
+                    limit: { type: "integer", example: 20 },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Validation error" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden - not unit owner" },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
+    "/api/barbershops/{shopId}/team/{membershipId}/deactivation": {
+      patch: {
+        tags: ["Team"],
+        summary: "Deactivate a team member membership (owner only)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+            description: "Barbershop unit ID",
+          },
+          {
+            name: "membershipId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+            description: "Membership ID to deactivate",
+          },
+          {
+            name: "Idempotency-Key",
+            in: "header",
+            required: false,
+            schema: { type: "string" },
+            description: "Optional idempotency key for durable execution",
+          },
+        ],
+        responses: {
+          "200": {
+            description:
+              "Membership deactivated successfully (or replayed idempotent response)",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    membershipId: { type: "string", format: "uuid" },
+                    state: { type: "string", example: "INACTIVE" },
+                    version: { type: "integer", example: 2 },
+                    endedAt: { type: "string", format: "date-time" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error or cannot deactivate unit owner",
+          },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden - not unit owner" },
+          "404": { description: "Membership not found" },
+          "409": {
+            description:
+              "Conflict - active/future bookings or concurrent version conflict",
+          },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
+    "/api/operation-attempts/{requestId}": {
+      get: {
+        tags: ["Operations"],
+        summary:
+          "Consult idempotent operation attempt by request ID (actor only)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "requestId",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Idempotency request ID",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Operation attempt details",
+            headers: {
+              "Cache-Control": {
+                schema: { type: "string", example: "no-store" },
+                description: "Durable non-cacheable operational response",
+              },
+            },
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    attempt: {
+                      type: "object",
+                      properties: {
+                        id: { type: "string", format: "uuid" },
+                        actorId: { type: "string", format: "uuid" },
+                        requestId: { type: "string" },
+                        resourceKind: {
+                          type: "string",
+                          example: "MEMBERSHIP_DEACTIVATION",
+                        },
+                        resourceId: { type: "string", nullable: true },
+                        state: {
+                          type: "string",
+                          enum: ["PENDING", "APPLIED", "NOT_APPLIED"],
+                        },
+                        responsePayload: { type: "object", nullable: true },
+                        createdAt: { type: "string", format: "date-time" },
+                        updatedAt: { type: "string", format: "date-time" },
+                        closedAt: {
+                          type: "string",
+                          format: "date-time",
+                          nullable: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": { description: "Unauthorized" },
+          "404": {
+            description: "Attempt not found or belongs to another actor",
+          },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
+    "/api/operation-attempts/{requestId}/close": {
+      post: {
+        tags: ["Operations"],
+        summary: "Close an in-flight operation attempt fence (actor only)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "requestId",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Idempotency request ID",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Attempt closed or confirmed",
+            headers: {
+              "Cache-Control": {
+                schema: { type: "string", example: "no-store" },
+                description: "Durable non-cacheable operational response",
+              },
+            },
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    closed: { type: "boolean", example: true },
+                    attempt: { type: "object" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description:
+              "Attempt cannot be closed (already terminal or applied)",
+          },
+          "401": { description: "Unauthorized" },
+          "404": {
+            description: "Attempt not found or belongs to another actor",
+          },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {

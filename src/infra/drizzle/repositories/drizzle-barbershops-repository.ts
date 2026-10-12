@@ -4,7 +4,7 @@ import {
   Role,
   type Membership,
 } from "../../../domain/enterprise/entities/membership";
-import { eq, or } from "drizzle-orm";
+import { eq, or, and } from "drizzle-orm";
 import { db } from "../index";
 import { DrizzleBarbershopMapper } from "../mappers/drizzle-barbershop-mapper";
 import { DrizzleMembershipMapper } from "../mappers/drizzle-membership-mapper";
@@ -83,7 +83,9 @@ export class DrizzleBarbershopsRepository implements BarbershopsRepository {
       })
       .from(membership)
       .innerJoin(barbershops, eq(membership.barbershopId, barbershops.id))
-      .where(eq(membership.userId, staffId));
+      .where(
+        and(eq(membership.userId, staffId), eq(membership.state, "ACTIVE")),
+      );
 
     return rows.map((row) => ({
       barbershop: DrizzleBarbershopMapper.toDomain(row.barbershop),

@@ -8,6 +8,7 @@ export const adaptRoute = (controller: Controller) => {
       ...request.body,
       ...request.params,
       ...request.query,
+      headers: request.headers,
       userId: request.user?.sub as string,
       _body: request.body,
       _query: request.query,
@@ -24,7 +25,8 @@ export const adaptRoute = (controller: Controller) => {
 
     if (
       request.originalUrl?.includes("/sessions") ||
-      request.originalUrl?.includes("/me")
+      request.originalUrl?.includes("/me") ||
+      request.originalUrl?.includes("/operation-attempts")
     ) {
       response.setHeader("Cache-Control", "no-store");
       response.setHeader("Pragma", "no-cache");
@@ -76,12 +78,12 @@ export const adaptRoute = (controller: Controller) => {
     } else {
       let errorMessage = "Unknown error";
 
-      if (
-        typeof httpResponse.body === "object" &&
-        httpResponse.body !== null &&
-        "error" in httpResponse.body
-      ) {
-        errorMessage = (httpResponse.body as any).error;
+      if (typeof httpResponse.body === "object" && httpResponse.body !== null) {
+        if ("error" in httpResponse.body) {
+          errorMessage = (httpResponse.body as any).error;
+        } else if ("message" in httpResponse.body) {
+          errorMessage = (httpResponse.body as any).message;
+        }
       } else if (typeof httpResponse.body === "string") {
         errorMessage = httpResponse.body;
       }
@@ -93,8 +95,17 @@ export const adaptRoute = (controller: Controller) => {
         );
       }
 
+      if (typeof httpResponse.body === "object" && httpResponse.body !== null) {
+        return response.status(httpResponse.statusCode).json({
+          error: errorMessage,
+          message: errorMessage,
+          ...httpResponse.body,
+        });
+      }
+
       return response.status(httpResponse.statusCode).json({
         error: errorMessage,
+        message: errorMessage,
       });
     }
   };

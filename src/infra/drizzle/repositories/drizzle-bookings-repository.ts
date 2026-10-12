@@ -1,4 +1,15 @@
-import { eq, and, gte, lte, lt, gt, ne } from "drizzle-orm";
+import {
+  eq,
+  and,
+  gte,
+  lte,
+  lt,
+  gt,
+  ne,
+  isNull,
+  notInArray,
+  or,
+} from "drizzle-orm";
 import { db } from "../index";
 import {
   bookings,
@@ -475,5 +486,39 @@ export class DrizzleBookingsRepository implements BookingsRepository {
         .where(eq(bookingServiceItems.bookingId, bookingId));
       await tx.delete(bookings).where(eq(bookings.id, bookingId));
     });
+  }
+
+  async findActiveAndFutureBookingsForBarberman(
+    barbershopId: string,
+    barbermanId: string,
+    now: Date,
+    tx?: any,
+  ): Promise<Booking[]> {
+    const terminalStatuses = ["CANCELLED", "COMPLETED", "NO_SHOW"];
+    const executor = tx ?? db;
+
+    const rows = await executor
+      .select()
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.barbershopId, barbershopId),
+          eq(bookings.barbermanId, barbermanId),
+          or(
+            isNull(bookings.status),
+            notInArray(bookings.status, terminalStatuses),
+          ),
+          or(
+            gt(bookings.endsAt, now),
+            and(
+              isNull(bookings.endsAt),
+              gte(bookings.startsAt, new Date(now.getTime() - 60 * 60 * 1000)),
+            ),
+            gte(bookings.startsAt, now),
+          ),
+        ),
+      );
+
+    return rows.map(BookingMapper.toDomain);
   }
 }

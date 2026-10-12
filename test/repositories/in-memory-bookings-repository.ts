@@ -272,4 +272,25 @@ export class InMemoryBookingsRepository implements BookingsRepository {
     }
     this.bookingItems.delete(booking.id.toString());
   }
+
+  async findActiveAndFutureBookingsForBarberman(
+    barbershopId: string,
+    barbermanId: string,
+    now: Date,
+  ): Promise<Booking[]> {
+    const terminal = ["CANCELLED", "COMPLETED", "NO_SHOW"];
+    return this.items.filter((b) => {
+      if (b.barbershopId.toString() !== barbershopId) return false;
+      if (b.barbermanId.toString() !== barbermanId) return false;
+      if (b.status && terminal.includes(b.status)) return false;
+
+      const ends = b.endsAt
+        ? b.endsAt.getTime()
+        : b.startsAt
+          ? b.startsAt.getTime() + 30 * 60 * 1000
+          : 0;
+      const starts = b.startsAt ? b.startsAt.getTime() : 0;
+      return ends > now.getTime() || starts >= now.getTime();
+    });
+  }
 }
