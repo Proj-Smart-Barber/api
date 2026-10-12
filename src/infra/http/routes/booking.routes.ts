@@ -7,12 +7,22 @@ import { makeCancelBookingController } from "../factories/make-cancel-booking-co
 import { makeUpdateBookingController } from "../factories/make-update-booking-controller";
 import { makeCreateBookingController } from "../factories/make-create-booking-controller";
 import { makeFetchBarbermanDailyScheduleWithDetailsController } from "../factories/make-fetch-barberman-daily-schedule-with-details-controller";
+import { makeFetchMyBookingsController } from "../factories/make-fetch-my-bookings-controller";
+import { makeGetBookingByIdController } from "../factories/make-get-booking-by-id-controller";
+import { makeRescheduleBookingController } from "../factories/make-reschedule-booking-controller";
+import { makeTransitionBookingStatusController } from "../factories/make-transition-booking-status-controller";
+
 const bookingRoutes = Router();
 
 bookingRoutes.post(
   "/",
   ensureUserIsAuthenticated,
   adaptRoute(makeCreateBookingController()),
+);
+bookingRoutes.get(
+  "/me",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeFetchMyBookingsController()),
 );
 bookingRoutes.get(
   "/barberman/schedule",
@@ -24,6 +34,11 @@ bookingRoutes.get(
   ensureUserIsAuthenticated,
   adaptRoute(makeFetchBarbermanDailyScheduleWithDetailsController()),
 );
+bookingRoutes.get(
+  "/:bookingId",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeGetBookingByIdController()),
+);
 bookingRoutes.delete(
   "/:bookingId/cancel",
   ensureUserIsAuthenticated,
@@ -33,6 +48,16 @@ bookingRoutes.patch(
   "/:bookingId/update",
   ensureUserIsAuthenticated,
   adaptRoute(makeUpdateBookingController()),
+);
+bookingRoutes.patch(
+  "/:bookingId/reschedule",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeRescheduleBookingController()),
+);
+bookingRoutes.patch(
+  "/:bookingId/status",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeTransitionBookingStatusController()),
 );
 
 export { bookingRoutes };

@@ -31,6 +31,20 @@ export class DrizzleUsersRepository implements UsersRepository {
     return UserMapper.toDomain(user);
   }
 
+  async findByCpf(cpf: string): Promise<User | null> {
+    const normalizedCpf = Cpf.normalize(cpf);
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.cpf, normalizedCpf));
+
+    if (!user) {
+      return null;
+    }
+
+    return UserMapper.toDomain(user);
+  }
+
   async findByCpfOrEmail(cpf: string, email: string): Promise<User | null> {
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedCpf = Cpf.normalize(cpf);
@@ -61,6 +75,9 @@ export class DrizzleUsersRepository implements UsersRepository {
         cpf: user.cpf,
         phoneNumber: user.phoneNumber,
         emailVerifiedAt: user.emailVerifiedAt ?? null,
+        accountType: user.accountType,
+        credentialVersion: user.credentialVersion,
+        onboardingIntent: user.onboardingIntent ?? null,
       })
       .returning();
 
@@ -78,6 +95,9 @@ export class DrizzleUsersRepository implements UsersRepository {
         cpf: user.cpf,
         phoneNumber: user.phoneNumber ?? null,
         emailVerifiedAt: user.emailVerifiedAt ?? null,
+        accountType: user.accountType,
+        credentialVersion: user.credentialVersion,
+        onboardingIntent: user.onboardingIntent ?? null,
       })
       .where(eq(users.id, user.id.toString()))
       .returning();

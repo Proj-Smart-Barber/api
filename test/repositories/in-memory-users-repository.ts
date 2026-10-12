@@ -28,6 +28,17 @@ export class InMemoryUsersRepository implements UsersRepository {
     return user;
   }
 
+  async findByCpf(cpf: string): Promise<User | null> {
+    const normalizedCpf = Cpf.normalize(cpf);
+    const user = this.users.find((user) => user.cpf === normalizedCpf);
+
+    if (!user) {
+      return null;
+    }
+
+    return user;
+  }
+
   async findByCpfOrEmail(cpf: string, email: string): Promise<User | null> {
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedCpf = Cpf.normalize(cpf);

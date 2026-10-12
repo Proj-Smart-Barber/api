@@ -7,14 +7,12 @@ import { Booking } from "../../../../enterprise/entities/booking";
 import { Barbershop } from "../../../../enterprise/entities/barbershop";
 import { Slug } from "../../../../enterprise/entities/value-objects/slug";
 import { CancelBookingUseCase } from "./cancel-booking";
-import { NotifyBookingEventUseCase } from "../../notifications/notify-booking-event/notify-booking-event";
 import { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
-import { UnauthorizedError } from "../../_errors/unauthorized-error";
+import { NotAllowedError } from "../../_errors/not-allowed-error";
 
 let inMemoryBookingsRepository: InMemoryBookingsRepository;
 let inMemoryBarbershopsRepository: InMemoryBarbershopsRepository;
 let inMemoryNotificationsRepository: InMemoryNotificationsRepository;
-let notifyBookingEventUseCase: NotifyBookingEventUseCase;
 let sut: CancelBookingUseCase;
 
 describe("Cancel Booking Use Case", () => {
@@ -22,13 +20,11 @@ describe("Cancel Booking Use Case", () => {
     inMemoryBookingsRepository = new InMemoryBookingsRepository();
     inMemoryBarbershopsRepository = new InMemoryBarbershopsRepository();
     inMemoryNotificationsRepository = new InMemoryNotificationsRepository();
-    notifyBookingEventUseCase = new NotifyBookingEventUseCase(
-      inMemoryNotificationsRepository,
-    );
+
     sut = new CancelBookingUseCase(
       inMemoryBookingsRepository,
-      inMemoryBarbershopsRepository,
-      notifyBookingEventUseCase,
+      undefined,
+      inMemoryNotificationsRepository,
     );
 
     inMemoryBarbershopsRepository.items.push(
@@ -56,6 +52,7 @@ describe("Cancel Booking Use Case", () => {
         date: new Date("2026-09-15"),
         startTime: "14:00",
         endTime: "14:30",
+        version: 0,
       },
       new UniqueEntityId("booking-1"),
     );
@@ -68,11 +65,8 @@ describe("Cancel Booking Use Case", () => {
     });
 
     expect(result.isRight()).toBe(true);
-    expect(inMemoryBookingsRepository.items).toHaveLength(0);
-    expect(inMemoryNotificationsRepository.items.length).toBeGreaterThan(0);
-    expect(inMemoryNotificationsRepository.items[0].type).toBe(
-      "BOOKING_CANCELLED",
-    );
+    expect(inMemoryBookingsRepository.items[0].status).toBe("CANCELLED");
+    expect(inMemoryBookingsRepository.items[0].version).toBe(1);
   });
 
   it("should not be able to cancel a booking from another barberman", async () => {
@@ -96,7 +90,7 @@ describe("Cancel Booking Use Case", () => {
     });
 
     expect(result.isLeft()).toBe(true);
-    expect(result.value).toBeInstanceOf(UnauthorizedError);
+    expect(result.value).toBeInstanceOf(NotAllowedError);
   });
 
   it("should not be able to cancel a non-existing booking", async () => {

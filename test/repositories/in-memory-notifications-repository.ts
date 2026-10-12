@@ -1,5 +1,6 @@
 import type { NotificationsRepository } from "../../src/domain/application/repositories/notifications-repository";
-import type { Notification } from "../../src/domain/enterprise/entities/notification";
+import { Notification } from "../../src/domain/enterprise/entities/notification";
+import { UniqueEntityId } from "../../src/core/entities/unique-entity-id";
 
 export class InMemoryNotificationsRepository
   implements NotificationsRepository
@@ -14,6 +15,37 @@ export class InMemoryNotificationsRepository
 
   async createMany(notificationsList: Notification[]): Promise<void> {
     this.items.push(...notificationsList);
+  }
+  async createManyWithTx(
+    items: Array<{
+      userId: string;
+      eventId?: string | null;
+      type: string;
+      title: string;
+      message: string;
+      referenceType?: string | null;
+      referenceId?: string | null;
+      scheduledAt: Date;
+      sentAt?: Date | null;
+    }>,
+    _tx?: any,
+  ): Promise<void> {
+    for (const item of items) {
+      this.items.push(
+        Notification.create({
+          userId: new UniqueEntityId(item.userId),
+          type: item.type,
+          title: item.title,
+          message: item.message,
+          referenceType: item.referenceType,
+          referenceId: item.referenceId
+            ? new UniqueEntityId(item.referenceId)
+            : null,
+          scheduledAt: item.scheduledAt,
+          sentAt: item.sentAt,
+        }),
+      );
+    }
   }
 
   async save(notification: Notification): Promise<Notification> {
@@ -38,7 +70,37 @@ export class InMemoryNotificationsRepository
     return notification ?? null;
   }
 
-  async findManyByUserId(userId: string): Promise<Notification[]> {
-    return this.items.filter((item) => item.userId.toString() === userId);
+  async findManyByUserId(
+    userId: string,
+    options?: { limit?: number; cursor?: string },
+  ): Promise<Notification[]> {
+    let items = this.items.filter((item) => item.userId.toString() === userId);
+
+    items = items.sort((a, b) => {
+      const aTime = a.createdAt?.getTime() ?? 0;
+      const bTime = b.createdAt?.getTime() ?? 0;
+      return bTime - aTime;
+    });
+
+    if (options?.cursor) {
+      const cursorIndex = items.findIndex(
+        (i) => i.id.toString() === options.cursor,
+      );
+      if (cursorIndex >= 0) {
+        items = items.slice(cursorIndex + 1);
+      }
+    }
+
+    if (options?.limit) {
+      items = items.slice(0, options.limit);
+    }
+
+    return items;
+  }
+
+  async countUnreadByUserId(userId: string): Promise<number> {
+    return this.items.filter(
+      (item) => item.userId.toString() === userId && !item.readAt,
+    ).length;
   }
 }

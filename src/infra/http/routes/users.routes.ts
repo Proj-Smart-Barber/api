@@ -12,6 +12,9 @@ import { makeVerifyEmailController } from "../factories/make-verify-email-contro
 import { makeSendPasswordRecoveryController } from "../factories/make-send-password-recovery-controller";
 import { makeResetPasswordController } from "../factories/make-reset-password-controller";
 
+import { makeLogoutAllController } from "../factories/make-logout-all-controller";
+import { makeChangePasswordController } from "../factories/make-change-password-controller";
+
 const userRoutes = Router();
 
 userRoutes.post("/", adaptRoute(makeCreateUserController()));
@@ -22,10 +25,19 @@ userRoutes.post(
 );
 userRoutes.post("/sessions/sign-out", adaptRoute(makeSignOutController()));
 userRoutes.post(
+  "/sessions/logout-all",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeLogoutAllController()),
+);
+userRoutes.post(
   "/verification-email",
   adaptRoute(makeSendEmailVerificationController()),
 );
 userRoutes.get(
+  "/verification-email/confirm",
+  adaptRoute(makeVerifyEmailController()),
+);
+userRoutes.post(
   "/verification-email/confirm",
   adaptRoute(makeVerifyEmailController()),
 );
@@ -41,6 +53,11 @@ userRoutes.get(
   "/me",
   ensureUserIsAuthenticated,
   adaptRoute(makeGetUserProfileController()),
+);
+userRoutes.patch(
+  "/me/password",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeChangePasswordController()),
 );
 userRoutes.get(
   "/me/barbershops",

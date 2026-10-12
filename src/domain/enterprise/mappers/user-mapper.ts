@@ -18,6 +18,9 @@ export class UserMapper {
         cpf: raw.cpf,
         phoneNumber: raw.phoneNumber ?? undefined,
         emailVerifiedAt: raw.emailVerifiedAt,
+        accountType: raw.accountType,
+        credentialVersion: raw.credentialVersion,
+        onboardingIntent: raw.onboardingIntent as "OWNER" | "CLIENT" | null,
         createdAt: raw.createdAt ?? new Date(),
       },
       new UniqueEntityId(raw.id),
@@ -27,12 +30,16 @@ export class UserMapper {
   static toPersistence(user: User) {
     return {
       id: user.id.toString(),
+      name: user.name,
       avatarUrl: user.avatarUrl,
       password: user.password.toString(),
       email: user.email,
       cpf: user.cpf,
       phoneNumber: user.phoneNumber,
       emailVerifiedAt: user.emailVerifiedAt ?? null,
+      accountType: user.accountType,
+      credentialVersion: user.credentialVersion,
+      onboardingIntent: user.onboardingIntent ?? null,
       createdAt: user.createdAt ?? new Date(),
     };
   }

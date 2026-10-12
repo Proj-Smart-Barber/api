@@ -1,21 +1,25 @@
 import { CancelBookingUseCase } from "../../../domain/application/use-cases/booking/cancel-booking/cancel-booking";
 import { CancelBookingController } from "../controllers/cancel-booking-controller";
 import { DrizzleBookingsRepository } from "../../drizzle/repositories/drizzle-bookings-repository";
-import { DrizzleBarbershopsRepository } from "../../drizzle/repositories/drizzle-barbershops-repository";
+import { DrizzleMembershipsRepository } from "../../drizzle/repositories/drizzle-memberships-repository";
 import { DrizzleNotificationsRepository } from "../../drizzle/repositories/drizzle-notifications-repository";
-import { NotifyBookingEventUseCase } from "../../../domain/application/use-cases/notifications/notify-booking-event/notify-booking-event";
+import { DrizzleProfessionalMembershipUnitOfWork } from "../../drizzle/services/drizzle-professional-membership-unit-of-work";
 
 export function makeCancelBookingController() {
   const drizzleBookingsRepository = new DrizzleBookingsRepository();
-  const drizzleBarbershopsRepository = new DrizzleBarbershopsRepository();
+  const drizzleMembershipsRepository = new DrizzleMembershipsRepository();
   const drizzleNotificationsRepository = new DrizzleNotificationsRepository();
-  const notifyBookingEventUseCase = new NotifyBookingEventUseCase(
-    drizzleNotificationsRepository,
-  );
+  const unitOfWork = new DrizzleProfessionalMembershipUnitOfWork();
+
   const cancelBookingUseCase = new CancelBookingUseCase(
     drizzleBookingsRepository,
-    drizzleBarbershopsRepository,
-    notifyBookingEventUseCase,
+    drizzleMembershipsRepository,
+    drizzleNotificationsRepository,
+    unitOfWork,
   );
-  return new CancelBookingController(cancelBookingUseCase);
+
+  return new CancelBookingController(
+    cancelBookingUseCase,
+    drizzleBookingsRepository,
+  );
 }

@@ -2,6 +2,7 @@ import { UniqueEntityId } from "../../../core/entities/unique-entity-id";
 import {
   Membership,
   type Role,
+  type MembershipState,
 } from "../../../domain/enterprise/entities/membership";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import type { membership } from "../schema";
@@ -17,6 +18,9 @@ export class DrizzleMembershipMapper {
         role: raw.role as Role,
         barbershopId: new UniqueEntityId(raw.barbershopId),
         userId: new UniqueEntityId(raw.userId),
+        state: (raw.state ?? "ACTIVE") as MembershipState,
+        version: raw.version ?? 1,
+        endedAt: raw.endedAt ?? null,
         createdAt: raw.createdAt ?? undefined,
       },
       new UniqueEntityId(raw.id),
@@ -29,6 +33,9 @@ export class DrizzleMembershipMapper {
       role: entity.role,
       barbershopId: entity.barbershopId.toString(),
       userId: entity.userId.toString(),
+      state: entity.state,
+      version: entity.version,
+      endedAt: entity.endedAt ?? null,
       createdAt: entity.createdAt,
     };
   }

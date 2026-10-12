@@ -13,7 +13,12 @@ const app = express();
 void runSchemaMigrations().catch((err) => {
   console.error("[App] Failed to run schema migrations on startup:", err);
 });
-app.use(cors());
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  }),
+);
 app.use(
   express.json({
     type: ["application/json", "text/plain"],
@@ -33,6 +38,11 @@ app.use(
     },
   }),
 );
+
+app.get("/docs-json", (_req: Request, res: Response) => {
+  res.status(200).json(swaggerDocument);
+});
+
 app.use("/api", routes);
 
 app.get(
