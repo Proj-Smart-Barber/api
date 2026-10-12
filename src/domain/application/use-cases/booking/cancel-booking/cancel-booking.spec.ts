@@ -42,14 +42,16 @@ describe("Cancel Booking Use Case", () => {
       ),
     );
   });
-
+  const futureDate = new Date();
+  futureDate.setDate(futureDate.getDate() + 2);
   it("should be able to cancel a booking and create notifications", async () => {
     const newBooking = Booking.create(
       {
         barbershopId: new UniqueEntityId("barbershop-1"),
         barbermanId: new UniqueEntityId("barberman-1"),
         shoppingCartId: new UniqueEntityId("cart-1"),
-        date: new Date("2026-09-15"),
+        // date: new Date("2026-11-15"),
+        date: futureDate,
         startTime: "14:00",
         endTime: "14:30",
         version: 0,
@@ -75,7 +77,7 @@ describe("Cancel Booking Use Case", () => {
         barbershopId: new UniqueEntityId("barbershop-1"),
         barbermanId: new UniqueEntityId("barberman-1"),
         shoppingCartId: new UniqueEntityId("cart-1"),
-        date: new Date(),
+        date: futureDate,
         startTime: "14:00",
         endTime: "14:30",
       },

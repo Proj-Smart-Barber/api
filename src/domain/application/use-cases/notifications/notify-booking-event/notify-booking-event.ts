@@ -14,12 +14,16 @@ export class NotifyBookingEventUseCase {
     timeText,
   }: NotifyBookingEventDTO): Promise<void> {
     const recipients = new Set<string>();
+    if (booking.customerId) {
+      recipients.add(booking.customerId.toString());
+    }
     recipients.add(booking.barbermanId.toString());
     if (barbershop.ownerId) {
       recipients.add(barbershop.ownerId.toString());
     }
 
-    const formattedDate = dateText ?? booking.date.toLocaleDateString("pt-BR");
+    const formattedDate =
+      dateText ?? booking.date.toLocaleDateString("pt-BR", { timeZone: "UTC" });
     const formattedTime =
       timeText ?? `${booking.startTime} - ${booking.endTime}`;
 
