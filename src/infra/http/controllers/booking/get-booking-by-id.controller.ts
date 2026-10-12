@@ -14,6 +14,7 @@ import { BookingDetailsMapper } from "../../../../domain/enterprise/mappers/book
 const getBookingByIdSchema = z.object({
   bookingId: z.string().uuid({ message: "ID do agendamento inválido." }),
   userId: z.string().uuid({ message: "ID do usuário inválido." }),
+  scope: z.enum(["PERSONAL", "UNIT"]).optional(),
 });
 
 export class GetBookingByIdController implements Controller {
@@ -53,10 +54,23 @@ export class GetBookingByIdController implements Controller {
         return notFound({ error: "Agendamento não encontrado." });
       }
 
+      let resolvedScope: "PERSONAL" | "UNIT";
+      if (parsed.scope) {
+        if (parsed.scope === "PERSONAL" && !isCustomer) {
+          return notFound({ error: "Agendamento não encontrado." });
+        }
+        if (parsed.scope === "UNIT" && !(isBarberman || isOwner)) {
+          return notFound({ error: "Agendamento não encontrado." });
+        }
+        resolvedScope = parsed.scope;
+      } else {
+        resolvedScope = isBarberman || isOwner ? "UNIT" : "PERSONAL";
+      }
+
       return ok({
         booking: BookingDetailsMapper.toHTTP(b, {
           actorId: parsed.userId,
-          scope: isBarberman || isOwner ? "UNIT" : "PERSONAL",
+          scope: resolvedScope,
         }),
       });
     } catch (err) {

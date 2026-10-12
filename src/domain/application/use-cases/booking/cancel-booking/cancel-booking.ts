@@ -199,6 +199,12 @@ export class CancelBookingUseCase {
       });
     };
 
+    if (dto.tx) {
+      return await runCancel(dto.tx, {
+        serverTime: dto.serverTime ?? new Date(),
+      });
+    }
+
     if (this.unitOfWork) {
       return await this.unitOfWork.withLocks(
         {

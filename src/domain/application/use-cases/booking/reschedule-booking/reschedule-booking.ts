@@ -437,6 +437,12 @@ export class RescheduleBookingUseCase {
       });
     };
 
+    if (dto.tx) {
+      return await runReschedule(dto.tx, {
+        serverTime: dto.serverTime ?? new Date(),
+      });
+    }
+
     if (this.unitOfWork) {
       const professionalIds = Array.from(
         new Set([booking.barbermanId.toString(), targetBarbermanId]),

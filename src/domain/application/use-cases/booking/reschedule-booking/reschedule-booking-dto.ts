@@ -10,4 +10,6 @@ export interface RescheduleBookingDTO {
   expectedDurationInMinutes?: number;
   scope?: "PERSONAL" | "UNIT";
   reason?: string;
+  tx?: any;
+  serverTime?: Date;
 }

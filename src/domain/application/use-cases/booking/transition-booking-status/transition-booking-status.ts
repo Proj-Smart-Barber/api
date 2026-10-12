@@ -229,6 +229,12 @@ export class TransitionBookingStatusUseCase {
       });
     };
 
+    if (dto.tx) {
+      return await runTransition(dto.tx, {
+        serverTime: dto.serverTime ?? new Date(),
+      });
+    }
+
     if (this.unitOfWork) {
       return await this.unitOfWork.withLocks(
         {
