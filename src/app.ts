@@ -38,6 +38,11 @@ app.use(
     },
   }),
 );
+
+app.get("/docs-json", (_req: Request, res: Response) => {
+  res.status(200).json(swaggerDocument);
+});
+
 app.use("/api", routes);
 
 app.get(

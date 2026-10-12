@@ -5,7 +5,10 @@ import { makeDeactivateUnitMembershipController } from "../factories/make-deacti
 import { makeGetBarbershopController } from "../factories/make-get-barbershop-controller";
 import { makeListBarbershopProfessionalsController } from "../factories/make-list-barbershop-professionals-controller";
 import { makeListUnitTeamController } from "../factories/make-list-unit-team-controller";
+import { makeLookupBookingCustomerController } from "../factories/make-lookup-booking-customer-controller";
+import { makeFetchUnitBookingsController } from "../factories/make-fetch-unit-bookings-controller";
 import { ensureUserIsAuthenticated } from "../middlewares/ensure-user-is-authenticated";
+import { bookingCustomerLookupLimit } from "../middlewares/booking-customer-lookup-limit";
 import { serviceRoutes } from "./service.routes";
 
 const barbershopRoutes = Router();
@@ -29,6 +32,17 @@ barbershopRoutes.patch(
   "/:shopId/team/:membershipId/deactivation",
   ensureUserIsAuthenticated,
   adaptRoute(makeDeactivateUnitMembershipController()),
+);
+barbershopRoutes.post(
+  "/:shopId/customers/lookup",
+  ensureUserIsAuthenticated,
+  bookingCustomerLookupLimit,
+  adaptRoute(makeLookupBookingCustomerController()),
+);
+barbershopRoutes.get(
+  "/:shopId/bookings",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeFetchUnitBookingsController()),
 );
 barbershopRoutes.use("/:shopId/services", serviceRoutes);
 

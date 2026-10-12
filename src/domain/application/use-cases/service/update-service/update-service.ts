@@ -5,6 +5,8 @@ import type { Service } from "../../../../enterprise/entities/service";
 import { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
 import { NotAllowedError } from "../../_errors/not-allowed-error";
 
+import type { ProfessionalMembershipUnitOfWork } from "../../../services/professional-membership-unit-of-work";
+
 export interface UpdateServiceDTO {
   barbershopId: string;
   serviceId: string;
@@ -24,6 +26,7 @@ export class UpdateServiceUseCase {
   constructor(
     private barbershopsRepository: BarbershopsRepository,
     private servicesRepository: ServicesRepository,
+    private unitOfWork?: ProfessionalMembershipUnitOfWork,
   ) {}
 
   async execute({
@@ -35,70 +38,83 @@ export class UpdateServiceUseCase {
     priceInCents,
     durationInMinutes,
   }: UpdateServiceDTO): Promise<UpdateServiceResponse> {
-    const barbershop = await this.barbershopsRepository.findById(barbershopId);
+    const action = async (): Promise<UpdateServiceResponse> => {
+      const barbershop =
+        await this.barbershopsRepository.findById(barbershopId);
 
-    if (!barbershop) {
-      return left(new ResourceNotFoundError("Barbearia não encontrada."));
-    }
-
-    if (barbershop.ownerId.toString() !== userId) {
-      return left(new NotAllowedError());
-    }
-
-    const service = await this.servicesRepository.findByIdAndBarbershopId(
-      serviceId,
-      barbershopId,
-    );
-
-    if (!service) {
-      return left(new ResourceNotFoundError("Serviço não encontrado."));
-    }
-
-    let updatedTitle: string | undefined;
-    if (title !== undefined) {
-      updatedTitle = title.trim();
-      if (updatedTitle.length < 2) {
-        return left(
-          new Error("O título do serviço deve ter no mínimo 2 caracteres."),
-        );
+      if (!barbershop) {
+        return left(new ResourceNotFoundError("Barbearia não encontrada."));
       }
-    }
 
-    if (priceInCents !== undefined) {
-      if (!Number.isInteger(priceInCents) || priceInCents <= 0) {
-        return left(
-          new Error("O preço em centavos deve ser um número inteiro positivo."),
-        );
+      if (barbershop.ownerId.toString() !== userId) {
+        return left(new NotAllowedError());
       }
-    }
 
-    if (durationInMinutes !== undefined) {
-      if (!Number.isInteger(durationInMinutes) || durationInMinutes <= 0) {
-        return left(
-          new Error(
-            "A duração em minutos deve ser um número inteiro positivo.",
-          ),
-        );
+      const service = await this.servicesRepository.findByIdAndBarbershopId(
+        serviceId,
+        barbershopId,
+      );
+
+      if (!service) {
+        return left(new ResourceNotFoundError("Serviço não encontrado."));
       }
-    }
 
-    let updatedDescription: string | undefined;
-    if (description !== undefined) {
-      updatedDescription = description.trim();
-      if (updatedDescription.length > 500) {
-        return left(new Error("A descrição não pode exceder 500 caracteres."));
+      let updatedTitle: string | undefined;
+      if (title !== undefined) {
+        updatedTitle = title.trim();
+        if (updatedTitle.length < 2) {
+          return left(
+            new Error("O título do serviço deve ter no mínimo 2 caracteres."),
+          );
+        }
       }
+
+      if (priceInCents !== undefined) {
+        if (!Number.isInteger(priceInCents) || priceInCents <= 0) {
+          return left(
+            new Error(
+              "O preço em centavos deve ser um número inteiro positivo.",
+            ),
+          );
+        }
+      }
+
+      if (durationInMinutes !== undefined) {
+        if (!Number.isInteger(durationInMinutes) || durationInMinutes <= 0) {
+          return left(
+            new Error(
+              "A duração em minutos deve ser um número inteiro positivo.",
+            ),
+          );
+        }
+      }
+
+      let updatedDescription: string | undefined;
+      if (description !== undefined) {
+        updatedDescription = description.trim();
+        if (updatedDescription.length > 500) {
+          return left(
+            new Error("A descrição não pode exceder 500 caracteres."),
+          );
+        }
+      }
+
+      service.update({
+        title: updatedTitle,
+        description: description !== undefined ? updatedDescription : undefined,
+        priceInCents,
+        durationInMinutes,
+      });
+
+      await this.servicesRepository.save(service);
+
+      return right({ service });
+    };
+
+    if (this.unitOfWork) {
+      return this.unitOfWork.withLocks({ unitIds: [barbershopId] }, action);
     }
 
-    service.update({
-      title: updatedTitle,
-      description: description !== undefined ? updatedDescription : undefined,
-      priceInCents,
-      durationInMinutes,
-    });
-
-    await this.servicesRepository.save(service);
-
-    return right({ service });
+    return action();
   }
 }

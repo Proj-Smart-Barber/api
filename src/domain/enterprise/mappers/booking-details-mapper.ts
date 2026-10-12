@@ -52,6 +52,11 @@ export interface PersistenceBookingDetails {
   };
 }
 
+import {
+  BookingPolicy,
+  type BookingScope,
+} from "../../application/services/booking-policy";
+
 export class BookingDetailsMapper {
   static toDomain(raw: PersistenceBookingDetails): BookingDetails {
     let resolvedServices: BookingDetailsServiceItem[] = [];
@@ -118,7 +123,34 @@ export class BookingDetailsMapper {
     });
   }
 
-  static toHTTP(bookingDetails: BookingDetails) {
+  static toHTTP(
+    bookingDetails: BookingDetails,
+    options?: {
+      actorId?: string;
+      barbershopOwnerId?: string;
+      serverTime?: Date;
+      scope?: BookingScope;
+    },
+  ) {
+    const serverTime = options?.serverTime ?? new Date();
+    const startsAt =
+      bookingDetails.startsAt ??
+      new Date(
+        `${bookingDetails.date.toISOString().split("T")[0]}T${bookingDetails.startTime}:00.000Z`,
+      );
+
+    const capabilities = BookingPolicy.evaluateCapabilities({
+      status: bookingDetails.status,
+      startsAt,
+      endsAt: bookingDetails.endsAt,
+      customerId: bookingDetails.customerId.toString(),
+      barbermanId: bookingDetails.barbermanId.toString(),
+      barbershopOwnerId: options?.barbershopOwnerId,
+      actorId: options?.actorId,
+      serverTime,
+      scope: options?.scope,
+    });
+
     return {
       id: bookingDetails.bookingId.toString(),
       barbershopId: bookingDetails.barbershopId.toString(),
@@ -131,7 +163,7 @@ export class BookingDetailsMapper {
         phoneNumber: bookingDetails.customer.phoneNumber,
       },
       services: bookingDetails.services.map((service) => ({
-        id: service.serviceId,
+        id: service.serviceId ?? service.id?.toString() ?? null,
         serviceId: service.serviceId,
         title: service.title,
         priceInCents: service.priceInCents,
@@ -151,6 +183,33 @@ export class BookingDetailsMapper {
       startTime: bookingDetails.startTime,
       endTime: bookingDetails.endTime,
       createdAt: bookingDetails.createdAt,
+      canCancel: capabilities.canCancel,
+      canReschedule: capabilities.canReschedule,
+      canComplete: capabilities.canComplete,
+      canMarkNoShow: capabilities.canMarkNoShow,
+      capabilities: {
+        cancel: {
+          allowed: capabilities.cancel.allowed,
+          reasonCode: capabilities.cancel.reasonCode,
+          deadlineAt: capabilities.cancel.deadlineAt?.toISOString() ?? null,
+        },
+        reschedule: {
+          allowed: capabilities.reschedule.allowed,
+          reasonCode: capabilities.reschedule.reasonCode,
+          deadlineAt: capabilities.reschedule.deadlineAt?.toISOString() ?? null,
+        },
+        complete: {
+          allowed: capabilities.complete.allowed,
+          reasonCode: capabilities.complete.reasonCode,
+          deadlineAt: capabilities.complete.deadlineAt?.toISOString() ?? null,
+        },
+        noShow: {
+          allowed: capabilities.noShow.allowed,
+          reasonCode: capabilities.noShow.reasonCode,
+          deadlineAt: capabilities.noShow.deadlineAt?.toISOString() ?? null,
+        },
+      },
+      serverTime: serverTime.toISOString(),
     };
   }
 }

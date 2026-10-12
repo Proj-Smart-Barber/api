@@ -4,7 +4,7 @@ import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
 import { Booking } from "../../../../enterprise/entities/booking";
 import { CancelBookingUseCase } from "./cancel-booking";
 import { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
-import { UnauthorizedError } from "../../_errors/unauthorized-error";
+import { NotAllowedError } from "../../_errors/not-allowed-error";
 let inMemoryBookingsRepository: InMemoryBookingsRepository;
 let sut: CancelBookingUseCase;
 
@@ -23,6 +23,7 @@ describe("Cancel Booking Use Case", () => {
         date: new Date(),
         startTime: "14:00",
         endTime: "14:30",
+        version: 0,
       },
       new UniqueEntityId("booking-1"),
     );
@@ -35,7 +36,8 @@ describe("Cancel Booking Use Case", () => {
     });
 
     expect(result.isRight()).toBe(true);
-    expect(inMemoryBookingsRepository.items).toHaveLength(0);
+    expect(inMemoryBookingsRepository.items[0].status).toBe("CANCELLED");
+    expect(inMemoryBookingsRepository.items[0].version).toBe(1);
   });
   it("should not be able to cancel a booking from another barberman", async () => {
     const newBooking = Booking.create(
@@ -58,7 +60,7 @@ describe("Cancel Booking Use Case", () => {
     });
 
     expect(result.isLeft()).toBe(true);
-    expect(result.value).toBeInstanceOf(UnauthorizedError);
+    expect(result.value).toBeInstanceOf(NotAllowedError);
   });
 
   it("should not be able to cancel a non-existing booking", async () => {

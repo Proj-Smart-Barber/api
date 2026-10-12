@@ -8,6 +8,8 @@ import {
   type HttpResponse,
 } from "../../../../core/infra/http-response";
 import type { BookingsRepository } from "../../../../domain/application/repositories/bookings-repository";
+import type { MembershipsRepository } from "../../../../domain/application/repositories/memberships-repository";
+import { BookingDetailsMapper } from "../../../../domain/enterprise/mappers/booking-details-mapper";
 
 const getBookingByIdSchema = z.object({
   bookingId: z.string().uuid({ message: "ID do agendamento inválido." }),
@@ -15,7 +17,10 @@ const getBookingByIdSchema = z.object({
 });
 
 export class GetBookingByIdController implements Controller {
-  constructor(private bookingsRepository: BookingsRepository) {}
+  constructor(
+    private bookingsRepository: BookingsRepository,
+    private membershipsRepository?: MembershipsRepository,
+  ) {}
 
   async handle(request: any): Promise<HttpResponse> {
     try {
@@ -29,37 +34,30 @@ export class GetBookingByIdController implements Controller {
         return notFound({ error: "Agendamento não encontrado." });
       }
 
-      // Permite acesso se for o cliente ou o profissional responsável
+      // Permite acesso se for o cliente ou o profissional responsável ou proprietário ativo da unidade
       const isCustomer = b.customer.id.toString() === parsed.userId;
       const isBarberman = b.barbermanId.toString() === parsed.userId;
 
-      if (!isCustomer && !isBarberman) {
+      let isOwner = false;
+      if (this.membershipsRepository) {
+        const mem = await this.membershipsRepository.findByBarbershopAndUser(
+          b.barbershopId.toString(),
+          parsed.userId,
+        );
+        if (mem && mem.state === "ACTIVE" && mem.role === "OWNER") {
+          isOwner = true;
+        }
+      }
+
+      if (!isCustomer && !isBarberman && !isOwner) {
         return notFound({ error: "Agendamento não encontrado." });
       }
 
       return ok({
-        booking: {
-          id: b.bookingId.toString(),
-          barbershopId: b.barbershopId.toString(),
-          barbermanId: b.barbermanId.toString(),
-          date: b.date.toISOString(),
-          startTime: b.startTime,
-          endTime: b.endTime,
-          createdAt: b.createdAt ? b.createdAt.toISOString() : null,
-          customer: {
-            id: b.customer.id.toString(),
-            name: b.customer.name,
-            phoneNumber: b.customer.phoneNumber,
-          },
-          services: b.services.map((s) => ({
-            id: s.serviceId ?? s.id?.toString() ?? null,
-            serviceId: s.serviceId,
-            title: s.title,
-            priceInCents: s.priceInCents,
-            durationInMinutes: s.durationInMinutes,
-            legacyAggregate: s.legacyAggregate,
-          })),
-        },
+        booking: BookingDetailsMapper.toHTTP(b, {
+          actorId: parsed.userId,
+          scope: isBarberman || isOwner ? "UNIT" : "PERSONAL",
+        }),
       });
     } catch (err) {
       if (err instanceof ZodError) {

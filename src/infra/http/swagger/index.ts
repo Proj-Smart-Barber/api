@@ -35,6 +35,26 @@ export const swaggerDocument = {
         },
       },
     },
+    "/docs-json": {
+      get: {
+        tags: ["System"],
+        summary: "OpenAPI specification JSON",
+        description:
+          "Returns the raw OpenAPI 3.0 specification document for frontend/SDK generation",
+        responses: {
+          200: {
+            description: "OpenAPI specification document",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     "/api/users/": {
       post: {
         tags: ["Users"],
@@ -1710,26 +1730,42 @@ export const swaggerDocument = {
     "/api/bookings": {
       post: {
         tags: ["Bookings"],
-        summary: "Create a new booking",
+        summary: "Create a new booking (personal or unit scope)",
         security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: "header",
+            name: "Idempotency-Key",
+            required: false,
+            schema: { type: "string" },
+            description:
+              "Optional UUIDv7 idempotency key for durable execution",
+          },
+        ],
         requestBody: {
           required: true,
           content: {
             "application/json": {
               schema: {
                 type: "object",
-                required: [
-                  "serviceId",
-                  "barbermanId",
-                  "date",
-                  "startTime",
-                  "endTime",
-                ],
+                required: ["barbermanId", "date", "startTime"],
                 properties: {
+                  scope: {
+                    type: "string",
+                    enum: ["PERSONAL", "UNIT"],
+                    default: "PERSONAL",
+                  },
+                  shopId: { type: "string", format: "uuid" },
+                  customerId: { type: "string", format: "uuid" },
                   serviceId: {
                     type: "string",
                     format: "uuid",
-                    example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                    description: "Legacy single service ID",
+                  },
+                  serviceIds: {
+                    type: "array",
+                    items: { type: "string", format: "uuid" },
+                    description: "Array of service IDs",
                   },
                   barbermanId: {
                     type: "string",
@@ -1744,6 +1780,8 @@ export const swaggerDocument = {
                   },
                   startTime: { type: "string", example: "14:00" },
                   endTime: { type: "string", example: "14:30" },
+                  expectedTotalPriceInCents: { type: "integer", example: 5000 },
+                  expectedDurationInMinutes: { type: "integer", example: 30 },
                 },
               },
             },
@@ -1757,43 +1795,8 @@ export const swaggerDocument = {
                 schema: {
                   type: "object",
                   properties: {
-                    booking: {
-                      type: "object",
-                      properties: {
-                        id: {
-                          type: "string",
-                          format: "uuid",
-                          example: "9e241c16-650f-492e-9cda-320f8c0b16c3",
-                        },
-                        barbershopId: {
-                          type: "string",
-                          format: "uuid",
-                          example: "13d4b8e0-7f42-4b7f-b390-b06bb776701f",
-                        },
-                        barbermanId: {
-                          type: "string",
-                          format: "uuid",
-                          example: "4903d18d-ea6e-494e-9be6-ef9f47775034",
-                        },
-                        shoppingCartId: {
-                          type: "string",
-                          format: "uuid",
-                          example: "09a90c95-1ef3-4cac-9a0a-ff03aa902022",
-                        },
-                        date: {
-                          type: "string",
-                          format: "date-time",
-                          example: "2026-09-11T00:00:00.000Z",
-                        },
-                        startTime: { type: "string", example: "14:00" },
-                        endTime: { type: "string", example: "14:30" },
-                        createdAt: {
-                          type: "string",
-                          format: "date-time",
-                          example: "2026-09-11T13:21:09.915Z",
-                        },
-                      },
-                    },
+                    booking: { $ref: "#/components/schemas/BookingDto" },
+                    serverTime: { type: "string", format: "date-time" },
                   },
                 },
               },
@@ -1825,11 +1828,16 @@ export const swaggerDocument = {
               },
             },
           },
+          "403": {
+            description:
+              "Forbidden - actor cannot book on behalf of third-party in PERSONAL scope or lacks permissions",
+          },
           "404": {
-            description: "Service not found or inactive",
+            description: "Service, professional or barbershop not found",
           },
           "409": {
-            description: "Time slot conflict for the barberman",
+            description:
+              "Conflict (SLOT_UNAVAILABLE, QUOTE_CHANGED, MEMBERSHIP_INACTIVE, CUSTOMER_NOT_ELIGIBLE, IDEMPOTENCY_PAYLOAD_MISMATCH)",
           },
           "500": {
             description: "Internal server error",
@@ -2074,7 +2082,7 @@ export const swaggerDocument = {
     "/api/bookings/{bookingId}/cancel": {
       delete: {
         tags: ["Bookings"],
-        summary: "Cancel an existing booking",
+        summary: "Cancel an existing booking logically",
         security: [{ bearerAuth: [] }],
         parameters: [
           {
@@ -2087,7 +2095,33 @@ export const swaggerDocument = {
             },
             description: "ID of the booking to be canceled",
           },
+          {
+            in: "header",
+            name: "Idempotency-Key",
+            required: false,
+            schema: { type: "string" },
+            description: "UUIDv7 idempotency key",
+          },
         ],
+        requestBody: {
+          required: false,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  expectedVersion: { type: "integer", example: 1 },
+                  reason: { type: "string", example: "Imprevisto pessoal" },
+                  scope: {
+                    type: "string",
+                    enum: ["PERSONAL", "UNIT"],
+                    example: "PERSONAL",
+                  },
+                },
+              },
+            },
+          },
+        },
         responses: {
           "200": {
             description: "Booking canceled successfully",
@@ -2096,34 +2130,8 @@ export const swaggerDocument = {
                 schema: {
                   type: "object",
                   properties: {
-                    booking: {
-                      type: "object",
-                      properties: {
-                        id: {
-                          type: "string",
-                          format: "uuid",
-                          example: "9e241c16-650f-492e-9cda-320f8c0b16c3",
-                        },
-                        barbershopId: {
-                          type: "string",
-                          format: "uuid",
-                        },
-                        barbermanId: {
-                          type: "string",
-                          format: "uuid",
-                        },
-                        shoppingCartId: {
-                          type: "string",
-                          format: "uuid",
-                        },
-                        date: {
-                          type: "string",
-                          format: "date-time",
-                        },
-                        startTime: { type: "string", example: "14:00" },
-                        endTime: { type: "string", example: "14:30" },
-                      },
-                    },
+                    booking: { $ref: "#/components/schemas/BookingDto" },
+                    serverTime: { type: "string", format: "date-time" },
                   },
                 },
               },
@@ -2137,6 +2145,10 @@ export const swaggerDocument = {
           },
           "404": {
             description: "Booking not found",
+          },
+          "409": {
+            description:
+              "Conflict - BOOKING_VERSION_CONFLICT, ACTION_DEADLINE_PASSED or TERMINAL_BOOKING_STATE",
           },
           "500": {
             description: "Internal server error",
@@ -2401,6 +2413,280 @@ export const swaggerDocument = {
         },
       },
     },
+    "/api/barbershops/{shopId}/customers/lookup": {
+      post: {
+        tags: ["Bookings", "Barbershop"],
+        summary:
+          "Lookup customer by exact email or CPF (staff only, rate limited)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+            description: "Barbershop unit ID",
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  email: {
+                    type: "string",
+                    format: "email",
+                    example: "cliente@exemplo.com",
+                  },
+                  cpf: {
+                    type: "string",
+                    example: "123.456.789-00",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Customer found and returned with masked data",
+            headers: {
+              "Cache-Control": {
+                schema: { type: "string", example: "no-store" },
+                description: "Security header preventing customer PII caching",
+              },
+            },
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/CustomerLookupResponse" },
+              },
+            },
+          },
+          "400": { description: "Invalid CPF or email format" },
+          "401": { description: "Unauthorized" },
+          "403": {
+            description: "Forbidden - user not an active staff member of unit",
+          },
+          "404": { description: "Customer not found" },
+          "429": {
+            description: "Too Many Requests - limit of 30 lookups/min exceeded",
+            headers: {
+              "Retry-After": {
+                schema: { type: "integer", example: 60 },
+                description: "Seconds until rate limit reset",
+              },
+            },
+          },
+          "503": {
+            description: "Service Unavailable - rate limiter counter failure",
+          },
+        },
+      },
+    },
+    "/api/barbershops/{shopId}/bookings": {
+      get: {
+        tags: ["Bookings", "Barbershop"],
+        summary: "List unit bookings with SQL summary (staff only)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "page",
+            in: "query",
+            required: false,
+            schema: { type: "integer", default: 1 },
+          },
+          {
+            name: "limit",
+            in: "query",
+            required: false,
+            schema: { type: "integer", default: 20, maximum: 100 },
+          },
+          {
+            name: "date",
+            in: "query",
+            required: false,
+            schema: { type: "string", format: "date", example: "2026-10-15" },
+            description: "Filter bookings on a specific date (YYYY-MM-DD)",
+          },
+          {
+            name: "startDate",
+            in: "query",
+            required: false,
+            schema: { type: "string", format: "date" },
+          },
+          {
+            name: "endDate",
+            in: "query",
+            required: false,
+            schema: { type: "string", format: "date" },
+          },
+          {
+            name: "status",
+            in: "query",
+            required: false,
+            schema: { type: "string" },
+          },
+          {
+            name: "barbermanId",
+            in: "query",
+            required: false,
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "List of unit bookings with summary",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/UnitBookingsResponse" },
+              },
+            },
+          },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden - not an active staff member" },
+        },
+      },
+    },
+    "/api/bookings/{bookingId}/reschedule": {
+      patch: {
+        tags: ["Bookings"],
+        summary: "Atomically reschedule an existing booking",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "bookingId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "Idempotency-Key",
+            in: "header",
+            required: false,
+            schema: { type: "string" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["date", "startTime"],
+                properties: {
+                  expectedVersion: { type: "integer", example: 1 },
+                  date: {
+                    type: "string",
+                    format: "date",
+                    example: "2026-10-15",
+                  },
+                  startTime: { type: "string", example: "15:00" },
+                  barbermanId: { type: "string", format: "uuid" },
+                  serviceIds: {
+                    type: "array",
+                    items: { type: "string", format: "uuid" },
+                  },
+                  expectedTotalPriceInCents: { type: "integer", example: 5000 },
+                  expectedDurationInMinutes: { type: "integer", example: 45 },
+                  reason: { type: "string" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Booking rescheduled successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    booking: { $ref: "#/components/schemas/BookingDto" },
+                    serverTime: { type: "string", format: "date-time" },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Validation error" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden" },
+          "404": { description: "Booking not found" },
+          "409": {
+            description:
+              "Conflict (SLOT_UNAVAILABLE, QUOTE_CHANGED, BOOKING_VERSION_CONFLICT, ACTION_DEADLINE_PASSED)",
+          },
+        },
+      },
+    },
+    "/api/bookings/{bookingId}/status": {
+      patch: {
+        tags: ["Bookings"],
+        summary: "Record attendance status transition (COMPLETED or NO_SHOW)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "bookingId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["status"],
+                properties: {
+                  status: {
+                    type: "string",
+                    enum: ["COMPLETED", "NO_SHOW"],
+                    example: "COMPLETED",
+                  },
+                  expectedVersion: { type: "integer", example: 1 },
+                  reason: { type: "string" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Status updated successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    booking: { $ref: "#/components/schemas/BookingDto" },
+                    serverTime: { type: "string", format: "date-time" },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Validation error" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden - only unit staff" },
+          "404": { description: "Booking not found" },
+          "409": {
+            description:
+              "Conflict (ACTION_DEADLINE_PASSED, BOOKING_VERSION_CONFLICT, TERMINAL_BOOKING_STATE)",
+          },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -2462,6 +2748,146 @@ export const swaggerDocument = {
             type: "string",
             format: "date-time",
             example: "2026-09-24T13:21:09.915Z",
+          },
+        },
+      },
+      BookingDto: {
+        type: "object",
+        properties: {
+          id: { type: "string", format: "uuid" },
+          barbershopId: { type: "string", format: "uuid" },
+          barbermanId: { type: "string", format: "uuid" },
+          customerId: { type: "string", format: "uuid" },
+          shoppingCartId: { type: "string", format: "uuid", nullable: true },
+          customer: {
+            type: "object",
+            properties: {
+              id: { type: "string", format: "uuid" },
+              name: { type: "string", example: "Carlos Silva" },
+              phoneNumber: { type: "string", nullable: true },
+            },
+          },
+          services: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                id: { type: "string", format: "uuid", nullable: true },
+                serviceId: { type: "string", format: "uuid", nullable: true },
+                title: { type: "string" },
+                priceInCents: { type: "integer", nullable: true },
+                durationInMinutes: { type: "integer", nullable: true },
+                legacyAggregate: { type: "boolean" },
+              },
+            },
+          },
+          startsAt: { type: "string", format: "date-time", nullable: true },
+          endsAt: { type: "string", format: "date-time", nullable: true },
+          timezone: { type: "string", example: "America/Sao_Paulo" },
+          status: { type: "string", example: "CONFIRMED" },
+          version: { type: "integer", example: 1 },
+          createdByUserId: { type: "string", format: "uuid", nullable: true },
+          clientRequestId: { type: "string", nullable: true },
+          totalPriceInCents: { type: "integer", nullable: true },
+          totalDurationInMinutes: { type: "integer", nullable: true },
+          date: { type: "string", format: "date-time" },
+          startTime: { type: "string", example: "14:00" },
+          endTime: { type: "string", example: "14:45" },
+          createdAt: { type: "string", format: "date-time" },
+          canCancel: { type: "boolean", example: true },
+          canReschedule: { type: "boolean", example: true },
+          canComplete: { type: "boolean", example: false },
+          canMarkNoShow: { type: "boolean", example: false },
+          capabilities: {
+            type: "object",
+            properties: {
+              cancel: {
+                type: "object",
+                properties: {
+                  allowed: { type: "boolean" },
+                  reasonCode: { type: "string", nullable: true },
+                  deadlineAt: {
+                    type: "string",
+                    format: "date-time",
+                    nullable: true,
+                  },
+                },
+              },
+              reschedule: {
+                type: "object",
+                properties: {
+                  allowed: { type: "boolean" },
+                  reasonCode: { type: "string", nullable: true },
+                  deadlineAt: {
+                    type: "string",
+                    format: "date-time",
+                    nullable: true,
+                  },
+                },
+              },
+              complete: {
+                type: "object",
+                properties: {
+                  allowed: { type: "boolean" },
+                  reasonCode: { type: "string", nullable: true },
+                  deadlineAt: {
+                    type: "string",
+                    format: "date-time",
+                    nullable: true,
+                  },
+                },
+              },
+              noShow: {
+                type: "object",
+                properties: {
+                  allowed: { type: "boolean" },
+                  reasonCode: { type: "string", nullable: true },
+                  deadlineAt: {
+                    type: "string",
+                    format: "date-time",
+                    nullable: true,
+                  },
+                },
+              },
+            },
+          },
+          serverTime: { type: "string", format: "date-time" },
+        },
+      },
+      CustomerLookupResponse: {
+        type: "object",
+        properties: {
+          id: { type: "string", format: "uuid" },
+          name: { type: "string", example: "João Santos" },
+          maskedEmail: { type: "string", example: "j***o@exemplo.com" },
+          maskedPhone: { type: "string", example: "(11) *****-1234" },
+          isEligible: { type: "boolean", example: true },
+          unconfirmedEmail: { type: "boolean", example: false },
+        },
+      },
+      UnitBookingsResponse: {
+        type: "object",
+        properties: {
+          items: {
+            type: "array",
+            items: { $ref: "#/components/schemas/BookingDto" },
+          },
+          page: { type: "integer", example: 1 },
+          limit: { type: "integer", example: 20 },
+          total: { type: "integer", example: 1 },
+          hasNext: { type: "boolean", example: false },
+          serverTime: { type: "string", format: "date-time" },
+          summary: {
+            type: "object",
+            properties: {
+              totalBookings: { type: "integer", example: 1 },
+              totalAmountInCents: { type: "integer", example: 5000 },
+              statusCounts: {
+                type: "object",
+                additionalProperties: { type: "integer" },
+              },
+              hasIncompleteData: { type: "boolean", example: false },
+            },
           },
         },
       },

@@ -4,6 +4,8 @@ import type { BarbershopsRepository } from "../../../repositories/barbershops-re
 import { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
 import { NotAllowedError } from "../../_errors/not-allowed-error";
 
+import type { ProfessionalMembershipUnitOfWork } from "../../../services/professional-membership-unit-of-work";
+
 interface DeleteScheduleExceptionDTO {
   exceptionId: string;
   barbershopId: string;
@@ -19,6 +21,7 @@ export class DeleteScheduleExceptionUseCase {
   constructor(
     private scheduleExceptionsRepository: ScheduleExceptionsRepository,
     private barbershopsRepository: BarbershopsRepository,
+    private unitOfWork?: ProfessionalMembershipUnitOfWork,
   ) {}
 
   async execute({
@@ -26,24 +29,33 @@ export class DeleteScheduleExceptionUseCase {
     barbershopId,
     staffId,
   }: DeleteScheduleExceptionDTO): Promise<DeleteScheduleExceptionResponse> {
-    const exception =
-      await this.scheduleExceptionsRepository.findById(exceptionId);
+    const action = async (): Promise<DeleteScheduleExceptionResponse> => {
+      const exception =
+        await this.scheduleExceptionsRepository.findById(exceptionId);
 
-    if (!exception) {
-      return left(new ResourceNotFoundError());
+      if (!exception) {
+        return left(new ResourceNotFoundError());
+      }
+
+      if (exception.barbershopId.toString() !== barbershopId) {
+        return left(new NotAllowedError());
+      }
+
+      const barbershop =
+        await this.barbershopsRepository.findById(barbershopId);
+      if (!barbershop || barbershop.ownerId.toString() !== staffId) {
+        return left(new NotAllowedError());
+      }
+
+      await this.scheduleExceptionsRepository.delete(exception);
+
+      return right(null);
+    };
+
+    if (this.unitOfWork) {
+      return this.unitOfWork.withLocks({ unitIds: [barbershopId] }, action);
     }
 
-    if (exception.barbershopId.toString() !== barbershopId) {
-      return left(new NotAllowedError());
-    }
-
-    const barbershop = await this.barbershopsRepository.findById(barbershopId);
-    if (!barbershop || barbershop.ownerId.toString() !== staffId) {
-      return left(new NotAllowedError());
-    }
-
-    await this.scheduleExceptionsRepository.delete(exception);
-
-    return right(null);
+    return action();
   }
 }

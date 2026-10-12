@@ -5,7 +5,7 @@ import type {
   UnitOfWorkContext,
 } from "../../../domain/application/services/professional-membership-unit-of-work";
 import { db } from "../index";
-import { barbershops, membership, users } from "../schema";
+import { barbershops, bookings, membership, users } from "../schema";
 
 export class DrizzleProfessionalMembershipUnitOfWork
   implements ProfessionalMembershipUnitOfWork
@@ -13,9 +13,10 @@ export class DrizzleProfessionalMembershipUnitOfWork
   async withLocks<T>(
     resources: LockResources,
     work: (tx: any, context: UnitOfWorkContext) => Promise<T>,
+    existingTx?: any,
   ): Promise<T> {
-    return await db.transaction(async (tx) => {
-      // 0. Attempt lock when applicable
+    const runInTx = async (tx: any) => {
+      // 0. Attempt advisory lock when applicable
       if (resources.attempt) {
         await tx.execute(
           sql`SELECT pg_advisory_xact_lock(hashtext(${resources.attempt.actorId}), hashtext(${resources.attempt.requestId}))`,
@@ -65,15 +66,46 @@ export class DrizzleProfessionalMembershipUnitOfWork
           .for("update");
       }
 
-      // 4. Fresh clock_timestamp queried strictly after acquiring all locks
+      // 4. Bookings in deterministic sorted order
+      const sortedBookingIds = Array.from(
+        new Set(resources.bookingIds?.filter(Boolean) ?? []),
+      ).sort();
+      if (sortedBookingIds.length > 0) {
+        await tx
+          .select({
+            id: bookings.id,
+            status: bookings.status,
+            version: bookings.version,
+          })
+          .from(bookings)
+          .where(inArray(bookings.id, sortedBookingIds))
+          .orderBy(asc(bookings.id))
+          .for("update");
+      }
+
+      // 5. Fresh clock_timestamp queried strictly after acquiring all locks
       const clockResult = await tx.execute(
         sql`SELECT clock_timestamp() AS server_time`,
       );
       const rows = (clockResult as any).rows ?? clockResult;
-      const rawTime = rows?.[0]?.server_time ?? new Date();
+      const rawTime = rows?.[0]?.server_time;
+      if (!rawTime) {
+        throw new Error("DATABASE_CLOCK_UNAVAILABLE");
+      }
       const serverTime = new Date(rawTime);
+      if (Number.isNaN(serverTime.getTime())) {
+        throw new Error("DATABASE_CLOCK_INVALID");
+      }
 
       return await work(tx, { serverTime });
+    };
+
+    if (existingTx) {
+      return await runInTx(existingTx);
+    }
+
+    return await db.transaction(async (tx) => {
+      return await runInTx(tx);
     });
   }
 }

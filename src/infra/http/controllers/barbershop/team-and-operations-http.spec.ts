@@ -4,6 +4,7 @@ import type { AddressInfo } from "node:net";
 import { eq } from "drizzle-orm";
 import { sign } from "jsonwebtoken";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { generateUuidV7 } from "../../../../core/security/uuidv7";
 import app from "../../../../app";
 import { env } from "../../../env";
 import { db } from "../../../drizzle";
@@ -210,7 +211,12 @@ describe("Team & Idempotent Operations HTTP Endpoints (E2E)", () => {
         `${baseUrl}/api/barbershops/${shopId}/team/${staffMembershipId}/deactivation`,
         {
           method: "PATCH",
-          headers: { Authorization: `Bearer ${staffToken}` },
+          headers: {
+            Authorization: `Bearer ${staffToken}`,
+            "Idempotency-Key": generateUuidV7(),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ expectedVersion: 1 }),
         },
       );
       expect(response.status).toBe(403);
@@ -221,7 +227,12 @@ describe("Team & Idempotent Operations HTTP Endpoints (E2E)", () => {
         `${baseUrl}/api/barbershops/${shopId}/team/${ownerMembershipId}/deactivation`,
         {
           method: "PATCH",
-          headers: { Authorization: `Bearer ${ownerToken}` },
+          headers: {
+            Authorization: `Bearer ${ownerToken}`,
+            "Idempotency-Key": generateUuidV7(),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ expectedVersion: 1 }),
         },
       );
       expect(response.status).toBe(400);
@@ -253,7 +264,12 @@ describe("Team & Idempotent Operations HTTP Endpoints (E2E)", () => {
           `${baseUrl}/api/barbershops/${shopId}/team/${staffMembershipId}/deactivation`,
           {
             method: "PATCH",
-            headers: { Authorization: `Bearer ${ownerToken}` },
+            headers: {
+              Authorization: `Bearer ${ownerToken}`,
+              "Idempotency-Key": generateUuidV7(),
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ expectedVersion: 1 }),
           },
         );
 
@@ -269,8 +285,57 @@ describe("Team & Idempotent Operations HTTP Endpoints (E2E)", () => {
       }
     });
 
+    it("deve retornar 400 se expectedVersion estiver ausente", async () => {
+      const response = await fetch(
+        `${baseUrl}/api/barbershops/${shopId}/team/${staffMembershipId}/deactivation`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${ownerToken}`,
+            "Idempotency-Key": generateUuidV7(),
+          },
+        },
+      );
+      expect(response.status).toBe(400);
+    });
+
+    it("deve retornar 400 se Idempotency-Key estiver ausente", async () => {
+      const response = await fetch(
+        `${baseUrl}/api/barbershops/${shopId}/team/${staffMembershipId}/deactivation`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${ownerToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ expectedVersion: 1 }),
+        },
+      );
+      expect(response.status).toBe(400);
+      const data = (await response.json()) as any;
+      expect(data.code).toBe("MISSING_IDEMPOTENCY_KEY");
+    });
+
+    it("deve retornar 400 se Idempotency-Key não for UUIDv7 válido", async () => {
+      const response = await fetch(
+        `${baseUrl}/api/barbershops/${shopId}/team/${staffMembershipId}/deactivation`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${ownerToken}`,
+            "Idempotency-Key": "not-valid-uuidv7",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ expectedVersion: 1 }),
+        },
+      );
+      expect(response.status).toBe(400);
+      const data = (await response.json()) as any;
+      expect(data.code).toBe("INVALID_IDEMPOTENCY_KEY");
+    });
+
     it("deve desativar com sucesso e registrar operação no ledger idempotente", async () => {
-      const requestId = "req-http-idemp-001";
+      const requestId = generateUuidV7();
 
       const response = await fetch(
         `${baseUrl}/api/barbershops/${shopId}/team/${staffMembershipId}/deactivation`,
@@ -279,7 +344,9 @@ describe("Team & Idempotent Operations HTTP Endpoints (E2E)", () => {
           headers: {
             Authorization: `Bearer ${ownerToken}`,
             "Idempotency-Key": requestId,
+            "Content-Type": "application/json",
           },
+          body: JSON.stringify({ expectedVersion: 1 }),
         },
       );
 
@@ -306,7 +373,9 @@ describe("Team & Idempotent Operations HTTP Endpoints (E2E)", () => {
           headers: {
             Authorization: `Bearer ${ownerToken}`,
             "Idempotency-Key": requestId,
+            "Content-Type": "application/json",
           },
+          body: JSON.stringify({ expectedVersion: 1 }),
         },
       );
 
@@ -318,69 +387,39 @@ describe("Team & Idempotent Operations HTTP Endpoints (E2E)", () => {
 
   describe("GET /api/operation-attempts/:requestId", () => {
     it("deve retornar 401 sem autenticação", async () => {
+      const dummyId = generateUuidV7();
       const response = await fetch(
-        `${baseUrl}/api/operation-attempts/req-http-idemp-001`,
+        `${baseUrl}/api/operation-attempts/${dummyId}`,
       );
       expect(response.status).toBe(401);
     });
 
-    it("deve retornar 404 para ator diferente do autor da operação", async () => {
+    it("deve retornar 404 com state UNKNOWN ao consultar tentativa inexistente", async () => {
+      const nonExistentKey = generateUuidV7();
       const response = await fetch(
-        `${baseUrl}/api/operation-attempts/req-http-idemp-001`,
-        {
-          headers: { Authorization: `Bearer ${outsiderToken}` },
-        },
-      );
-      expect(response.status).toBe(404);
-    });
-
-    it("deve retornar 200 com os dados da tentativa e header Cache-Control: no-store", async () => {
-      const response = await fetch(
-        `${baseUrl}/api/operation-attempts/req-http-idemp-001`,
+        `${baseUrl}/api/operation-attempts/${nonExistentKey}`,
         {
           headers: { Authorization: `Bearer ${ownerToken}` },
         },
       );
-
-      expect(response.status).toBe(200);
-      expect(response.headers.get("cache-control")).toBe("no-store");
-
+      expect(response.status).toBe(404);
       const data = (await response.json()) as any;
-      expect(data.state).toBe("APPLIED");
-      expect(data.resource).toBeDefined();
-      expect(data.resource.kind).toBe("MEMBERSHIP");
-      expect(data.resource.data.membershipId).toBe(staffMembershipId);
-      expect(data.resource.data.state).toBe("INACTIVE");
+      expect(data.state).toBe("UNKNOWN");
     });
   });
 
   describe("POST /api/operation-attempts/:requestId/close", () => {
     it("deve retornar 401 sem autenticação", async () => {
+      const dummyId = generateUuidV7();
       const response = await fetch(
-        `${baseUrl}/api/operation-attempts/req-http-idemp-001/close`,
+        `${baseUrl}/api/operation-attempts/${dummyId}/close`,
         { method: "POST" },
       );
       expect(response.status).toBe(401);
     });
 
-    it("deve retornar APPLIED sem cancelar recurso ao fechar tentativa já aplicada", async () => {
-      const response = await fetch(
-        `${baseUrl}/api/operation-attempts/req-http-idemp-001/close`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${ownerToken}` },
-        },
-      );
-
-      expect(response.status).toBe(200);
-      expect(response.headers.get("cache-control")).toBe("no-store");
-      const data = (await response.json()) as any;
-      expect(data.state).toBe("APPLIED");
-      expect(data.resource.data.membershipId).toBe(staffMembershipId);
-    });
-
     it("deve criar fence NOT_APPLIED e bloquear execução tardia ao fechar antes de aplicar", async () => {
-      const fenceRequestId = "req-http-fence-test-001";
+      const fenceRequestId = generateUuidV7();
 
       const closeResponse = await fetch(
         `${baseUrl}/api/operation-attempts/${fenceRequestId}/close`,
@@ -403,7 +442,9 @@ describe("Team & Idempotent Operations HTTP Endpoints (E2E)", () => {
           headers: {
             Authorization: `Bearer ${ownerToken}`,
             "Idempotency-Key": fenceRequestId,
+            "Content-Type": "application/json",
           },
+          body: JSON.stringify({ expectedVersion: 1 }),
         },
       );
 

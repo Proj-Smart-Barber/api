@@ -45,7 +45,7 @@ export class InMemoryBookingsRepository implements BookingsRepository {
     this.bookingItems.set(booking.id.toString(), items);
   }
 
-  async save(booking: Booking): Promise<void> {
+  async save(booking: Booking, _tx?: any, _options?: any): Promise<void> {
     const itemIndex = this.items.findIndex(
       (item) => item.id.toString() === booking.id.toString(),
     );
@@ -77,13 +77,25 @@ export class InMemoryBookingsRepository implements BookingsRepository {
         return false;
       }
 
-      const bookingStart = new Date(booking.date);
-      const [startHour, startMin] = booking.startTime.split(":").map(Number);
-      bookingStart.setUTCHours(startHour, startMin, 0, 0);
+      const bookingStart =
+        booking.startsAt ??
+        (() => {
+          const d = new Date(booking.date);
+          const [startHour, startMin] = booking.startTime
+            .split(":")
+            .map(Number);
+          d.setUTCHours(startHour, startMin, 0, 0);
+          return d;
+        })();
 
-      const bookingEnd = new Date(booking.date);
-      const [endHour, endMin] = booking.endTime.split(":").map(Number);
-      bookingEnd.setUTCHours(endHour, endMin, 0, 0);
+      const bookingEnd =
+        booking.endsAt ??
+        (() => {
+          const d = new Date(booking.date);
+          const [endHour, endMin] = booking.endTime.split(":").map(Number);
+          d.setUTCHours(endHour, endMin, 0, 0);
+          return d;
+        })();
 
       return startAt < bookingEnd && endAt > bookingStart;
     });
@@ -292,5 +304,88 @@ export class InMemoryBookingsRepository implements BookingsRepository {
       const starts = b.startsAt ? b.startsAt.getTime() : 0;
       return ends > now.getTime() || starts >= now.getTime();
     });
+  }
+
+  async findUnitBookings({
+    barbershopId,
+    barbermanId,
+    date,
+    status,
+    page = 1,
+    limit = 20,
+  }: {
+    barbershopId: string;
+    barbermanId?: string;
+    date?: string;
+    status?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    let filtered = this.items.filter(
+      (b) => b.barbershopId.toString() === barbershopId,
+    );
+    if (barbermanId) {
+      filtered = filtered.filter(
+        (b) => b.barbermanId.toString() === barbermanId,
+      );
+    }
+    if (status) {
+      filtered = filtered.filter((b) => b.status === status);
+    }
+    if (date) {
+      filtered = filtered.filter((b) => {
+        const bDate = b.startsAt
+          ? b.startsAt.toISOString().split("T")[0]
+          : b.date.toISOString().split("T")[0];
+        return bDate === date.split("T")[0];
+      });
+    }
+
+    filtered.sort((a, b) => {
+      const aTime = a.startsAt?.getTime() ?? 0;
+      const bTime = b.startsAt?.getTime() ?? 0;
+      if (aTime !== bTime) return aTime - bTime;
+      return a.id.toString().localeCompare(b.id.toString());
+    });
+
+    const total = filtered.length;
+    let totalAmountInCents = 0;
+    let hasIncompleteData = false;
+    const statusCounts: Record<string, number> = {};
+
+    for (const b of filtered) {
+      const price = b.totalPriceInCents;
+      if (price === null || price === undefined) {
+        hasIncompleteData = true;
+      } else {
+        totalAmountInCents += price;
+      }
+      const st = b.status ?? "UNKNOWN";
+      statusCounts[st] = (statusCounts[st] ?? 0) + 1;
+    }
+
+    const pageLimit = Math.min(Math.max(1, limit), 100);
+    const offset = (Math.max(1, page) - 1) * pageLimit;
+    const pageItems = filtered.slice(offset, offset + pageLimit);
+
+    const items: BookingDetails[] = [];
+    for (const b of pageItems) {
+      const details = await this.findByIdWithDetails(b.id.toString());
+      if (details) items.push(details);
+    }
+
+    return {
+      items,
+      page: Math.max(1, page),
+      limit: pageLimit,
+      total,
+      hasNext: offset + pageItems.length < total,
+      summary: {
+        totalBookings: total,
+        totalAmountInCents,
+        statusCounts,
+        hasIncompleteData,
+      },
+    };
   }
 }

@@ -405,6 +405,32 @@ export async function runSchemaMigrations() {
       ON "operation_attempts" ("expires_at");
     `);
 
+    // 11. Grupo 2 — Notificações idempotentes por evento e rate limit de customer lookup
+    await db.execute(sql`
+      ALTER TABLE "notifications" ADD COLUMN IF NOT EXISTS "event_id" uuid;
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'notifications_event_user_unique'
+        ) THEN
+          ALTER TABLE "notifications" ADD CONSTRAINT "notifications_event_user_unique" UNIQUE ("event_id", "user_id");
+        END IF;
+      END $$;
+    `);
+
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "customer_lookup_rate_limits" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+        "key" text NOT NULL,
+        "count" integer DEFAULT 1 NOT NULL,
+        "reset_at" timestamp with time zone NOT NULL,
+        "created_at" timestamp with time zone DEFAULT now(),
+        CONSTRAINT "customer_lookup_rate_limits_key_unique" UNIQUE ("key")
+      );
+      CREATE INDEX IF NOT EXISTS "customer_lookup_rate_limits_key_idx" ON "customer_lookup_rate_limits" ("key");
+      CREATE INDEX IF NOT EXISTS "customer_lookup_rate_limits_reset_at_idx" ON "customer_lookup_rate_limits" ("reset_at");
+    `);
+
     hasMigrated = true;
     console.log("[Migration] Schema migrations completed successfully.");
     return {

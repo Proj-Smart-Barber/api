@@ -1,4 +1,8 @@
 export interface CancelBookingDTO {
   bookingId: string;
-  barbermanId: string;
+  actorId?: string;
+  barbermanId?: string;
+  expectedVersion?: number;
+  reason?: string;
+  scope?: "PERSONAL" | "UNIT";
 }

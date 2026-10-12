@@ -8,6 +8,8 @@ import { makeCreateBookingController } from "../factories/make-create-booking-co
 import { makeFetchBarbermanDailyScheduleWithDetailsController } from "../factories/make-fetch-barberman-daily-schedule-with-details-controller";
 import { makeFetchMyBookingsController } from "../factories/make-fetch-my-bookings-controller";
 import { makeGetBookingByIdController } from "../factories/make-get-booking-by-id-controller";
+import { makeRescheduleBookingController } from "../factories/make-reschedule-booking-controller";
+import { makeTransitionBookingStatusController } from "../factories/make-transition-booking-status-controller";
 
 const bookingRoutes = Router();
 
@@ -40,6 +42,16 @@ bookingRoutes.delete(
   "/:bookingId/cancel",
   ensureUserIsAuthenticated,
   adaptRoute(makeCancelBookingController()),
+);
+bookingRoutes.patch(
+  "/:bookingId/reschedule",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeRescheduleBookingController()),
+);
+bookingRoutes.patch(
+  "/:bookingId/status",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeTransitionBookingStatusController()),
 );
 
 export { bookingRoutes };

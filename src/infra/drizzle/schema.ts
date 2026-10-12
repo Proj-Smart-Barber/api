@@ -386,21 +386,45 @@ export const scheduleExceptions = pgTable("schedule_exceptions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const notifications = pgTable("notifications", {
-  id: uuid().primaryKey().defaultRandom(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id),
-  type: text().notNull(),
-  title: text().notNull(),
-  message: text().notNull(),
-  referenceType: text("reference_type"),
-  referenceId: uuid("reference_id"),
-  scheduledAt: timestamp("scheduled_at").notNull(),
-  sentAt: timestamp("sent_at"),
-  readAt: timestamp("read_at"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    eventId: uuid("event_id"),
+    type: text().notNull(),
+    title: text().notNull(),
+    message: text().notNull(),
+    referenceType: text("reference_type"),
+    referenceId: uuid("reference_id"),
+    scheduledAt: timestamp("scheduled_at").notNull(),
+    sentAt: timestamp("sent_at"),
+    readAt: timestamp("read_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    unique("notifications_event_user_unique").on(table.eventId, table.userId),
+    index("notifications_user_id_idx").on(table.userId),
+  ],
+);
+
+export const customerLookupRateLimits = pgTable(
+  "customer_lookup_rate_limits",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    key: text().notNull(),
+    count: integer().notNull().default(1),
+    resetAt: timestamp("reset_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    unique("customer_lookup_rate_limits_key_unique").on(table.key),
+    index("customer_lookup_rate_limits_key_idx").on(table.key),
+    index("customer_lookup_rate_limits_reset_at_idx").on(table.resetAt),
+  ],
+);
 
 export const operationAttempts = pgTable(
   "operation_attempts",
