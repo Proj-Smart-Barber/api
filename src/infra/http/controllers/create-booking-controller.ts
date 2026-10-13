@@ -46,7 +46,7 @@ const createBookingControllerRequest = z.object({
     .string()
     .regex(/^\d{2}:\d{2}$/, "Horário de fim inválido.")
     .optional(),
-  slotStartAt: z.string().optional(),
+  slotStartAt: z.string().datetime({ offset: true }).optional(),
   expectedTotalPriceInCents: z.number().int().positive().optional(),
   expectedDurationInMinutes: z.number().int().positive().optional(),
 });
@@ -105,6 +105,7 @@ export class CreateBookingController implements Controller {
 
         const payloadHash = canonicalOperationHash({
           action: "CREATE_BOOKING",
+          slotStartAt: parsed.slotStartAt ? new Date(parsed.slotStartAt).toISOString() : undefined,
           scope: parsed.scope,
           shopId: resolvedShopId,
           customerId: parsed.customerId ?? parsed.userId,

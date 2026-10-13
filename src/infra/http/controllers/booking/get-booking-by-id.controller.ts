@@ -14,6 +14,7 @@ import { BookingDetailsMapper } from "../../../../domain/enterprise/mappers/book
 const getBookingByIdSchema = z.object({
   bookingId: z.string().uuid({ message: "ID do agendamento inválido." }),
   userId: z.string().uuid({ message: "ID do usuário inválido." }),
+  scope: z.enum(["PERSONAL", "UNIT"]).optional(),
 });
 
 export class GetBookingByIdController implements Controller {
@@ -36,13 +37,19 @@ export class GetBookingByIdController implements Controller {
 
       // Permite acesso se for o cliente ou o profissional responsável ou proprietário ativo da unidade
       const isCustomer = b.customer.id.toString() === parsed.userId;
-      const isBarberman = b.barbermanId.toString() === parsed.userId;
+      let isBarberman = false;
 
       let isOwner = false;
       if (this.membershipsRepository) {
         const mem = await this.membershipsRepository.findByBarbershopAndUser(
           b.barbershopId.toString(),
           parsed.userId,
+        );
+        isBarberman = Boolean(
+          mem &&
+            mem.state === "ACTIVE" &&
+            ["OWNER", "BARBERMAN"].includes(mem.role) &&
+            b.barbermanId.toString() === parsed.userId,
         );
         if (mem && mem.state === "ACTIVE" && mem.role === "OWNER") {
           isOwner = true;
@@ -53,10 +60,24 @@ export class GetBookingByIdController implements Controller {
         return notFound({ error: "Agendamento não encontrado." });
       }
 
+      let resolvedScope: "PERSONAL" | "UNIT";
+      if (parsed.scope) {
+        if (parsed.scope === "PERSONAL" && !isCustomer) {
+          return notFound({ error: "Agendamento não encontrado." });
+        }
+        if (parsed.scope === "UNIT" && !(isBarberman || isOwner)) {
+          return notFound({ error: "Agendamento não encontrado." });
+        }
+        resolvedScope = parsed.scope;
+      } else {
+        resolvedScope = isBarberman || isOwner ? "UNIT" : "PERSONAL";
+      }
+
       return ok({
         booking: BookingDetailsMapper.toHTTP(b, {
           actorId: parsed.userId,
-          scope: isBarberman || isOwner ? "UNIT" : "PERSONAL",
+          scope: resolvedScope,
+          barbershopOwnerId: isOwner ? parsed.userId : undefined,
         }),
       });
     } catch (err) {

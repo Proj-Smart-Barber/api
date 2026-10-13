@@ -23,10 +23,17 @@ import {
   TerminalBookingStateError,
 } from "../../../../domain/application/use-cases/_errors/booking-errors";
 
+import {
+  IdempotencyKeyError,
+  type OperationAttemptService,
+} from "../../../../domain/application/services/operation-attempt-service";
+import { canonicalOperationHash } from "../../../../domain/application/services/canonical-operation-hash";
+import { isValidUuidV7 } from "../../../../core/security/uuidv7";
+
 const rescheduleBookingSchema = z.object({
   bookingId: z.string().uuid({ message: "ID do agendamento inválido." }),
   userId: z.string().uuid({ message: "Usuário não autenticado." }),
-  expectedVersion: z.coerce.number().int().min(1).optional(),
+  expectedVersion: z.coerce.number().int().min(1),
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Data deve estar no formato YYYY-MM-DD."),
@@ -35,6 +42,7 @@ const rescheduleBookingSchema = z.object({
   serviceIds: z.array(z.string().uuid()).min(1).optional(),
   expectedTotalPriceInCents: z.number().int().positive().optional(),
   expectedDurationInMinutes: z.number().int().positive().optional(),
+  slotStartAt: z.string().datetime({ offset: true }).optional(),
   scope: z.enum(["PERSONAL", "UNIT"]).optional(),
   reason: z.string().optional(),
 });
@@ -45,11 +53,141 @@ export class RescheduleBookingController implements Controller {
   constructor(
     private rescheduleBookingUseCase: RescheduleBookingUseCase,
     private bookingsRepository?: BookingsRepository,
+    private operationAttemptService?: OperationAttemptService,
   ) {}
 
   async handle(request: RescheduleBookingRequest): Promise<HttpResponse> {
     try {
       const parsed = rescheduleBookingSchema.parse(request);
+
+      const headers = (request as any).headers as
+        | Record<string, string | undefined>
+        | undefined;
+      const headerKey =
+        headers?.["idempotency-key"] ?? headers?.["Idempotency-Key"];
+      const rawRequestId =
+        typeof headerKey === "string" && headerKey.trim() !== ""
+          ? headerKey.trim()
+          : undefined;
+
+      if (!rawRequestId)
+        return clientError({
+          code: "IDEMPOTENCY_KEY_REQUIRED",
+          message: "Idempotency-Key obrigatório para alterar a reserva.",
+        });
+
+      if (rawRequestId && !isValidUuidV7(rawRequestId)) {
+        return clientError({
+          error:
+            "Chave de idempotência inválida. Deve ser UUIDv7 com timestamp válido.",
+          message:
+            "Chave de idempotência inválida. Deve ser UUIDv7 com timestamp válido.",
+          code: "INVALID_IDEMPOTENCY_KEY",
+        });
+      }
+
+      if (rawRequestId && this.operationAttemptService) {
+        const existingBooking = this.bookingsRepository
+          ? await this.bookingsRepository.findById(parsed.bookingId)
+          : null;
+
+        const professionalIds = existingBooking
+          ? Array.from(
+              new Set([
+                existingBooking.barbermanId.toString(),
+                ...(parsed.barbermanId ? [parsed.barbermanId] : []),
+              ]),
+            )
+          : parsed.barbermanId
+            ? [parsed.barbermanId]
+            : [];
+
+        const lockResources = {
+          unitIds: existingBooking
+            ? [existingBooking.barbershopId.toString()]
+            : [],
+          professionalIds,
+          bookingIds: [parsed.bookingId],
+        };
+
+        const payloadHash = canonicalOperationHash({
+          action: "RESCHEDULE_BOOKING",
+          bookingId: parsed.bookingId,
+          expectedVersion: parsed.expectedVersion,
+          date: parsed.date,
+          startTime: parsed.startTime,
+          slotStartAt: parsed.slotStartAt,
+          barbermanId: parsed.barbermanId,
+          serviceIds: parsed.serviceIds,
+          expectedTotalPriceInCents: parsed.expectedTotalPriceInCents,
+          expectedDurationInMinutes: parsed.expectedDurationInMinutes,
+          scope: parsed.scope,
+          reason: parsed.reason,
+        });
+
+        const attemptResult = await this.operationAttemptService.executeOnce(
+          {
+            actorId: parsed.userId,
+            operation: "RESCHEDULE_BOOKING",
+            requestId: rawRequestId,
+            payloadHash,
+            resourceKind: "BOOKING",
+            lockResources,
+          },
+          async (tx, { serverTime }) => {
+            const result = await this.rescheduleBookingUseCase.execute({
+              bookingId: parsed.bookingId,
+              actorId: parsed.userId,
+              expectedVersion: parsed.expectedVersion,
+              date: parsed.date,
+              startTime: parsed.startTime,
+              slotStartAt: parsed.slotStartAt,
+              barbermanId: parsed.barbermanId,
+              serviceIds: parsed.serviceIds,
+              expectedTotalPriceInCents: parsed.expectedTotalPriceInCents,
+              expectedDurationInMinutes: parsed.expectedDurationInMinutes,
+              scope: parsed.scope,
+              reason: parsed.reason,
+              tx,
+              serverTime,
+            });
+
+            if (result.isLeft()) {
+              throw result.value;
+            }
+
+            const { booking, serverTime: bookingServerTime } = result.value;
+
+            let bookingDto: any;
+            if (this.bookingsRepository) {
+              const details = await this.bookingsRepository.getDetails(
+                booking.id.toString(),
+                tx,
+              );
+              if (details) {
+                bookingDto = BookingDetailsMapper.toHTTP(details, {
+                  actorId: parsed.userId,
+                  serverTime: new Date(bookingServerTime),
+                  scope: parsed.scope,
+                });
+              }
+            }
+
+            if (!bookingDto) {
+              bookingDto = BookingMapper.toHTTP(booking);
+            }
+
+            return {
+              resourceKind: "BOOKING" as const,
+              resourceId: booking.id.toString(),
+              resourceVersion: booking.version,
+              data: { booking: bookingDto, serverTime: bookingServerTime },
+            };
+          },
+        );
+
+        return ok(attemptResult.resource?.data ?? {});
+      }
 
       const result = await this.rescheduleBookingUseCase.execute({
         bookingId: parsed.bookingId,
@@ -57,6 +195,7 @@ export class RescheduleBookingController implements Controller {
         expectedVersion: parsed.expectedVersion,
         date: parsed.date,
         startTime: parsed.startTime,
+        slotStartAt: parsed.slotStartAt,
         barbermanId: parsed.barbermanId,
         serviceIds: parsed.serviceIds,
         expectedTotalPriceInCents: parsed.expectedTotalPriceInCents,
@@ -66,60 +205,7 @@ export class RescheduleBookingController implements Controller {
       });
 
       if (result.isLeft()) {
-        const error = result.value;
-
-        if (error instanceof ResourceNotFoundError) {
-          return notFound(error.message);
-        }
-
-        if (error instanceof NotAllowedError) {
-          return forbidden(error.message);
-        }
-
-        if (error instanceof BookingVersionConflictError) {
-          return conflict({
-            error: "BOOKING_VERSION_CONFLICT",
-            code: "BOOKING_VERSION_CONFLICT",
-            message: error.message,
-            currentVersion: error.currentVersion,
-          });
-        }
-
-        if (error instanceof TerminalBookingStateError) {
-          return conflict({
-            error: "TERMINAL_BOOKING_STATE",
-            code: "TERMINAL_BOOKING_STATE",
-            message: error.message,
-          });
-        }
-
-        if (error instanceof ActionDeadlinePassedError) {
-          return conflict({
-            error: "ACTION_DEADLINE_PASSED",
-            code: "ACTION_DEADLINE_PASSED",
-            message: error.message,
-          });
-        }
-
-        if (error instanceof SlotUnavailableError) {
-          return conflict({
-            error: "SLOT_UNAVAILABLE",
-            code: "SLOT_UNAVAILABLE",
-            message: error.message,
-          });
-        }
-
-        if (error instanceof QuoteChangedError) {
-          return conflict({
-            error: "QUOTE_CHANGED",
-            code: "QUOTE_CHANGED",
-            message: error.message,
-            quote: error.quote,
-            operationState: "NOT_APPLIED",
-          });
-        }
-
-        return clientError(error);
+        return this.handleError(result.value);
       }
 
       const { booking, serverTime } = result.value;
@@ -143,10 +229,82 @@ export class RescheduleBookingController implements Controller {
       });
     } catch (err) {
       if (err instanceof ZodError) {
-        return clientError(z.prettifyError(err));
+        return clientError({ errors: err.issues });
       }
 
-      return fail(err instanceof Error ? err : new Error(String(err)));
+      return this.handleError(err);
     }
+  }
+
+  private handleError(error: unknown): HttpResponse {
+    if (error instanceof IdempotencyKeyError) {
+      if (error.code === "IDEMPOTENCY_PAYLOAD_MISMATCH") {
+        return conflict({
+          code: error.code,
+          error: error.message,
+          message: error.message,
+        });
+      }
+      return clientError({
+        code: error.code,
+        error: error.message,
+        message: error.message,
+      });
+    }
+
+    if (error instanceof ResourceNotFoundError) {
+      return notFound(error.message);
+    }
+
+    if (error instanceof NotAllowedError) {
+      return forbidden(error.message);
+    }
+
+    if (error instanceof BookingVersionConflictError) {
+      return conflict({
+        error: "BOOKING_VERSION_CONFLICT",
+        code: "BOOKING_VERSION_CONFLICT",
+        message: error.message,
+        currentVersion: error.currentVersion,
+      });
+    }
+
+    if (error instanceof TerminalBookingStateError) {
+      return conflict({
+        error: "TERMINAL_BOOKING_STATE",
+        code: "TERMINAL_BOOKING_STATE",
+        message: error.message,
+      });
+    }
+
+    if (error instanceof ActionDeadlinePassedError) {
+      return conflict({
+        error: "ACTION_DEADLINE_PASSED",
+        code: "ACTION_DEADLINE_PASSED",
+        message: error.message,
+      });
+    }
+
+    if (error instanceof SlotUnavailableError) {
+      return conflict({
+        error: "SLOT_UNAVAILABLE",
+        code: "SLOT_UNAVAILABLE",
+        message: error.message,
+      });
+    }
+
+    if (error instanceof QuoteChangedError) {
+      return conflict({
+        error: "QUOTE_CHANGED",
+        code: "QUOTE_CHANGED",
+        message: error.message,
+        quote: error.quote,
+        operationState: "NOT_APPLIED",
+      });
+    }
+
+    return clientError(
+      error instanceof Error ? { message: error.message } : error,
+    );
   }
 }

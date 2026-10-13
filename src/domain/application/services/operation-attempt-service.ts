@@ -95,7 +95,7 @@ export class OperationAttemptService {
         tx,
       );
     } catch {
-      return true;
+      return false;
     }
   }
 

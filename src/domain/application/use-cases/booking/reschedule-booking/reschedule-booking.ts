@@ -1,6 +1,8 @@
+import type { BarbershopsRepository } from "../../../repositories/barbershops-repository";
+import { NotifyBookingEventUseCase } from "../../notifications/notify-booking-event/notify-booking-event";
+import { slotMatchesLocalTime } from "../../../services/booking-slot";
 import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
 import { type Either, left, right } from "../../../../../core/logic/either";
-import { generateUuidV7 } from "../../../../../core/security/uuidv7";
 import type { Booking } from "../../../../enterprise/entities/booking";
 import type { BookingsRepository } from "../../../repositories/bookings-repository";
 import type { MembershipsRepository } from "../../../repositories/memberships-repository";
@@ -71,6 +73,7 @@ export class RescheduleBookingUseCase {
     private membershipsRepository?: MembershipsRepository,
     private notificationsRepository?: NotificationsRepository,
     private unitOfWork?: ProfessionalMembershipUnitOfWork,
+    private barbershopsRepository?: BarbershopsRepository,
   ) {}
 
   async execute(
@@ -283,8 +286,18 @@ export class RescheduleBookingUseCase {
 
     const timezone = booking.timezone ?? "America/Sao_Paulo";
     const offset = getOffsetForTimezone(dto.date, timezone);
-    const newStartsAt = new Date(`${dto.date}T${dto.startTime}:00${offset}`);
-    const newEndsAt = new Date(`${dto.date}T${calculatedEndTime}:00${offset}`);
+    const newStartsAt = dto.slotStartAt
+      ? new Date(dto.slotStartAt)
+      : new Date(`${dto.date}T${dto.startTime}:00${offset}`);
+    if (!slotMatchesLocalTime(newStartsAt, dto.date, dto.startTime, timezone))
+      return left(
+        new NotAllowedError(
+          "Horário incompatível com a data e fuso da unidade.",
+        ),
+      );
+    const newEndsAt = new Date(
+      newStartsAt.getTime() + authoritativeTotalDurationInMinutes * 60000,
+    );
 
     const runReschedule = async (
       tx?: any,
@@ -400,35 +413,23 @@ export class RescheduleBookingUseCase {
       });
 
       if (this.notificationsRepository) {
-        const recipients = new Set<string>();
-        if (booking.customerId && booking.customerId.toString() !== actorId) {
-          recipients.add(booking.customerId.toString());
-        }
-        if (targetBarbermanId !== actorId) {
-          recipients.add(targetBarbermanId);
-        }
-        if (
-          previousBarbermanId !== targetBarbermanId &&
-          previousBarbermanId !== actorId
-        ) {
-          recipients.add(previousBarbermanId);
-        }
-
-        const items = Array.from(recipients).map((recipientId) => ({
-          userId: recipientId,
-          eventId: generateUuidV7(),
-          type: "BOOKING_RESCHEDULED",
-          title: "Agendamento Reagendado",
-          message: `Agendamento alterado para ${dto.date} às ${dto.startTime}.`,
-          referenceType: "BOOKING",
-          referenceId: booking.id.toString(),
-          scheduledAt: now,
-          sentAt: now,
-        }));
-
-        if (items.length > 0) {
-          await this.notificationsRepository.createManyWithTx(items, tx);
-        }
+        const barbershop = this.barbershopsRepository
+          ? await this.barbershopsRepository.findById(
+              booking.barbershopId.toString(),
+            )
+          : undefined;
+        if (this.barbershopsRepository && !barbershop)
+          throw new Error("Unidade não encontrada ao notificar reserva.");
+        await new NotifyBookingEventUseCase(
+          this.notificationsRepository,
+        ).execute({
+          booking,
+          barbershop: barbershop ?? undefined,
+          eventType: "RESCHEDULED",
+          serverTime: now,
+          tx,
+          previousBarbermanId,
+        });
       }
 
       return right({
@@ -436,6 +437,12 @@ export class RescheduleBookingUseCase {
         serverTime: now.toISOString(),
       });
     };
+
+    if (dto.tx) {
+      return await runReschedule(dto.tx, {
+        serverTime: dto.serverTime ?? new Date(),
+      });
+    }
 
     if (this.unitOfWork) {
       const professionalIds = Array.from(

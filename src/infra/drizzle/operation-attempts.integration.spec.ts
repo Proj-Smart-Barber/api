@@ -201,7 +201,7 @@ describe("Operation Attempts & Idempotency Ledger (Task B2 & Checkpoint)", () =>
       },
       async () => ({
         resourceKind: "MEMBERSHIP" as const,
-        resourceId: "mem-456",
+        resourceId: (await db.select({ id: membership.id }).from(membership).where(eq(membership.userId, actorAId)).limit(1))[0].id,
         resourceVersion: 3,
         data: { state: "INACTIVE", version: 3 },
       }),
@@ -214,7 +214,7 @@ describe("Operation Attempts & Idempotency Ledger (Task B2 & Checkpoint)", () =>
     expect(attempt?.state).toBe("APPLIED");
     expect(attempt?.operation).toBe("TEST_LOST_RESPONSE");
     expect(attempt?.resource?.kind).toBe("MEMBERSHIP");
-    expect(attempt?.resource?.id).toBe("mem-456");
+    expect(attempt?.resource?.id).toBe((await db.select({ id: membership.id }).from(membership).where(eq(membership.userId, actorAId)).limit(1))[0].id);
     expect(attempt?.resource?.version).toBe(3);
     expect(attempt?.resource?.data).toEqual({ state: "INACTIVE", version: 3 });
   });
@@ -425,7 +425,7 @@ describe("Operation Attempts & Idempotency Ledger (Task B2 & Checkpoint)", () =>
       payloadHash: "hash_old",
       state: "APPLIED",
       resourceKind: "MEMBERSHIP",
-      resourceId: "mem-past-123",
+      resourceId: (await db.select({ id: membership.id }).from(membership).where(eq(membership.userId, actorAId)).limit(1))[0].id,
       resourceVersion: 1,
       responsePayload: JSON.stringify({ state: "INACTIVE", durable: true }),
       terminalReason: null,

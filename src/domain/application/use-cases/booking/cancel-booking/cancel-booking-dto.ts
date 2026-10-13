@@ -5,4 +5,6 @@ export interface CancelBookingDTO {
   expectedVersion?: number;
   reason?: string;
   scope?: "PERSONAL" | "UNIT";
+  tx?: any;
+  serverTime?: Date;
 }

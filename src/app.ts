@@ -10,7 +10,8 @@ import { DemoSeedEngine } from "./infra/drizzle/demo-seed/engine";
 const app = express();
 
 // Executa migrações idempotentes no boot do servidor
-void runSchemaMigrations().catch((err) => {
+// Integration tests prepare their isolated schema explicitly; concurrent boot DDL can deadlock fixtures.
+if (process.env.NODE_ENV !== "test") void runSchemaMigrations().catch((err) => {
   console.error("[App] Failed to run schema migrations on startup:", err);
 });
 app.use(

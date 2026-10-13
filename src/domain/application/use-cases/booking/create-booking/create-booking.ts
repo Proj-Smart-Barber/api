@@ -1,3 +1,4 @@
+import { slotMatchesLocalTime } from "../../../services/booking-slot";
 import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
 import { type Either, left, right } from "../../../../../core/logic/either";
 import { Booking } from "../../../../enterprise/entities/booking";
@@ -307,6 +308,7 @@ export class CreateBookingUseCase {
     const startAt = dto.slotStartAt
       ? new Date(dto.slotStartAt)
       : new Date(`${dto.date}T${dto.startTime}:00${offset}`);
+    if (!slotMatchesLocalTime(startAt, dto.date, dto.startTime, timezone)) return left(new NotAllowedError("Horário incompatível com a data e fuso da unidade."));
     const endAt = new Date(
       startAt.getTime() + calculatedDurationInMinutes * 60 * 1000,
     );

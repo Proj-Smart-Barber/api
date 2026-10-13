@@ -12,5 +12,5 @@ export function makeFetchUnitBookingsController(): Controller {
     bookingsRepository,
   );
 
-  return new FetchUnitBookingsController(fetchUnitBookingsUseCase);
+  return new FetchUnitBookingsController(fetchUnitBookingsUseCase, membershipsRepository);
 }

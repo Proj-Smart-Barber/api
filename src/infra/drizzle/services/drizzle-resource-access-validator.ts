@@ -69,12 +69,17 @@ export class DrizzleResourceAccessValidator implements ResourceAccessValidator {
 
       // Customer or Barberman
       if (
-        targetBooking.customerId === actorId ||
-        targetBooking.barbermanId === actorId
+        targetBooking.customerId === actorId
       ) {
         return true;
       }
 
+      if (targetBooking.barbermanId === actorId) {
+        const [professional] = await executor.select({ id: membership.id }).from(membership).where(and(
+          eq(membership.barbershopId, targetBooking.barbershopId), eq(membership.userId, actorId), eq(membership.state, "ACTIVE"),
+        ));
+        if (professional) return true;
+      }
       // Active OWNER in the barbershop
       const [ownerMem] = await executor
         .select({ id: membership.id })

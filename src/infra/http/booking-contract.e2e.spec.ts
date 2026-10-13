@@ -321,6 +321,7 @@ describe("Booking Contract & Lifecycle E2E Workflow (Task B5)", () => {
         headers: {
           Authorization: `Bearer ${customerToken}`,
           "Content-Type": "application/json",
+          "Idempotency-Key": generateUuidV7(),
         },
         body: JSON.stringify({
           date: "2026-12-10",
@@ -348,6 +349,7 @@ describe("Booking Contract & Lifecycle E2E Workflow (Task B5)", () => {
         headers: {
           Authorization: `Bearer ${customerToken}`,
           "Content-Type": "application/json",
+          "Idempotency-Key": generateUuidV7(),
         },
         body: JSON.stringify({
           date: "2026-12-10",
@@ -381,6 +383,7 @@ describe("Booking Contract & Lifecycle E2E Workflow (Task B5)", () => {
         headers: {
           Authorization: `Bearer ${customerToken}`,
           "Content-Type": "application/json",
+          "Idempotency-Key": generateUuidV7(),
         },
         body: JSON.stringify({
           reason: "Imprevisto pessoal",
@@ -401,10 +404,12 @@ describe("Booking Contract & Lifecycle E2E Workflow (Task B5)", () => {
         headers: {
           Authorization: `Bearer ${customerToken}`,
           "Content-Type": "application/json",
+          "Idempotency-Key": generateUuidV7(),
         },
         body: JSON.stringify({
           date: "2026-12-10",
           startTime: "15:00",
+          expectedVersion: 3,
         }),
       },
     );

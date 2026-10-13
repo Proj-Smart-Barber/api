@@ -4,4 +4,6 @@ export interface TransitionBookingStatusDTO {
   status: "COMPLETED" | "NO_SHOW";
   expectedVersion?: number;
   reason?: string;
+  tx?: any;
+  serverTime?: Date;
 }
