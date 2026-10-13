@@ -1,3 +1,4 @@
+import { DrizzleBarbershopsRepository } from "../../drizzle/repositories/drizzle-barbershops-repository";
 import { RescheduleBookingUseCase } from "../../../domain/application/use-cases/booking/reschedule-booking/reschedule-booking";
 import { RescheduleBookingController } from "../controllers/booking/reschedule-booking.controller";
 import { DrizzleBookingsRepository } from "../../drizzle/repositories/drizzle-bookings-repository";
@@ -23,6 +24,7 @@ export function makeRescheduleBookingController() {
     drizzleMembershipsRepository,
     drizzleNotificationsRepository,
     unitOfWork,
+    new DrizzleBarbershopsRepository(),
   );
 
   const attemptsRepository = new DrizzleOperationAttemptsRepository();

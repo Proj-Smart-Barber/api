@@ -1,5 +1,7 @@
 # Contrato de reservas e publicação coordenada
 
+Atualização de13/10/2026: o PR51 agora incorpora a contribuição do PR50, com notificações transacionais e remarcação única em /reschedule. Evidências atuais e mapa de reaproveitamento em [INTEGRACAO_PRS_50_51.md](INTEGRACAO_PRS_50_51.md). O frontend30 já foi mergeado. A evidência local abaixo é histórica, anterior à consolidação de316testes.
+
 As alterações DELETE /api/bookings/:id/cancel, PATCH /api/bookings/:id/reschedule e PATCH /api/bookings/:id/status exigem Idempotency-Key UUIDv7 e expectedVersion inteiro positivo. Não reutilizar uma chave com outro payload. Status aceita somente COMPLETED ou NO_SHOW. A criação mantém compatibilidade com a chamada legada sem chave; o consumidor novo utiliza o ledger.
 
 slotStartAt, quando informado na criação/remarcação, deve ser um instante ISO com offset e corresponder a date/startTime no fuso IANA da unidade. O instante normalizado participa do hash, evitando replay de um horário diferente. O detalhe aceita scope PERSONAL ou UNIT; a leitura profissional exige vínculo ACTIVE e papel autorizado na unidade. CreatedByUserId não concede acesso pessoal ao agendamento de outro cliente.

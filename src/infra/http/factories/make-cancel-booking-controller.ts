@@ -1,3 +1,4 @@
+import { DrizzleBarbershopsRepository } from "../../drizzle/repositories/drizzle-barbershops-repository";
 import { CancelBookingUseCase } from "../../../domain/application/use-cases/booking/cancel-booking/cancel-booking";
 import { CancelBookingController } from "../controllers/cancel-booking-controller";
 import { DrizzleBookingsRepository } from "../../drizzle/repositories/drizzle-bookings-repository";
@@ -20,6 +21,7 @@ export function makeCancelBookingController() {
     drizzleMembershipsRepository,
     drizzleNotificationsRepository,
     unitOfWork,
+    new DrizzleBarbershopsRepository(),
   );
 
   const attemptsRepository = new DrizzleOperationAttemptsRepository();

@@ -1,6 +1,7 @@
 import { type Either, left, right } from "../../../../../core/logic/either";
-import { generateUuidV7 } from "../../../../../core/security/uuidv7";
 import type { BookingsRepository } from "../../../repositories/bookings-repository";
+import type { BarbershopsRepository } from "../../../repositories/barbershops-repository";
+import { NotifyBookingEventUseCase } from "../../notifications/notify-booking-event/notify-booking-event";
 import type { MembershipsRepository } from "../../../repositories/memberships-repository";
 import type { NotificationsRepository } from "../../../repositories/notifications-repository";
 import type { ProfessionalMembershipUnitOfWork } from "../../../services/professional-membership-unit-of-work";
@@ -33,6 +34,7 @@ export class CancelBookingUseCase {
     private membershipsRepository?: MembershipsRepository,
     private notificationsRepository?: NotificationsRepository,
     private unitOfWork?: ProfessionalMembershipUnitOfWork,
+    private barbershopsRepository?: BarbershopsRepository,
   ) {}
 
   async execute(dto: CancelBookingDTO): Promise<CancelBookingUseCaseResponse> {
@@ -168,29 +170,22 @@ export class CancelBookingUseCase {
       });
 
       if (this.notificationsRepository) {
-        const recipientId =
-          scope === "PERSONAL"
-            ? booking.barbermanId.toString()
-            : booking.customerId?.toString();
-
-        if (recipientId && recipientId !== actorId) {
-          await this.notificationsRepository.createManyWithTx(
-            [
-              {
-                userId: recipientId,
-                eventId: generateUuidV7(),
-                type: "BOOKING_CANCELLED",
-                title: "Agendamento Cancelado",
-                message: `O agendamento das ${booking.startTime} foi cancelado.`,
-                referenceType: "BOOKING",
-                referenceId: booking.id.toString(),
-                scheduledAt: now,
-                sentAt: now,
-              },
-            ],
-            tx,
-          );
-        }
+        const barbershop = this.barbershopsRepository
+          ? await this.barbershopsRepository.findById(
+              booking.barbershopId.toString(),
+            )
+          : undefined;
+        if (this.barbershopsRepository && !barbershop)
+          throw new Error("Unidade não encontrada ao notificar reserva.");
+        await new NotifyBookingEventUseCase(
+          this.notificationsRepository,
+        ).execute({
+          booking,
+          barbershop: barbershop ?? undefined,
+          eventType: "CANCELLED",
+          serverTime: now,
+          tx,
+        });
       }
 
       return right({

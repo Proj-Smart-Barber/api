@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { randomUUID } from "node:crypto";
 import http from "node:http";
 import type { AddressInfo } from "node:net";
-import { inArray, eq } from "drizzle-orm";
+import { inArray, eq, and } from "drizzle-orm";
+import { DrizzleNotificationsRepository } from "../drizzle/repositories/drizzle-notifications-repository";
 import { sign } from "jsonwebtoken";
 import { generateUuidV7 } from "../../core/security/uuidv7";
 import app from "../../app";
@@ -295,6 +296,19 @@ describe("Booking Actions Contract & Idempotency E2E (Task I2)", () => {
     expect(attemptData.state).toBe("APPLIED");
     expect(attemptData.resource.kind).toBe("BOOKING");
     expect(attemptData.resource.id).toBe(booking.id);
+    const notices = await db
+      .select()
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.referenceId, booking.id),
+          eq(notifications.type, "BOOKING_CANCELLED"),
+        ),
+      );
+    expect(notices.map((n) => n.userId).sort()).toEqual(
+      [ownerUserId, barberUserId, customerUserId].sort(),
+    );
+    expect(notices.every((n) => n.message.includes("25/10/2026"))).toBe(true);
   });
 
   it("should enforce Idempotency-Key and ledger on PATCH /api/bookings/:bookingId/reschedule", async () => {
@@ -349,6 +363,25 @@ describe("Booking Actions Contract & Idempotency E2E (Task I2)", () => {
     const resData2 = (await rescheduleRes2.json()) as any;
     expect(resData2.booking.startTime).toBe("16:00");
     expect(resData2.booking.version).toBe(booking.version + 1);
+    const notices = await db
+      .select()
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.referenceId, booking.id),
+          eq(notifications.type, "BOOKING_RESCHEDULED"),
+        ),
+      );
+    expect(notices.map((n) => n.userId).sort()).toEqual(
+      [ownerUserId, barberUserId, customerUserId].sort(),
+    );
+    expect(notices.every((n) => n.message.includes("26/10/2026"))).toBe(true);
+    expect(new Date(resData1.booking.startsAt).toISOString()).toBe(
+      "2026-10-26T19:00:00.000Z",
+    );
+    expect(new Date(resData1.booking.endsAt).toISOString()).toBe(
+      "2026-10-26T19:30:00.000Z",
+    );
 
     // Conferir se attempt existe no ledger
     const attemptRes = await fetch(
@@ -453,60 +486,356 @@ describe("Booking Actions Contract & Idempotency E2E (Task I2)", () => {
 
   it("includes the selected instant in the creation payload hash", async () => {
     const key = generateUuidV7();
-    const send = (slotStartAt: string) => fetch(`${baseUrl}/api/bookings`, { method: "POST", headers: { Authorization: `Bearer ${customerToken}`, "Content-Type": "application/json", "Idempotency-Key": key }, body: JSON.stringify({ scope: "PERSONAL", shopId, serviceIds: [service1Id], barbermanId: barberUserId, date: "2026-11-16", startTime: "10:00", slotStartAt }) });
+    const send = (slotStartAt: string) =>
+      fetch(`${baseUrl}/api/bookings`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${customerToken}`,
+          "Content-Type": "application/json",
+          "Idempotency-Key": key,
+        },
+        body: JSON.stringify({
+          scope: "PERSONAL",
+          shopId,
+          serviceIds: [service1Id],
+          barbermanId: barberUserId,
+          date: "2026-11-16",
+          startTime: "10:00",
+          slotStartAt,
+        }),
+      });
     const first = await send("2026-11-16T13:00:00.000Z");
     expect(first.status).toBe(201);
-    testBookingIds.push((await first.json() as any).booking.id);
+    testBookingIds.push(((await first.json()) as any).booking.id);
     const different = await send("2026-11-16T14:00:00.000Z");
     expect(different.status).toBe(409);
-    expect((await different.json() as any).code).toBe("IDEMPOTENCY_PAYLOAD_MISMATCH");
+    expect(((await different.json()) as any).code).toBe(
+      "IDEMPOTENCY_PAYLOAD_MISMATCH",
+    );
   });
   it("rejects missing key and missing version on new mutations", async () => {
     const booking = await createTestBooking("2026-11-12", "10:00");
-    const missingKey = await fetch(`${baseUrl}/api/bookings/${booking.id}/cancel`, {
-      method: "DELETE", headers: { Authorization: `Bearer ${customerToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ expectedVersion: booking.version, scope: "PERSONAL" }),
-    });
+    const missingKey = await fetch(
+      `${baseUrl}/api/bookings/${booking.id}/cancel`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${customerToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          expectedVersion: booking.version,
+          scope: "PERSONAL",
+        }),
+      },
+    );
     expect(missingKey.status).toBe(400);
-    const missingVersion = await fetch(`${baseUrl}/api/bookings/${booking.id}/cancel`, {
-      method: "DELETE", headers: { Authorization: `Bearer ${customerToken}`, "Content-Type": "application/json", "Idempotency-Key": generateUuidV7() },
-      body: JSON.stringify({ scope: "PERSONAL" }),
-    });
+    const missingVersion = await fetch(
+      `${baseUrl}/api/bookings/${booking.id}/cancel`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${customerToken}`,
+          "Content-Type": "application/json",
+          "Idempotency-Key": generateUuidV7(),
+        },
+        body: JSON.stringify({ scope: "PERSONAL" }),
+      },
+    );
     expect(missingVersion.status).toBe(400);
   });
   it("denies UNIT detail after professional membership is deactivated", async () => {
     const booking = await createTestBooking("2026-11-13", "10:00");
-    await db.update(membership).set({ state: "INACTIVE" }).where(eq(membership.userId, barberUserId));
+    await db
+      .update(membership)
+      .set({ state: "INACTIVE" })
+      .where(eq(membership.userId, barberUserId));
     try {
-      const response = await fetch(`${baseUrl}/api/bookings/${booking.id}?scope=UNIT`, { headers: { Authorization: `Bearer ${barberToken}` } });
+      const response = await fetch(
+        `${baseUrl}/api/bookings/${booking.id}?scope=UNIT`,
+        { headers: { Authorization: `Bearer ${barberToken}` } },
+      );
       expect(response.status).toBe(404);
-      const personal = await fetch(`${baseUrl}/api/bookings/${booking.id}?scope=PERSONAL`, { headers: { Authorization: `Bearer ${customerToken}` } });
+      const personal = await fetch(
+        `${baseUrl}/api/bookings/${booking.id}?scope=PERSONAL`,
+        { headers: { Authorization: `Bearer ${customerToken}` } },
+      );
       expect(personal.status).toBe(200);
-    } finally { await db.update(membership).set({ state: "ACTIVE" }).where(eq(membership.userId, barberUserId)); }
+    } finally {
+      await db
+        .update(membership)
+        .set({ state: "ACTIVE" })
+        .where(eq(membership.userId, barberUserId));
+    }
   });
   it("recovers a cancellation when connection is lost after server commit", async () => {
     const booking = await createTestBooking("2026-11-14", "10:00");
     const key = generateUuidV7();
     const proxy = http.createServer(async (request, response) => {
       try {
-        const upstream = await fetch(`${baseUrl}/api/bookings/${booking.id}/cancel`, {
-          method: "DELETE", headers: { Authorization: `Bearer ${customerToken}`, "Content-Type": "application/json", "Idempotency-Key": key },
-          body: JSON.stringify({ scope: "PERSONAL", expectedVersion: booking.version }),
-        });
+        const upstream = await fetch(
+          `${baseUrl}/api/bookings/${booking.id}/cancel`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${customerToken}`,
+              "Content-Type": "application/json",
+              "Idempotency-Key": key,
+            },
+            body: JSON.stringify({
+              scope: "PERSONAL",
+              expectedVersion: booking.version,
+            }),
+          },
+        );
         await upstream.text();
         response.destroy();
-      } catch { response.destroy(); }
+      } catch {
+        response.destroy();
+      }
     });
-    await new Promise<void>(resolve => proxy.listen(0, "127.0.0.1", resolve));
+    await new Promise<void>((resolve) => proxy.listen(0, "127.0.0.1", resolve));
     try {
-      await expect(fetch(`http://127.0.0.1:${(proxy.address() as AddressInfo).port}`)).rejects.toThrow();
-      const result = await fetch(`${baseUrl}/api/operation-attempts/${key}`, { headers: { Authorization: `Bearer ${customerToken}` } });
-      const data = await result.json() as any;
+      await expect(
+        fetch(`http://127.0.0.1:${(proxy.address() as AddressInfo).port}`),
+      ).rejects.toThrow();
+      const result = await fetch(`${baseUrl}/api/operation-attempts/${key}`, {
+        headers: { Authorization: `Bearer ${customerToken}` },
+      });
+      const data = (await result.json()) as any;
       expect(data.state).toBe("APPLIED");
       expect(data.resource.id).toBe(booking.id);
       expect(data.resource.data.booking.version).toBe(booking.version + 1);
-      const close = await fetch(`${baseUrl}/api/operation-attempts/${key}/close`, { method: "POST", headers: { Authorization: `Bearer ${customerToken}` } });
-      expect((await close.json() as any).state).toBe("APPLIED");
-    } finally { await new Promise<void>(resolve => proxy.close(() => resolve())); }
+      const close = await fetch(
+        `${baseUrl}/api/operation-attempts/${key}/close`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${customerToken}` },
+        },
+      );
+      expect(((await close.json()) as any).state).toBe("APPLIED");
+    } finally {
+      await new Promise<void>((resolve) => proxy.close(() => resolve()));
+    }
   });
+
+  const sendReschedule = (
+    booking: any,
+    token: string,
+    overrides: Record<string, unknown> = {},
+    key = generateUuidV7(),
+  ) =>
+    fetch(`${baseUrl}/api/bookings/${booking.id}/reschedule`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "Idempotency-Key": key,
+      },
+      body: JSON.stringify({
+        scope: token === customerToken ? "PERSONAL" : "UNIT",
+        expectedVersion: booking.version,
+        date: "2026-11-22",
+        startTime: "15:00",
+        ...overrides,
+      }),
+    });
+
+  it("does not expose the unsafe update path or accept a keyless reschedule", async () => {
+    const booking = await createTestBooking("2026-11-20", "10:00");
+    const old = await fetch(`${baseUrl}/api/bookings/${booking.id}/update`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${barberToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ startTime: "11:00" }),
+    });
+    expect(old.status).toBe(404);
+    const noKey = await fetch(
+      `${baseUrl}/api/bookings/${booking.id}/reschedule`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${barberToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          scope: "UNIT",
+          expectedVersion: booking.version,
+          date: "2026-11-20",
+          startTime: "11:00",
+        }),
+      },
+    );
+    expect(noKey.status).toBe(400);
+    const missingVersion = await sendReschedule(booking, barberToken, {
+      expectedVersion: undefined,
+    });
+    expect(missingVersion.status).toBe(400);
+  });
+
+  it.each(["CANCELLED", "COMPLETED", "NO_SHOW"])(
+    "rejects rescheduling terminal state %s",
+    async (status) => {
+      const booking = await createTestBooking(
+        "2026-11-21",
+        status === "CANCELLED"
+          ? "09:00"
+          : status === "COMPLETED"
+            ? "10:00"
+            : "11:00",
+      );
+      await db
+        .update(bookings)
+        .set({ status })
+        .where(eq(bookings.id, booking.id));
+      const response = await sendReschedule(booking, barberToken);
+      expect(response.status).toBe(409);
+      expect(((await response.json()) as any).code).toBe(
+        "TERMINAL_BOOKING_STATE",
+      );
+    },
+  );
+
+  it("rejects inactive professionals and expired personal deadlines", async () => {
+    const booking = await createTestBooking("2026-11-23", "09:00");
+    await db
+      .update(membership)
+      .set({ state: "INACTIVE" })
+      .where(eq(membership.userId, barberUserId));
+    try {
+      expect((await sendReschedule(booking, barberToken)).status).toBe(403);
+    } finally {
+      await db
+        .update(membership)
+        .set({ state: "ACTIVE" })
+        .where(eq(membership.userId, barberUserId));
+    }
+    await db
+      .update(bookings)
+      .set({ startsAt: new Date(Date.now() + 3600000) })
+      .where(eq(bookings.id, booking.id));
+    const response = await sendReschedule(booking, customerToken);
+    expect(response.status).toBe(409);
+    expect(((await response.json()) as any).code).toBe(
+      "ACTION_DEADLINE_PASSED",
+    );
+  });
+
+  it("serializes simultaneous edits and rejects a stale version", async () => {
+    const booking = await createTestBooking("2026-11-24", "09:00");
+    const results = await Promise.all([
+      sendReschedule(booking, ownerToken, {
+        date: "2026-11-24",
+        startTime: "10:00",
+      }),
+      sendReschedule(booking, ownerToken, {
+        date: "2026-11-24",
+        startTime: "11:00",
+      }),
+    ]);
+    expect(results.map((r) => r.status).sort()).toEqual([200, 409]);
+    const bodies = (await Promise.all(results.map((r) => r.json()))) as any[];
+    expect(bodies.find((b) => b.code)?.code).toBe("BOOKING_VERSION_CONFLICT");
+    const [saved] = await db
+      .select()
+      .from(bookings)
+      .where(eq(bookings.id, booking.id));
+    expect(saved.version).toBe(booking.version + 1);
+    const events = await db
+      .select()
+      .from(bookingEvents)
+      .where(
+        and(
+          eq(bookingEvents.bookingId, booking.id),
+          eq(bookingEvents.eventType, "RESCHEDULED"),
+        ),
+      );
+    expect(events).toHaveLength(1);
+  });
+
+  it("derives duration from selected services instead of caller endTime", async () => {
+    const booking = await createTestBooking("2026-11-25", "09:00");
+    const response = await sendReschedule(booking, ownerToken, {
+      date: "2026-11-25",
+      startTime: "10:00",
+      serviceIds: [service1Id, service2Id],
+      slotStartAt: "2026-11-25T13:00:00Z",
+      endTime: "10:01",
+    });
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as any;
+    expect(body.booking.endTime).toBe("11:00");
+    expect(body.booking.totalDurationInMinutes).toBe(60);
+    expect(body.booking.startsAt).toBe("2026-11-25T13:00:00.000Z");
+    expect(body.booking.endsAt).toBe("2026-11-25T14:00:00.000Z");
+  });
+
+  it.each(["reschedule", "cancel"])(
+    "rolls back %s, event and notifications if notification storage fails",
+    async (action) => {
+      const booking = await createTestBooking(
+        "2026-11-26",
+        action === "cancel" ? "10:00" : "09:00",
+      );
+      const beforeNotices = await db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.referenceId, booking.id));
+      const spy = vi
+        .spyOn(DrizzleNotificationsRepository.prototype, "createManyWithTx")
+        .mockRejectedValue(new Error("Notification storage unavailable"));
+      try {
+        const response =
+          action === "reschedule"
+            ? await sendReschedule(booking, ownerToken, {
+                date: "2026-11-26",
+                startTime: "11:00",
+              })
+            : await fetch(`${baseUrl}/api/bookings/${booking.id}/cancel`, {
+                method: "DELETE",
+                headers: {
+                  Authorization: `Bearer ${ownerToken}`,
+                  "Content-Type": "application/json",
+                  "Idempotency-Key": generateUuidV7(),
+                },
+                body: JSON.stringify({
+                  expectedVersion: booking.version,
+                  scope: "UNIT",
+                }),
+              });
+        expect(response.status).toBeGreaterThanOrEqual(400);
+        const [saved] = await db
+          .select()
+          .from(bookings)
+          .where(eq(bookings.id, booking.id));
+        expect(saved.version).toBe(booking.version);
+        expect(saved.status).toBe("CONFIRMED");
+        expect(saved.startTime).toBe(booking.startTime);
+        const events = await db
+          .select()
+          .from(bookingEvents)
+          .where(
+            and(
+              eq(bookingEvents.bookingId, booking.id),
+              eq(
+                bookingEvents.eventType,
+                action === "cancel" ? "CANCELLED" : "RESCHEDULED",
+              ),
+            ),
+          );
+        expect(events).toHaveLength(0);
+        const afterNotices = await db
+          .select()
+          .from(notifications)
+          .where(eq(notifications.referenceId, booking.id));
+        expect(afterNotices.map((n) => n.id).sort()).toEqual(
+          beforeNotices.map((n) => n.id).sort(),
+        );
+      } finally {
+        spy.mockRestore();
+      }
+    },
+  );
 });
