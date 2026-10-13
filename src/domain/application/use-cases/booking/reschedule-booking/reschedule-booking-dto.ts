@@ -4,6 +4,7 @@ export interface RescheduleBookingDTO {
   expectedVersion?: number;
   date: string;
   startTime: string;
+  slotStartAt?: string;
   barbermanId?: string;
   serviceIds?: string[];
   expectedTotalPriceInCents?: number;

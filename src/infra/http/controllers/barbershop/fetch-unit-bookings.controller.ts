@@ -12,6 +12,7 @@ import { NotAllowedError } from "../../../../domain/application/use-cases/_error
 import { ResourceNotFoundError } from "../../../../domain/application/use-cases/_errors/resource-not-found-error";
 import type { FetchUnitBookingsUseCase } from "../../../../domain/application/use-cases/barbershop/fetch-unit-bookings/fetch-unit-bookings";
 import { BookingDetailsMapper } from "../../../../domain/enterprise/mappers/booking-details-mapper";
+import type { MembershipsRepository } from "../../../../domain/application/repositories/memberships-repository";
 
 const fetchUnitBookingsSchema = z.object({
   shopId: z.string().uuid({ message: "ID da barbearia inválido." }),
@@ -24,7 +25,7 @@ const fetchUnitBookingsSchema = z.object({
 });
 
 export class FetchUnitBookingsController implements Controller {
-  constructor(private fetchUnitBookingsUseCase: FetchUnitBookingsUseCase) {}
+  constructor(private fetchUnitBookingsUseCase: FetchUnitBookingsUseCase, private memberships?: MembershipsRepository) {}
 
   async handle(request: Record<string, unknown>): Promise<HttpResponse> {
     try {
@@ -52,11 +53,13 @@ export class FetchUnitBookingsController implements Controller {
       }
 
       const serverTime = new Date();
+      const member = await this.memberships?.findByBarbershopAndUser(parsed.shopId, parsed.userId);
       const mappedItems = result.value.items.map((item) =>
         BookingDetailsMapper.toHTTP(item, {
           actorId: parsed.userId,
           serverTime,
           scope: "UNIT",
+          barbershopOwnerId: member?.state === "ACTIVE" && member.role === "OWNER" ? parsed.userId : undefined,
         }),
       );
 

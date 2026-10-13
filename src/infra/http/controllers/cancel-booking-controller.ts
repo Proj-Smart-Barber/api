@@ -33,7 +33,7 @@ import { isValidUuidV7 } from "../../../core/security/uuidv7";
 const cancelBookingControllerRequest = z.object({
   bookingId: z.string().uuid(),
   userId: z.string().uuid(),
-  expectedVersion: z.coerce.number().int().min(1).optional(),
+  expectedVersion: z.coerce.number().int().min(1),
   reason: z.string().optional(),
   scope: z.enum(["PERSONAL", "UNIT"]).optional(),
 });
@@ -62,6 +62,12 @@ export class CancelBookingController implements Controller {
         typeof headerKey === "string" && headerKey.trim() !== ""
           ? headerKey.trim()
           : undefined;
+
+      if (!rawRequestId)
+        return clientError({
+          code: "IDEMPOTENCY_KEY_REQUIRED",
+          message: "Idempotency-Key obrigatório para alterar a reserva.",
+        });
 
       if (rawRequestId && !isValidUuidV7(rawRequestId)) {
         return clientError({

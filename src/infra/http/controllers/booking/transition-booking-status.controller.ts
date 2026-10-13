@@ -34,7 +34,7 @@ const transitionBookingStatusSchema = z.object({
   status: z.enum(["COMPLETED", "NO_SHOW"], {
     message: "Status inválido. Aceito: COMPLETED ou NO_SHOW.",
   }),
-  expectedVersion: z.coerce.number().int().min(1).optional(),
+  expectedVersion: z.coerce.number().int().min(1),
   reason: z.string().optional(),
 });
 
@@ -62,6 +62,12 @@ export class TransitionBookingStatusController implements Controller {
         typeof headerKey === "string" && headerKey.trim() !== ""
           ? headerKey.trim()
           : undefined;
+
+      if (!rawRequestId)
+        return clientError({
+          code: "IDEMPOTENCY_KEY_REQUIRED",
+          message: "Idempotency-Key obrigatório para alterar a reserva.",
+        });
 
       if (rawRequestId && !isValidUuidV7(rawRequestId)) {
         return clientError({

@@ -1,3 +1,4 @@
+import { slotMatchesLocalTime } from "../../../services/booking-slot";
 import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
 import { type Either, left, right } from "../../../../../core/logic/either";
 import { generateUuidV7 } from "../../../../../core/security/uuidv7";
@@ -283,8 +284,9 @@ export class RescheduleBookingUseCase {
 
     const timezone = booking.timezone ?? "America/Sao_Paulo";
     const offset = getOffsetForTimezone(dto.date, timezone);
-    const newStartsAt = new Date(`${dto.date}T${dto.startTime}:00${offset}`);
-    const newEndsAt = new Date(`${dto.date}T${calculatedEndTime}:00${offset}`);
+    const newStartsAt = dto.slotStartAt ? new Date(dto.slotStartAt) : new Date(`${dto.date}T${dto.startTime}:00${offset}`);
+    if (!slotMatchesLocalTime(newStartsAt, dto.date, dto.startTime, timezone)) return left(new NotAllowedError("Horário incompatível com a data e fuso da unidade."));
+    const newEndsAt = new Date(newStartsAt.getTime() + authoritativeTotalDurationInMinutes * 60000);
 
     const runReschedule = async (
       tx?: any,

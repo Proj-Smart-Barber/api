@@ -1779,6 +1779,12 @@ export const swaggerDocument = {
                     description: "Date in YYYY-MM-DD format",
                   },
                   startTime: { type: "string", example: "14:00" },
+                  slotStartAt: {
+                    type: "string",
+                    format: "date-time",
+                    description:
+                      "Selected instant; must match date/time in unit timezone and participates in the idempotency hash",
+                  },
                   endTime: { type: "string", example: "14:30" },
                   expectedTotalPriceInCents: { type: "integer", example: 5000 },
                   expectedDurationInMinutes: { type: "integer", example: 30 },
@@ -2098,17 +2104,18 @@ export const swaggerDocument = {
           {
             in: "header",
             name: "Idempotency-Key",
-            required: false,
+            required: true,
             schema: { type: "string" },
             description: "UUIDv7 idempotency key",
           },
         ],
         requestBody: {
-          required: false,
+          required: true,
           content: {
             "application/json": {
               schema: {
                 type: "object",
+                required: ["expectedVersion"],
                 properties: {
                   expectedVersion: { type: "integer", example: 1 },
                   reason: { type: "string", example: "Imprevisto pessoal" },
@@ -2570,7 +2577,7 @@ export const swaggerDocument = {
           {
             name: "Idempotency-Key",
             in: "header",
-            required: false,
+            required: true,
             schema: { type: "string" },
           },
         ],
@@ -2580,7 +2587,7 @@ export const swaggerDocument = {
             "application/json": {
               schema: {
                 type: "object",
-                required: ["date", "startTime"],
+                required: ["date", "startTime", "expectedVersion"],
                 properties: {
                   expectedVersion: { type: "integer", example: 1 },
                   date: {
@@ -2589,6 +2596,12 @@ export const swaggerDocument = {
                     example: "2026-10-15",
                   },
                   startTime: { type: "string", example: "15:00" },
+                  slotStartAt: {
+                    type: "string",
+                    format: "date-time",
+                    description:
+                      "Selected instant; must match date/time in unit timezone and participates in the idempotency hash",
+                  },
                   barbermanId: { type: "string", format: "uuid" },
                   serviceIds: {
                     type: "array",
@@ -2635,6 +2648,13 @@ export const swaggerDocument = {
         security: [{ bearerAuth: [] }],
         parameters: [
           {
+            name: "Idempotency-Key",
+            in: "header",
+            required: true,
+            schema: { type: "string" },
+            description: "UUIDv7 idempotency key",
+          },
+          {
             name: "bookingId",
             in: "path",
             required: true,
@@ -2647,7 +2667,7 @@ export const swaggerDocument = {
             "application/json": {
               schema: {
                 type: "object",
-                required: ["status"],
+                required: ["status", "expectedVersion"],
                 properties: {
                   status: {
                     type: "string",

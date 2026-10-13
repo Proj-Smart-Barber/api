@@ -33,7 +33,7 @@ import { isValidUuidV7 } from "../../../../core/security/uuidv7";
 const rescheduleBookingSchema = z.object({
   bookingId: z.string().uuid({ message: "ID do agendamento inválido." }),
   userId: z.string().uuid({ message: "Usuário não autenticado." }),
-  expectedVersion: z.coerce.number().int().min(1).optional(),
+  expectedVersion: z.coerce.number().int().min(1),
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Data deve estar no formato YYYY-MM-DD."),
@@ -42,6 +42,7 @@ const rescheduleBookingSchema = z.object({
   serviceIds: z.array(z.string().uuid()).min(1).optional(),
   expectedTotalPriceInCents: z.number().int().positive().optional(),
   expectedDurationInMinutes: z.number().int().positive().optional(),
+  slotStartAt: z.string().datetime({ offset: true }).optional(),
   scope: z.enum(["PERSONAL", "UNIT"]).optional(),
   reason: z.string().optional(),
 });
@@ -68,6 +69,12 @@ export class RescheduleBookingController implements Controller {
         typeof headerKey === "string" && headerKey.trim() !== ""
           ? headerKey.trim()
           : undefined;
+
+      if (!rawRequestId)
+        return clientError({
+          code: "IDEMPOTENCY_KEY_REQUIRED",
+          message: "Idempotency-Key obrigatório para alterar a reserva.",
+        });
 
       if (rawRequestId && !isValidUuidV7(rawRequestId)) {
         return clientError({
@@ -109,6 +116,7 @@ export class RescheduleBookingController implements Controller {
           expectedVersion: parsed.expectedVersion,
           date: parsed.date,
           startTime: parsed.startTime,
+          slotStartAt: parsed.slotStartAt,
           barbermanId: parsed.barbermanId,
           serviceIds: parsed.serviceIds,
           expectedTotalPriceInCents: parsed.expectedTotalPriceInCents,
@@ -133,6 +141,7 @@ export class RescheduleBookingController implements Controller {
               expectedVersion: parsed.expectedVersion,
               date: parsed.date,
               startTime: parsed.startTime,
+              slotStartAt: parsed.slotStartAt,
               barbermanId: parsed.barbermanId,
               serviceIds: parsed.serviceIds,
               expectedTotalPriceInCents: parsed.expectedTotalPriceInCents,
@@ -186,6 +195,7 @@ export class RescheduleBookingController implements Controller {
         expectedVersion: parsed.expectedVersion,
         date: parsed.date,
         startTime: parsed.startTime,
+        slotStartAt: parsed.slotStartAt,
         barbermanId: parsed.barbermanId,
         serviceIds: parsed.serviceIds,
         expectedTotalPriceInCents: parsed.expectedTotalPriceInCents,

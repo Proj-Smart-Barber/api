@@ -37,13 +37,19 @@ export class GetBookingByIdController implements Controller {
 
       // Permite acesso se for o cliente ou o profissional responsável ou proprietário ativo da unidade
       const isCustomer = b.customer.id.toString() === parsed.userId;
-      const isBarberman = b.barbermanId.toString() === parsed.userId;
+      let isBarberman = false;
 
       let isOwner = false;
       if (this.membershipsRepository) {
         const mem = await this.membershipsRepository.findByBarbershopAndUser(
           b.barbershopId.toString(),
           parsed.userId,
+        );
+        isBarberman = Boolean(
+          mem &&
+            mem.state === "ACTIVE" &&
+            ["OWNER", "BARBERMAN"].includes(mem.role) &&
+            b.barbermanId.toString() === parsed.userId,
         );
         if (mem && mem.state === "ACTIVE" && mem.role === "OWNER") {
           isOwner = true;
@@ -71,6 +77,7 @@ export class GetBookingByIdController implements Controller {
         booking: BookingDetailsMapper.toHTTP(b, {
           actorId: parsed.userId,
           scope: resolvedScope,
+          barbershopOwnerId: isOwner ? parsed.userId : undefined,
         }),
       });
     } catch (err) {

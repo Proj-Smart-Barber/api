@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { randomUUID } from "node:crypto";
 import http from "node:http";
 import type { AddressInfo } from "node:net";
-import { inArray } from "drizzle-orm";
+import { inArray, eq } from "drizzle-orm";
 import { sign } from "jsonwebtoken";
 import { generateUuidV7 } from "../../core/security/uuidv7";
 import app from "../../app";
@@ -449,5 +449,64 @@ describe("Booking Actions Contract & Idempotency E2E (Task I2)", () => {
     expect(res.status).toBe(400);
     const data = (await res.json()) as any;
     expect(data.code).toBe("INVALID_IDEMPOTENCY_KEY");
+  });
+
+  it("includes the selected instant in the creation payload hash", async () => {
+    const key = generateUuidV7();
+    const send = (slotStartAt: string) => fetch(`${baseUrl}/api/bookings`, { method: "POST", headers: { Authorization: `Bearer ${customerToken}`, "Content-Type": "application/json", "Idempotency-Key": key }, body: JSON.stringify({ scope: "PERSONAL", shopId, serviceIds: [service1Id], barbermanId: barberUserId, date: "2026-11-16", startTime: "10:00", slotStartAt }) });
+    const first = await send("2026-11-16T13:00:00.000Z");
+    expect(first.status).toBe(201);
+    testBookingIds.push((await first.json() as any).booking.id);
+    const different = await send("2026-11-16T14:00:00.000Z");
+    expect(different.status).toBe(409);
+    expect((await different.json() as any).code).toBe("IDEMPOTENCY_PAYLOAD_MISMATCH");
+  });
+  it("rejects missing key and missing version on new mutations", async () => {
+    const booking = await createTestBooking("2026-11-12", "10:00");
+    const missingKey = await fetch(`${baseUrl}/api/bookings/${booking.id}/cancel`, {
+      method: "DELETE", headers: { Authorization: `Bearer ${customerToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ expectedVersion: booking.version, scope: "PERSONAL" }),
+    });
+    expect(missingKey.status).toBe(400);
+    const missingVersion = await fetch(`${baseUrl}/api/bookings/${booking.id}/cancel`, {
+      method: "DELETE", headers: { Authorization: `Bearer ${customerToken}`, "Content-Type": "application/json", "Idempotency-Key": generateUuidV7() },
+      body: JSON.stringify({ scope: "PERSONAL" }),
+    });
+    expect(missingVersion.status).toBe(400);
+  });
+  it("denies UNIT detail after professional membership is deactivated", async () => {
+    const booking = await createTestBooking("2026-11-13", "10:00");
+    await db.update(membership).set({ state: "INACTIVE" }).where(eq(membership.userId, barberUserId));
+    try {
+      const response = await fetch(`${baseUrl}/api/bookings/${booking.id}?scope=UNIT`, { headers: { Authorization: `Bearer ${barberToken}` } });
+      expect(response.status).toBe(404);
+      const personal = await fetch(`${baseUrl}/api/bookings/${booking.id}?scope=PERSONAL`, { headers: { Authorization: `Bearer ${customerToken}` } });
+      expect(personal.status).toBe(200);
+    } finally { await db.update(membership).set({ state: "ACTIVE" }).where(eq(membership.userId, barberUserId)); }
+  });
+  it("recovers a cancellation when connection is lost after server commit", async () => {
+    const booking = await createTestBooking("2026-11-14", "10:00");
+    const key = generateUuidV7();
+    const proxy = http.createServer(async (request, response) => {
+      try {
+        const upstream = await fetch(`${baseUrl}/api/bookings/${booking.id}/cancel`, {
+          method: "DELETE", headers: { Authorization: `Bearer ${customerToken}`, "Content-Type": "application/json", "Idempotency-Key": key },
+          body: JSON.stringify({ scope: "PERSONAL", expectedVersion: booking.version }),
+        });
+        await upstream.text();
+        response.destroy();
+      } catch { response.destroy(); }
+    });
+    await new Promise<void>(resolve => proxy.listen(0, "127.0.0.1", resolve));
+    try {
+      await expect(fetch(`http://127.0.0.1:${(proxy.address() as AddressInfo).port}`)).rejects.toThrow();
+      const result = await fetch(`${baseUrl}/api/operation-attempts/${key}`, { headers: { Authorization: `Bearer ${customerToken}` } });
+      const data = await result.json() as any;
+      expect(data.state).toBe("APPLIED");
+      expect(data.resource.id).toBe(booking.id);
+      expect(data.resource.data.booking.version).toBe(booking.version + 1);
+      const close = await fetch(`${baseUrl}/api/operation-attempts/${key}/close`, { method: "POST", headers: { Authorization: `Bearer ${customerToken}` } });
+      expect((await close.json() as any).state).toBe("APPLIED");
+    } finally { await new Promise<void>(resolve => proxy.close(() => resolve())); }
   });
 });
