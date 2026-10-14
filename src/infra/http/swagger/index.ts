@@ -73,11 +73,24 @@ export const swaggerDocument = {
                     format: "email",
                     example: "john@example.com",
                   },
-                  password: { type: "string", example: "secret123" },
+                  password: {
+                    type: "string",
+                    description:
+                      "Senha de segurança (mínimo de 15 caracteres e máximo de 72 bytes UTF-8)",
+                    example: "minhasenhasegura123",
+                  },
                   cpf: {
                     type: "string",
-                    description: "CPF (com ou sem máscara)",
+                    description:
+                      "CPF (com ou sem máscara, validado por dígitos verificadores)",
                     example: "111.444.777-35",
+                  },
+                  onboardingIntent: {
+                    type: "string",
+                    enum: ["OWNER", "CLIENT"],
+                    nullable: true,
+                    description: "Intenção de onboarding ('OWNER' ou 'CLIENT')",
+                    example: "CLIENT",
                   },
                   phoneNumber: {
                     type: "string",

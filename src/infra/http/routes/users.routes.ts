@@ -8,6 +8,7 @@ import { ensureUserIsAuthenticated } from "../middlewares/ensure-user-is-authent
 import { makeGetUserProfileController } from "../factories/make-get-user-profile-controller";
 import { makeFetchUserBarbershopsController } from "../factories/make-fetch-user-barbershops-controller";
 import { makeSendEmailVerificationController } from "../factories/make-send-email-verification-controller";
+import { sendEmailVerificationLimit } from "../middlewares/send-verification-email-limit";
 import { makeVerifyEmailController } from "../factories/make-verify-email-controller";
 import { makeSendPasswordRecoveryController } from "../factories/make-send-password-recovery-controller";
 import { makeResetPasswordController } from "../factories/make-reset-password-controller";
@@ -31,6 +32,7 @@ userRoutes.post(
 );
 userRoutes.post(
   "/verification-email",
+  sendEmailVerificationLimit,
   adaptRoute(makeSendEmailVerificationController()),
 );
 userRoutes.get(
