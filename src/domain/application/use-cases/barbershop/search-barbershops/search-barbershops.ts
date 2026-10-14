@@ -16,17 +16,28 @@ export class SearchBarbershopsUseCase {
 
   async execute(input: DiscoveryInput): Promise<SearchBarbershopsResponse> {
     try {
+      const isHealthy = this.discoveryRepository.isLocationServiceHealthy
+        ? await this.discoveryRepository.isLocationServiceHealthy()
+        : false;
+
       if (input.mode === "NEARBY") {
-        if (this.discoveryRepository.isLocationServiceHealthy) {
-          const isHealthy =
-            await this.discoveryRepository.isLocationServiceHealthy();
-          if (!isHealthy) {
-            return left(new LocationServiceUnavailableError());
-          }
+        if (!isHealthy) {
+          return left(new LocationServiceUnavailableError());
         }
       }
 
       const result = await this.discoveryRepository.search(input);
+
+      if (input.mode === "ALL" && !isHealthy) {
+        return right({
+          ...result,
+          items: result.items.map((item) => ({
+            ...item,
+            coordinates: null,
+          })),
+        });
+      }
+
       return right(result);
     } catch (error) {
       if (error instanceof LocationServiceUnavailableError) {

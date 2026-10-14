@@ -52,6 +52,7 @@ export type SetLocationCommand = {
 };
 
 export type LocationStatus = "UNCONFIRMED" | "CONFIRMED" | "NEEDS_REVIEW";
+export type LocationSource = "MANUAL" | "GOOGLE";
 
 export type LastOwnerMutation = {
   id: string;
@@ -63,9 +64,11 @@ export type LocationState = {
   shopId: string;
   address: string;
   status: LocationStatus;
+  source: LocationSource;
   version: number;
   point: GeoPoint | null;
   confirmedAt: string | null;
+  acquiredAt: string | null;
   validUntil: string | null;
   lastOwnerMutation: LastOwnerMutation | null;
 };

@@ -33,6 +33,41 @@ describe.skipIf(!testDbUrl)(
       expect(secondRun.success).toBe(true);
     });
 
+    it("supports two concurrent isolated schemas without constraint/type conflicts", async () => {
+      const isolated2 = await createDiscoveryTestDatabase(testDbUrl!);
+      try {
+        const run1 = await runSchemaMigrations(isolated2.db);
+        expect(run1.success).toBe(true);
+
+        // Verify constraints exist in both schemas independently
+        const checkSchemaConstraints = async (schema: string) => {
+          const res = await isolated.pool.query(
+            `
+            SELECT c.conname
+            FROM pg_constraint c
+            JOIN pg_class cl ON cl.oid = c.conrelid
+            JOIN pg_namespace n ON n.oid = cl.relnamespace
+            WHERE n.nspname = $1
+              AND c.conname = 'barbershop_locations_coordinates_check'
+          `,
+            [schema],
+          );
+          expect(res.rows).toHaveLength(1);
+        };
+
+        await checkSchemaConstraints(isolated.schema);
+        await checkSchemaConstraints(isolated2.schema);
+
+        // Verify idempotent rerun on both schemas
+        const runIdempotent1 = await runSchemaMigrations(isolated.db);
+        const runIdempotent2 = await runSchemaMigrations(isolated2.db);
+        expect(runIdempotent1.success).toBe(true);
+        expect(runIdempotent2.success).toBe(true);
+      } finally {
+        await isolated2.close();
+      }
+    });
+
     it("preserves legacy barbershops without location row as unconfirmed", async () => {
       await isolated.pool.query(`
       INSERT INTO users (id, name, email, password, cpf)

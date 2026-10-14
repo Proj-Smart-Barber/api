@@ -1,7 +1,6 @@
 import type { Controller } from "../../../../core/infra/controller";
 import {
   clientError,
-  fail,
   type HttpResponse,
   ok,
 } from "../../../../core/infra/http-response";
@@ -145,7 +144,10 @@ export class SearchBarbershopsController implements Controller {
             body: { error: error.message },
           };
         }
-        return fail(error);
+        return {
+          statusCode: 500,
+          body: { error: "Erro interno no serviço de busca de barbearias." },
+        };
       }
 
       return ok(result.value);
@@ -155,7 +157,13 @@ export class SearchBarbershopsController implements Controller {
           error: error.issues[0]?.message ?? "Parâmetros inválidos.",
         });
       }
-      return fail(error instanceof Error ? error : new Error(String(error)));
+      console.error(
+        "[SearchBarbershopsController] Internal error during discovery.",
+      );
+      return {
+        statusCode: 500,
+        body: { error: "Erro interno no serviço de busca de barbearias." },
+      };
     }
   }
 }
@@ -165,7 +173,27 @@ export class SearchNearbyBarbershopsController implements Controller {
 
   async handle(request: Record<string, any>): Promise<HttpResponse> {
     try {
-      const parsed = searchNearbyBodySchema.parse(request);
+      if (
+        request._query &&
+        (request._query.latitude !== undefined ||
+          request._query.longitude !== undefined ||
+          request._query.radiusKm !== undefined)
+      ) {
+        return {
+          statusCode: 400,
+          body: {
+            error:
+              "Coordenadas e raio não são permitidos na query string. Devem ser enviados exclusivamente no corpo JSON da requisição.",
+          },
+          headers: {
+            "Cache-Control": "no-store",
+            Pragma: "no-cache",
+          },
+        };
+      }
+
+      const bodyPayload = request._body ?? request;
+      const parsed = searchNearbyBodySchema.parse(bodyPayload);
 
       const result = await this.searchBarbershopsUseCase.execute({
         mode: "NEARBY",
@@ -185,11 +213,19 @@ export class SearchNearbyBarbershopsController implements Controller {
           return {
             statusCode: 503,
             body: { error: error.message },
+            headers: {
+              "Cache-Control": "no-store",
+              Pragma: "no-cache",
+            },
           };
         }
         return {
           statusCode: 500,
           body: { error: "Erro interno no processamento de proximidade." },
+          headers: {
+            "Cache-Control": "no-store",
+            Pragma: "no-cache",
+          },
         };
       }
 
@@ -203,9 +239,16 @@ export class SearchNearbyBarbershopsController implements Controller {
       };
     } catch (error) {
       if (error instanceof ZodError) {
-        return clientError({
-          error: error.issues[0]?.message ?? "Parâmetros inválidos.",
-        });
+        return {
+          statusCode: 400,
+          body: {
+            error: error.issues[0]?.message ?? "Parâmetros inválidos.",
+          },
+          headers: {
+            "Cache-Control": "no-store",
+            Pragma: "no-cache",
+          },
+        };
       }
 
       // Privacy: Sanitize errors to guarantee client position is never leaked to logs or response
@@ -216,6 +259,10 @@ export class SearchNearbyBarbershopsController implements Controller {
         statusCode: 500,
         body: {
           error: "Erro interno no serviço de descoberta por proximidade.",
+        },
+        headers: {
+          "Cache-Control": "no-store",
+          Pragma: "no-cache",
         },
       };
     }

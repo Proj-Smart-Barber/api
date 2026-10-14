@@ -73,17 +73,29 @@ export async function runSchemaMigrations(targetDb: any = db) {
       DO $$
       BEGIN
         IF NOT EXISTS (
-          SELECT 1 FROM pg_constraint WHERE conname = 'services_barbershop_id_barbershops_id_fkey'
+          SELECT 1 FROM pg_constraint c
+          JOIN pg_class cl ON cl.oid = c.conrelid
+          JOIN pg_namespace n ON n.oid = cl.relnamespace
+          WHERE c.conname = 'services_barbershop_id_barbershops_id_fkey'
+            AND n.nspname = current_schema()
         ) THEN
           ALTER TABLE "services" ADD CONSTRAINT "services_barbershop_id_barbershops_id_fkey" FOREIGN KEY ("barbershop_id") REFERENCES "barbershops"("id") ON DELETE CASCADE;
         END IF;
         IF NOT EXISTS (
-          SELECT 1 FROM pg_constraint WHERE conname = 'services_price_positive_check'
+          SELECT 1 FROM pg_constraint c
+          JOIN pg_class cl ON cl.oid = c.conrelid
+          JOIN pg_namespace n ON n.oid = cl.relnamespace
+          WHERE c.conname = 'services_price_positive_check'
+            AND n.nspname = current_schema()
         ) THEN
           ALTER TABLE "services" ADD CONSTRAINT "services_price_positive_check" CHECK ("price_in_cents" > 0);
         END IF;
         IF NOT EXISTS (
-          SELECT 1 FROM pg_constraint WHERE conname = 'services_duration_positive_check'
+          SELECT 1 FROM pg_constraint c
+          JOIN pg_class cl ON cl.oid = c.conrelid
+          JOIN pg_namespace n ON n.oid = cl.relnamespace
+          WHERE c.conname = 'services_duration_positive_check'
+            AND n.nspname = current_schema()
         ) THEN
           ALTER TABLE "services" ADD CONSTRAINT "services_duration_positive_check" CHECK ("duration_in_minutes" > 0);
         END IF;
@@ -149,7 +161,12 @@ export async function runSchemaMigrations(targetDb: any = db) {
     await targetDb.execute(sql`
       DO $$
       BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'invitation_status') THEN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_type t
+          JOIN pg_namespace n ON n.oid = t.typnamespace
+          WHERE t.typname = 'invitation_status'
+            AND n.nspname = current_schema()
+        ) THEN
           CREATE TYPE "invitation_status" AS ENUM ('PENDING', 'ACCEPTED', 'DECLINED', 'REVOKED');
         END IF;
       END $$;
@@ -196,13 +213,21 @@ export async function runSchemaMigrations(targetDb: any = db) {
       DO $$
       BEGIN
         IF NOT EXISTS (
-          SELECT 1 FROM pg_constraint WHERE conname = 'bookings_customer_id_users_id_fkey'
+          SELECT 1 FROM pg_constraint c
+          JOIN pg_class cl ON cl.oid = c.conrelid
+          JOIN pg_namespace n ON n.oid = cl.relnamespace
+          WHERE c.conname = 'bookings_customer_id_users_id_fkey'
+            AND n.nspname = current_schema()
         ) THEN
           ALTER TABLE "bookings" ADD CONSTRAINT "bookings_customer_id_users_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "users"("id");
         END IF;
 
         IF NOT EXISTS (
-          SELECT 1 FROM pg_constraint WHERE conname = 'bookings_created_by_user_id_users_id_fkey'
+          SELECT 1 FROM pg_constraint c
+          JOIN pg_class cl ON cl.oid = c.conrelid
+          JOIN pg_namespace n ON n.oid = cl.relnamespace
+          WHERE c.conname = 'bookings_created_by_user_id_users_id_fkey'
+            AND n.nspname = current_schema()
         ) THEN
           ALTER TABLE "bookings" ADD CONSTRAINT "bookings_created_by_user_id_users_id_fkey" FOREIGN KEY ("created_by_user_id") REFERENCES "users"("id");
         END IF;
@@ -354,15 +379,30 @@ export async function runSchemaMigrations(targetDb: any = db) {
     await targetDb.execute(sql`
       DO $$
       BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'membership_state') THEN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_type t
+          JOIN pg_namespace n ON n.oid = t.typnamespace
+          WHERE t.typname = 'membership_state'
+            AND n.nspname = current_schema()
+        ) THEN
           CREATE TYPE "membership_state" AS ENUM ('ACTIVE', 'INACTIVE');
         END IF;
 
-        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'operation_attempt_state') THEN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_type t
+          JOIN pg_namespace n ON n.oid = t.typnamespace
+          WHERE t.typname = 'operation_attempt_state'
+            AND n.nspname = current_schema()
+        ) THEN
           CREATE TYPE "operation_attempt_state" AS ENUM ('PENDING', 'APPLIED', 'NOT_APPLIED');
         END IF;
 
-        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'operation_resource_kind') THEN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_type t
+          JOIN pg_namespace n ON n.oid = t.typnamespace
+          WHERE t.typname = 'operation_resource_kind'
+            AND n.nspname = current_schema()
+        ) THEN
           CREATE TYPE "operation_resource_kind" AS ENUM ('BOOKING', 'MEMBERSHIP', 'REGISTRATION', 'INVITATION');
         END IF;
       END $$;
@@ -413,7 +453,11 @@ export async function runSchemaMigrations(targetDb: any = db) {
       DO $$
       BEGIN
         IF NOT EXISTS (
-          SELECT 1 FROM pg_constraint WHERE conname = 'notifications_event_user_unique'
+          SELECT 1 FROM pg_constraint c
+          JOIN pg_class cl ON cl.oid = c.conrelid
+          JOIN pg_namespace n ON n.oid = cl.relnamespace
+          WHERE c.conname = 'notifications_event_user_unique'
+            AND n.nspname = current_schema()
         ) THEN
           ALTER TABLE "notifications" ADD CONSTRAINT "notifications_event_user_unique" UNIQUE ("event_id", "user_id");
         END IF;
@@ -437,7 +481,12 @@ export async function runSchemaMigrations(targetDb: any = db) {
     await targetDb.execute(sql`
       DO $$
       BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'barbershop_location_status') THEN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_type t
+          JOIN pg_namespace n ON n.oid = t.typnamespace
+          WHERE t.typname = 'barbershop_location_status'
+            AND n.nspname = current_schema()
+        ) THEN
           CREATE TYPE "barbershop_location_status" AS ENUM ('UNCONFIRMED', 'CONFIRMED', 'NEEDS_REVIEW');
         END IF;
       END $$;
@@ -474,14 +523,22 @@ export async function runSchemaMigrations(targetDb: any = db) {
       DO $$
       BEGIN
         IF NOT EXISTS (
-          SELECT 1 FROM pg_constraint WHERE conname = 'barbershop_locations_coordinates_check'
+          SELECT 1 FROM pg_constraint c
+          JOIN pg_class cl ON cl.oid = c.conrelid
+          JOIN pg_namespace n ON n.oid = cl.relnamespace
+          WHERE c.conname = 'barbershop_locations_coordinates_check'
+            AND n.nspname = current_schema()
         ) THEN
           ALTER TABLE "barbershop_locations" ADD CONSTRAINT "barbershop_locations_coordinates_check"
           CHECK (("latitude" IS NULL AND "longitude" IS NULL) OR ("latitude" IS NOT NULL AND "longitude" IS NOT NULL AND "latitude" >= -90 AND "latitude" <= 90 AND "longitude" >= -180 AND "longitude" <= 180));
         END IF;
 
         IF NOT EXISTS (
-          SELECT 1 FROM pg_constraint WHERE conname = 'barbershop_locations_version_non_negative_check'
+          SELECT 1 FROM pg_constraint c
+          JOIN pg_class cl ON cl.oid = c.conrelid
+          JOIN pg_namespace n ON n.oid = cl.relnamespace
+          WHERE c.conname = 'barbershop_locations_version_non_negative_check'
+            AND n.nspname = current_schema()
         ) THEN
           ALTER TABLE "barbershop_locations" ADD CONSTRAINT "barbershop_locations_version_non_negative_check"
           CHECK ("version" >= 0);
@@ -518,7 +575,11 @@ export async function runSchemaMigrations(targetDb: any = db) {
       DO $$
       BEGIN
         IF NOT EXISTS (
-          SELECT 1 FROM pg_constraint WHERE conname = 'geocoding_candidates_coordinates_check'
+          SELECT 1 FROM pg_constraint c
+          JOIN pg_class cl ON cl.oid = c.conrelid
+          JOIN pg_namespace n ON n.oid = cl.relnamespace
+          WHERE c.conname = 'geocoding_candidates_coordinates_check'
+            AND n.nspname = current_schema()
         ) THEN
           ALTER TABLE "geocoding_candidates" ADD CONSTRAINT "geocoding_candidates_coordinates_check"
           CHECK ("latitude" >= -90 AND "latitude" <= 90 AND "longitude" >= -180 AND "longitude" <= 180);

@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { type SQL, sql } from "drizzle-orm";
 import type { DiscoveryRepository } from "../../../domain/application/repositories/discovery-repository";
 import type {
   DiscoveryInput,
@@ -25,24 +25,72 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
   async isLocationServiceHealthy(): Promise<boolean> {
     try {
       const result = await this.database.execute(sql`
-        SELECT is_healthy
+        SELECT is_healthy, last_heartbeat_at
         FROM location_maintenance_health
         WHERE component = 'google_maps_cache'
+          AND is_healthy = true
+          AND last_heartbeat_at IS NOT NULL
+          AND last_heartbeat_at >= (NOW() - INTERVAL '36 hours')
+          AND last_heartbeat_at <= (NOW() + INTERVAL '5 minutes')
         LIMIT 1
       `);
       if (!result.rows || result.rows.length === 0) {
-        return true;
+        return false;
       }
-      return Boolean(result.rows[0].is_healthy);
+      return true;
     } catch {
       // If table query fails, fail-closed for nearby maintenance
       return false;
     }
   }
 
+  private normalizeQuery(query: string): string {
+    return query
+      .trim()
+      .slice(0, 120)
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[%_\\]/g, "\\$&");
+  }
+
+  private normalizeColumnSql(columnSql: SQL): SQL {
+    return sql`regexp_replace(translate(lower(${columnSql}), 'áàâãäéèêëíìîïóòôõöúùûüçñ', 'aaaaaeeeeiiiiooooouuuucn'), '[\u0300-\u036f]', '', 'g')`;
+  }
+
+  private getLocationEligibilitySql(): SQL {
+    return sql`(
+      bl.status = 'CONFIRMED'
+      AND bl.latitude IS NOT NULL
+      AND bl.longitude IS NOT NULL
+      AND bl.latitude >= -90.0 AND bl.latitude <= 90.0
+      AND bl.longitude >= -180.0 AND bl.longitude <= 180.0
+      AND (
+        CASE
+          WHEN (bl.source = 'GOOGLE' OR bl.google_place_id IS NOT NULL OR bl.google_reference IS NOT NULL) THEN (
+            bl.source = 'GOOGLE'
+            AND bl.acquired_at IS NOT NULL
+            AND bl.valid_until IS NOT NULL
+            AND bl.acquired_at <= NOW()
+            AND bl.valid_until > NOW()
+            AND bl.valid_until <= (bl.acquired_at + INTERVAL '25 days')
+            AND (bl.acquired_at + INTERVAL '25 days') >= NOW()
+          )
+          WHEN bl.source = 'MANUAL' AND bl.google_place_id IS NULL AND bl.google_reference IS NULL THEN (
+            bl.valid_until IS NULL OR bl.valid_until > NOW()
+          )
+          ELSE FALSE
+        END
+      )
+    )`;
+  }
+
   async search(input: DiscoveryInput): Promise<DiscoveryPage> {
-    const page = Math.max(1, input.page);
-    const limit = Math.max(1, Math.min(50, input.limit));
+    const page = Math.max(1, Number.isFinite(input.page) ? input.page : 1);
+    const limit = Math.max(
+      1,
+      Math.min(50, Number.isFinite(input.limit) ? input.limit : 20),
+    );
     const offset = (page - 1) * limit;
     const serverTime = new Date().toISOString();
 
@@ -60,18 +108,21 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
     offset: number,
     serverTime: string,
   ): Promise<DiscoveryPage> {
+    const eligibilitySql = this.getLocationEligibilitySql();
     const conditions = [sql`b.status = 'ACTIVE'`];
 
     if (input.q && input.q.trim().length > 0) {
-      const sanitized = input.q
-        .trim()
-        .slice(0, 120)
-        .replace(/[%_\\]/g, "\\$&");
+      const sanitized = this.normalizeQuery(input.q);
       const term = `%${sanitized}%`;
-      conditions.push(sql`(b.name ILIKE ${term} OR b.location ILIKE ${term})`);
+      const normName = this.normalizeColumnSql(sql`b.name`);
+      const normLocation = this.normalizeColumnSql(sql`b.location`);
+      conditions.push(
+        sql`(${normName} LIKE ${term} OR ${normLocation} LIKE ${term})`,
+      );
     }
 
     const whereClause = sql.join(conditions, sql` AND `);
+    const normOrderName = this.normalizeColumnSql(sql`b.name`);
 
     const countResult = await this.database.execute(sql`
       SELECT COUNT(*)::int AS total
@@ -87,32 +138,26 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
         b.slug,
         b.location,
         b.avatar_url,
-        bl.status AS location_status,
         bl.latitude,
         bl.longitude,
-        bl.valid_until
+        (${eligibilitySql}) AS is_eligible
       FROM barbershops b
       LEFT JOIN barbershop_locations bl ON bl.barbershop_id = b.id
       WHERE ${whereClause}
-      ORDER BY lower(b.name) ASC, b.id ASC
+      ORDER BY ${normOrderName} ASC, b.id ASC
       LIMIT ${limit}
       OFFSET ${offset}
     `);
 
-    const now = new Date();
     const items: PublicShop[] = rowsResult.rows.map((row: any) => {
-      const isEligible =
-        row.location_status === "CONFIRMED" &&
-        row.latitude !== null &&
-        row.longitude !== null &&
-        (row.valid_until === null || new Date(row.valid_until) > now);
-
-      const coordinates: GeoPoint | null = isEligible
-        ? {
-            latitude: Number(row.latitude),
-            longitude: Number(row.longitude),
-          }
-        : null;
+      const isEligible = Boolean(row.is_eligible);
+      const coordinates: GeoPoint | null =
+        isEligible && row.latitude !== null && row.longitude !== null
+          ? {
+              latitude: Number(row.latitude),
+              longitude: Number(row.longitude),
+            }
+          : null;
 
       return {
         id: row.id,
@@ -143,22 +188,34 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
     serverTime: string,
   ): Promise<DiscoveryPage> {
     const { point, radiusKm } = input;
-    const radiusMeters = radiusKm * 1000;
+    const radiusMeters = radiusKm * 1000.0;
     const lat = point.latitude;
     const lon = point.longitude;
 
-    // Bounding box pre-filter optimization
-    const deltaLat = radiusKm / 111.32;
-    const cosLat = Math.cos((lat * Math.PI) / 180.0);
-    const deltaLon =
-      Math.abs(lat) < 89.9 && cosLat > 0.0001
-        ? radiusKm / (111.32 * cosLat)
-        : 180.0;
+    // Conservative bounding box derivation based on R = 6,371,000m sphere
+    const R = 6371000.0;
+    const angularRadius = radiusMeters / R;
+    // 1.5% safety margin on angular delta to guarantee conservative bounding box
+    const deltaLatDegrees = ((angularRadius * 180.0) / Math.PI) * 1.015;
 
-    const minLat = Math.max(-90.0, lat - deltaLat);
-    const maxLat = Math.min(90.0, lat + deltaLat);
-    const minLon = lon - deltaLon;
-    const maxLon = lon + deltaLon;
+    const minLat = Math.max(-90.0, lat - deltaLatDegrees);
+    const maxLat = Math.min(90.0, lat + deltaLatDegrees);
+
+    const touchesPole =
+      lat + deltaLatDegrees >= 89.9 || lat - deltaLatDegrees <= -89.9;
+
+    let deltaLonDegrees: number;
+    if (touchesPole) {
+      deltaLonDegrees = 180.0;
+    } else {
+      const maxLatMag = Math.max(Math.abs(minLat), Math.abs(maxLat));
+      const cosLat = Math.cos((maxLatMag * Math.PI) / 180.0);
+      if (cosLat < 0.001) {
+        deltaLonDegrees = 180.0;
+      } else {
+        deltaLonDegrees = (deltaLatDegrees / cosLat) * 1.015;
+      }
+    }
 
     // Exact spherical Haversine formula (Earth R = 6,371,000 m) with numerical clamping [0, 1]
     const haversineSql = sql`
@@ -170,28 +227,47 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
       ))
     `;
 
+    const eligibilitySql = this.getLocationEligibilitySql();
+
     const conditions = [
       sql`b.status = 'ACTIVE'`,
-      sql`bl.status = 'CONFIRMED'`,
-      sql`bl.latitude IS NOT NULL`,
-      sql`bl.longitude IS NOT NULL`,
+      sql`${eligibilitySql}`,
       sql`bl.latitude BETWEEN ${minLat}::double precision AND ${maxLat}::double precision`,
-      sql`(bl.valid_until IS NULL OR bl.valid_until > NOW())`,
     ];
 
-    if (deltaLon < 180.0) {
-      conditions.push(
-        sql`bl.longitude BETWEEN ${minLon}::double precision AND ${maxLon}::double precision`,
-      );
+    if (deltaLonDegrees < 180.0) {
+      const rawMinLon = lon - deltaLonDegrees;
+      const rawMaxLon = lon + deltaLonDegrees;
+
+      if (rawMaxLon > 180.0) {
+        // Antimeridian crossing towards east (wraps to negative longitudes)
+        const normMin = rawMinLon;
+        const normMax = rawMaxLon - 360.0;
+        conditions.push(
+          sql`(bl.longitude >= ${normMin}::double precision OR bl.longitude <= ${normMax}::double precision)`,
+        );
+      } else if (rawMinLon < -180.0) {
+        // Antimeridian crossing towards west (wraps to positive longitudes)
+        const normMin = rawMinLon + 360.0;
+        const normMax = rawMaxLon;
+        conditions.push(
+          sql`(bl.longitude >= ${normMin}::double precision OR bl.longitude <= ${normMax}::double precision)`,
+        );
+      } else {
+        conditions.push(
+          sql`bl.longitude BETWEEN ${rawMinLon}::double precision AND ${rawMaxLon}::double precision`,
+        );
+      }
     }
 
     if (input.q && input.q.trim().length > 0) {
-      const sanitized = input.q
-        .trim()
-        .slice(0, 120)
-        .replace(/[%_\\]/g, "\\$&");
+      const sanitized = this.normalizeQuery(input.q);
       const term = `%${sanitized}%`;
-      conditions.push(sql`(b.name ILIKE ${term} OR b.location ILIKE ${term})`);
+      const normName = this.normalizeColumnSql(sql`b.name`);
+      const normLocation = this.normalizeColumnSql(sql`b.location`);
+      conditions.push(
+        sql`(${normName} LIKE ${term} OR ${normLocation} LIKE ${term})`,
+      );
     }
 
     const baseWhere = sql.join(conditions, sql` AND `);
