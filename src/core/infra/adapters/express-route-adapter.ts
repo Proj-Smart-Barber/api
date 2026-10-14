@@ -100,8 +100,11 @@ export const adaptRoute = (controller: Controller) => {
       }
 
       if (httpResponse.statusCode >= 500) {
+        const sanitizedUrl = request.originalUrl
+          ? request.originalUrl.split("?")[0]
+          : (request.url ?? "unknown-url");
         console.error(
-          `[HTTP ${httpResponse.statusCode}] Error on ${request.method} ${request.originalUrl}:`,
+          `[HTTP ${httpResponse.statusCode}] Error on ${request.method} ${sanitizedUrl}:`,
           httpResponse.body,
         );
       }
