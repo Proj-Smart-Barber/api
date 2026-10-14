@@ -13,6 +13,10 @@ const envSchema = z.object({
     .union([z.url(), z.literal("")])
     .optional()
     .transform((value) => (value ? value : undefined)),
+  EMAIL_VERIFICATION_URL: z
+    .union([z.url(), z.literal("")])
+    .optional()
+    .transform((value) => (value ? value : undefined)),
   RESEND_API_KEY: z.string(),
   EMAIL_FROM: z.string().min(1),
   VERIFICATION_TOKEN_EXPIRES_IN: z.string().default("1d"),

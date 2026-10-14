@@ -45,9 +45,7 @@ describe("Send email verification", () => {
     const sent = fakeEmailService.sentEmails[0];
     expect(sent.to).toBe("fulano@email.com");
     expect(sent.name).toBe("Fulano");
-    expect(sent.verificationUrl).toContain(
-      "/api/users/verification-email/confirm?token=",
-    );
+    expect(sent.verificationUrl).toContain("/verify-email?token=");
     expect(sent.expiresInHours).toBeGreaterThan(0);
   });
 
