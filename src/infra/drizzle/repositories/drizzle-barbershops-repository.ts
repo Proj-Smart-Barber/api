@@ -4,11 +4,11 @@ import {
   Role,
   type Membership,
 } from "../../../domain/enterprise/entities/membership";
-import { eq, or, and } from "drizzle-orm";
+import { eq, or, and, sql } from "drizzle-orm";
 import { db } from "../index";
 import { DrizzleBarbershopMapper } from "../mappers/drizzle-barbershop-mapper";
 import { DrizzleMembershipMapper } from "../mappers/drizzle-membership-mapper";
-import { barbershops, membership } from "../schema";
+import { barbershops, membership, users } from "../schema";
 
 export class DrizzleBarbershopsRepository implements BarbershopsRepository {
   async createWithOwnerMembership(
@@ -30,6 +30,22 @@ export class DrizzleBarbershopsRepository implements BarbershopsRepository {
       await transaction
         .insert(membership)
         .values(DrizzleMembershipMapper.toDrizzle(ownerMembership));
+
+      // Read the current role inside the UPDATE; a pre-transaction user snapshot
+      // must never overwrite concurrent credential, profile or admin changes.
+      const [owner] = await transaction
+        .update(users)
+        .set({
+          accountType: sql`CASE WHEN ${users.accountType} = 'PLATFORM_ADMIN'
+            THEN ${users.accountType} ELSE 'OWNER' END`,
+          onboardingIntent: null,
+        })
+        .where(eq(users.id, barbershop.ownerId.toString()))
+        .returning({ id: users.id });
+
+      if (!owner) {
+        throw new Error("The barbershop owner user could not be updated.");
+      }
 
       return DrizzleBarbershopMapper.toDomain(createdBarbershop);
     });
