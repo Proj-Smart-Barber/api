@@ -1,6 +1,7 @@
 export type HttpResponse = {
   statusCode: number;
   body: unknown;
+  headers?: Record<string, string>;
 };
 
 export function ok<T>(dto?: T): HttpResponse {

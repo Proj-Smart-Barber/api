@@ -7,11 +7,21 @@ import { makeListBarbershopProfessionalsController } from "../factories/make-lis
 import { makeListUnitTeamController } from "../factories/make-list-unit-team-controller";
 import { makeLookupBookingCustomerController } from "../factories/make-lookup-booking-customer-controller";
 import { makeFetchUnitBookingsController } from "../factories/make-fetch-unit-bookings-controller";
+import {
+  makeSearchBarbershopsController,
+  makeSearchNearbyBarbershopsController,
+} from "../factories/make-search-barbershops-controller";
 import { ensureUserIsAuthenticated } from "../middlewares/ensure-user-is-authenticated";
 import { bookingCustomerLookupLimit } from "../middlewares/booking-customer-lookup-limit";
 import { serviceRoutes } from "./service.routes";
 
 const barbershopRoutes = Router();
+
+barbershopRoutes.get("/", adaptRoute(makeSearchBarbershopsController()));
+barbershopRoutes.post(
+  "/nearby",
+  adaptRoute(makeSearchNearbyBarbershopsController()),
+);
 
 barbershopRoutes.post(
   "/",

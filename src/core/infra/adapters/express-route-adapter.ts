@@ -28,13 +28,22 @@ export const adaptRoute = (controller: Controller) => {
       request.originalUrl?.includes("/me") ||
       request.originalUrl?.includes("/operation-attempts") ||
       request.originalUrl?.includes("/bookings") ||
-      request.originalUrl?.includes("/customers/lookup")
+      request.originalUrl?.includes("/customers/lookup") ||
+      request.originalUrl?.includes("/barbershops/nearby")
     ) {
       response.setHeader("Cache-Control", "no-store");
       response.setHeader("Pragma", "no-cache");
     }
 
     const httpResponse = await controller.handle(requestData);
+
+    if (httpResponse.headers) {
+      for (const [headerName, headerValue] of Object.entries(
+        httpResponse.headers,
+      )) {
+        response.setHeader(headerName, headerValue);
+      }
+    }
 
     if (httpResponse.statusCode >= 200 && httpResponse.statusCode <= 299) {
       if (isWebClient) {
