@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import {
   boolean,
   check,
+  doublePrecision,
   index,
   integer,
   pgEnum,
@@ -51,6 +52,11 @@ export const operationResourceKindEnum = pgEnum("operation_resource_kind", [
   "REGISTRATION",
   "INVITATION",
 ]);
+
+export const barbershopLocationStatusEnum = pgEnum(
+  "barbershop_location_status",
+  ["UNCONFIRMED", "CONFIRMED", "NEEDS_REVIEW"],
+);
 
 // ── Tables ────────────────────────────────────────────────
 
@@ -463,6 +469,135 @@ export const operationAttempts = pgTable(
   ],
 );
 
+export const barbershopLocations = pgTable(
+  "barbershop_locations",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    barbershopId: uuid("barbershop_id")
+      .notNull()
+      .references(() => barbershops.id, { onDelete: "cascade" }),
+    status: barbershopLocationStatusEnum("status")
+      .notNull()
+      .default("UNCONFIRMED"),
+    latitude: doublePrecision("latitude"),
+    longitude: doublePrecision("longitude"),
+    version: integer("version").notNull().default(1),
+    confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
+    source: text("source").notNull().default("MANUAL"),
+    googlePlaceId: text("google_place_id"),
+    googleReference: text("google_reference"),
+    acquiredAt: timestamp("acquired_at", { withTimezone: true }),
+    validUntil: timestamp("valid_until", { withTimezone: true }),
+    pinAdjusted: boolean("pin_adjusted").notNull().default(false),
+    lastMutationId: uuid("last_mutation_id"),
+    lastMutationActorId: uuid("last_mutation_actor_id").references(
+      () => users.id,
+    ),
+    lastMutationHash: text("last_mutation_hash"),
+    lastMutationSavedVersion: integer("last_mutation_saved_version"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    unique("barbershop_locations_barbershop_id_unique").on(table.barbershopId),
+    index("barbershop_locations_status_valid_until_idx").on(
+      table.status,
+      table.validUntil,
+    ),
+    index("barbershop_locations_valid_until_idx").on(table.validUntil),
+    check(
+      "barbershop_locations_coordinates_check",
+      sql`("latitude" IS NULL AND "longitude" IS NULL) OR ("latitude" IS NOT NULL AND "longitude" IS NOT NULL AND "latitude" >= -90 AND "latitude" <= 90 AND "longitude" >= -180 AND "longitude" <= 180)`,
+    ),
+    check(
+      "barbershop_locations_version_non_negative_check",
+      sql`"version" >= 0`,
+    ),
+  ],
+);
+
+export const geocodingCandidates = pgTable(
+  "geocoding_candidates",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    actorId: uuid("actor_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    barbershopId: uuid("barbershop_id").references(() => barbershops.id, {
+      onDelete: "cascade",
+    }),
+    addressHash: text("address_hash").notNull(),
+    latitude: doublePrecision("latitude").notNull(),
+    longitude: doublePrecision("longitude").notNull(),
+    placeId: text("place_id").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    consumedAt: timestamp("consumed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index("geocoding_candidates_actor_id_idx").on(table.actorId),
+    index("geocoding_candidates_expires_at_idx").on(table.expiresAt),
+    index("geocoding_candidates_actor_address_hash_idx").on(
+      table.actorId,
+      table.addressHash,
+    ),
+    check(
+      "geocoding_candidates_coordinates_check",
+      sql`"latitude" >= -90 AND "latitude" <= 90 AND "longitude" >= -180 AND "longitude" <= 180`,
+    ),
+  ],
+);
+
+export const locationMaintenanceHealth = pgTable(
+  "location_maintenance_health",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    component: text("component").notNull().unique(),
+    isHealthy: boolean("is_healthy").notNull().default(true),
+    lastHeartbeatAt: timestamp("last_heartbeat_at", { withTimezone: true }),
+    consecutiveFailures: integer("consecutive_failures").notNull().default(0),
+    details: text("details"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    index("location_maintenance_health_component_idx").on(table.component),
+  ],
+);
+
+export const geocodingUsageBuckets = pgTable(
+  "geocoding_usage_buckets",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    scope: text("scope").notNull(),
+    scopeId: text("scope_id").notNull(),
+    windowType: text("window_type").notNull(),
+    windowStart: timestamp("window_start", { withTimezone: true }).notNull(),
+    count: integer("count").notNull().default(0),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    unique("geocoding_usage_buckets_scope_window_unique").on(
+      table.scope,
+      table.scopeId,
+      table.windowType,
+      table.windowStart,
+    ),
+    index("geocoding_usage_buckets_lookup_idx").on(
+      table.scope,
+      table.scopeId,
+      table.windowType,
+      table.windowStart,
+    ),
+    index("geocoding_usage_buckets_expires_at_idx").on(table.expiresAt),
+  ],
+);
+
 // ── Relations ─────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -533,6 +668,7 @@ export const barbershopsRelations = relations(barbershops, ({ one, many }) => ({
   exceptions: many(scheduleExceptions),
   bookings: many(bookings),
   invitations: many(invitations),
+  location: one(barbershopLocations),
 }));
 
 export const invitationsRelations = relations(invitations, ({ one }) => ({
@@ -681,6 +817,34 @@ export const scheduleExceptionsRelations = relations(
     barberman: one(users, {
       fields: [scheduleExceptions.barbermanId],
       references: [users.id],
+    }),
+  }),
+);
+
+export const barbershopLocationsRelations = relations(
+  barbershopLocations,
+  ({ one }) => ({
+    barbershop: one(barbershops, {
+      fields: [barbershopLocations.barbershopId],
+      references: [barbershops.id],
+    }),
+    lastMutationActor: one(users, {
+      fields: [barbershopLocations.lastMutationActorId],
+      references: [users.id],
+    }),
+  }),
+);
+
+export const geocodingCandidatesRelations = relations(
+  geocodingCandidates,
+  ({ one }) => ({
+    actor: one(users, {
+      fields: [geocodingCandidates.actorId],
+      references: [users.id],
+    }),
+    barbershop: one(barbershops, {
+      fields: [geocodingCandidates.barbershopId],
+      references: [barbershops.id],
     }),
   }),
 );

@@ -696,6 +696,49 @@ export const swaggerDocument = {
       },
     },
     "/api/barbershops/": {
+      get: {
+        tags: ["Barbershops"],
+        summary: "Busca textual paginada de barbearias públicas (modo ALL)",
+        description:
+          "Lista barbearias ativas ordenadas alfabeticamente por nome. Rejeita coordenadas geográficas nesta rota.",
+        parameters: [
+          {
+            name: "q",
+            in: "query",
+            required: false,
+            schema: { type: "string", maxLength: 120 },
+            description: "Termo de busca textual por nome ou localização",
+          },
+          {
+            name: "page",
+            in: "query",
+            required: false,
+            schema: { type: "integer", default: 1, minimum: 1 },
+            description: "Número da página",
+          },
+          {
+            name: "limit",
+            in: "query",
+            required: false,
+            schema: { type: "integer", default: 20, minimum: 1, maximum: 50 },
+            description: "Limite de registros por página (máximo 50)",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Página de barbearias retornada com sucesso",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/DiscoveryPage" },
+              },
+            },
+          },
+          "400": {
+            description: "Erro de validação ou envio indevido de coordenadas",
+          },
+          "500": { description: "Internal server error" },
+        },
+      },
       post: {
         tags: ["Barbershops"],
         summary: "Create a barbershop",
@@ -759,6 +802,93 @@ export const swaggerDocument = {
           "404": { description: "Authenticated user not found" },
           "409": { description: "CNPJ or generated slug already in use" },
           "500": { description: "Internal server error" },
+        },
+      },
+    },
+    "/api/barbershops/nearby": {
+      post: {
+        tags: ["Barbershops"],
+        summary: "Busca de barbearias por proximidade geográfica (modo NEARBY)",
+        description:
+          "Busca unidades ativas com localização confirmada e recente dentro do raio especificado. Resposta com cabeçalho Cache-Control: no-store para proteção de privacidade do cliente.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["latitude", "longitude", "radiusKm"],
+                properties: {
+                  latitude: {
+                    type: "number",
+                    minimum: -90,
+                    maximum: 90,
+                    example: -23.55052,
+                    description: "Latitude do ponto de busca",
+                  },
+                  longitude: {
+                    type: "number",
+                    minimum: -180,
+                    maximum: 180,
+                    example: -46.633308,
+                    description: "Longitude do ponto de busca",
+                  },
+                  radiusKm: {
+                    type: "integer",
+                    enum: [5, 10, 25, 50],
+                    example: 10,
+                    description: "Raio de busca em quilômetros",
+                  },
+                  q: {
+                    type: "string",
+                    maxLength: 120,
+                    example: "Centro",
+                    description: "Filtro textual opcional",
+                  },
+                  page: {
+                    type: "integer",
+                    default: 1,
+                    minimum: 1,
+                    example: 1,
+                  },
+                  limit: {
+                    type: "integer",
+                    default: 20,
+                    minimum: 1,
+                    maximum: 50,
+                    example: 20,
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Lista de barbearias próximas ordenada por distância",
+            headers: {
+              "Cache-Control": {
+                schema: { type: "string", example: "no-store" },
+                description:
+                  "Indica que a resposta não deve ser armazenada em cache por conter dados derivados de localização sensível",
+              },
+            },
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/DiscoveryPage" },
+              },
+            },
+          },
+          "400": {
+            description: "Erro de validação nos parâmetros de entrada",
+          },
+          "503": {
+            description:
+              "Serviço de manutenção de localização temporariamente indisponível",
+          },
+          "500": {
+            description: "Erro interno no processamento de proximidade",
+          },
         },
       },
     },
@@ -2923,6 +3053,56 @@ export const swaggerDocument = {
             },
           },
         },
+      },
+      PublicShop: {
+        type: "object",
+        properties: {
+          id: { type: "string", format: "uuid" },
+          name: { type: "string", example: "Barbearia Vintage" },
+          slug: { type: "string", example: "barbearia-vintage" },
+          location: {
+            type: "string",
+            example: "Rua Augusta, 1000 - Consolação, São Paulo - SP",
+          },
+          avatarUrl: {
+            type: "string",
+            format: "uri",
+            nullable: true,
+            example: "https://example.com/avatar.jpg",
+          },
+          coordinates: {
+            type: "object",
+            nullable: true,
+            properties: {
+              latitude: { type: "number", example: -23.55052 },
+              longitude: { type: "number", example: -46.633308 },
+            },
+            required: ["latitude", "longitude"],
+          },
+          distanceMeters: {
+            type: "number",
+            nullable: true,
+            example: 1250,
+            description:
+              "Distância em metros até o ponto de busca (nulo no modo ALL)",
+          },
+        },
+        required: ["id", "name", "slug", "location"],
+      },
+      DiscoveryPage: {
+        type: "object",
+        properties: {
+          items: {
+            type: "array",
+            items: { $ref: "#/components/schemas/PublicShop" },
+          },
+          page: { type: "integer", example: 1 },
+          limit: { type: "integer", example: 20 },
+          total: { type: "integer", example: 42 },
+          hasNext: { type: "boolean", example: true },
+          serverTime: { type: "string", format: "date-time" },
+        },
+        required: ["items", "page", "limit", "total", "hasNext", "serverTime"],
       },
     },
   },

@@ -3,8 +3,10 @@ import { db } from "./index";
 
 let hasMigrated = false;
 
-export async function runSchemaMigrations() {
-  if (hasMigrated) {
+// biome-ignore lint/suspicious/noExplicitAny: accepts either default db or isolated test db
+export async function runSchemaMigrations(targetDb: any = db) {
+  const isDefaultDb = targetDb === db;
+  if (isDefaultDb && hasMigrated) {
     return {
       success: true,
       message: "Migration already completed in this process.",
@@ -15,21 +17,21 @@ export async function runSchemaMigrations() {
 
   try {
     // 1. service_items snapshots
-    await db.execute(sql`
+    await targetDb.execute(sql`
       ALTER TABLE "service_items" ADD COLUMN IF NOT EXISTS "title_snapshot" text;
       ALTER TABLE "service_items" ADD COLUMN IF NOT EXISTS "price_in_cents_snapshot" integer;
       ALTER TABLE "service_items" ADD COLUMN IF NOT EXISTS "duration_in_minutes_snapshot" integer;
     `);
 
     // 2. services new columns
-    await db.execute(sql`
+    await targetDb.execute(sql`
       ALTER TABLE "services" ADD COLUMN IF NOT EXISTS "barbershop_id" uuid;
       ALTER TABLE "services" ADD COLUMN IF NOT EXISTS "is_active" boolean DEFAULT true NOT NULL;
       ALTER TABLE "services" ADD COLUMN IF NOT EXISTS "updated_at" timestamp DEFAULT now();
     `);
 
     // 3. Backfill snapshots from current service state if missing
-    await db.execute(sql`
+    await targetDb.execute(sql`
       UPDATE "service_items"
       SET
         "title_snapshot" = "services"."title",
@@ -41,7 +43,7 @@ export async function runSchemaMigrations() {
     `);
 
     // 4. Backfill services barbershop_id if orphan
-    await db.execute(sql`
+    await targetDb.execute(sql`
       WITH distinct_pairs AS (
         SELECT DISTINCT
           si.service_id,
@@ -67,7 +69,7 @@ export async function runSchemaMigrations() {
     `);
 
     // 5. Constraints and check validations
-    await db.execute(sql`
+    await targetDb.execute(sql`
       DO $$
       BEGIN
         IF NOT EXISTS (
@@ -89,11 +91,11 @@ export async function runSchemaMigrations() {
     `);
 
     // 6. Indices
-    await db.execute(sql`
+    await targetDb.execute(sql`
       CREATE INDEX IF NOT EXISTS "services_barbershop_active_title_id_idx" ON "services" ("barbershop_id","is_active","title","id");
     `);
 
-    await db.execute(sql`
+    await targetDb.execute(sql`
       CREATE TABLE IF NOT EXISTS "refresh_tokens" (
         "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
         "user_id" uuid NOT NULL,
@@ -108,13 +110,13 @@ export async function runSchemaMigrations() {
       );
     `);
 
-    await db.execute(sql`
+    await targetDb.execute(sql`
       CREATE INDEX IF NOT EXISTS "refresh_tokens_user_id_idx" ON "refresh_tokens" ("user_id");
       CREATE INDEX IF NOT EXISTS "refresh_tokens_family_id_idx" ON "refresh_tokens" ("family_id");
     `);
 
     // 7. Unificação de staffs e customers para users
-    await db.execute(sql`
+    await targetDb.execute(sql`
       DO $$
       BEGIN
         IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'staffs') THEN
@@ -144,7 +146,7 @@ export async function runSchemaMigrations() {
     `);
 
     // 8. Convites de barbeiros
-    await db.execute(sql`
+    await targetDb.execute(sql`
       DO $$
       BEGIN
         IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'invitation_status') THEN
@@ -153,7 +155,7 @@ export async function runSchemaMigrations() {
       END $$;
     `);
 
-    await db.execute(sql`
+    await targetDb.execute(sql`
       CREATE TABLE IF NOT EXISTS "invitations" (
         "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
         "barbershop_id" uuid NOT NULL,
@@ -171,13 +173,13 @@ export async function runSchemaMigrations() {
       );
     `);
 
-    await db.execute(sql`
+    await targetDb.execute(sql`
       CREATE INDEX IF NOT EXISTS "invitations_barbershop_email_idx" ON "invitations" ("barbershop_id","email");
       CREATE INDEX IF NOT EXISTS "invitations_status_idx" ON "invitations" ("status");
     `);
 
     // 9. B1 — Booking items, snapshots, history and backwards-compatible columns
-    await db.execute(sql`
+    await targetDb.execute(sql`
       ALTER TABLE "bookings" ADD COLUMN IF NOT EXISTS "customer_id" uuid;
       ALTER TABLE "bookings" ADD COLUMN IF NOT EXISTS "starts_at" timestamp with time zone;
       ALTER TABLE "bookings" ADD COLUMN IF NOT EXISTS "ends_at" timestamp with time zone;
@@ -190,7 +192,7 @@ export async function runSchemaMigrations() {
       ALTER TABLE "bookings" ALTER COLUMN "shopping_cart_id" DROP NOT NULL;
     `);
 
-    await db.execute(sql`
+    await targetDb.execute(sql`
       DO $$
       BEGIN
         IF NOT EXISTS (
@@ -207,13 +209,13 @@ export async function runSchemaMigrations() {
       END $$;
     `);
 
-    await db.execute(sql`
+    await targetDb.execute(sql`
       CREATE INDEX IF NOT EXISTS "bookings_barbershop_starts_at_id_idx" ON "bookings" ("barbershop_id", "starts_at", "id");
       CREATE INDEX IF NOT EXISTS "bookings_barberman_starts_ends_idx" ON "bookings" ("barberman_id", "starts_at", "ends_at");
       CREATE INDEX IF NOT EXISTS "bookings_customer_id_idx" ON "bookings" ("customer_id");
     `);
 
-    await db.execute(sql`
+    await targetDb.execute(sql`
       CREATE TABLE IF NOT EXISTS "booking_service_items" (
         "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
         "booking_id" uuid NOT NULL,
@@ -228,12 +230,12 @@ export async function runSchemaMigrations() {
       );
     `);
 
-    await db.execute(sql`
+    await targetDb.execute(sql`
       CREATE INDEX IF NOT EXISTS "booking_service_items_booking_id_idx" ON "booking_service_items" ("booking_id");
       CREATE INDEX IF NOT EXISTS "booking_service_items_service_id_idx" ON "booking_service_items" ("service_id");
     `);
 
-    await db.execute(sql`
+    await targetDb.execute(sql`
       CREATE TABLE IF NOT EXISTS "booking_events" (
         "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
         "booking_id" uuid NOT NULL,
@@ -251,11 +253,11 @@ export async function runSchemaMigrations() {
       );
     `);
 
-    await db.execute(sql`
+    await targetDb.execute(sql`
       CREATE INDEX IF NOT EXISTS "booking_events_booking_id_created_at_idx" ON "booking_events" ("booking_id", "created_at");
     `);
 
-    await db.execute(sql`
+    await targetDb.execute(sql`
       UPDATE "bookings" AS b
       SET
         "customer_id" = sc."user_id",
@@ -268,7 +270,7 @@ export async function runSchemaMigrations() {
         AND b."customer_id" IS NULL;
     `);
 
-    await db.execute(sql`
+    await targetDb.execute(sql`
       UPDATE "bookings" AS b
       SET
         "starts_at" = (b."date"::date + b."start_time"::time) AT TIME ZONE COALESCE(bs."timezone", 'America/Sao_Paulo'),
@@ -281,7 +283,7 @@ export async function runSchemaMigrations() {
         AND b."end_time" IS NOT NULL;
     `);
 
-    await db.execute(sql`
+    await targetDb.execute(sql`
       INSERT INTO "booking_service_items" (
         "id",
         "booking_id",
@@ -316,7 +318,7 @@ export async function runSchemaMigrations() {
       );
     `);
 
-    await db.execute(sql`
+    await targetDb.execute(sql`
       INSERT INTO "booking_events" (
         "id",
         "booking_id",
@@ -349,7 +351,7 @@ export async function runSchemaMigrations() {
     `);
 
     // 10. Grupo 1 — Vínculos ACTIVE/INACTIVE, versionamento e ledger de operações
-    await db.execute(sql`
+    await targetDb.execute(sql`
       DO $$
       BEGIN
         IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'membership_state') THEN
@@ -366,18 +368,18 @@ export async function runSchemaMigrations() {
       END $$;
     `);
 
-    await db.execute(sql`
+    await targetDb.execute(sql`
       ALTER TABLE "membership" ADD COLUMN IF NOT EXISTS "state" "membership_state" DEFAULT 'ACTIVE' NOT NULL;
       ALTER TABLE "membership" ADD COLUMN IF NOT EXISTS "version" integer DEFAULT 1 NOT NULL;
       ALTER TABLE "membership" ADD COLUMN IF NOT EXISTS "ended_at" timestamp with time zone;
     `);
 
-    await db.execute(sql`
+    await targetDb.execute(sql`
       CREATE INDEX IF NOT EXISTS "membership_barbershop_state_created_idx"
       ON "membership" ("barbershop_id", "state", "created_at", "id");
     `);
 
-    await db.execute(sql`
+    await targetDb.execute(sql`
       CREATE TABLE IF NOT EXISTS "operation_attempts" (
         "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
         "actor_id" uuid NOT NULL,
@@ -398,7 +400,7 @@ export async function runSchemaMigrations() {
       );
     `);
 
-    await db.execute(sql`
+    await targetDb.execute(sql`
       CREATE INDEX IF NOT EXISTS "operation_attempts_actor_request_idx"
       ON "operation_attempts" ("actor_id", "request_id");
       CREATE INDEX IF NOT EXISTS "operation_attempts_expires_at_idx"
@@ -406,7 +408,7 @@ export async function runSchemaMigrations() {
     `);
 
     // 11. Grupo 2 — Notificações idempotentes por evento e rate limit de customer lookup
-    await db.execute(sql`
+    await targetDb.execute(sql`
       ALTER TABLE "notifications" ADD COLUMN IF NOT EXISTS "event_id" uuid;
       DO $$
       BEGIN
@@ -418,7 +420,7 @@ export async function runSchemaMigrations() {
       END $$;
     `);
 
-    await db.execute(sql`
+    await targetDb.execute(sql`
       CREATE TABLE IF NOT EXISTS "customer_lookup_rate_limits" (
         "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
         "key" text NOT NULL,
@@ -431,7 +433,147 @@ export async function runSchemaMigrations() {
       CREATE INDEX IF NOT EXISTS "customer_lookup_rate_limits_reset_at_idx" ON "customer_lookup_rate_limits" ("reset_at");
     `);
 
-    hasMigrated = true;
+    // 12. Descoberta e Geolocalização — Grupo 1 (barbershop_locations, geocoding_candidates, health, usage buckets)
+    await targetDb.execute(sql`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'barbershop_location_status') THEN
+          CREATE TYPE "barbershop_location_status" AS ENUM ('UNCONFIRMED', 'CONFIRMED', 'NEEDS_REVIEW');
+        END IF;
+      END $$;
+    `);
+
+    await targetDb.execute(sql`
+      CREATE TABLE IF NOT EXISTS "barbershop_locations" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+        "barbershop_id" uuid NOT NULL,
+        "status" "barbershop_location_status" DEFAULT 'UNCONFIRMED' NOT NULL,
+        "latitude" double precision,
+        "longitude" double precision,
+        "version" integer DEFAULT 1 NOT NULL,
+        "confirmed_at" timestamp with time zone,
+        "source" text DEFAULT 'MANUAL' NOT NULL,
+        "google_place_id" text,
+        "google_reference" text,
+        "acquired_at" timestamp with time zone,
+        "valid_until" timestamp with time zone,
+        "pin_adjusted" boolean DEFAULT false NOT NULL,
+        "last_mutation_id" uuid,
+        "last_mutation_actor_id" uuid,
+        "last_mutation_hash" text,
+        "last_mutation_saved_version" integer,
+        "created_at" timestamp with time zone DEFAULT now(),
+        "updated_at" timestamp with time zone DEFAULT now(),
+        CONSTRAINT "barbershop_locations_barbershop_id_unique" UNIQUE ("barbershop_id"),
+        CONSTRAINT "barbershop_locations_barbershop_id_barbershops_id_fkey" FOREIGN KEY ("barbershop_id") REFERENCES "barbershops"("id") ON DELETE CASCADE,
+        CONSTRAINT "barbershop_locations_last_mutation_actor_id_users_id_fkey" FOREIGN KEY ("last_mutation_actor_id") REFERENCES "users"("id")
+      );
+    `);
+
+    await targetDb.execute(sql`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'barbershop_locations_coordinates_check'
+        ) THEN
+          ALTER TABLE "barbershop_locations" ADD CONSTRAINT "barbershop_locations_coordinates_check"
+          CHECK (("latitude" IS NULL AND "longitude" IS NULL) OR ("latitude" IS NOT NULL AND "longitude" IS NOT NULL AND "latitude" >= -90 AND "latitude" <= 90 AND "longitude" >= -180 AND "longitude" <= 180));
+        END IF;
+
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'barbershop_locations_version_non_negative_check'
+        ) THEN
+          ALTER TABLE "barbershop_locations" ADD CONSTRAINT "barbershop_locations_version_non_negative_check"
+          CHECK ("version" >= 0);
+        END IF;
+      END $$;
+    `);
+
+    await targetDb.execute(sql`
+      CREATE INDEX IF NOT EXISTS "barbershop_locations_status_valid_until_idx"
+      ON "barbershop_locations" ("status", "valid_until");
+
+      CREATE INDEX IF NOT EXISTS "barbershop_locations_valid_until_idx"
+      ON "barbershop_locations" ("valid_until");
+    `);
+
+    await targetDb.execute(sql`
+      CREATE TABLE IF NOT EXISTS "geocoding_candidates" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+        "actor_id" uuid NOT NULL,
+        "barbershop_id" uuid,
+        "address_hash" text NOT NULL,
+        "latitude" double precision NOT NULL,
+        "longitude" double precision NOT NULL,
+        "place_id" text NOT NULL,
+        "expires_at" timestamp with time zone NOT NULL,
+        "consumed_at" timestamp with time zone,
+        "created_at" timestamp with time zone DEFAULT now(),
+        CONSTRAINT "geocoding_candidates_actor_id_users_id_fkey" FOREIGN KEY ("actor_id") REFERENCES "users"("id") ON DELETE CASCADE,
+        CONSTRAINT "geocoding_candidates_barbershop_id_barbershops_id_fkey" FOREIGN KEY ("barbershop_id") REFERENCES "barbershops"("id") ON DELETE CASCADE
+      );
+    `);
+
+    await targetDb.execute(sql`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'geocoding_candidates_coordinates_check'
+        ) THEN
+          ALTER TABLE "geocoding_candidates" ADD CONSTRAINT "geocoding_candidates_coordinates_check"
+          CHECK ("latitude" >= -90 AND "latitude" <= 90 AND "longitude" >= -180 AND "longitude" <= 180);
+        END IF;
+      END $$;
+    `);
+
+    await targetDb.execute(sql`
+      CREATE INDEX IF NOT EXISTS "geocoding_candidates_actor_id_idx"
+      ON "geocoding_candidates" ("actor_id");
+
+      CREATE INDEX IF NOT EXISTS "geocoding_candidates_expires_at_idx"
+      ON "geocoding_candidates" ("expires_at");
+
+      CREATE INDEX IF NOT EXISTS "geocoding_candidates_actor_address_hash_idx"
+      ON "geocoding_candidates" ("actor_id", "address_hash");
+    `);
+
+    await targetDb.execute(sql`
+      CREATE TABLE IF NOT EXISTS "location_maintenance_health" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+        "component" text NOT NULL,
+        "is_healthy" boolean DEFAULT true NOT NULL,
+        "last_heartbeat_at" timestamp with time zone,
+        "consecutive_failures" integer DEFAULT 0 NOT NULL,
+        "details" text,
+        "created_at" timestamp with time zone DEFAULT now(),
+        "updated_at" timestamp with time zone DEFAULT now(),
+        CONSTRAINT "location_maintenance_health_component_unique" UNIQUE ("component")
+      );
+      CREATE INDEX IF NOT EXISTS "location_maintenance_health_component_idx"
+      ON "location_maintenance_health" ("component");
+    `);
+
+    await targetDb.execute(sql`
+      CREATE TABLE IF NOT EXISTS "geocoding_usage_buckets" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+        "scope" text NOT NULL,
+        "scope_id" text NOT NULL,
+        "window_type" text NOT NULL,
+        "window_start" timestamp with time zone NOT NULL,
+        "count" integer DEFAULT 0 NOT NULL,
+        "expires_at" timestamp with time zone NOT NULL,
+        "created_at" timestamp with time zone DEFAULT now(),
+        CONSTRAINT "geocoding_usage_buckets_scope_window_unique" UNIQUE ("scope", "scope_id", "window_type", "window_start")
+      );
+      CREATE INDEX IF NOT EXISTS "geocoding_usage_buckets_lookup_idx"
+      ON "geocoding_usage_buckets" ("scope", "scope_id", "window_type", "window_start");
+      CREATE INDEX IF NOT EXISTS "geocoding_usage_buckets_expires_at_idx"
+      ON "geocoding_usage_buckets" ("expires_at");
+    `);
+
+    if (isDefaultDb) {
+      hasMigrated = true;
+    }
     console.log("[Migration] Schema migrations completed successfully.");
     return {
       success: true,
