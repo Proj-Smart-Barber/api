@@ -1,6 +1,8 @@
 import { type Either, left, right } from "../../../../../core/logic/either";
 import type { ScheduleExceptionsRepository } from "../../../repositories/schedule-exceptions-repository";
 import type { BarbershopsRepository } from "../../../repositories/barbershops-repository";
+import type { MembershipsRepository } from "../../../repositories/memberships-repository";
+import { Role } from "../../../../enterprise/entities/membership";
 import { ScheduleException } from "../../../../enterprise/entities/schedule-exception";
 import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
 import { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
@@ -28,6 +30,7 @@ export class CreateScheduleExceptionUseCase {
     private scheduleExceptionsRepository: ScheduleExceptionsRepository,
     private barbershopsRepository: BarbershopsRepository,
     private unitOfWork?: ProfessionalMembershipUnitOfWork,
+    private membershipsRepository?: MembershipsRepository,
   ) {}
 
   async execute({
@@ -44,11 +47,48 @@ export class CreateScheduleExceptionUseCase {
         await this.barbershopsRepository.findById(barbershopId);
 
       if (!barbershop) {
-        return left(new ResourceNotFoundError());
+        return left(new ResourceNotFoundError("Barbearia não encontrada."));
       }
 
-      if (barbershop.ownerId.toString() !== staffId) {
+      if (this.membershipsRepository) {
+        const actorMembership =
+          await this.membershipsRepository.findByBarbershopAndUser(
+            barbershopId,
+            staffId,
+          );
+
+        const isOwnerActive =
+          actorMembership &&
+          actorMembership.role === Role.OWNER &&
+          actorMembership.state === "ACTIVE";
+
+        const isLegacyOwner = barbershop.ownerId.toString() === staffId;
+
+        if (!isOwnerActive && !isLegacyOwner) {
+          return left(
+            new NotAllowedError(
+              "Apenas o proprietário ativo da unidade pode criar exceções de agenda.",
+            ),
+          );
+        }
+      } else if (barbershop.ownerId.toString() !== staffId) {
         return left(new NotAllowedError());
+      }
+
+      if (barbermanId && this.membershipsRepository) {
+        const targetMembership =
+          await this.membershipsRepository.findByBarbershopAndUser(
+            barbershopId,
+            barbermanId,
+          );
+
+        if (!targetMembership || targetMembership.state !== "ACTIVE") {
+          return left(
+            new ResourceNotFoundError(
+              "Profissional não possui vínculo ativo nesta unidade.",
+            ),
+          );
+        }
       }
 
       if ((startTime && !endTime) || (!startTime && endTime)) {

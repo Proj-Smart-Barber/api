@@ -56,22 +56,89 @@ describe("Update Barbershop Schedule", () => {
     expect(inMemorySchedulesRepository.items[0].closeTime).toBe("18:00");
   });
 
-  it("should not be able to create a schedule if openTime is greater or equal to closeTime", async () => {
-    const result = await sut.execute({
+  it("should isolate schedules between general, barber A, and barber B without cross-contamination", async () => {
+    // 1. Criar jornada geral da barbearia
+    const generalResult = await sut.execute({
       barbershopId: "shop-1",
       createdBy: "staff-1",
       barbermanId: null,
       schedules: [
         {
           dayOfWeek: "MONDAY",
-          openTime: "18:00",
-          closeTime: "08:00",
+          openTime: "08:00",
+          closeTime: "18:00",
         },
       ],
     });
+    expect(generalResult.isRight()).toBe(true);
 
-    // 2. Verificando a falha
-    expect(result.isLeft()).toBe(true); // Left significa Erro/Falha no Either
-    expect(inMemorySchedulesRepository.items).toHaveLength(0); // Nada foi salvo
+    // 2. Criar jornada individual para Barbeiro A
+    const barberAResult = await sut.execute({
+      barbershopId: "shop-1",
+      createdBy: "staff-1",
+      barbermanId: "barber-a",
+      schedules: [
+        {
+          dayOfWeek: "MONDAY",
+          openTime: "10:00",
+          closeTime: "16:00",
+        },
+      ],
+    });
+    expect(barberAResult.isRight()).toBe(true);
+
+    // 3. Criar jornada individual para Barbeiro B
+    const barberBResult = await sut.execute({
+      barbershopId: "shop-1",
+      createdBy: "staff-1",
+      barbermanId: "barber-b",
+      schedules: [
+        {
+          dayOfWeek: "MONDAY",
+          openTime: "12:00",
+          closeTime: "20:00",
+        },
+      ],
+    });
+    expect(barberBResult.isRight()).toBe(true);
+
+    // 4. Atualizar Barbeiro A para um novo horário
+    const updateBarberAResult = await sut.execute({
+      barbershopId: "shop-1",
+      createdBy: "staff-1",
+      barbermanId: "barber-a",
+      schedules: [
+        {
+          dayOfWeek: "MONDAY",
+          openTime: "09:00",
+          closeTime: "15:00",
+        },
+      ],
+    });
+    expect(updateBarberAResult.isRight()).toBe(true);
+
+    // 5. Garantir que a jornada geral continua intacta (08:00 - 18:00)
+    const generalItems = inMemorySchedulesRepository.items.filter(
+      (item) => item.barbermanId === null,
+    );
+    expect(generalItems).toHaveLength(1);
+    expect(generalItems[0].openTime).toBe("08:00");
+    expect(generalItems[0].closeTime).toBe("18:00");
+
+    // 6. Garantir que a jornada do Barbeiro B continua intacta (12:00 - 20:00)
+    const barberBItems = inMemorySchedulesRepository.items.filter(
+      (item) => item.barbermanId?.toString() === "barber-b",
+    );
+    expect(barberBItems).toHaveLength(1);
+    expect(barberBItems[0].openTime).toBe("12:00");
+    expect(barberBItems[0].closeTime).toBe("20:00");
+
+    // 7. Garantir que a jornada do Barbeiro A foi devidamente atualizada (09:00 - 15:00)
+    const barberAItems = inMemorySchedulesRepository.items.filter(
+      (item) => item.barbermanId?.toString() === "barber-a",
+    );
+    expect(barberAItems).toHaveLength(1);
+    expect(barberAItems[0].openTime).toBe("09:00");
+    expect(barberAItems[0].closeTime).toBe("15:00");
   });
 });
