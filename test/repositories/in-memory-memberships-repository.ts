@@ -103,7 +103,20 @@ export class InMemoryMembershipsRepository implements MembershipsRepository {
   async acceptInvitation(
     _invitation: Invitation,
     membership: Membership,
+    userToPromote?: any,
   ): Promise<void> {
-    this.items.push(membership);
+    if (userToPromote && this.usersRepository) {
+      await this.usersRepository.save(userToPromote);
+    }
+    const existingIndex = this.items.findIndex(
+      (m) =>
+        m.barbershopId.toString() === membership.barbershopId.toString() &&
+        m.userId.toString() === membership.userId.toString(),
+    );
+    if (existingIndex >= 0) {
+      this.items[existingIndex] = membership;
+    } else {
+      this.items.push(membership);
+    }
   }
 }

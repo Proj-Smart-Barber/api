@@ -120,11 +120,39 @@ export class DrizzleMembershipsRepository implements MembershipsRepository {
   async acceptInvitation(
     invitation: Invitation,
     membershipEntity: Membership,
+    userToPromote?: any,
   ): Promise<void> {
     await db.transaction(async (transaction) => {
-      await transaction
-        .insert(membership)
-        .values(DrizzleMembershipMapper.toDrizzle(membershipEntity));
+      if (userToPromote) {
+        await transaction
+          .update(users)
+          .set({ accountType: userToPromote.accountType })
+          .where(eq(users.id, userToPromote.id.toString()));
+      }
+
+      const [existing] = await transaction
+        .select()
+        .from(membership)
+        .where(
+          and(
+            eq(
+              membership.barbershopId,
+              membershipEntity.barbershopId.toString(),
+            ),
+            eq(membership.userId, membershipEntity.userId.toString()),
+          ),
+        );
+
+      if (existing) {
+        await transaction
+          .update(membership)
+          .set(DrizzleMembershipMapper.toDrizzle(membershipEntity))
+          .where(eq(membership.id, existing.id));
+      } else {
+        await transaction
+          .insert(membership)
+          .values(DrizzleMembershipMapper.toDrizzle(membershipEntity));
+      }
 
       await transaction
         .update(invitations)
@@ -133,3 +161,4 @@ export class DrizzleMembershipsRepository implements MembershipsRepository {
     });
   }
 }
+

@@ -9,5 +9,11 @@ export interface BarbershopInvitationItem {
 }
 
 export interface FetchBarbershopInvitationsResponse {
+  items: BarbershopInvitationItem[];
   invitations: BarbershopInvitationItem[];
+  page: number;
+  limit: number;
+  total: number;
+  hasNext: boolean;
+  serverTime: string;
 }

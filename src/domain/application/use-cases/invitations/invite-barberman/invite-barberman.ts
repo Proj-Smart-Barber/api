@@ -55,8 +55,22 @@ export class InviteBarbermanUseCase {
       return left(new ResourceNotFoundError("Barbearia inativa."));
     }
 
-    if (barbershop.ownerId.toString() !== userId) {
-      return left(new NotAllowedError());
+    const actorMembership =
+      await this.membershipsRepository.findByBarbershopAndUser(
+        barbershopId,
+        userId,
+      );
+
+    const isOwner = actorMembership
+      ? actorMembership.role === Role.OWNER && actorMembership.state === "ACTIVE"
+      : barbershop.ownerId.toString() === userId;
+
+    if (!isOwner) {
+      return left(
+        new NotAllowedError(
+          "Apenas o proprietário ativo da unidade pode enviar convites.",
+        ),
+      );
     }
 
     const existingUser =
@@ -69,7 +83,7 @@ export class InviteBarbermanUseCase {
           existingUser.id.toString(),
         );
 
-      if (membership) {
+      if (membership && membership.state === "ACTIVE") {
         return left(new AlreadyAMemberError());
       }
     }

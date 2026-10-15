@@ -54,6 +54,12 @@ export class Membership extends Entity<MembershipProps> {
     this.props.version = (this.props.version ?? 1) + 1;
   }
 
+  reactivate(at: Date = new Date()): void {
+    this.props.state = "ACTIVE";
+    this.props.endedAt = null;
+    this.props.version = (this.props.version ?? 1) + 1;
+  }
+
   static create(
     props: Optional<MembershipProps, "createdAt" | "state" | "version">,
     id?: UniqueEntityId,

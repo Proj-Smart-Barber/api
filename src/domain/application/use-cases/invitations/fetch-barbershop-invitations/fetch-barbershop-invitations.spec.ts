@@ -102,4 +102,41 @@ describe("Fetch barbershop invitations use case", () => {
     expect(response.isLeft()).toBe(true);
     expect(response.value).toBeInstanceOf(ResourceNotFoundError);
   });
+
+  it("should support pagination and provide serverTime", async () => {
+    for (let i = 1; i <= 25; i++) {
+      addInvitation(`user${i}@example.com`, "PENDING");
+    }
+
+    const response = await sut.execute({
+      barbershopId: "shop-1",
+      userId: "owner-1",
+      page: 1,
+      limit: 20,
+    });
+
+    expect(response.isRight()).toBe(true);
+    if (response.isRight()) {
+      expect(response.value.items).toHaveLength(20);
+      expect(response.value.total).toBe(25);
+      expect(response.value.hasNext).toBe(true);
+      expect(response.value.page).toBe(1);
+      expect(response.value.limit).toBe(20);
+      expect(typeof response.value.serverTime).toBe("string");
+    }
+
+    const page2 = await sut.execute({
+      barbershopId: "shop-1",
+      userId: "owner-1",
+      page: 2,
+      limit: 20,
+    });
+
+    expect(page2.isRight()).toBe(true);
+    if (page2.isRight()) {
+      expect(page2.value.items).toHaveLength(5);
+      expect(page2.value.hasNext).toBe(false);
+      expect(page2.value.page).toBe(2);
+    }
+  });
 });

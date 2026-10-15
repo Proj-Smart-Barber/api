@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import type { InvitationsRepository } from "../../../domain/application/repositories/invitations-repository";
 import type { Invitation } from "../../../domain/enterprise/entities/invitation";
 import { db } from "../index";
@@ -62,6 +62,33 @@ export class DrizzleInvitationsRepository implements InvitationsRepository {
       .where(eq(invitations.barbershopId, barbershopId));
 
     return results.map(DrizzleInvitationMapper.toDomain);
+  }
+
+  async findManyByBarbershopIdPaginated(
+    barbershopId: string,
+    options: { page: number; limit: number },
+  ): Promise<{ items: Invitation[]; total: number }> {
+    const whereClause = eq(invitations.barbershopId, barbershopId);
+
+    const [countResult] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(invitations)
+      .where(whereClause);
+
+    const total = Number(countResult?.count ?? 0);
+
+    const rows = await db
+      .select()
+      .from(invitations)
+      .where(whereClause)
+      .orderBy(desc(invitations.createdAt))
+      .limit(options.limit)
+      .offset((options.page - 1) * options.limit);
+
+    return {
+      items: rows.map(DrizzleInvitationMapper.toDomain),
+      total,
+    };
   }
 
   async findByBarbershopIdAndEmail(

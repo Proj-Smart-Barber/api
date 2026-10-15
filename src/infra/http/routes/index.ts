@@ -7,6 +7,7 @@ import { barbershopInvitationRoutes } from "./barbershop-invitation.routes";
 import { invitationRoutes } from "./invitation.routes";
 import { notificationRoutes } from "./notification.routes";
 import { operationAttemptRoutes } from "./operation-attempt.routes";
+import { barberRoutes } from "./barber.routes";
 
 const routes = Router();
 
@@ -15,6 +16,7 @@ routes.use("/staffs", userRoutes);
 routes.use("/invitations", invitationRoutes);
 routes.use("/notifications", notificationRoutes);
 routes.use("/barbershops", barbershopRoutes);
+routes.use("/barbers", barberRoutes);
 routes.use("/bookings", bookingRoutes);
 routes.use("/barbershops/:shopId", scheduleRoutes);
 routes.use("/barbershops/:shopId", barbershopInvitationRoutes);

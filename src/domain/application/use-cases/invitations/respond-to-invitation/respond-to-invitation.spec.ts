@@ -4,7 +4,7 @@ import { InMemoryInvitationsRepository } from "../../../../../../test/repositori
 import { InMemoryMembershipsRepository } from "../../../../../../test/repositories/in-memory-memberships-repository";
 import { InMemoryUsersRepository } from "../../../../../../test/repositories/in-memory-users-repository";
 import { Invitation } from "../../../../enterprise/entities/invitation";
-import { Role } from "../../../../enterprise/entities/membership";
+import { Membership, Role } from "../../../../enterprise/entities/membership";
 import { User } from "../../../../enterprise/entities/user";
 import { Password } from "../../../../enterprise/entities/value-objects/password";
 import { RespondToInvitationUseCase } from "./respond-to-invitation";
@@ -220,5 +220,50 @@ describe("Respond to Invitation Use Case (Canonical)", () => {
       invitation.id.toString(),
     );
     expect(saved?.status).toBe("DECLINED");
+  });
+
+  it("permite reativar membro INACTIVE com novo aceite e incrementa versão", async () => {
+    const user = User.create({
+      name: "Barbeiro Retornando",
+      email: "retorno@barbearia.com",
+      password: Password.create("hash"),
+      cpf: "12345678909",
+      accountType: "BARBER",
+    });
+    await usersRepository.save(user);
+
+    // Vínculo existente porém INACTIVE
+    const previousMembership = Membership.create({
+      barbershopId: new UniqueEntityId("shop-123"),
+      userId: user.id,
+      role: Role.BARBERMAN,
+      state: "INACTIVE",
+      version: 2,
+      endedAt: new Date(),
+    });
+    await membershipsRepository.create(previousMembership);
+
+    const invitation = createPendingInvitation(
+      "retorno@barbearia.com",
+      "shop-123",
+      "fakehash-retorno",
+    );
+
+    const result = await sut.execute({
+      userId: user.id.toString(),
+      action: "ACCEPT",
+      reference: { kind: "id", invitationId: invitation.id.toString() },
+    });
+
+    expect(result.isRight()).toBe(true);
+
+    const updatedMembership =
+      await membershipsRepository.findByBarbershopAndUser(
+        "shop-123",
+        user.id.toString(),
+      );
+    expect(updatedMembership?.state).toBe("ACTIVE");
+    expect(updatedMembership?.endedAt).toBeNull();
+    expect(updatedMembership?.version).toBe(3);
   });
 });

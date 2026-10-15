@@ -1,6 +1,8 @@
 import { type Either, left, right } from "../../../../../core/logic/either";
+import { Role } from "../../../../enterprise/entities/membership";
 import type { BarbershopsRepository } from "../../../repositories/barbershops-repository";
 import type { InvitationsRepository } from "../../../repositories/invitations-repository";
+import type { MembershipsRepository } from "../../../repositories/memberships-repository";
 import { NotAllowedError } from "../../_errors/not-allowed-error";
 import { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
 import type { RevokeInvitationDTO } from "./revoke-invitation-dto";
@@ -15,6 +17,7 @@ export class RevokeInvitationUseCase {
   constructor(
     private barbershopsRepository: BarbershopsRepository,
     private invitationsRepository: InvitationsRepository,
+    private membershipsRepository?: MembershipsRepository,
   ) {}
 
   async execute({
@@ -28,7 +31,25 @@ export class RevokeInvitationUseCase {
       return left(new ResourceNotFoundError("Barbearia não encontrada."));
     }
 
-    if (barbershop.ownerId.toString() !== userId) {
+    if (this.membershipsRepository) {
+      const actorMembership =
+        await this.membershipsRepository.findByBarbershopAndUser(
+          barbershopId,
+          userId,
+        );
+
+      if (
+        !actorMembership ||
+        actorMembership.role !== Role.OWNER ||
+        actorMembership.state !== "ACTIVE"
+      ) {
+        return left(
+          new NotAllowedError(
+            "Apenas o proprietário ativo da unidade pode revogar convites.",
+          ),
+        );
+      }
+    } else if (barbershop.ownerId.toString() !== userId) {
       return left(new NotAllowedError());
     }
 

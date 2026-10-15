@@ -84,25 +84,36 @@ export class RespondToInvitationUseCase {
         user.id.toString(),
       );
 
-    if (existingMembership) {
+    if (existingMembership && existingMembership.state === "ACTIVE") {
       return left(new AlreadyAMemberError());
     }
 
     // Promove CLIENT para BARBER mantendo OWNER se já for OWNER
+    let userToPromote: typeof user | undefined;
     if (user.accountType === "CLIENT") {
       user.promoteToBarber();
-      await this.usersRepository.save(user);
+      userToPromote = user;
     }
 
-    const membership = Membership.create({
-      role: Role.BARBERMAN,
-      barbershopId: invitation.barbershopId,
-      userId: user.id,
-    });
+    let targetMembership: Membership;
+    if (existingMembership) {
+      existingMembership.reactivate(new Date());
+      targetMembership = existingMembership;
+    } else {
+      targetMembership = Membership.create({
+        role: Role.BARBERMAN,
+        barbershopId: invitation.barbershopId,
+        userId: user.id,
+      });
+    }
 
     invitation.markAccepted();
 
-    await this.membershipsRepository.acceptInvitation(invitation, membership);
+    await this.membershipsRepository.acceptInvitation(
+      invitation,
+      targetMembership,
+      userToPromote,
+    );
 
     return right({
       invitationId: invitation.id.toString(),

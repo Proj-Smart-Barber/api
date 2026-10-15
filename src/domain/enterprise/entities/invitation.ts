@@ -80,6 +80,11 @@ export class Invitation extends Entity<InvitationProps> {
     this.props.status = "REVOKED";
   }
 
+  renew(tokenHash: string, expiresAt: Date): void {
+    this.props.tokenHash = tokenHash;
+    this.props.expiresAt = expiresAt;
+  }
+
   static create(
     props: Optional<InvitationProps, "createdAt" | "respondedAt">,
     id?: UniqueEntityId,

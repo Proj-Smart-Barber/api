@@ -195,6 +195,25 @@ export async function runSchemaMigrations(targetDb: any = db) {
       CREATE INDEX IF NOT EXISTS "invitations_status_idx" ON "invitations" ("status");
     `);
 
+    await targetDb.execute(sql`
+      CREATE TABLE IF NOT EXISTS "barber_registrations" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+        "barbershop_id" uuid NOT NULL,
+        "invitation_id" uuid NOT NULL,
+        "name" text NOT NULL,
+        "cpf" text NOT NULL,
+        "email" text NOT NULL,
+        "token_hash" text NOT NULL,
+        "status" "invitation_status" DEFAULT 'PENDING' NOT NULL,
+        "expires_at" timestamp NOT NULL,
+        "responded_at" timestamp,
+        "created_at" timestamp DEFAULT now(),
+        CONSTRAINT "barber_registrations_token_hash_unique" UNIQUE ("token_hash"),
+        CONSTRAINT "barber_registrations_barbershop_id_barbershops_id_fkey" FOREIGN KEY ("barbershop_id") REFERENCES "barbershops"("id") ON DELETE CASCADE,
+        CONSTRAINT "barber_registrations_invitation_id_invitations_id_fkey" FOREIGN KEY ("invitation_id") REFERENCES "invitations"("id") ON DELETE CASCADE
+      );
+    `);
+
     // 9. B1 — Booking items, snapshots, history and backwards-compatible columns
     await targetDb.execute(sql`
       ALTER TABLE "bookings" ADD COLUMN IF NOT EXISTS "customer_id" uuid;
