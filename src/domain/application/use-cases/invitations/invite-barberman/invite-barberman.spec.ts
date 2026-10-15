@@ -313,4 +313,38 @@ describe("Invite barberman use case", () => {
     expect(inMemoryInvitationsRepository.items).toHaveLength(0);
     expect(inMemoryNotificationsRepository.items).toHaveLength(0);
   });
+
+  it("permite convidar novamente um barbeiro cujo vínculo está INACTIVE", async () => {
+    const owner = await createOwner();
+    addBarbershop(owner.id.toString());
+
+    const barberman = User.create({
+      name: "Barbeiro Antigo",
+      email: "antigo@example.com",
+      password: await Password.generateHashFromPlainText("12345678", 12),
+      cpf: "22222222222",
+    });
+    await inMemoryUsersRepository.save(barberman);
+
+    // Vínculo INACTIVE anterior
+    inMemoryMembershipsRepository.items.push(
+      Membership.create({
+        role: Role.BARBERMAN,
+        barbershopId: new UniqueEntityId("shop-1"),
+        userId: barberman.id,
+        state: "INACTIVE",
+        endedAt: new Date(),
+      }),
+    );
+
+    const response = await sut.execute({
+      barbershopId: "shop-1",
+      userId: owner.id.toString(),
+      email: "antigo@example.com",
+    });
+
+    expect(response.isRight()).toBe(true);
+    expect(inMemoryInvitationsRepository.items).toHaveLength(1);
+    expect(inMemoryInvitationsRepository.items[0].email).toBe("antigo@example.com");
+  });
 });

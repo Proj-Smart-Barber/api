@@ -44,6 +44,19 @@ export class InMemoryInvitationsRepository implements InvitationsRepository {
     );
   }
 
+  async findManyByBarbershopIdPaginated(
+    barbershopId: string,
+    options: { page: number; limit: number },
+  ): Promise<{ items: Invitation[]; total: number }> {
+    const all = this.items.filter(
+      (item) => item.barbershopId.toString() === barbershopId,
+    );
+    const total = all.length;
+    const offset = (options.page - 1) * options.limit;
+    const items = all.slice(offset, offset + options.limit);
+    return { items, total };
+  }
+
   async findByBarbershopIdAndEmail(
     barbershopId: string,
     email: string,

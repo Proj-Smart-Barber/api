@@ -1,4 +1,4 @@
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, gt, sql } from "drizzle-orm";
 import type {
   ListTeamOptions,
   MembershipsRepository,
@@ -6,10 +6,11 @@ import type {
 } from "../../../domain/application/repositories/memberships-repository";
 import type { Invitation } from "../../../domain/enterprise/entities/invitation";
 import type { Membership } from "../../../domain/enterprise/entities/membership";
+import { InvalidInvitationError } from "../../../domain/application/use-cases/_errors/invalid-invitation-error";
 import { db } from "../index";
 import { DrizzleInvitationMapper } from "../mappers/drizzle-invitation-mapper";
 import { DrizzleMembershipMapper } from "../mappers/drizzle-membership-mapper";
-import { invitations, membership, users } from "../schema";
+import { barberRegistrations, barbershops, invitations, membership, users } from "../schema";
 
 export class DrizzleMembershipsRepository implements MembershipsRepository {
   async create(membershipEntity: Membership): Promise<Membership> {
@@ -120,16 +121,116 @@ export class DrizzleMembershipsRepository implements MembershipsRepository {
   async acceptInvitation(
     invitation: Invitation,
     membershipEntity: Membership,
+    userToPromote?: any,
   ): Promise<void> {
     await db.transaction(async (transaction) => {
-      await transaction
-        .insert(membership)
-        .values(DrizzleMembershipMapper.toDrizzle(membershipEntity));
+      const now = new Date();
 
-      await transaction
+      // 1. UPDATE atômico e condicional do convite
+      const [updatedInvitation] = await transaction
         .update(invitations)
-        .set(DrizzleInvitationMapper.toDrizzle(invitation))
-        .where(eq(invitations.id, invitation.id.toString()));
+        .set({
+          status: "ACCEPTED",
+          respondedAt: now,
+        })
+        .where(
+          and(
+            eq(invitations.id, invitation.id.toString()),
+            eq(invitations.status, "PENDING"),
+            gt(invitations.expiresAt, now),
+          ),
+        )
+        .returning();
+
+      if (!updatedInvitation) {
+        throw new InvalidInvitationError(
+          "Convite inválido, já respondido ou expirado.",
+        );
+      }
+
+      // 2. Revalidação de autoridade e barbearia ativa
+      const [shop] = await transaction
+        .select()
+        .from(barbershops)
+        .where(
+          and(
+            eq(barbershops.id, invitation.barbershopId.toString()),
+            eq(barbershops.status, "ACTIVE"),
+          ),
+        );
+
+      if (!shop) {
+        throw new InvalidInvitationError(
+          "A barbearia vinculada ao convite não está ativa.",
+        );
+      }
+
+      const [inviterMembership] = await transaction
+        .select()
+        .from(membership)
+        .where(
+          and(
+            eq(membership.barbershopId, invitation.barbershopId.toString()),
+            eq(membership.userId, invitation.invitedById.toString()),
+            eq(membership.role, "OWNER"),
+            eq(membership.state, "ACTIVE"),
+          ),
+        );
+
+      const isLegacyOwner = shop.ownerId === invitation.invitedById.toString();
+      if (!inviterMembership && !isLegacyOwner) {
+        throw new InvalidInvitationError(
+          "O proprietário que enviou o convite não possui mais vínculo ativo na unidade.",
+        );
+      }
+
+      // 3. Promover conta se aplicável
+      if (userToPromote) {
+        await transaction
+          .update(users)
+          .set({ accountType: userToPromote.accountType })
+          .where(eq(users.id, userToPromote.id.toString()));
+      }
+
+      // 4. Inserir ou atualizar vínculo de membro
+      const [existing] = await transaction
+        .select()
+        .from(membership)
+        .where(
+          and(
+            eq(
+              membership.barbershopId,
+              membershipEntity.barbershopId.toString(),
+            ),
+            eq(membership.userId, membershipEntity.userId.toString()),
+          ),
+        );
+
+      if (existing) {
+        await transaction
+          .update(membership)
+          .set(DrizzleMembershipMapper.toDrizzle(membershipEntity))
+          .where(eq(membership.id, existing.id));
+      } else {
+        await transaction
+          .insert(membership)
+          .values(DrizzleMembershipMapper.toDrizzle(membershipEntity));
+      }
+
+      // 5. Sincroniza barber_registrations se associado a este convite
+      await transaction
+        .update(barberRegistrations)
+        .set({
+          status: "ACCEPTED",
+          respondedAt: now,
+        })
+        .where(
+          and(
+            eq(barberRegistrations.invitationId, invitation.id.toString()),
+            eq(barberRegistrations.status, "PENDING"),
+          ),
+        );
     });
   }
 }
+

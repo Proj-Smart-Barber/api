@@ -3,6 +3,8 @@ import { adaptRoute } from "../../../core/infra/adapters/express-route-adapter";
 import { makeCreateBarbershopController } from "../factories/make-create-barbershop-controller";
 import { makeDeactivateUnitMembershipController } from "../factories/make-deactivate-unit-membership-controller";
 import { makeGetBarbershopController } from "../factories/make-get-barbershop-controller";
+import { makeGetUnitTeamMemberController } from "../factories/make-get-unit-team-member-controller";
+import { makeCreateBarberRegistrationController } from "../factories/make-create-barber-registration-controller";
 import { makeListBarbershopProfessionalsController } from "../factories/make-list-barbershop-professionals-controller";
 import { makeListUnitTeamController } from "../factories/make-list-unit-team-controller";
 import { makeLookupBookingCustomerController } from "../factories/make-lookup-booking-customer-controller";
@@ -37,6 +39,16 @@ barbershopRoutes.get(
   "/:shopId/team",
   ensureUserIsAuthenticated,
   adaptRoute(makeListUnitTeamController()),
+);
+barbershopRoutes.get(
+  "/:shopId/team/:membershipId",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeGetUnitTeamMemberController()),
+);
+barbershopRoutes.post(
+  "/:shopId/barber-registrations",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeCreateBarberRegistrationController()),
 );
 barbershopRoutes.patch(
   "/:shopId/team/:membershipId/deactivation",

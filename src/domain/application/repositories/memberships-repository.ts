@@ -4,6 +4,8 @@ import type {
   MembershipState,
 } from "../../enterprise/entities/membership";
 
+import type { User } from "../../enterprise/entities/user";
+
 export interface TeamMemberWithUser {
   membership: Membership;
   user: {
@@ -35,10 +37,12 @@ export interface MembershipsRepository {
   ): Promise<{ items: TeamMemberWithUser[]; total: number }>;
   /**
    * Atomically creates the membership and marks its invitation as accepted.
+   * If userToPromote is passed, it is saved inside the same atomic transaction.
    * The invitation entity is expected to be already mutated (markAccepted).
    */
   acceptInvitation(
     invitation: Invitation,
     membership: Membership,
+    userToPromote?: User,
   ): Promise<void>;
 }

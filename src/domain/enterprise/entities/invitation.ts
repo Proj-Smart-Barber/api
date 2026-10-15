@@ -14,6 +14,7 @@ interface InvitationProps {
   expiresAt: Date;
   invitedById: UniqueEntityId;
   respondedAt?: Date | null;
+  lastResentAt?: Date | null;
   createdAt?: Date;
 }
 
@@ -50,6 +51,10 @@ export class Invitation extends Entity<InvitationProps> {
     return this.props.respondedAt;
   }
 
+  get lastResentAt(): Date | null | undefined {
+    return this.props.lastResentAt;
+  }
+
   get createdAt(): Date | undefined {
     return this.props.createdAt;
   }
@@ -78,6 +83,12 @@ export class Invitation extends Entity<InvitationProps> {
 
   revoke(): void {
     this.props.status = "REVOKED";
+  }
+
+  renew(tokenHash: string, expiresAt: Date, resentAt: Date = new Date()): void {
+    this.props.tokenHash = tokenHash;
+    this.props.expiresAt = expiresAt;
+    this.props.lastResentAt = resentAt;
   }
 
   static create(

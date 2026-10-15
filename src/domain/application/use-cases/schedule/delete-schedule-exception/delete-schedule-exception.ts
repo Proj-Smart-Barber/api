@@ -1,6 +1,8 @@
 import { type Either, left, right } from "../../../../../core/logic/either";
 import type { ScheduleExceptionsRepository } from "../../../repositories/schedule-exceptions-repository";
 import type { BarbershopsRepository } from "../../../repositories/barbershops-repository";
+import type { MembershipsRepository } from "../../../repositories/memberships-repository";
+import { Role } from "../../../../enterprise/entities/membership";
 import { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
 import { NotAllowedError } from "../../_errors/not-allowed-error";
 
@@ -22,6 +24,7 @@ export class DeleteScheduleExceptionUseCase {
     private scheduleExceptionsRepository: ScheduleExceptionsRepository,
     private barbershopsRepository: BarbershopsRepository,
     private unitOfWork?: ProfessionalMembershipUnitOfWork,
+    private membershipsRepository?: MembershipsRepository,
   ) {}
 
   async execute({
@@ -43,7 +46,28 @@ export class DeleteScheduleExceptionUseCase {
 
       const barbershop =
         await this.barbershopsRepository.findById(barbershopId);
-      if (!barbershop || barbershop.ownerId.toString() !== staffId) {
+      if (!barbershop) {
+        return left(new ResourceNotFoundError());
+      }
+
+      if (this.membershipsRepository) {
+        const actorMembership =
+          await this.membershipsRepository.findByBarbershopAndUser(
+            barbershopId,
+            staffId,
+          );
+
+        const isOwnerActive =
+          actorMembership &&
+          actorMembership.role === Role.OWNER &&
+          actorMembership.state === "ACTIVE";
+
+        const isLegacyOwner = barbershop.ownerId.toString() === staffId;
+
+        if (!isOwnerActive && !isLegacyOwner) {
+          return left(new NotAllowedError());
+        }
+      } else if (barbershop.ownerId.toString() !== staffId) {
         return left(new NotAllowedError());
       }
 

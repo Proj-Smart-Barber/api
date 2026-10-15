@@ -1459,6 +1459,20 @@ export const swaggerDocument = {
             required: true,
             schema: { type: "string", format: "uuid" },
           },
+          {
+            name: "page",
+            in: "query",
+            required: false,
+            schema: { type: "integer", default: 1, minimum: 1 },
+            description: "Número da página",
+          },
+          {
+            name: "limit",
+            in: "query",
+            required: false,
+            schema: { type: "integer", default: 20, minimum: 1, maximum: 100 },
+            description: "Limite de itens por página",
+          },
         ],
         responses: {
           "200": {
@@ -1468,6 +1482,40 @@ export const swaggerDocument = {
                 schema: {
                   type: "object",
                   properties: {
+                    items: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: { type: "string", format: "uuid" },
+                          email: { type: "string", format: "email" },
+                          status: {
+                            type: "string",
+                            enum: [
+                              "PENDING",
+                              "ACCEPTED",
+                              "DECLINED",
+                              "REVOKED",
+                            ],
+                          },
+                          role: {
+                            type: "string",
+                            enum: ["OWNER", "BARBERMAN"],
+                          },
+                          expiresAt: { type: "string", format: "date-time" },
+                          respondedAt: {
+                            type: "string",
+                            format: "date-time",
+                            nullable: true,
+                          },
+                          createdAt: {
+                            type: "string",
+                            format: "date-time",
+                            nullable: true,
+                          },
+                        },
+                      },
+                    },
                     invitations: {
                       type: "array",
                       items: {
@@ -1502,6 +1550,11 @@ export const swaggerDocument = {
                         },
                       },
                     },
+                    page: { type: "integer", example: 1 },
+                    limit: { type: "integer", example: 20 },
+                    total: { type: "integer", example: 1 },
+                    hasNext: { type: "boolean", example: false },
+                    serverTime: { type: "string", format: "date-time" },
                   },
                 },
               },
@@ -1512,6 +1565,71 @@ export const swaggerDocument = {
               "Validation error, not the owner, or barbershop not found",
           },
           "401": { description: "Missing or invalid authentication" },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
+    "/api/barbershops/{shopId}/invitations/{invitationId}/resend": {
+      post: {
+        tags: ["Invitations"],
+        summary: "Resend an invitation with cooldown (owner only)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "invitationId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "Idempotency-Key",
+            in: "header",
+            required: false,
+            schema: { type: "string" },
+            description: "Chave de idempotência UUIDv7",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Invitation resent successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    invitationId: { type: "string", format: "uuid" },
+                    sentAt: { type: "string", format: "date-time" },
+                    expiresAt: { type: "string", format: "date-time" },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Validation error or invalid invitation state" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden - not unit owner" },
+          "404": { description: "Invitation or barbershop not found" },
+          "429": {
+            description: "Cooldown active - wait 60s before resending",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string", example: "Aguarde 60 segundos antes de reenviar este convite." },
+                    code: { type: "string", example: "RESEND_COOLDOWN" },
+                    retryAfterSeconds: { type: "integer", example: 60 },
+                  },
+                },
+              },
+            },
+          },
           "500": { description: "Internal server error" },
         },
       },
@@ -2446,6 +2564,218 @@ export const swaggerDocument = {
           "409": {
             description:
               "Conflict - active/future bookings or concurrent version conflict",
+          },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
+    "/api/barbershops/{shopId}/team/{membershipId}": {
+      get: {
+        tags: ["Team"],
+        summary: "Get team member details (owner only)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+            description: "Barbershop unit ID",
+          },
+          {
+            name: "membershipId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+            description: "Membership ID",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Member details retrieved successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    member: {
+                      type: "object",
+                      properties: {
+                        membershipId: { type: "string", format: "uuid" },
+                        userId: { type: "string", format: "uuid" },
+                        name: { type: "string" },
+                        role: { type: "string", example: "BARBERMAN" },
+                        state: { type: "string", enum: ["ACTIVE", "INACTIVE"] },
+                        version: { type: "integer", example: 1 },
+                        joinedAt: { type: "string", format: "date-time" },
+                        endedAt: {
+                          type: "string",
+                          format: "date-time",
+                          nullable: true,
+                        },
+                        avatarUrl: { type: "string", nullable: true },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Validation error" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden - not unit owner" },
+          "404": { description: "Member or barbershop not found" },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
+    "/api/barbershops/{shopId}/barber-registrations": {
+      post: {
+        tags: ["Team"],
+        summary: "Initiate professional registration for a barber (owner only)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+            description: "Barbershop unit ID",
+          },
+          {
+            name: "Idempotency-Key",
+            in: "header",
+            required: true,
+            schema: { type: "string" },
+            description: "Chave de idempotência UUIDv7",
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["name", "cpf", "email"],
+                properties: {
+                  name: { type: "string", example: "Carlos Barbeiro" },
+                  cpf: { type: "string", example: "123.456.789-00" },
+                  email: {
+                    type: "string",
+                    format: "email",
+                    example: "carlos@barbearia.com",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Registration initiated successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    registrationId: { type: "string", format: "uuid" },
+                    invitationId: { type: "string", format: "uuid" },
+                    email: { type: "string", format: "email" },
+                    status: { type: "string", example: "PENDING" },
+                    requiresExistingAccountLogin: {
+                      type: "boolean",
+                      example: false,
+                    },
+                    expiresAt: { type: "string", format: "date-time" },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Validation error or missing idempotency key" },
+          "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden - not unit owner" },
+          "404": { description: "Barbershop not found or inactive" },
+          "409": {
+            description:
+              "Conflict (IDENTITY_CONFLICT, ALREADY_A_MEMBER, PENDING_INVITATION_EXISTS)",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                    code: { type: "string", example: "IDENTITY_CONFLICT" },
+                  },
+                },
+              },
+            },
+          },
+          "500": { description: "Internal server error" },
+        },
+      },
+    },
+    "/api/barbers/activate": {
+      post: {
+        tags: ["Barbers"],
+        summary:
+          "Activate barber account with password (public via email link)",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["token", "password"],
+                properties: {
+                  token: {
+                    type: "string",
+                    description: "Token recebido por e-mail",
+                  },
+                  password: {
+                    type: "string",
+                    description:
+                      "Nova senha (mínimo 8 caracteres, máximo 72 bytes)",
+                    example: "senhasegura123",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Account activated successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean", example: true },
+                    userId: { type: "string", format: "uuid" },
+                    email: { type: "string", format: "email" },
+                    status: { type: "string", example: "COMPLETED" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid or expired token, or invalid password",
+          },
+          "409": {
+            description: "Account already exists (requires login instead)",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                    code: { type: "string", example: "account_already_exists" },
+                  },
+                },
+              },
+            },
           },
           "500": { description: "Internal server error" },
         },

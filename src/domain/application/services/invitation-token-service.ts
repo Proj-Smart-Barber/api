@@ -33,9 +33,16 @@ export function createInvitationToken(
   };
 }
 
-export function buildInvitationUrl(plainToken: string): string {
-  const baseUrl = env.FRONTEND_URL ?? env.APP_URL;
-  const url = new URL(baseUrl);
+export function buildInvitationUrl(
+  plainToken: string,
+  isExistingUser = false,
+): string {
+  const rawBaseUrl = env.FRONTEND_URL ?? env.APP_URL;
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
+  const path = isExistingUser ? "/invitation" : "/activate-barber";
+  const url = new URL(`${baseUrl}${path}`);
 
   url.searchParams.set("token", plainToken);
 

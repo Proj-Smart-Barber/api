@@ -3,6 +3,7 @@ import { adaptRoute } from "../../../core/infra/adapters/express-route-adapter";
 import { makeFetchBarbershopInvitationsController } from "../factories/make-fetch-barbershop-invitations-controller";
 import { makeInviteBarbermanController } from "../factories/make-invite-barberman-controller";
 import { makeRevokeInvitationController } from "../factories/make-revoke-invitation-controller";
+import { makeResendInvitationController } from "../factories/make-resend-invitation-controller";
 import { ensureUserIsAuthenticated } from "../middlewares/ensure-user-is-authenticated";
 
 const barbershopInvitationRoutes = Router({ mergeParams: true });
@@ -19,6 +20,13 @@ barbershopInvitationRoutes.get(
   "/invitations",
   ensureUserIsAuthenticated,
   adaptRoute(makeFetchBarbershopInvitationsController()),
+);
+
+// POST /barbershops/:shopId/invitations/:invitationId/resend
+barbershopInvitationRoutes.post(
+  "/invitations/:invitationId/resend",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeResendInvitationController()),
 );
 
 // DELETE /barbershops/:shopId/invitations/:invitationId

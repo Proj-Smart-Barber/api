@@ -7,6 +7,10 @@ export interface InvitationsRepository {
   findById(id: string): Promise<Invitation | null>;
   findByTokenHash(tokenHash: string): Promise<Invitation | null>;
   findManyByBarbershopId(barbershopId: string): Promise<Invitation[]>;
+  findManyByBarbershopIdPaginated(
+    barbershopId: string,
+    options: { page: number; limit: number },
+  ): Promise<{ items: Invitation[]; total: number }>;
   findByBarbershopIdAndEmail(
     barbershopId: string,
     email: string,
