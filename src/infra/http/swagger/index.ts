@@ -1990,6 +1990,60 @@ export const swaggerDocument = {
         },
       },
     },
+    "/api/bookings/me": {
+      get: {
+        tags: ["Bookings"],
+        summary: "Fetch customer bookings or authoritative upcoming booking",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: "query",
+            name: "view",
+            required: false,
+            schema: { type: "string", enum: ["all", "upcoming"] },
+            description:
+              "View mode: 'all' for paginated history, 'upcoming' for active/future bookings ordered by start time",
+          },
+          {
+            in: "query",
+            name: "limit",
+            required: false,
+            schema: { type: "integer", minimum: 1, maximum: 50 },
+            description:
+              "Number of bookings to return (default 1 for upcoming, 20 for all)",
+          },
+          {
+            in: "query",
+            name: "page",
+            required: false,
+            schema: { type: "integer", minimum: 1 },
+            description: "Page number for pagination",
+          },
+        ],
+        responses: {
+          200: {
+            description: "Bookings retrieved successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    bookings: {
+                      type: "array",
+                      items: { type: "object" },
+                    },
+                    serverTime: { type: "string", format: "date-time" },
+                  },
+                },
+              },
+            },
+          },
+          401: {
+            description: "Unauthorized",
+          },
+        },
+      },
+    },
     "/api/bookings": {
       post: {
         tags: ["Bookings"],
