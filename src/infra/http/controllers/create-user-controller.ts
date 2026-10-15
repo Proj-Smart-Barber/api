@@ -22,7 +22,7 @@ const createUserControllerRequest = z.object({
   name: z.string(),
   email: z.email(),
   password: z.string().refine((val) => validateNewPassword(val).valid, {
-    message: "A senha deve ter pelo menos 15 caracteres e no máximo 72 bytes.",
+    message: "A senha deve ter pelo menos 8 caracteres e no máximo 72 bytes.",
   }),
   cpf: cpfSchema,
   onboardingIntent: z.enum(["OWNER", "CLIENT"]).optional(),
