@@ -8,6 +8,7 @@ import {
   ne,
   isNull,
   notInArray,
+  inArray,
   or,
   asc,
 } from "drizzle-orm";
@@ -29,6 +30,7 @@ import type {
   FindManyByBarbermanAndDateParams,
   FindOverlappingParams,
   FindManyByShoppingCartParams,
+  FindManyByCustomerIdOptions,
 } from "../../../domain/application/repositories/bookings-repository";
 import type { Booking } from "../../../domain/enterprise/entities/booking";
 import { BookingDetails } from "../../../domain/enterprise/entities/booking-details";
@@ -510,9 +512,55 @@ export class DrizzleBookingsRepository implements BookingsRepository {
 
   async findManyByCustomerId(
     customerId: string,
-    options?: { page?: number },
+    options?: FindManyByCustomerIdOptions,
   ): Promise<BookingDetails[]> {
+    if (options?.view === "upcoming") {
+      const now = new Date();
+      const limit = options.limit ?? 1;
+
+      const rows = await db
+        .select({ id: bookings.id })
+        .from(bookings)
+        .leftJoin(shoppingCarts, eq(bookings.shoppingCartId, shoppingCarts.id))
+        .where(
+          and(
+            or(
+              eq(bookings.customerId, customerId),
+              eq(shoppingCarts.userId, customerId),
+            ),
+            or(
+              isNull(bookings.status),
+              inArray(bookings.status, ["CONFIRMED", "IN_PROGRESS"]),
+            ),
+            or(
+              gt(bookings.endsAt, now),
+              and(
+                isNull(bookings.endsAt),
+                gte(
+                  bookings.startsAt,
+                  new Date(now.getTime() - 60 * 60 * 1000),
+                ),
+              ),
+              gte(bookings.startsAt, now),
+            ),
+          ),
+        )
+        .orderBy(asc(bookings.startsAt), asc(bookings.id))
+        .limit(limit);
+
+      const detailsList: BookingDetails[] = [];
+      for (const row of rows) {
+        const details = await this.getDetails(row.id);
+        if (details) {
+          detailsList.push(details);
+        }
+      }
+
+      return detailsList;
+    }
+
     const page = options?.page ?? 1;
+    const limit = options?.limit ?? 20;
 
     // Search by bookings.customerId OR shoppingCarts.userId
     const rows = await db
@@ -520,8 +568,8 @@ export class DrizzleBookingsRepository implements BookingsRepository {
       .from(bookings)
       .leftJoin(shoppingCarts, eq(bookings.shoppingCartId, shoppingCarts.id))
       .where(and(eq(bookings.customerId, customerId)))
-      .limit(20)
-      .offset((page - 1) * 20);
+      .limit(limit)
+      .offset((page - 1) * limit);
 
     const bookingIds = rows.map((r) => r.id);
     if (bookingIds.length === 0) {
@@ -531,8 +579,8 @@ export class DrizzleBookingsRepository implements BookingsRepository {
         .from(bookings)
         .innerJoin(shoppingCarts, eq(bookings.shoppingCartId, shoppingCarts.id))
         .where(eq(shoppingCarts.userId, customerId))
-        .limit(20)
-        .offset((page - 1) * 20);
+        .limit(limit)
+        .offset((page - 1) * limit);
       bookingIds.push(...legacyRows.map((r) => r.id));
     }
 

@@ -49,6 +49,12 @@ export interface SaveBookingOptions {
   updateItems?: boolean;
 }
 
+export interface FindManyByCustomerIdOptions {
+  page?: number;
+  view?: "all" | "upcoming";
+  limit?: number;
+}
+
 export interface BookingsRepository {
   create(booking: Booking): Promise<void>;
   createWithItemAndCart(params: CreateBookingBundleParams): Promise<void>;
@@ -68,7 +74,7 @@ export interface BookingsRepository {
   ): Promise<BookingDetails[]>;
   findManyByCustomerId(
     customerId: string,
-    options?: { page?: number },
+    options?: FindManyByCustomerIdOptions,
   ): Promise<BookingDetails[]>;
   findByIdWithDetails(
     bookingId: string,

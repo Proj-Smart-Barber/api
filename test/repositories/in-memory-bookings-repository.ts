@@ -5,6 +5,7 @@ import type {
   FindManyByBarbermanAndDateParams,
   FindManyByShoppingCartParams,
   FindOverlappingParams,
+  FindManyByCustomerIdOptions,
 } from "../../src/domain/application/repositories/bookings-repository";
 import type { Booking } from "../../src/domain/enterprise/entities/booking";
 import type { BookingServiceItem } from "../../src/domain/enterprise/entities/booking-service-item";
@@ -150,15 +151,51 @@ export class InMemoryBookingsRepository implements BookingsRepository {
 
   async findManyByCustomerId(
     customerId: string,
-    _options?: { page?: number },
+    options?: FindManyByCustomerIdOptions,
   ): Promise<BookingDetails[]> {
-    const customerBookings = this.items.filter((b) => {
+    let customerBookings = this.items.filter((b) => {
       if (b.customerId?.toString() === customerId) return true;
       const bundle = this.createdBundles.find(
         (cb) => cb.booking.id.toString() === b.id.toString(),
       );
       return bundle?.cart.userId.toString() === customerId;
     });
+
+    if (options?.view === "upcoming") {
+      const now = new Date();
+      const terminal = ["CANCELLED", "COMPLETED", "NO_SHOW"];
+      customerBookings = customerBookings.filter((b) => {
+        if (b.status && terminal.includes(b.status)) return false;
+        if (b.status && !["CONFIRMED", "IN_PROGRESS"].includes(b.status)) {
+          return false;
+        }
+
+        const ends = b.endsAt
+          ? b.endsAt.getTime()
+          : b.startsAt
+            ? b.startsAt.getTime() + 30 * 60 * 1000
+            : 0;
+        const starts = b.startsAt ? b.startsAt.getTime() : 0;
+        return ends > now.getTime() || starts >= now.getTime();
+      });
+
+      customerBookings.sort((a, b) => {
+        const timeA = a.startsAt?.getTime() ?? 0;
+        const timeB = b.startsAt?.getTime() ?? 0;
+        if (timeA !== timeB) return timeA - timeB;
+        return a.id.toString().localeCompare(b.id.toString());
+      });
+
+      const limit = options.limit ?? 1;
+      customerBookings = customerBookings.slice(0, limit);
+    } else {
+      const page = options?.page ?? 1;
+      const limit = options?.limit ?? 20;
+      customerBookings = customerBookings.slice(
+        (page - 1) * limit,
+        page * limit,
+      );
+    }
 
     const result: BookingDetails[] = [];
     for (const booking of customerBookings) {
