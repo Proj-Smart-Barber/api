@@ -37,7 +37,7 @@ describe.skipIf(!target)(
     let isolated: Awaited<ReturnType<typeof createClientAuthTestDatabase>>;
     let server: Server;
     let base: string;
-    const password = "synthetic-password-123";
+    const password = "senha123";
     const email = "synthetic.client@example.com";
 
     beforeEach(async () => {
@@ -78,6 +78,8 @@ describe.skipIf(!target)(
     }
 
     it("creates, sends, confirms and authenticates a new client without automatic login", async () => {
+      // Signup is public; identity remains protected and verification is still required.
+      expect((await fetch(`${base}/api/users/me`)).status).toBe(401);
       expect((await register()).status).toBe(201);
       expect(
         (await post("/users/sessions/auth", { email, password })).status,

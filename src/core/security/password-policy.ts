@@ -5,10 +5,10 @@ export function validateNewPassword(password: string): {
   const codePoints = [...password].length;
   const byteLength = Buffer.byteLength(password, "utf8");
 
-  if (codePoints < 15) {
+  if (codePoints < 8) {
     return {
       valid: false,
-      error: "A senha deve ter pelo menos 15 caracteres.",
+      error: "A senha deve ter pelo menos 8 caracteres.",
     };
   }
 

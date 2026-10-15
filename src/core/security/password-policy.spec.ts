@@ -2,8 +2,8 @@ import { validateNewPassword } from "./password-policy";
 
 describe("Password Policy", () => {
   it("should validate unicode code points correctly", () => {
-    const validEmoji = "😀".repeat(15);
-    const invalidEmoji = "😀".repeat(14);
+    const validEmoji = "😀".repeat(8);
+    const invalidEmoji = "😀".repeat(7);
 
     expect(validateNewPassword(validEmoji).valid).toBe(true);
     expect(validateNewPassword(invalidEmoji).valid).toBe(false);
@@ -17,7 +17,7 @@ describe("Password Policy", () => {
     expect(validateNewPassword(invalid73).valid).toBe(false);
   });
 
-  it("should reject password with fewer than 15 characters", () => {
-    expect(validateNewPassword("short-pass").valid).toBe(false);
+  it("should reject password with fewer than 8 characters", () => {
+    expect(validateNewPassword("short12").valid).toBe(false);
   });
 });

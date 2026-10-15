@@ -55,10 +55,11 @@ export const swaggerDocument = {
         },
       },
     },
-    "/api/users/": {
+    "/api/users": {
       post: {
         tags: ["Users"],
         summary: "Create a new user",
+        security: [],
         requestBody: {
           required: true,
           content: {
@@ -75,8 +76,9 @@ export const swaggerDocument = {
                   },
                   password: {
                     type: "string",
+                    minLength: 8,
                     description:
-                      "Senha de segurança (mínimo de 15 caracteres e máximo de 72 bytes UTF-8)",
+                      "Senha de segurança (mínimo de 8 caracteres e máximo de 72 bytes UTF-8)",
                     example: "minhasenhasegura123",
                   },
                   cpf: {
