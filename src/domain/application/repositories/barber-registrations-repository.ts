@@ -5,6 +5,7 @@ export interface BarberRegistrationsRepository {
   save(registration: BarberRegistration): Promise<BarberRegistration>;
   findById(id: string): Promise<BarberRegistration | null>;
   findByTokenHash(tokenHash: string): Promise<BarberRegistration | null>;
+  findByInvitationId(invitationId: string): Promise<BarberRegistration | null>;
   findByBarbershopIdAndEmail(
     barbershopId: string,
     email: string,

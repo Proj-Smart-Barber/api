@@ -17,6 +17,7 @@ import { InMemoryUsersRepository } from "../../../../../../test/repositories/in-
 import { AlreadyAMemberError } from "../../_errors/already-a-member-error";
 import { IdentityConflictError } from "../../_errors/identity-conflict-error";
 import { NotAllowedError } from "../../_errors/not-allowed-error";
+import { InvalidCpfError } from "../../../../enterprise/errors/invalid-cpf-error";
 import { CreateBarberRegistrationUseCase } from "./create-barber-registration";
 
 describe("CreateBarberRegistrationUseCase - Matriz de Identidade", () => {
@@ -75,7 +76,7 @@ describe("CreateBarberRegistrationUseCase - Matriz de Identidade", () => {
       {
         name: "Proprietário",
         email: "owner@modelo.com",
-        cpf: "00011122233",
+        cpf: "12345678909",
         password: Password.create("hash-owner"),
         accountType: "OWNER",
       },
@@ -89,7 +90,7 @@ describe("CreateBarberRegistrationUseCase - Matriz de Identidade", () => {
       actorId: ownerId.toString(),
       shopId: shopId.toString(),
       name: "Novo Barbeiro",
-      cpf: "111.222.333-44",
+      cpf: "111.444.777-35",
       email: "novo.barbeiro@example.com",
     });
 
@@ -102,7 +103,7 @@ describe("CreateBarberRegistrationUseCase - Matriz de Identidade", () => {
 
     expect(barberRegistrationsRepository.items).toHaveLength(1);
     expect(invitationsRepository.items).toHaveLength(1);
-    expect(barberRegistrationsRepository.items[0].cpf).toBe("11122233344");
+    expect(barberRegistrationsRepository.items[0].cpf).toBe("11144477735");
     // Nenhuma conta de usuário ativa/criada antes do aceite
     const createdUser = await usersRepository.findByEmail("novo.barbeiro@example.com");
     expect(createdUser).toBeNull();
@@ -113,7 +114,7 @@ describe("CreateBarberRegistrationUseCase - Matriz de Identidade", () => {
     const existingClient = User.create({
       name: "Cliente Existente",
       email: "cliente@example.com",
-      cpf: "22233344455",
+      cpf: "52998224725",
       password: Password.create(originalPasswordHash),
       accountType: "CLIENT",
     });
@@ -123,7 +124,7 @@ describe("CreateBarberRegistrationUseCase - Matriz de Identidade", () => {
       actorId: ownerId.toString(),
       shopId: shopId.toString(),
       name: "Tentativa de Renomear",
-      cpf: "222.333.444-55",
+      cpf: "529.982.247-25",
       email: "cliente@example.com",
     });
 
@@ -143,7 +144,7 @@ describe("CreateBarberRegistrationUseCase - Matriz de Identidade", () => {
     const user = User.create({
       name: "Fulano",
       email: "email.cadastrado@example.com",
-      cpf: "33344455566",
+      cpf: "00000000191",
       password: Password.create("hash"),
     });
     await usersRepository.save(user);
@@ -152,7 +153,7 @@ describe("CreateBarberRegistrationUseCase - Matriz de Identidade", () => {
       actorId: ownerId.toString(),
       shopId: shopId.toString(),
       name: "Outro Nome",
-      cpf: "333.444.555-66",
+      cpf: "000.000.001-91",
       email: "email.outro@example.com",
     });
 
@@ -164,7 +165,7 @@ describe("CreateBarberRegistrationUseCase - Matriz de Identidade", () => {
     const user = User.create({
       name: "Ciclano",
       email: "ciclano@example.com",
-      cpf: "44455566677",
+      cpf: "00000000272",
       password: Password.create("hash"),
     });
     await usersRepository.save(user);
@@ -173,7 +174,7 @@ describe("CreateBarberRegistrationUseCase - Matriz de Identidade", () => {
       actorId: ownerId.toString(),
       shopId: shopId.toString(),
       name: "Ciclano",
-      cpf: "999.888.777-66",
+      cpf: "000.000.003-53",
       email: "ciclano@example.com",
     });
 
@@ -185,13 +186,13 @@ describe("CreateBarberRegistrationUseCase - Matriz de Identidade", () => {
     const user1 = User.create({
       name: "User 1",
       email: "user1@example.com",
-      cpf: "11111111111",
+      cpf: "00000000434",
       password: Password.create("hash1"),
     });
     const user2 = User.create({
       name: "User 2",
       email: "user2@example.com",
-      cpf: "22222222222",
+      cpf: "00000000515",
       password: Password.create("hash2"),
     });
     await usersRepository.save(user1);
@@ -201,7 +202,7 @@ describe("CreateBarberRegistrationUseCase - Matriz de Identidade", () => {
       actorId: ownerId.toString(),
       shopId: shopId.toString(),
       name: "Mix",
-      cpf: "111.111.111-11",
+      cpf: "000.000.004-34",
       email: "user2@example.com",
     });
 
@@ -213,7 +214,7 @@ describe("CreateBarberRegistrationUseCase - Matriz de Identidade", () => {
     const existingBarber = User.create({
       name: "Barbeiro da Casa",
       email: "barbeiro@modelo.com",
-      cpf: "55566677788",
+      cpf: "00000000604",
       password: Password.create("hash"),
       accountType: "BARBER",
     });
@@ -232,7 +233,7 @@ describe("CreateBarberRegistrationUseCase - Matriz de Identidade", () => {
       actorId: ownerId.toString(),
       shopId: shopId.toString(),
       name: "Barbeiro da Casa",
-      cpf: "555.666.777-88",
+      cpf: "000.000.006-04",
       email: "barbeiro@modelo.com",
     });
 
@@ -240,11 +241,24 @@ describe("CreateBarberRegistrationUseCase - Matriz de Identidade", () => {
     expect(result.value).toBeInstanceOf(AlreadyAMemberError);
   });
 
+  it("rejeita cadastro com CPF inválido pelo algoritmo canônico", async () => {
+    const result = await sut.execute({
+      actorId: ownerId.toString(),
+      shopId: shopId.toString(),
+      name: "Barbeiro CPF Inválido",
+      cpf: "111.222.333-44",
+      email: "barbeiro.invalido@example.com",
+    });
+
+    expect(result.isLeft()).toBe(true);
+    expect(result.value).toBeInstanceOf(InvalidCpfError);
+  });
+
   it("rejeita se o ator não for OWNER ACTIVE da unidade", async () => {
     const otherUser = User.create({
       name: "Outro Usuário",
       email: "outro@modelo.com",
-      cpf: "77788899900",
+      cpf: "00000000787",
       password: Password.create("hash"),
     });
     await usersRepository.save(otherUser);
@@ -253,7 +267,7 @@ describe("CreateBarberRegistrationUseCase - Matriz de Identidade", () => {
       actorId: otherUser.id.toString(),
       shopId: shopId.toString(),
       name: "Barbeiro",
-      cpf: "123.456.789-01",
+      cpf: "000.000.008-68",
       email: "barbeiro@teste.com",
     });
 

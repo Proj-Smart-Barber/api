@@ -15,6 +15,8 @@ import {
   buildInvitationUrl,
   createInvitationToken,
 } from "../../../services/invitation-token-service";
+import { Cpf } from "../../../../enterprise/entities/value-objects/cpf";
+import { InvalidCpfError } from "../../../../enterprise/errors/invalid-cpf-error";
 import { AlreadyAMemberError } from "../../_errors/already-a-member-error";
 import { EmailSendError } from "../../_errors/email-send-error";
 import { IdentityConflictError } from "../../_errors/identity-conflict-error";
@@ -93,10 +95,10 @@ export class CreateBarberRegistrationUseCase {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    const cleanCpf = cpf.replace(/\D/g, "");
+    const cleanCpf = Cpf.normalize(cpf);
 
-    if (cleanCpf.length !== 11) {
-      return left(new Error("CPF deve conter exatamente 11 dígitos."));
+    if (!Cpf.isValid(cleanCpf)) {
+      return left(new InvalidCpfError());
     }
 
     // 1. Consulta matriz de identidade
@@ -196,7 +198,7 @@ export class CreateBarberRegistrationUseCase {
         to: normalizedEmail,
         ownerName,
         barbershopName: barbershop.name,
-        invitationUrl: buildInvitationUrl(plainToken),
+        invitationUrl: buildInvitationUrl(plainToken, Boolean(isExistingUser)),
         expiresInDays,
       });
     } catch {

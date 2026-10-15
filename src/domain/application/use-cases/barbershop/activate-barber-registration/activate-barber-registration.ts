@@ -1,11 +1,13 @@
 import { hashToken } from "../../../../../core/crypto/token";
 import { type Either, left, right } from "../../../../../core/logic/either";
 import { User } from "../../../../enterprise/entities/user";
+import { Cpf } from "../../../../enterprise/entities/value-objects/cpf";
 import { Password } from "../../../../enterprise/entities/value-objects/password";
 import type { BarberRegistrationsRepository } from "../../../repositories/barber-registrations-repository";
 import type { InvitationsRepository } from "../../../repositories/invitations-repository";
 import type { UsersRepository } from "../../../repositories/users-repository";
 import { AccountAlreadyExistsError } from "../../_errors/account-already-exists-error";
+import { IdentityConflictError } from "../../_errors/identity-conflict-error";
 import { InvalidInvitationError } from "../../_errors/invalid-invitation-error";
 
 export interface ActivateBarberRegistrationDTO {
@@ -20,7 +22,10 @@ export interface ActivateBarberRegistrationResponse {
 }
 
 export type ActivateBarberRegistrationUseCaseResponse = Either<
-  InvalidInvitationError | AccountAlreadyExistsError | Error,
+  | InvalidInvitationError
+  | AccountAlreadyExistsError
+  | IdentityConflictError
+  | Error,
   ActivateBarberRegistrationResponse
 >;
 
@@ -47,16 +52,15 @@ export class ActivateBarberRegistrationUseCase {
     const invitation =
       await this.invitationsRepository.findByTokenHash(tokenHash);
 
-    if (!registration && !invitation) {
-      return left(new InvalidInvitationError("Token de ativação inválido."));
+    if (!registration) {
+      return left(
+        new InvalidInvitationError(
+          "Cadastro profissional não encontrado para este token.",
+        ),
+      );
     }
 
-    const email = registration?.email ?? invitation?.email;
-    if (!email) {
-      return left(new InvalidInvitationError("Dados do convite corrompidos."));
-    }
-
-    if (registration && !registration.isPending()) {
+    if (!registration.isPending()) {
       return left(
         new InvalidInvitationError("Este cadastro já foi ativado ou expirou."),
       );
@@ -68,9 +72,32 @@ export class ActivateBarberRegistrationUseCase {
       );
     }
 
-    // Se já existe conta para este e-mail, deve fazer login em vez de definir nova senha
-    const existingUser = await this.usersRepository.findByEmail(email);
-    if (existingUser) {
+    const cleanCpf = Cpf.normalize(registration.cpf);
+    if (!Cpf.isValid(cleanCpf)) {
+      return left(
+        new InvalidInvitationError("CPF do cadastro profissional é inválido."),
+      );
+    }
+
+    const normalizedEmail = registration.email.trim().toLowerCase();
+
+    // Revalidação no momento da ativação para evitar corridas com cadastro público concorrente
+    const existingUserByEmail =
+      await this.usersRepository.findByEmail(normalizedEmail);
+    const existingUserByCpf = await this.usersRepository.findByCpf(cleanCpf);
+
+    const hasConflict =
+      (existingUserByCpf && !existingUserByEmail) ||
+      (existingUserByEmail && !existingUserByCpf) ||
+      (existingUserByEmail &&
+        existingUserByCpf &&
+        existingUserByEmail.id.toString() !== existingUserByCpf.id.toString());
+
+    if (hasConflict) {
+      return left(new IdentityConflictError());
+    }
+
+    if (existingUserByEmail && existingUserByCpf) {
       return left(new AccountAlreadyExistsError());
     }
 
@@ -95,9 +122,9 @@ export class ActivateBarberRegistrationUseCase {
     );
 
     const user = User.create({
-      name: registration?.name ?? "Profissional",
-      email,
-      cpf: registration?.cpf ?? "00000000000",
+      name: registration.name.trim(),
+      email: normalizedEmail,
+      cpf: cleanCpf,
       password: hashedPassword,
       accountType: "CLIENT",
       emailVerifiedAt: new Date(),
@@ -105,10 +132,8 @@ export class ActivateBarberRegistrationUseCase {
 
     await this.usersRepository.save(user);
 
-    if (registration) {
-      registration.markCompleted(new Date());
-      await this.barberRegistrationsRepository.save(registration);
-    }
+    registration.markCompleted(new Date());
+    await this.barberRegistrationsRepository.save(registration);
 
     return right({
       userId: user.id.toString(),

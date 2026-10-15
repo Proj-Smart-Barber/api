@@ -47,6 +47,16 @@ export class DrizzleBarberRegistrationsRepository
     return DrizzleBarberRegistrationMapper.toDomain(row);
   }
 
+  async findByInvitationId(invitationId: string): Promise<BarberRegistration | null> {
+    const [row] = await db
+      .select()
+      .from(barberRegistrations)
+      .where(eq(barberRegistrations.invitationId, invitationId));
+
+    if (!row) return null;
+    return DrizzleBarberRegistrationMapper.toDomain(row);
+  }
+
   async findByBarbershopIdAndEmail(
     barbershopId: string,
     email: string,

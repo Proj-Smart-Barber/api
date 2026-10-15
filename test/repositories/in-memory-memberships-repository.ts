@@ -5,6 +5,7 @@ import type {
 } from "../../src/domain/application/repositories/memberships-repository";
 import type { Invitation } from "../../src/domain/enterprise/entities/invitation";
 import type { Membership } from "../../src/domain/enterprise/entities/membership";
+import { InvalidInvitationError } from "../../src/domain/application/use-cases/_errors/invalid-invitation-error";
 import type { InMemoryUsersRepository } from "./in-memory-users-repository";
 
 export class InMemoryMembershipsRepository implements MembershipsRepository {
@@ -101,10 +102,16 @@ export class InMemoryMembershipsRepository implements MembershipsRepository {
   }
 
   async acceptInvitation(
-    _invitation: Invitation,
+    invitation: Invitation,
     membership: Membership,
     userToPromote?: any,
   ): Promise<void> {
+    if (invitation.isExpired()) {
+      throw new InvalidInvitationError(
+        "Convite inválido, já respondido ou expirado.",
+      );
+    }
+
     if (userToPromote && this.usersRepository) {
       await this.usersRepository.save(userToPromote);
     }

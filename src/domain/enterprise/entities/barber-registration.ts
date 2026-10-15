@@ -65,6 +65,11 @@ export class BarberRegistration extends Entity<BarberRegistrationProps> {
     this.props.respondedAt = at;
   }
 
+  renew(tokenHash: string, expiresAt: Date): void {
+    this.props.tokenHash = tokenHash;
+    this.props.expiresAt = expiresAt;
+  }
+
   static create(
     props: Optional<BarberRegistrationProps, "createdAt" | "status">,
     id?: UniqueEntityId,

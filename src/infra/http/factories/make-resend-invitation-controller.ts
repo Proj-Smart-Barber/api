@@ -7,6 +7,7 @@ import { DrizzleOperationAttemptsRepository } from "../../drizzle/repositories/d
 import { DrizzleUsersRepository } from "../../drizzle/repositories/drizzle-users-repository";
 import { DrizzleProfessionalMembershipUnitOfWork } from "../../drizzle/services/drizzle-professional-membership-unit-of-work";
 import { DrizzleResourceAccessValidator } from "../../drizzle/services/drizzle-resource-access-validator";
+import { DrizzleBarberRegistrationsRepository } from "../../drizzle/repositories/drizzle-barber-registrations-repository";
 import { ResendEmailService } from "../../email/resend-email-service";
 import { ResendInvitationController } from "../controllers/invitations/resend-invitation.controller";
 
@@ -16,6 +17,8 @@ export function makeResendInvitationController() {
   const membershipsRepository = new DrizzleMembershipsRepository();
   const usersRepository = new DrizzleUsersRepository();
   const emailService = new ResendEmailService();
+  const barberRegistrationsRepository =
+    new DrizzleBarberRegistrationsRepository();
 
   const useCase = new ResendInvitationUseCase(
     barbershopsRepository,
@@ -23,6 +26,7 @@ export function makeResendInvitationController() {
     membershipsRepository,
     usersRepository,
     emailService,
+    barberRegistrationsRepository,
   );
 
   const attemptsRepository = new DrizzleOperationAttemptsRepository();

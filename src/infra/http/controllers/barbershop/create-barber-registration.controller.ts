@@ -21,6 +21,7 @@ import { IdentityConflictError } from "../../../../domain/application/use-cases/
 import { NotAllowedError } from "../../../../domain/application/use-cases/_errors/not-allowed-error";
 import { PendingInvitationAlreadyExistsError } from "../../../../domain/application/use-cases/_errors/pending-invitation-already-exists-error";
 import { ResourceNotFoundError } from "../../../../domain/application/use-cases/_errors/resource-not-found-error";
+import { InvalidCpfError } from "../../../../domain/enterprise/errors/invalid-cpf-error";
 import type { CreateBarberRegistrationUseCase } from "../../../../domain/application/use-cases/barbershop/create-barber-registration/create-barber-registration";
 
 const createBarberRegistrationSchema = z.object({
@@ -77,6 +78,7 @@ export class CreateBarberRegistrationController implements Controller {
         const payloadHash = canonicalOperationHash({
           action: "CREATE_BARBER_REGISTRATION",
           shopId: parsed.shopId,
+          name: parsed.name.trim(),
           cpf: cleanCpf,
           email: normalizedEmail,
         });
@@ -150,6 +152,13 @@ export class CreateBarberRegistrationController implements Controller {
     }
     if (error instanceof NotAllowedError) {
       return forbidden({ error: error.message, message: error.message });
+    }
+    if (error instanceof InvalidCpfError) {
+      return clientError({
+        error: error.message,
+        message: error.message,
+        code: "INVALID_CPF",
+      });
     }
     if (error instanceof IdentityConflictError) {
       return conflict({

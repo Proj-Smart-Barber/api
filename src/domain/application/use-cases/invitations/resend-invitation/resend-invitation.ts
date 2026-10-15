@@ -25,14 +25,19 @@ export interface ResendInvitationResponse {
   expiresAt: string;
 }
 
+import type { BarberRegistrationsRepository } from "../../../repositories/barber-registrations-repository";
+
 export class ResendCooldownError extends Error {
   public readonly code = "RESEND_COOLDOWN";
+  public readonly retryAfterSeconds: number;
 
   constructor(
-    message = "Aguarde 60 segundos antes de reenviar este convite.",
+    retryAfterSeconds = 60,
+    message = `Aguarde ${retryAfterSeconds} segundos antes de reenviar este convite.`,
   ) {
     super(message);
     this.name = "ResendCooldownError";
+    this.retryAfterSeconds = retryAfterSeconds;
   }
 }
 
@@ -52,6 +57,7 @@ export class ResendInvitationUseCase {
     private membershipsRepository: MembershipsRepository,
     private usersRepository: UsersRepository,
     private emailService: EmailService,
+    private barberRegistrationsRepository?: BarberRegistrationsRepository,
   ) {}
 
   async execute({
@@ -99,11 +105,16 @@ export class ResendInvitationUseCase {
       );
     }
 
-    // Cooldown check: 60s
-    const createdAtTime = invitation.createdAt?.getTime() ?? 0;
+    // Cooldown check: 60s a partir do último envio (lastResentAt ou createdAt)
+    const lastAttemptTime =
+      invitation.lastResentAt?.getTime() ??
+      invitation.createdAt?.getTime() ??
+      0;
     const now = Date.now();
-    if (now - createdAtTime < 60_000) {
-      return left(new ResendCooldownError());
+    const elapsed = now - lastAttemptTime;
+    if (elapsed < 60_000) {
+      const remainingSeconds = Math.max(1, Math.ceil((60_000 - elapsed) / 1000));
+      return left(new ResendCooldownError(remainingSeconds));
     }
 
     const owner = await this.usersRepository.findById(userId);
@@ -115,15 +126,32 @@ export class ResendInvitationUseCase {
     const { plainToken, tokenHash, expiresAt, expiresInDays } =
       createInvitationToken();
 
-    invitation.renew(tokenHash, expiresAt);
+    invitation.renew(tokenHash, expiresAt, new Date());
     await this.invitationsRepository.save(invitation);
+
+    // Sincroniza o novo token com barber_registrations para que o fluxo de ativação funcione
+    if (this.barberRegistrationsRepository) {
+      const registration =
+        (await this.barberRegistrationsRepository.findByInvitationId(invitationId)) ??
+        (await this.barberRegistrationsRepository.findByBarbershopIdAndEmail(
+          barbershopId,
+          invitation.email,
+        ));
+
+      if (registration && registration.isPending()) {
+        registration.renew(tokenHash, expiresAt);
+        await this.barberRegistrationsRepository.save(registration);
+      }
+    }
+
+    const existingUser = await this.usersRepository.findByEmail(invitation.email);
 
     try {
       await this.emailService.sendInvitationEmail({
         to: invitation.email,
         ownerName: owner.name,
         barbershopName: barbershop.name,
-        invitationUrl: buildInvitationUrl(plainToken),
+        invitationUrl: buildInvitationUrl(plainToken, Boolean(existingUser)),
         expiresInDays,
       });
     } catch {

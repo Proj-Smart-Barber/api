@@ -31,6 +31,13 @@ export class InMemoryBarberRegistrationsRepository
     return registration ?? null;
   }
 
+  async findByInvitationId(invitationId: string): Promise<BarberRegistration | null> {
+    const registration = this.items.find(
+      (item) => item.invitationId.toString() === invitationId,
+    );
+    return registration ?? null;
+  }
+
   async findByBarbershopIdAndEmail(
     barbershopId: string,
     email: string,

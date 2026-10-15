@@ -14,6 +14,8 @@ import { InMemoryBarbershopsRepository } from "../../../../../../test/repositori
 import { InMemoryInvitationsRepository } from "../../../../../../test/repositories/in-memory-invitations-repository";
 import { InMemoryMembershipsRepository } from "../../../../../../test/repositories/in-memory-memberships-repository";
 import { InMemoryUsersRepository } from "../../../../../../test/repositories/in-memory-users-repository";
+import { InMemoryBarberRegistrationsRepository } from "../../../../../../test/repositories/in-memory-barber-registrations-repository";
+import { BarberRegistration } from "../../../../enterprise/entities/barber-registration";
 import {
   ResendInvitationUseCase,
   ResendCooldownError,
@@ -24,6 +26,7 @@ describe("ResendInvitationUseCase", () => {
   let invitationsRepository: InMemoryInvitationsRepository;
   let membershipsRepository: InMemoryMembershipsRepository;
   let usersRepository: InMemoryUsersRepository;
+  let barberRegistrationsRepository: InMemoryBarberRegistrationsRepository;
   let emailService: FakeEmailService;
   let sut: ResendInvitationUseCase;
 
@@ -32,6 +35,7 @@ describe("ResendInvitationUseCase", () => {
     invitationsRepository = new InMemoryInvitationsRepository();
     membershipsRepository = new InMemoryMembershipsRepository();
     usersRepository = new InMemoryUsersRepository();
+    barberRegistrationsRepository = new InMemoryBarberRegistrationsRepository();
     emailService = new FakeEmailService();
 
     sut = new ResendInvitationUseCase(
@@ -40,6 +44,7 @@ describe("ResendInvitationUseCase", () => {
       membershipsRepository,
       usersRepository,
       emailService,
+      barberRegistrationsRepository,
     );
   });
 
@@ -156,5 +161,83 @@ describe("ResendInvitationUseCase", () => {
 
     expect(result.isLeft()).toBe(true);
     expect(result.value).toBeInstanceOf(ResendCooldownError);
+  });
+
+  it("sincroniza o tokenHash de barber_registrations associado ao convite reenviado", async () => {
+    const ownerId = new UniqueEntityId();
+    const barbershopId = new UniqueEntityId();
+
+    const barbershop = Barbershop.create(
+      {
+        name: "Barbearia Top",
+        ownerId,
+        slug: Slug.create("top-sync"),
+        cnpj: "11111111000199",
+        location: "Rua 1",
+        status: "ACTIVE",
+        timezone: "America/Sao_Paulo",
+      },
+      barbershopId,
+    );
+    barbershopsRepository.items.push(barbershop);
+
+    await membershipsRepository.create(
+      Membership.create({
+        barbershopId,
+        userId: ownerId,
+        role: Role.OWNER,
+        state: "ACTIVE",
+      }),
+    );
+
+    const ownerUser = User.create(
+      {
+        name: "Proprietário",
+        email: "owner-sync@top.com",
+        cpf: "11144477735",
+        password: Password.create("hash"),
+        accountType: "OWNER",
+      },
+      ownerId,
+    );
+    await usersRepository.save(ownerUser);
+
+    const invitation = Invitation.create({
+      barbershopId,
+      email: "barber-sync@top.com",
+      role: Role.BARBERMAN,
+      tokenHash: "old-invitation-hash",
+      status: "PENDING",
+      expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+      invitedById: ownerId,
+      createdAt: new Date(Date.now() - 120_000),
+    });
+    await invitationsRepository.create(invitation);
+
+    const registration = BarberRegistration.create({
+      barbershopId,
+      invitationId: invitation.id,
+      name: "Barbeiro Sincronizado",
+      cpf: "52998224725",
+      email: "barber-sync@top.com",
+      tokenHash: "old-invitation-hash",
+      status: "PENDING",
+      expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+    });
+    await barberRegistrationsRepository.create(registration);
+
+    const result = await sut.execute({
+      barbershopId: barbershopId.toString(),
+      invitationId: invitation.id.toString(),
+      userId: ownerId.toString(),
+    });
+
+    expect(result.isRight()).toBe(true);
+    const updatedRegistration = await barberRegistrationsRepository.findByInvitationId(
+      invitation.id.toString(),
+    );
+    expect(updatedRegistration).not.toBeNull();
+    expect(updatedRegistration?.tokenHash).toBe(invitation.tokenHash);
+    expect(updatedRegistration?.tokenHash).not.toBe("old-invitation-hash");
   });
 });

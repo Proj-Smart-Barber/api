@@ -8,6 +8,7 @@ import {
   type HttpResponse,
 } from "../../../../core/infra/http-response";
 import { AccountAlreadyExistsError } from "../../../../domain/application/use-cases/_errors/account-already-exists-error";
+import { IdentityConflictError } from "../../../../domain/application/use-cases/_errors/identity-conflict-error";
 import { InvalidInvitationError } from "../../../../domain/application/use-cases/_errors/invalid-invitation-error";
 import type { ActivateBarberRegistrationUseCase } from "../../../../domain/application/use-cases/barbershop/activate-barber-registration/activate-barber-registration";
 
@@ -44,6 +45,14 @@ export class ActivateBarberController implements Controller {
         if (error instanceof AccountAlreadyExistsError) {
           return conflict({
             code: "account_already_exists",
+            message: error.message,
+            error: error.message,
+          });
+        }
+
+        if (error instanceof IdentityConflictError) {
+          return conflict({
+            code: error.code,
             message: error.message,
             error: error.message,
           });

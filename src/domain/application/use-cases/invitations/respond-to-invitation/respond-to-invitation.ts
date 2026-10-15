@@ -109,11 +109,18 @@ export class RespondToInvitationUseCase {
 
     invitation.markAccepted();
 
-    await this.membershipsRepository.acceptInvitation(
-      invitation,
-      targetMembership,
-      userToPromote,
-    );
+    try {
+      await this.membershipsRepository.acceptInvitation(
+        invitation,
+        targetMembership,
+        userToPromote,
+      );
+    } catch (err) {
+      if (err instanceof InvalidInvitationError) {
+        return left(err);
+      }
+      throw err;
+    }
 
     return right({
       invitationId: invitation.id.toString(),
