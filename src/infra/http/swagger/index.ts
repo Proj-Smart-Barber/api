@@ -937,6 +937,105 @@ export const swaggerDocument = {
       },
     },
     "/api/barbershops/{shopId}/schedules": {
+      get: {
+        tags: ["Schedules"],
+        summary: "Fetch barbershop schedules",
+        description:
+          "Fetch weekly schedules for a barbershop, optionally filtered by barberman",
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "barbermanId",
+            in: "query",
+            required: false,
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Barbershop schedules fetched successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    schedules: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: {
+                            type: "string",
+                            format: "uuid",
+                            example: "9e241c16-650f-492e-9cda-320f8c0b16c3",
+                          },
+                          barbershopId: {
+                            type: "string",
+                            format: "uuid",
+                            example: "13d4b8e0-7f42-4b7f-b390-b06bb776701f",
+                          },
+                          barbermanId: {
+                            type: "string",
+                            format: "uuid",
+                            nullable: true,
+                            example: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+                          },
+                          dayOfWeek: {
+                            type: "string",
+                            enum: [
+                              "SUNDAY",
+                              "MONDAY",
+                              "TUESDAY",
+                              "WEDNESDAY",
+                              "THURSDAY",
+                              "FRIDAY",
+                              "SATURDAY",
+                            ],
+                            example: "MONDAY",
+                          },
+                          openTime: { type: "string", example: "08:00" },
+                          closeTime: { type: "string", example: "18:00" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "500": {
+            description: "Internal server error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
       put: {
         tags: ["Schedules"],
         summary: "Update barbershop schedules",
@@ -1001,6 +1100,99 @@ export const swaggerDocument = {
           },
           "404": {
             description: "Barbershop not found",
+          },
+        },
+      },
+    },
+    "/api/barbershops/{shopId}/availability": {
+      get: {
+        tags: ["Schedules"],
+        summary: "Calculate availability slots",
+        description:
+          "Calculate available booking slots based on barbershop hours, barberman schedule, exceptions, and bookings",
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "date",
+            in: "query",
+            required: true,
+            schema: { type: "string", format: "date" },
+            example: "2026-10-15",
+          },
+          {
+            name: "serviceIds",
+            in: "query",
+            required: true,
+            schema: { type: "string" },
+            description: "Comma-separated UUIDs of services",
+            example: "e2b6a5b2-3c4d-5e6f-7a8b-9c0d1e2f3a4b",
+          },
+          {
+            name: "barbermanId",
+            in: "query",
+            required: false,
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Availability slots calculated successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    slots: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          start: {
+                            type: "string",
+                            example: "2026-10-15T09:00:00-03:00",
+                          },
+                          end: {
+                            type: "string",
+                            example: "2026-10-15T09:30:00-03:00",
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Validation error or invalid services",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "500": {
+            description: "Internal server error",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    error: { type: "string" },
+                  },
+                },
+              },
+            },
           },
         },
       },

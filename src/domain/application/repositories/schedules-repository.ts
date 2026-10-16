@@ -11,4 +11,5 @@ export interface SchedulesRepository {
     barbermanId: string | null,
     schedules: BarbershopSchedule[],
   ): Promise<void>;
+  runWithLock<T>(barbershopId: string, operation: () => Promise<T>): Promise<T>;
 }

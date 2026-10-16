@@ -3,6 +3,7 @@ import type {
   FindManyByBarbermanAndDateParams,
   FindManyByShoppingCartParams,
   FindOverlappingParams,
+  FindManyFutureByBarbershopParams,
 } from "../../src/domain/application/repositories/bookings-repository";
 import type { Booking } from "../../src/domain/enterprise/entities/booking";
 import { BookingDetails } from "../../src/domain/enterprise/entities/booking-details";
@@ -129,5 +130,27 @@ export class InMemoryBookingsRepository implements BookingsRepository {
     if (itemIndex >= 0) {
       this.items.splice(itemIndex, 1);
     }
+  }
+
+  async findManyFutureByBarbershop({
+    barbershopId,
+    barbermanId,
+    from = new Date(),
+  }: FindManyFutureByBarbershopParams): Promise<Booking[]> {
+    const safeFloor = new Date(from.getTime() - 24 * 60 * 60 * 1000);
+    const safeFloorDateStr = safeFloor.toISOString().split("T")[0];
+
+    return this.items.filter((booking) => {
+      if (booking.barbershopId.toString() !== barbershopId) {
+        return false;
+      }
+
+      if (barbermanId && booking.barbermanId.toString() !== barbermanId) {
+        return false;
+      }
+
+      const bookingDateStr = booking.date.toISOString().split("T")[0];
+      return bookingDateStr >= safeFloorDateStr;
+    });
   }
 }

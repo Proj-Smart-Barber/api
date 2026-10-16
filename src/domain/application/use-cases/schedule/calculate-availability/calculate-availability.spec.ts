@@ -56,9 +56,16 @@ describe("Calculate Availability", () => {
     inMemorySchedulesRepository.items.push(
       BarbershopSchedule.create({
         barbershopId: new UniqueEntityId("shop-1"),
-        barbermanId: new UniqueEntityId("barber-1"),
         createdBy: new UniqueEntityId("owner-1"),
         dayOfWeek: "TUESDAY", // 2026-09-15 is a Tuesday
+        openTime: "08:00",
+        closeTime: "18:00",
+      }),
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        barbermanId: new UniqueEntityId("barber-1"),
+        createdBy: new UniqueEntityId("owner-1"),
+        dayOfWeek: "TUESDAY",
         openTime: "08:00",
         closeTime: "10:00",
       }),
@@ -206,6 +213,13 @@ describe("Calculate Availability", () => {
     inMemorySchedulesRepository.items.push(
       BarbershopSchedule.create({
         barbershopId: new UniqueEntityId("shop-1"),
+        createdBy: new UniqueEntityId("owner-1"),
+        dayOfWeek: "TUESDAY",
+        openTime: "08:00",
+        closeTime: "18:00",
+      }),
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
         barbermanId: new UniqueEntityId("barber-1"),
         createdBy: new UniqueEntityId("owner-1"),
         dayOfWeek: "TUESDAY",
@@ -250,6 +264,332 @@ describe("Calculate Availability", () => {
       expect(starts).not.toContain("2026-09-15T10:00:00-03:00");
       // 09:30 ends at 10:00, so it does NOT overlap with 10:00 booking
       expect(starts).toContain("2026-09-15T09:30:00-03:00");
+    }
+  });
+
+  it("should calculate availability as the intersection of barbershop and barberman schedules", async () => {
+    // Barbearia abre 08:00 às 18:00
+    inMemorySchedulesRepository.items.push(
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        createdBy: new UniqueEntityId("owner-1"),
+        dayOfWeek: "TUESDAY",
+        openTime: "08:00",
+        closeTime: "18:00",
+      }),
+      // Barbeiro atende apenas das 10:00 às 14:00
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        barbermanId: new UniqueEntityId("barber-1"),
+        createdBy: new UniqueEntityId("barber-1"),
+        dayOfWeek: "TUESDAY",
+        openTime: "10:00",
+        closeTime: "14:00",
+      }),
+    );
+
+    inMemoryServicesRepository.items.push(
+      Service.create(
+        {
+          barbershopId: new UniqueEntityId("shop-1"),
+          title: "Corte",
+          durationInMinutes: 60,
+          priceInCents: 5000,
+        },
+        new UniqueEntityId("service-1"),
+      ),
+    );
+
+    const result = await sut.execute({
+      barbershopId: "shop-1",
+      barbermanId: "barber-1",
+      date: "2026-09-15", // Tuesday
+      serviceIds: ["service-1"],
+    });
+
+    expect(result.isRight()).toBe(true);
+    if (result.isRight()) {
+      const starts = result.value.availableSlots.map((s) => s.start);
+      // Slots esperados dentro de 10:00 às 14:00 com duração 60min e passo 30min:
+      // 10:00, 10:30, 11:00, 11:30, 12:00, 12:30, 13:00 (7 slots)
+      expect(result.value.availableSlots).toHaveLength(7);
+      expect(starts).not.toContain("2026-09-15T08:00:00-03:00");
+      expect(starts).not.toContain("2026-09-15T09:30:00-03:00");
+      expect(starts).toContain("2026-09-15T10:00:00-03:00");
+      expect(starts).toContain("2026-09-15T13:00:00-03:00");
+      expect(starts).not.toContain("2026-09-15T13:30:00-03:00"); // 13:30 + 60 = 14:30 > 14:00
+    }
+  });
+
+  it("should return empty slots if barbershop is closed on that day even when barber has schedule", async () => {
+    // Barbearia tem horário apenas na segunda, mas barbeiro cadastrou terça
+    inMemorySchedulesRepository.items.push(
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        createdBy: new UniqueEntityId("owner-1"),
+        dayOfWeek: "MONDAY",
+        openTime: "08:00",
+        closeTime: "18:00",
+      }),
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        barbermanId: new UniqueEntityId("barber-1"),
+        createdBy: new UniqueEntityId("barber-1"),
+        dayOfWeek: "TUESDAY",
+        openTime: "10:00",
+        closeTime: "14:00",
+      }),
+    );
+
+    inMemoryServicesRepository.items.push(
+      Service.create(
+        {
+          barbershopId: new UniqueEntityId("shop-1"),
+          title: "Corte",
+          durationInMinutes: 30,
+          priceInCents: 5000,
+        },
+        new UniqueEntityId("service-1"),
+      ),
+    );
+
+    const result = await sut.execute({
+      barbershopId: "shop-1",
+      barbermanId: "barber-1",
+      date: "2026-09-15", // Tuesday
+      serviceIds: ["service-1"],
+    });
+
+    expect(result.isRight()).toBe(true);
+    if (result.isRight()) {
+      expect(result.value.availableSlots).toHaveLength(0);
+    }
+  });
+
+  it("should return empty slots if barber does not work on that day", async () => {
+    // Barbearia abre na terça, mas barbeiro atende apenas na segunda
+    inMemorySchedulesRepository.items.push(
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        createdBy: new UniqueEntityId("owner-1"),
+        dayOfWeek: "TUESDAY",
+        openTime: "08:00",
+        closeTime: "18:00",
+      }),
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        barbermanId: new UniqueEntityId("barber-1"),
+        createdBy: new UniqueEntityId("barber-1"),
+        dayOfWeek: "MONDAY",
+        openTime: "10:00",
+        closeTime: "14:00",
+      }),
+    );
+
+    inMemoryServicesRepository.items.push(
+      Service.create(
+        {
+          barbershopId: new UniqueEntityId("shop-1"),
+          title: "Corte",
+          durationInMinutes: 30,
+          priceInCents: 5000,
+        },
+        new UniqueEntityId("service-1"),
+      ),
+    );
+
+    const result = await sut.execute({
+      barbershopId: "shop-1",
+      barbermanId: "barber-1",
+      date: "2026-09-15", // Tuesday
+      serviceIds: ["service-1"],
+    });
+
+    expect(result.isRight()).toBe(true);
+    if (result.isRight()) {
+      expect(result.value.availableSlots).toHaveLength(0);
+    }
+  });
+
+  it("should discount both barbershop general exceptions and barberman specific exceptions", async () => {
+    inMemorySchedulesRepository.items.push(
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        createdBy: new UniqueEntityId("owner-1"),
+        dayOfWeek: "TUESDAY",
+        openTime: "08:00",
+        closeTime: "18:00",
+      }),
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        barbermanId: new UniqueEntityId("barber-1"),
+        createdBy: new UniqueEntityId("barber-1"),
+        dayOfWeek: "TUESDAY",
+        openTime: "08:00",
+        closeTime: "18:00",
+      }),
+    );
+
+    inMemoryServicesRepository.items.push(
+      Service.create(
+        {
+          barbershopId: new UniqueEntityId("shop-1"),
+          title: "Corte",
+          durationInMinutes: 30,
+          priceInCents: 5000,
+        },
+        new UniqueEntityId("service-1"),
+      ),
+    );
+
+    // Exceção geral da barbearia (ex: manutenção 09:00 - 10:00)
+    inMemoryScheduleExceptionsRepository.items.push(
+      ScheduleException.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        date: new Date("2026-09-15"),
+        startTime: "09:00",
+        endTime: "10:00",
+      }),
+    );
+
+    // Exceção específica do barbeiro (ex: consulta médica 14:00 - 15:00)
+    inMemoryScheduleExceptionsRepository.items.push(
+      ScheduleException.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        barbermanId: new UniqueEntityId("barber-1"),
+        date: new Date("2026-09-15"),
+        startTime: "14:00",
+        endTime: "15:00",
+      }),
+    );
+
+    const result = await sut.execute({
+      barbershopId: "shop-1",
+      barbermanId: "barber-1",
+      date: "2026-09-15",
+      serviceIds: ["service-1"],
+    });
+
+    expect(result.isRight()).toBe(true);
+    if (result.isRight()) {
+      const starts = result.value.availableSlots.map((s) => s.start);
+      // Exceção geral descontada
+      expect(starts).not.toContain("2026-09-15T09:00:00-03:00");
+      expect(starts).not.toContain("2026-09-15T09:30:00-03:00");
+      // Exceção individual descontada
+      expect(starts).not.toContain("2026-09-15T14:00:00-03:00");
+      expect(starts).not.toContain("2026-09-15T14:30:00-03:00");
+      // Horários normais liberados
+      expect(starts).toContain("2026-09-15T08:30:00-03:00");
+      expect(starts).toContain("2026-09-15T10:00:00-03:00");
+      expect(starts).toContain("2026-09-15T15:00:00-03:00");
+    }
+  });
+
+  it("should return empty slots if barbershop has a full day exception (Holiday) when querying barber", async () => {
+    inMemorySchedulesRepository.items.push(
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        createdBy: new UniqueEntityId("owner-1"),
+        dayOfWeek: "TUESDAY",
+        openTime: "08:00",
+        closeTime: "18:00",
+      }),
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        barbermanId: new UniqueEntityId("barber-1"),
+        createdBy: new UniqueEntityId("barber-1"),
+        dayOfWeek: "TUESDAY",
+        openTime: "08:00",
+        closeTime: "18:00",
+      }),
+    );
+
+    inMemoryServicesRepository.items.push(
+      Service.create(
+        {
+          barbershopId: new UniqueEntityId("shop-1"),
+          title: "Corte",
+          durationInMinutes: 30,
+          priceInCents: 5000,
+        },
+        new UniqueEntityId("service-1"),
+      ),
+    );
+
+    // Feriado geral
+    inMemoryScheduleExceptionsRepository.items.push(
+      ScheduleException.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        date: new Date("2026-09-15"),
+        reason: "Feriado",
+      }),
+    );
+
+    const result = await sut.execute({
+      barbershopId: "shop-1",
+      barbermanId: "barber-1",
+      date: "2026-09-15",
+      serviceIds: ["service-1"],
+    });
+
+    expect(result.isRight()).toBe(true);
+    if (result.isRight()) {
+      expect(result.value.availableSlots).toHaveLength(0);
+    }
+  });
+
+  it("should return empty slots if barber has a full day exception", async () => {
+    inMemorySchedulesRepository.items.push(
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        createdBy: new UniqueEntityId("owner-1"),
+        dayOfWeek: "TUESDAY",
+        openTime: "08:00",
+        closeTime: "18:00",
+      }),
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        barbermanId: new UniqueEntityId("barber-1"),
+        createdBy: new UniqueEntityId("barber-1"),
+        dayOfWeek: "TUESDAY",
+        openTime: "08:00",
+        closeTime: "18:00",
+      }),
+    );
+
+    inMemoryServicesRepository.items.push(
+      Service.create(
+        {
+          barbershopId: new UniqueEntityId("shop-1"),
+          title: "Corte",
+          durationInMinutes: 30,
+          priceInCents: 5000,
+        },
+        new UniqueEntityId("service-1"),
+      ),
+    );
+
+    // Folga / Atestado do barbeiro
+    inMemoryScheduleExceptionsRepository.items.push(
+      ScheduleException.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        barbermanId: new UniqueEntityId("barber-1"),
+        date: new Date("2026-09-15"),
+        reason: "Atestado",
+      }),
+    );
+
+    const result = await sut.execute({
+      barbershopId: "shop-1",
+      barbermanId: "barber-1",
+      date: "2026-09-15",
+      serviceIds: ["service-1"],
+    });
+
+    expect(result.isRight()).toBe(true);
+    if (result.isRight()) {
+      expect(result.value.availableSlots).toHaveLength(0);
     }
   });
 
@@ -447,6 +787,91 @@ describe("Calculate Availability", () => {
       expect(result.value.message).toBe(
         "Um ou mais serviços não foram encontrados ou estão inativos para esta barbearia.",
       );
+    }
+  });
+
+  it("should calculate general availability when barbermanId is not provided (Sprint 2 regression)", async () => {
+    inMemorySchedulesRepository.items.push(
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        createdBy: new UniqueEntityId("owner-1"),
+        dayOfWeek: "TUESDAY",
+        openTime: "09:00",
+        closeTime: "12:00",
+      }),
+    );
+
+    inMemoryServicesRepository.items.push(
+      Service.create(
+        {
+          barbershopId: new UniqueEntityId("shop-1"),
+          title: "Corte",
+          durationInMinutes: 30,
+          priceInCents: 5000,
+        },
+        new UniqueEntityId("service-1"),
+      ),
+    );
+
+    const result = await sut.execute({
+      barbershopId: "shop-1",
+      date: "2026-09-15", // Tuesday
+      serviceIds: ["service-1"],
+      barbermanId: null,
+    });
+
+    expect(result.isRight()).toBe(true);
+    if (result.isRight()) {
+      expect(result.value.availableSlots).toHaveLength(6);
+      expect(result.value.availableSlots[0].start).toContain("09:00");
+      expect(result.value.availableSlots[5].start).toContain("11:30");
+    }
+  });
+
+  it("should return 0 slots for a barber with empty weekly schedule while general barbershop slots remain accessible", async () => {
+    inMemorySchedulesRepository.items.push(
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        createdBy: new UniqueEntityId("owner-1"),
+        dayOfWeek: "TUESDAY",
+        openTime: "08:00",
+        closeTime: "18:00",
+      }),
+    );
+
+    inMemoryServicesRepository.items.push(
+      Service.create(
+        {
+          barbershopId: new UniqueEntityId("shop-1"),
+          title: "Corte",
+          durationInMinutes: 30,
+          priceInCents: 5000,
+        },
+        new UniqueEntityId("service-1"),
+      ),
+    );
+
+    const barberResult = await sut.execute({
+      barbershopId: "shop-1",
+      date: "2026-09-15", // Tuesday
+      serviceIds: ["service-1"],
+      barbermanId: "barber-with-no-schedules",
+    });
+
+    expect(barberResult.isRight()).toBe(true);
+    if (barberResult.isRight()) {
+      expect(barberResult.value.availableSlots).toHaveLength(0);
+    }
+
+    const generalResult = await sut.execute({
+      barbershopId: "shop-1",
+      date: "2026-09-15", // Tuesday
+      serviceIds: ["service-1"],
+    });
+
+    expect(generalResult.isRight()).toBe(true);
+    if (generalResult.isRight()) {
+      expect(generalResult.value.availableSlots.length).toBeGreaterThan(0);
     }
   });
 });

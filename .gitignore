@@ -10,4 +10,3 @@ coverage/*
 .tmp/
 .demo-seed-credentials.json
 .demo-seed-manifest.json
-

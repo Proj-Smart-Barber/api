@@ -112,17 +112,63 @@ export class CalculateAvailabilityUseCase {
     const allSchedules =
       await this.schedulesRepository.findManyByBarbershopId(barbershopId);
 
-    const daySchedules = allSchedules.filter(
-      (s) =>
-        s.dayOfWeek === dayOfWeek &&
-        (barbermanId
-          ? s.barbermanId?.toString() === barbermanId
-          : !s.barbermanId),
+    const generalDaySchedules = allSchedules.filter(
+      (s) => s.dayOfWeek === dayOfWeek && !s.barbermanId,
     );
 
-    if (daySchedules.length === 0) {
+    if (generalDaySchedules.length === 0) {
       return right({ availableSlots: [] });
     }
+
+    interface TimeInterval {
+      openMinutes: number;
+      closeMinutes: number;
+    }
+
+    let operatingIntervals: TimeInterval[] = [];
+
+    if (barbermanId) {
+      const barberDaySchedules = allSchedules.filter(
+        (s) =>
+          s.dayOfWeek === dayOfWeek &&
+          s.barbermanId?.toString() === barbermanId,
+      );
+
+      if (barberDaySchedules.length === 0) {
+        return right({ availableSlots: [] });
+      }
+
+      for (const gen of generalDaySchedules) {
+        const genOpen = timeToMinutes(gen.openTime);
+        const genClose = timeToMinutes(gen.closeTime);
+
+        for (const barb of barberDaySchedules) {
+          const barbOpen = timeToMinutes(barb.openTime);
+          const barbClose = timeToMinutes(barb.closeTime);
+
+          const interOpen = Math.max(genOpen, barbOpen);
+          const interClose = Math.min(genClose, barbClose);
+
+          if (interOpen < interClose) {
+            operatingIntervals.push({
+              openMinutes: interOpen,
+              closeMinutes: interClose,
+            });
+          }
+        }
+      }
+
+      if (operatingIntervals.length === 0) {
+        return right({ availableSlots: [] });
+      }
+    } else {
+      operatingIntervals = generalDaySchedules.map((s) => ({
+        openMinutes: timeToMinutes(s.openTime),
+        closeMinutes: timeToMinutes(s.closeTime),
+      }));
+    }
+
+    operatingIntervals.sort((a, b) => a.openMinutes - b.openMinutes);
 
     // 3. Buscar exceções do dia
     const allExceptions =
@@ -134,7 +180,7 @@ export class CalculateAvailabilityUseCase {
       const eDate = new Date(e.date).toISOString().split("T")[0];
       const tDate = date; // date from parameter
       const matchBarberman = barbermanId
-        ? e.barbermanId?.toString() === barbermanId
+        ? !e.barbermanId || e.barbermanId.toString() === barbermanId
         : !e.barbermanId;
       return eDate === tDate && matchBarberman;
     });
@@ -155,14 +201,15 @@ export class CalculateAvailabilityUseCase {
     // 5. Gerar os slots fatiados
     const availableSlots: AvailabilitySlotDTO[] = [];
     const SLOT_STEP_MINUTES = 30; // Fatias geradas a cada 30 minutos
+    const seenSlots = new Set<string>();
 
-    for (const schedule of daySchedules) {
-      const openMinutes = timeToMinutes(schedule.openTime);
-      const closeMinutes = timeToMinutes(schedule.closeTime);
+    for (const interval of operatingIntervals) {
+      let currentStartMinutes = interval.openMinutes;
 
-      let currentStartMinutes = openMinutes;
-
-      while (currentStartMinutes + totalDurationInMinutes <= closeMinutes) {
+      while (
+        currentStartMinutes + totalDurationInMinutes <=
+        interval.closeMinutes
+      ) {
         const currentEndMinutes = currentStartMinutes + totalDurationInMinutes;
 
         const overlapsException = dayExceptions.some((ex) => {
@@ -181,11 +228,15 @@ export class CalculateAvailabilityUseCase {
         if (!overlapsException && !overlapsBooking) {
           const startStr = minutesToTime(currentStartMinutes);
           const endStr = minutesToTime(currentEndMinutes);
+          const slotKey = `${startStr}-${endStr}`;
 
-          availableSlots.push({
-            start: `${date}T${startStr}:00${offset}`,
-            end: `${date}T${endStr}:00${offset}`,
-          });
+          if (!seenSlots.has(slotKey)) {
+            seenSlots.add(slotKey);
+            availableSlots.push({
+              start: `${date}T${startStr}:00${offset}`,
+              end: `${date}T${endStr}:00${offset}`,
+            });
+          }
         }
 
         currentStartMinutes += SLOT_STEP_MINUTES;

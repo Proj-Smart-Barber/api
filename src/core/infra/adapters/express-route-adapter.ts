@@ -17,13 +17,29 @@ export const adaptRoute = (controller: Controller) => {
       return response.status(httpResponse.statusCode).json(httpResponse.body);
     } else {
       let errorMessage = "Unknown error";
+      let validationErrors: unknown;
 
-      if (
-        typeof httpResponse.body === "object" &&
-        httpResponse.body !== null &&
-        "error" in httpResponse.body
-      ) {
-        errorMessage = (httpResponse.body as any).error;
+      if (typeof httpResponse.body === "object" && httpResponse.body !== null) {
+        const body = httpResponse.body as Record<string, unknown>;
+
+        if ("error" in body && typeof body.error === "string") {
+          errorMessage = body.error;
+        } else if ("message" in body && typeof body.message === "string") {
+          errorMessage = body.message;
+        } else if ("errors" in body && Array.isArray(body.errors)) {
+          validationErrors = body.errors;
+          const firstIssue = body.errors[0];
+          if (
+            typeof firstIssue === "object" &&
+            firstIssue !== null &&
+            "message" in firstIssue &&
+            typeof (firstIssue as { message: unknown }).message === "string"
+          ) {
+            errorMessage = (firstIssue as { message: string }).message;
+          } else {
+            errorMessage = "Validation error";
+          }
+        }
       } else if (typeof httpResponse.body === "string") {
         errorMessage = httpResponse.body;
       }
@@ -35,9 +51,28 @@ export const adaptRoute = (controller: Controller) => {
         );
       }
 
-      return response.status(httpResponse.statusCode).json({
+      const responsePayload: Record<string, unknown> = {
         error: errorMessage,
-      });
+      };
+
+      if (typeof httpResponse.body === "object" && httpResponse.body !== null) {
+        const body = httpResponse.body as Record<string, unknown>;
+        if ("code" in body) {
+          responsePayload.code = body.code;
+        }
+        if ("message" in body && typeof body.message === "string") {
+          responsePayload.message = body.message;
+        }
+        if ("conflicts" in body) {
+          responsePayload.conflicts = body.conflicts;
+        }
+      }
+
+      if (validationErrors !== undefined) {
+        responsePayload.errors = validationErrors;
+      }
+
+      return response.status(httpResponse.statusCode).json(responsePayload);
     }
   };
 };

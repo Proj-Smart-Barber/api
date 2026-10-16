@@ -8,6 +8,8 @@
     "dev": "tsx --watch src/server.ts",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e:availability": "NODE_ENV=test tsx scripts/verify-e2e-availability.ts",
+    "test:e2e:issue-29": "npm run test:e2e:availability",
     "db:seed": "tsx src/infra/drizzle/seed.ts",
     "db:seed:demo:dry-run": "tsx src/infra/drizzle/demo-seed/cli.ts --dry-run",
     "db:seed:demo:apply": "tsx src/infra/drizzle/demo-seed/cli.ts --apply",

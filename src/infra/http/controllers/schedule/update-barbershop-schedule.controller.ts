@@ -2,10 +2,16 @@ import type { Controller } from "../../../../core/infra/controller";
 import {
   type HttpResponse,
   clientError,
+  conflict,
+  forbidden,
+  notFound,
   ok,
   fail,
 } from "../../../../core/infra/http-response";
 import type { UpdateBarbershopScheduleUseCase } from "../../../../domain/application/use-cases/schedule/update-barbershop-schedule/update-barbershop-schedule";
+import { NotAllowedError } from "../../../../domain/application/use-cases/_errors/not-allowed-error";
+import { ResourceNotFoundError } from "../../../../domain/application/use-cases/_errors/resource-not-found-error";
+import { ScheduleBookingConflictError } from "../../../../domain/application/use-cases/_errors/schedule-booking-conflict-error";
 import { z } from "zod";
 
 export class UpdateBarbershopScheduleController implements Controller {
@@ -52,6 +58,24 @@ export class UpdateBarbershopScheduleController implements Controller {
 
       if (result.isLeft()) {
         const error = result.value;
+
+        if (error instanceof NotAllowedError) {
+          return forbidden(error.message);
+        }
+
+        if (error instanceof ResourceNotFoundError) {
+          return notFound(error.message);
+        }
+
+        if (error instanceof ScheduleBookingConflictError) {
+          return conflict({
+            code: error.code,
+            message: error.message,
+            error: error.message,
+            conflicts: error.conflictingBookings,
+          });
+        }
+
         return clientError(error.message);
       }
 

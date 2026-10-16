@@ -1,5 +1,6 @@
 import { eq, and, gte, lte, lt, gt, ne } from "drizzle-orm";
 import { db } from "../index";
+import { getActiveDb } from "../drizzle-transaction-context";
 import {
   bookings,
   shoppingCarts,
@@ -13,6 +14,7 @@ import type {
   FindManyByBarbermanAndDateParams,
   FindOverlappingParams,
   FindManyByShoppingCartParams,
+  FindManyFutureByBarbershopParams,
 } from "../../../domain/application/repositories/bookings-repository";
 import type { Booking } from "../../../domain/enterprise/entities/booking";
 import type { BookingDetails } from "../../../domain/enterprise/entities/booking-details";
@@ -157,5 +159,36 @@ export class DrizzleBookingsRepository implements BookingsRepository {
         .where(eq(notifications.bookingId, bookingId));
       await tx.delete(bookings).where(eq(bookings.id, bookingId));
     });
+  }
+
+  async findManyFutureByBarbershop({
+    barbershopId,
+    barbermanId,
+    from = new Date(),
+  }: FindManyFutureByBarbershopParams): Promise<Booking[]> {
+    const client = getActiveDb();
+
+    // Margem segura de piso inferior: 24 horas antes do instante `from`.
+    // Isso evita que viradas de data UTC (ex: 01:00 UTC) excluam reservas de um dia civil
+    // anterior que ainda são futuras no fuso local da barbearia (ex: 22:00 em America/Sao_Paulo UTC-3).
+    const safeFloor = new Date(from.getTime() - 24 * 60 * 60 * 1000);
+    const safeFloorDateStr = safeFloor.toISOString().split("T")[0];
+    const startOfSafeFloorDay = new Date(`${safeFloorDateStr}T00:00:00.000Z`);
+
+    const filters = [
+      eq(bookings.barbershopId, barbershopId),
+      gte(bookings.date, startOfSafeFloorDay),
+    ];
+
+    if (barbermanId) {
+      filters.push(eq(bookings.barbermanId, barbermanId));
+    }
+
+    const result = await client
+      .select()
+      .from(bookings)
+      .where(and(...filters));
+
+    return result.map((row) => BookingMapper.toDomain(row));
   }
 }

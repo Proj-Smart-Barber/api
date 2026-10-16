@@ -4,6 +4,13 @@ import type { BarbershopSchedule } from "../../src/domain/enterprise/entities/ba
 export class InMemorySchedulesRepository implements SchedulesRepository {
   public items: BarbershopSchedule[] = [];
 
+  async runWithLock<T>(
+    _barbershopId: string,
+    operation: () => Promise<T>,
+  ): Promise<T> {
+    return await operation();
+  }
+
   async create(schedule: BarbershopSchedule): Promise<void> {
     this.items.push(schedule);
   }

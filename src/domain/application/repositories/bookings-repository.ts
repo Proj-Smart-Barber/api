@@ -19,6 +19,12 @@ export interface FindManyByShoppingCartParams {
   page?: number;
 }
 
+export interface FindManyFutureByBarbershopParams {
+  barbershopId: string;
+  barbermanId?: string | null;
+  from?: Date;
+}
+
 export interface BookingsRepository {
   create(booking: Booking): Promise<void>;
   save(booking: Booking): Promise<void>;
@@ -34,4 +40,7 @@ export interface BookingsRepository {
   findManyWithDetailsByBarbermanAndDate(
     params: FindManyByBarbermanAndDateParams,
   ): Promise<BookingDetails[]>;
+  findManyFutureByBarbershop(
+    params: FindManyFutureByBarbershopParams,
+  ): Promise<Booking[]>;
 }
