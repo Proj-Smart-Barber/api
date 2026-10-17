@@ -68,16 +68,21 @@ export class DrizzleResourceAccessValidator implements ResourceAccessValidator {
       }
 
       // Customer or Barberman
-      if (
-        targetBooking.customerId === actorId
-      ) {
+      if (targetBooking.customerId === actorId) {
         return true;
       }
 
       if (targetBooking.barbermanId === actorId) {
-        const [professional] = await executor.select({ id: membership.id }).from(membership).where(and(
-          eq(membership.barbershopId, targetBooking.barbershopId), eq(membership.userId, actorId), eq(membership.state, "ACTIVE"),
-        ));
+        const [professional] = await executor
+          .select({ id: membership.id })
+          .from(membership)
+          .where(
+            and(
+              eq(membership.barbershopId, targetBooking.barbershopId),
+              eq(membership.userId, actorId),
+              eq(membership.state, "ACTIVE"),
+            ),
+          );
         if (professional) return true;
       }
       // Active OWNER in the barbershop
@@ -94,6 +99,48 @@ export class DrizzleResourceAccessValidator implements ResourceAccessValidator {
         );
 
       return Boolean(ownerMem);
+    }
+
+    if (resourceKind === "SCHEDULE") {
+      let shopId = resourceId;
+      let targetBarbermanId: string | null = null;
+
+      if (resourceId.includes(":")) {
+        const parts = resourceId.split(":");
+        shopId = parts[0];
+        targetBarbermanId = parts[1] || null;
+      }
+
+      // Check if actor is active OWNER of the shop
+      const [ownerMem] = await executor
+        .select({ id: membership.id })
+        .from(membership)
+        .where(
+          and(
+            eq(membership.barbershopId, shopId),
+            eq(membership.userId, actorId),
+            eq(membership.role, "OWNER"),
+            eq(membership.state, "ACTIVE"),
+          ),
+        );
+      if (ownerMem) return true;
+
+      // If targetBarbermanId is actorId (self-schedule)
+      if (targetBarbermanId === actorId) {
+        const [activeBarber] = await executor
+          .select({ id: membership.id })
+          .from(membership)
+          .where(
+            and(
+              eq(membership.barbershopId, shopId),
+              eq(membership.userId, actorId),
+              eq(membership.state, "ACTIVE"),
+            ),
+          );
+        if (activeBarber) return true;
+      }
+
+      return false;
     }
 
     return true;

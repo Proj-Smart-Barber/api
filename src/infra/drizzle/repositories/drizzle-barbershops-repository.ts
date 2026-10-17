@@ -109,6 +109,20 @@ export class DrizzleBarbershopsRepository implements BarbershopsRepository {
     }));
   }
 
+  async save(barbershop: Barbershop): Promise<void> {
+    await db
+      .update(barbershops)
+      .set({
+        name: barbershop.name,
+        location: barbershop.location,
+        avatarUrl: barbershop.avatarUrl,
+        slug: barbershop.slug.value,
+        cnpj: barbershop.cnpj,
+        status: barbershop.status,
+      })
+      .where(eq(barbershops.id, barbershop.id.toString()));
+  }
+
   private validateOwnerMembership(
     barbershop: Barbershop,
     ownerMembership: Membership,

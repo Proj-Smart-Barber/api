@@ -10,6 +10,7 @@ export interface OperationAttemptRecord {
     | "MEMBERSHIP"
     | "REGISTRATION"
     | "INVITATION"
+    | "SCHEDULE"
     | null;
   resourceId?: string | null;
   resourceVersion?: number | null;

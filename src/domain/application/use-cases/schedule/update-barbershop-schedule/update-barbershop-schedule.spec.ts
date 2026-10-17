@@ -1,7 +1,11 @@
 import { InMemorySchedulesRepository } from "../../../../../../test/repositories/in-memory-schedules-repository";
 import { InMemoryBarbershopsRepository } from "../../../../../../test/repositories/in-memory-barbershops-repository";
+import { InMemoryMembershipsRepository } from "../../../../../../test/repositories/in-memory-memberships-repository";
+import { InMemoryBookingsRepository } from "../../../../../../test/repositories/in-memory-bookings-repository";
 import { UpdateBarbershopScheduleUseCase } from "./update-barbershop-schedule";
 import { Barbershop } from "../../../../enterprise/entities/barbershop";
+import { Membership, Role } from "../../../../enterprise/entities/membership";
+import { Booking } from "../../../../enterprise/entities/booking";
 import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
 import { Slug } from "../../../../enterprise/entities/value-objects/slug";
 
@@ -66,7 +70,7 @@ describe("Update Barbershop Schedule", () => {
         {
           dayOfWeek: "MONDAY",
           openTime: "08:00",
-          closeTime: "18:00",
+          closeTime: "20:00",
         },
       ],
     });
@@ -123,7 +127,7 @@ describe("Update Barbershop Schedule", () => {
     );
     expect(generalItems).toHaveLength(1);
     expect(generalItems[0].openTime).toBe("08:00");
-    expect(generalItems[0].closeTime).toBe("18:00");
+    expect(generalItems[0].closeTime).toBe("20:00");
 
     // 6. Garantir que a jornada do Barbeiro B continua intacta (12:00 - 20:00)
     const barberBItems = inMemorySchedulesRepository.items.filter(
@@ -140,5 +144,337 @@ describe("Update Barbershop Schedule", () => {
     expect(barberAItems).toHaveLength(1);
     expect(barberAItems[0].openTime).toBe("09:00");
     expect(barberAItems[0].closeTime).toBe("15:00");
+  });
+
+  describe("Autorização e Regras de Negócio da Fase 1", () => {
+    let inMemoryMembershipsRepository: InMemoryMembershipsRepository;
+    let inMemoryBookingsRepository: InMemoryBookingsRepository;
+    let authorizedSut: UpdateBarbershopScheduleUseCase;
+
+    const ownerUserId = "owner-user";
+    const barberUserId = "barber-user";
+    const colleagueUserId = "colleague-user";
+    const clientUserId = "client-user";
+    const inactiveBarberUserId = "inactive-barber-user";
+    const shopId = "shop-1";
+
+    beforeEach(async () => {
+      inMemoryMembershipsRepository = new InMemoryMembershipsRepository();
+      inMemoryBookingsRepository = new InMemoryBookingsRepository();
+
+      authorizedSut = new UpdateBarbershopScheduleUseCase(
+        inMemorySchedulesRepository,
+        inMemoryBarbershopsRepository,
+        undefined,
+        inMemoryMembershipsRepository,
+        inMemoryBookingsRepository,
+      );
+
+      // Cadastrar membros
+      await inMemoryMembershipsRepository.create(
+        Membership.create({
+          barbershopId: new UniqueEntityId(shopId),
+          userId: new UniqueEntityId(ownerUserId),
+          role: Role.OWNER,
+          state: "ACTIVE",
+        }),
+      );
+
+      await inMemoryMembershipsRepository.create(
+        Membership.create({
+          barbershopId: new UniqueEntityId(shopId),
+          userId: new UniqueEntityId(barberUserId),
+          role: Role.BARBERMAN,
+          state: "ACTIVE",
+        }),
+      );
+
+      await inMemoryMembershipsRepository.create(
+        Membership.create({
+          barbershopId: new UniqueEntityId(shopId),
+          userId: new UniqueEntityId(colleagueUserId),
+          role: Role.BARBERMAN,
+          state: "ACTIVE",
+        }),
+      );
+
+      await inMemoryMembershipsRepository.create(
+        Membership.create({
+          barbershopId: new UniqueEntityId(shopId),
+          userId: new UniqueEntityId(inactiveBarberUserId),
+          role: Role.BARBERMAN,
+          state: "INACTIVE",
+        }),
+      );
+
+      // Jornada geral inicial da barbearia: Seg-Sex das 08:00 às 18:00
+      await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: ownerUserId,
+        barbermanId: null,
+        state: "CUSTOM",
+        schedules: [
+          { dayOfWeek: "MONDAY", openTime: "08:00", closeTime: "18:00" },
+          { dayOfWeek: "TUESDAY", openTime: "08:00", closeTime: "18:00" },
+          { dayOfWeek: "WEDNESDAY", openTime: "08:00", closeTime: "18:00" },
+          { dayOfWeek: "THURSDAY", openTime: "08:00", closeTime: "18:00" },
+          { dayOfWeek: "FRIDAY", openTime: "08:00", closeTime: "18:00" },
+        ],
+      });
+    });
+
+    it("BARBERMAN ativo deve poder alterar exclusivamente sua própria jornada", async () => {
+      const result = await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: barberUserId,
+        barbermanId: barberUserId,
+        state: "CUSTOM",
+        schedules: [
+          { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "17:00" },
+        ],
+      });
+
+      expect(result.isRight()).toBe(true);
+      if (result.isRight()) {
+        expect(result.value.state).toBe("CUSTOM");
+        expect(result.value.schedules).toHaveLength(1);
+        expect(result.value.effectiveSchedules).toHaveLength(1);
+        expect(result.value.schedules[0].openTime).toBe("09:00");
+      }
+    });
+
+    it("BARBERMAN tentando alterar jornada geral (sem barbermanId) deve ser rejeitado", async () => {
+      const result = await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: barberUserId,
+        barbermanId: null,
+        state: "CUSTOM",
+        schedules: [
+          { dayOfWeek: "MONDAY", openTime: "08:00", closeTime: "18:00" },
+        ],
+      });
+
+      expect(result.isLeft()).toBe(true);
+      if (result.isLeft()) {
+        expect(result.value.name).toBe("NotAllowedError");
+      }
+    });
+
+    it("BARBERMAN tentando alterar jornada de um colega deve ser rejeitado", async () => {
+      const result = await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: barberUserId,
+        barbermanId: colleagueUserId,
+        state: "CUSTOM",
+        schedules: [
+          { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "17:00" },
+        ],
+      });
+
+      expect(result.isLeft()).toBe(true);
+      if (result.isLeft()) {
+        expect(result.value.name).toBe("NotAllowedError");
+      }
+    });
+
+    it("CLIENT ou usuário sem vínculo ativo deve ser rejeitado", async () => {
+      // Cliente sem membership
+      const clientResult = await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: clientUserId,
+        barbermanId: clientUserId,
+        state: "CUSTOM",
+        schedules: [
+          { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "17:00" },
+        ],
+      });
+      expect(clientResult.isLeft()).toBe(true);
+
+      // Barbeiro inativo
+      const inactiveResult = await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: inactiveBarberUserId,
+        barbermanId: inactiveBarberUserId,
+        state: "CUSTOM",
+        schedules: [
+          { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "17:00" },
+        ],
+      });
+      expect(inactiveResult.isLeft()).toBe(true);
+    });
+
+    it("OWNER ativo pode alterar a jornada de qualquer profissional ativo da unidade", async () => {
+      const result = await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: ownerUserId,
+        barbermanId: barberUserId,
+        state: "CUSTOM",
+        schedules: [
+          { dayOfWeek: "MONDAY", openTime: "10:00", closeTime: "16:00" },
+        ],
+      });
+
+      expect(result.isRight()).toBe(true);
+    });
+
+    it("Jornada geral não pode ter estado INHERIT", async () => {
+      const result = await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: ownerUserId,
+        barbermanId: null,
+        state: "INHERIT",
+        schedules: [],
+      });
+
+      expect(result.isLeft()).toBe(true);
+      if (result.isLeft()) {
+        expect(result.value.message).toContain("não pode herdar");
+      }
+    });
+
+    it("BARBERMAN com state=INHERIT deve herdar a jornada geral e ter schedules vazia persistida", async () => {
+      const result = await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: barberUserId,
+        barbermanId: barberUserId,
+        state: "INHERIT",
+        schedules: [],
+      });
+
+      expect(result.isRight()).toBe(true);
+      if (result.isRight()) {
+        expect(result.value.state).toBe("INHERIT");
+        expect(result.value.schedules).toHaveLength(0); // não duplica no banco
+        expect(result.value.effectiveSchedules).toHaveLength(5); // reflete a geral
+      }
+    });
+
+    it("BARBERMAN com state=CLOSED deve fechar a semana e ter effectiveSchedules vazia", async () => {
+      const result = await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: barberUserId,
+        barbermanId: barberUserId,
+        state: "CLOSED",
+        schedules: [],
+      });
+
+      expect(result.isRight()).toBe(true);
+      if (result.isRight()) {
+        expect(result.value.state).toBe("CLOSED");
+        expect(result.value.schedules).toHaveLength(0);
+        expect(result.value.effectiveSchedules).toHaveLength(0);
+      }
+    });
+
+    it("BARBERMAN com state=CUSTOM exige pelo menos um período válido", async () => {
+      const result = await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: barberUserId,
+        barbermanId: barberUserId,
+        state: "CUSTOM",
+        schedules: [],
+      });
+
+      expect(result.isLeft()).toBe(true);
+      if (result.isLeft()) {
+        expect(result.value.message).toContain(
+          "exige pelo menos um período válido",
+        );
+      }
+    });
+
+    it("Horário individual fora do funcionamento geral da unidade deve ser rejeitado", async () => {
+      // Geral é 08:00 às 18:00. Barbeiro tentando 07:00 às 16:00
+      const result = await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: barberUserId,
+        barbermanId: barberUserId,
+        state: "CUSTOM",
+        schedules: [
+          { dayOfWeek: "MONDAY", openTime: "07:00", closeTime: "16:00" },
+        ],
+      });
+
+      expect(result.isLeft()).toBe(true);
+      if (result.isLeft()) {
+        expect(result.value.message).toContain(
+          "fora do horário de funcionamento geral",
+        );
+      }
+    });
+
+    it("Conflito de agendamento futuro: rejeita alteração se houver agendamento confirmado fora do novo horário", async () => {
+      const now = new Date();
+      // Criar um agendamento futuro para a próxima segunda-feira às 16:00
+      // Próxima segunda:
+      const daysUntilMonday = (1 + 7 - now.getDay()) % 7 || 7;
+      const nextMonday = new Date(
+        now.getTime() + daysUntilMonday * 24 * 60 * 60 * 1000,
+      );
+      nextMonday.setHours(16, 0, 0, 0);
+
+      const booking = Booking.create({
+        barbershopId: new UniqueEntityId(shopId),
+        barbermanId: new UniqueEntityId(barberUserId),
+        customerId: new UniqueEntityId("client-1"),
+        startsAt: nextMonday,
+        endsAt: new Date(nextMonday.getTime() + 30 * 60 * 1000),
+        status: "CONFIRMED",
+        totalPriceInCents: 5000,
+        totalDurationInMinutes: 30,
+      });
+      await inMemoryBookingsRepository.create(booking);
+
+      // Barbeiro tenta encurtar a jornada de segunda para fechar às 15:00 (o que corta o agendamento das 16:00)
+      const result = await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: barberUserId,
+        barbermanId: barberUserId,
+        state: "CUSTOM",
+        schedules: [
+          { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "15:00" },
+        ],
+      });
+
+      expect(result.isLeft()).toBe(true);
+      if (result.isLeft()) {
+        expect(result.value.name).toBe("ScheduleBookingConflictError");
+        const conflictErr = result.value as any;
+        expect(conflictErr.conflictingBookings).toHaveLength(1);
+        expect(conflictErr.conflictingBookings[0].bookingId).toBe(
+          booking.id.toString(),
+        );
+      }
+    });
+
+    it("Controle de versão otimista: expectedVersion incompatível deve ser rejeitado", async () => {
+      // 1. Gravar versão inicial
+      await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: barberUserId,
+        barbermanId: barberUserId,
+        state: "CUSTOM",
+        schedules: [
+          { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "17:00" },
+        ],
+      });
+
+      // 2. Tentar atualizar passando expectedVersion = 999 (esperado é 2)
+      const result = await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: barberUserId,
+        barbermanId: barberUserId,
+        state: "CUSTOM",
+        expectedVersion: 999,
+        schedules: [
+          { dayOfWeek: "MONDAY", openTime: "10:00", closeTime: "16:00" },
+        ],
+      });
+
+      expect(result.isLeft()).toBe(true);
+      if (result.isLeft()) {
+        expect(result.value.name).toBe("ScheduleVersionConflictError");
+      }
+    });
   });
 });

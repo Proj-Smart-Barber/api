@@ -651,6 +651,42 @@ export async function runSchemaMigrations(targetDb: any = db) {
       ON "geocoding_usage_buckets" ("expires_at");
     `);
 
+    // Schedule Scopes & Operations Schedule enum value
+    await targetDb.execute(sql`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_enum e
+          JOIN pg_type t ON t.oid = e.enumtypid
+          WHERE t.typname = 'operation_resource_kind' AND e.enumlabel = 'SCHEDULE'
+        ) THEN
+          ALTER TYPE "operation_resource_kind" ADD VALUE 'SCHEDULE';
+        END IF;
+
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_type WHERE typname = 'barbershop_schedule_state'
+        ) THEN
+          CREATE TYPE "barbershop_schedule_state" AS ENUM ('INHERIT', 'CUSTOM', 'CLOSED');
+        END IF;
+      END $$;
+
+      CREATE TABLE IF NOT EXISTS "barbershop_schedule_scopes" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+        "barbershop_id" uuid NOT NULL REFERENCES "barbershops"("id") ON DELETE CASCADE,
+        "barberman_id" uuid REFERENCES "users"("id") ON DELETE CASCADE,
+        "state" "barbershop_schedule_state" DEFAULT 'CUSTOM' NOT NULL,
+        "version" integer DEFAULT 1 NOT NULL,
+        "last_mutation_id" uuid,
+        "last_mutation_hash" text,
+        "created_at" timestamp with time zone DEFAULT now(),
+        "updated_at" timestamp with time zone DEFAULT now(),
+        CONSTRAINT "barbershop_schedule_scopes_shop_barberman_unique" UNIQUE ("barbershop_id", "barberman_id")
+      );
+
+      CREATE INDEX IF NOT EXISTS "barbershop_schedule_scopes_lookup_idx"
+      ON "barbershop_schedule_scopes" ("barbershop_id", "barberman_id");
+    `);
+
     if (isDefaultDb) {
       hasMigrated = true;
     }

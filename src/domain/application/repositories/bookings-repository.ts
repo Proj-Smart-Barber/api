@@ -87,6 +87,12 @@ export interface BookingsRepository {
     now: Date,
     tx?: any,
   ): Promise<Booking[]>;
+  findActiveAndFutureBookings(params: {
+    barbershopId: string;
+    barbermanId?: string | null;
+    now?: Date;
+    tx?: any;
+  }): Promise<Booking[]>;
   findUnitBookings(
     params: FindUnitBookingsParams,
   ): Promise<FindUnitBookingsResult>;

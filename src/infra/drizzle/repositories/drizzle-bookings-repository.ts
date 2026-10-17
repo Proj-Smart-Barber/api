@@ -7,6 +7,7 @@ import {
   gt,
   ne,
   isNull,
+  isNotNull,
   notInArray,
   inArray,
   or,
@@ -528,10 +529,8 @@ export class DrizzleBookingsRepository implements BookingsRepository {
               eq(bookings.customerId, customerId),
               eq(shoppingCarts.userId, customerId),
             ),
-            or(
-              isNull(bookings.status),
-              inArray(bookings.status, ["CONFIRMED", "IN_PROGRESS"]),
-            ),
+            inArray(bookings.status, ["CONFIRMED", "IN_PROGRESS"]),
+            isNotNull(bookings.startsAt),
             or(
               gt(bookings.endsAt, now),
               and(
@@ -646,6 +645,48 @@ export class DrizzleBookingsRepository implements BookingsRepository {
           ),
         ),
       );
+
+    return rows.map(BookingMapper.toDomain);
+  }
+
+  async findActiveAndFutureBookings({
+    barbershopId,
+    barbermanId,
+    now = new Date(),
+    tx,
+  }: {
+    barbershopId: string;
+    barbermanId?: string | null;
+    now?: Date;
+    tx?: any;
+  }): Promise<Booking[]> {
+    const terminalStatuses = ["CANCELLED", "COMPLETED", "NO_SHOW"];
+    const executor = tx ?? db;
+
+    const conditions = [
+      eq(bookings.barbershopId, barbershopId),
+      or(
+        isNull(bookings.status),
+        notInArray(bookings.status, terminalStatuses),
+      ),
+      or(
+        gt(bookings.endsAt, now),
+        and(
+          isNull(bookings.endsAt),
+          gte(bookings.startsAt, new Date(now.getTime() - 60 * 60 * 1000)),
+        ),
+        gte(bookings.startsAt, now),
+      ),
+    ];
+
+    if (barbermanId) {
+      conditions.push(eq(bookings.barbermanId, barbermanId));
+    }
+
+    const rows = await executor
+      .select()
+      .from(bookings)
+      .where(and(...conditions));
 
     return rows.map(BookingMapper.toDomain);
   }

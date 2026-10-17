@@ -76,4 +76,20 @@ export class InMemoryBarbershopsRepository implements BarbershopsRepository {
     }
     return results;
   }
+
+  async create(barbershop: Barbershop): Promise<Barbershop> {
+    this.items.push(barbershop);
+    return barbershop;
+  }
+
+  async save(barbershop: Barbershop): Promise<void> {
+    const index = this.items.findIndex(
+      (item) => item.id.toString() === barbershop.id.toString(),
+    );
+    if (index >= 0) {
+      this.items[index] = barbershop;
+    } else {
+      this.items.push(barbershop);
+    }
+  }
 }

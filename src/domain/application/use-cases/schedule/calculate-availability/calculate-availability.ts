@@ -112,13 +112,44 @@ export class CalculateAvailabilityUseCase {
     const allSchedules =
       await this.schedulesRepository.findManyByBarbershopId(barbershopId);
 
-    const daySchedules = allSchedules.filter(
+    let daySchedules = allSchedules.filter(
       (s) =>
         s.dayOfWeek === dayOfWeek &&
         (barbermanId
           ? s.barbermanId?.toString() === barbermanId
           : !s.barbermanId),
     );
+
+    if (barbermanId) {
+      const scope = await this.schedulesRepository.findScope(
+        barbershopId,
+        barbermanId,
+      );
+
+      if (scope) {
+        if (scope.state === "CLOSED") {
+          return right({ availableSlots: [] });
+        }
+        if (scope.state === "INHERIT") {
+          daySchedules = allSchedules.filter(
+            (s) => s.dayOfWeek === dayOfWeek && !s.barbermanId,
+          );
+        } else {
+          daySchedules = allSchedules.filter(
+            (s) =>
+              s.dayOfWeek === dayOfWeek &&
+              s.barbermanId?.toString() === barbermanId,
+          );
+        }
+      } else {
+        // Legado ambíguo sem scope: preserva horários individuais já existentes se houver, ou fecha sem abrir horários indevidos
+        daySchedules = allSchedules.filter(
+          (s) =>
+            s.dayOfWeek === dayOfWeek &&
+            s.barbermanId?.toString() === barbermanId,
+        );
+      }
+    }
 
     if (daySchedules.length === 0) {
       return right({ availableSlots: [] });

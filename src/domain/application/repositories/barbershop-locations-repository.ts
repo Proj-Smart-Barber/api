@@ -1,7 +1,6 @@
 import type {
   LocationState,
   LocationStatus,
-  SetLocationCommand,
 } from "../services/discovery-contract";
 
 export interface BarbershopLocationPersistence {
@@ -31,7 +30,8 @@ export interface BarbershopLocationsRepository {
     barbershopId: string,
   ): Promise<BarbershopLocationPersistence | null>;
   saveLocation(
-    command: SetLocationCommand,
+    data: Partial<BarbershopLocationPersistence> & { barbershopId: string },
+    tx?: any,
   ): Promise<BarbershopLocationPersistence>;
   findLocationState(barbershopId: string): Promise<LocationState | null>;
 }

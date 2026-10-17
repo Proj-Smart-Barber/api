@@ -15,6 +15,8 @@ import {
 } from "../factories/make-search-barbershops-controller";
 import { ensureUserIsAuthenticated } from "../middlewares/ensure-user-is-authenticated";
 import { bookingCustomerLookupLimit } from "../middlewares/booking-customer-lookup-limit";
+import { makeGetBarbershopLocationController } from "../factories/make-get-barbershop-location-controller";
+import { makeUpdateBarbershopLocationController } from "../factories/make-update-barbershop-location-controller";
 import { serviceRoutes } from "./service.routes";
 
 const barbershopRoutes = Router();
@@ -65,6 +67,16 @@ barbershopRoutes.get(
   "/:shopId/bookings",
   ensureUserIsAuthenticated,
   adaptRoute(makeFetchUnitBookingsController()),
+);
+barbershopRoutes.get(
+  "/:shopId/location",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeGetBarbershopLocationController()),
+);
+barbershopRoutes.patch(
+  "/:shopId/location",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeUpdateBarbershopLocationController()),
 );
 barbershopRoutes.use("/:shopId/services", serviceRoutes);
 

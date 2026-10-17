@@ -51,6 +51,13 @@ export const operationResourceKindEnum = pgEnum("operation_resource_kind", [
   "MEMBERSHIP",
   "REGISTRATION",
   "INVITATION",
+  "SCHEDULE",
+]);
+
+export const barbershopScheduleStateEnum = pgEnum("barbershop_schedule_state", [
+  "INHERIT",
+  "CUSTOM",
+  "CLOSED",
 ]);
 
 export const barbershopLocationStatusEnum = pgEnum(
@@ -211,6 +218,37 @@ export const barbershopSchedules = pgTable("barbershop_schedules", {
   closeTime: text("close_time").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+export const barbershopScheduleScopes = pgTable(
+  "barbershop_schedule_scopes",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    barbershopId: uuid("barbershop_id")
+      .notNull()
+      .references(() => barbershops.id, { onDelete: "cascade" }),
+    barbermanId: uuid("barberman_id").references(() => users.id, {
+      onDelete: "cascade",
+    }),
+    state: barbershopScheduleStateEnum("state").notNull().default("CUSTOM"),
+    version: integer("version").notNull().default(1),
+    lastMutationId: uuid("last_mutation_id"),
+    lastMutationHash: text("last_mutation_hash"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    unique("barbershop_schedule_scopes_shop_barberman_unique").on(
+      table.barbershopId,
+      table.barbermanId,
+    ),
+    index("barbershop_schedule_scopes_lookup_idx").on(
+      table.barbershopId,
+      table.barbermanId,
+    ),
+  ],
+);
 
 export const services = pgTable(
   "services",
@@ -665,6 +703,7 @@ export const barbershopsRelations = relations(barbershops, ({ one, many }) => ({
   services: many(services),
   memberships: many(membership),
   schedules: many(barbershopSchedules),
+  scheduleScopes: many(barbershopScheduleScopes),
   exceptions: many(scheduleExceptions),
   bookings: many(bookings),
   invitations: many(invitations),
@@ -709,6 +748,20 @@ export const barbershopSchedulesRelations = relations(
       fields: [barbershopSchedules.createdBy],
       references: [users.id],
       relationName: "createdByUser",
+    }),
+  }),
+);
+
+export const barbershopScheduleScopesRelations = relations(
+  barbershopScheduleScopes,
+  ({ one }) => ({
+    barbershop: one(barbershops, {
+      fields: [barbershopScheduleScopes.barbershopId],
+      references: [barbershops.id],
+    }),
+    barberman: one(users, {
+      fields: [barbershopScheduleScopes.barbermanId],
+      references: [users.id],
     }),
   }),
 );

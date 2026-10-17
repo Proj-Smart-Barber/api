@@ -32,7 +32,7 @@ describe("FetchMyBookingsController Unit Tests (Grupo 1)", () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toHaveProperty("bookings", []);
     expect(response.body).toHaveProperty("serverTime");
-    expect(new Date(response.body.serverTime).getTime()).not.toBeNaN();
+    expect(new Date((response.body as any).serverTime).getTime()).not.toBeNaN();
   });
 
   it("deve retornar o próximo agendamento futuro elegível mesmo com mais de 20 agendamentos no histórico", async () => {
@@ -102,10 +102,12 @@ describe("FetchMyBookingsController Unit Tests (Grupo 1)", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.body.bookings).toHaveLength(1);
-    expect(response.body.bookings[0].id).toBe(nextBooking.id.toString());
-    expect(response.body.bookings[0].status).toBe("CONFIRMED");
-    expect(response.body.serverTime).toBeDefined();
+    expect((response.body as any).bookings).toHaveLength(1);
+    expect((response.body as any).bookings[0].id).toBe(
+      nextBooking.id.toString(),
+    );
+    expect((response.body as any).bookings[0].status).toBe("CONFIRMED");
+    expect((response.body as any).serverTime).toBeDefined();
   });
 
   it("deve incluir atendimento CONFIRMED em andamento como próximo atendimento", async () => {
@@ -130,8 +132,10 @@ describe("FetchMyBookingsController Unit Tests (Grupo 1)", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.body.bookings).toHaveLength(1);
-    expect(response.body.bookings[0].id).toBe(inProgressBooking.id.toString());
+    expect((response.body as any).bookings).toHaveLength(1);
+    expect((response.body as any).bookings[0].id).toBe(
+      inProgressBooking.id.toString(),
+    );
   });
 
   it("deve manter a compatibilidade da listagem histórica sem view=upcoming", async () => {
@@ -156,7 +160,7 @@ describe("FetchMyBookingsController Unit Tests (Grupo 1)", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.body.bookings).toHaveLength(5);
-    expect(response.body.serverTime).toBeDefined();
+    expect((response.body as any).bookings).toHaveLength(5);
+    expect((response.body as any).serverTime).toBeDefined();
   });
 });

@@ -12,4 +12,6 @@ export interface BarbershopsRepository {
   findManyByStaffId(
     staffId: string,
   ): Promise<Array<{ barbershop: Barbershop; role: string }>>;
+  save(barbershop: Barbershop): Promise<void>;
+  create?(barbershop: Barbershop): Promise<Barbershop>;
 }

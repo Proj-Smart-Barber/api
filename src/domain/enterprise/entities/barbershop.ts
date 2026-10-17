@@ -1,7 +1,7 @@
 import { Entity } from "../../../core/entities/Entity";
 import type { UniqueEntityId } from "../../../core/entities/unique-entity-id";
 import type { Optional } from "../../../core/types/optional";
-import type { Slug } from "./value-objects/slug";
+import { Slug } from "./value-objects/slug";
 
 export type BarbershopStatus = "ACTIVE" | "INACTIVE";
 
@@ -42,6 +42,10 @@ export class Barbershop extends Entity<BarbershopProps> {
     return this.props.location;
   }
 
+  set location(location: string) {
+    this.props.location = location;
+  }
+
   get timezone(): string {
     return this.props.timezone;
   }
@@ -55,13 +59,20 @@ export class Barbershop extends Entity<BarbershopProps> {
   }
 
   static create(
-    props: Optional<BarbershopProps, "createdAt">,
+    props: Optional<
+      BarbershopProps,
+      "createdAt" | "slug" | "cnpj" | "timezone" | "status"
+    >,
     id?: UniqueEntityId,
   ) {
     const barbershop = new Barbershop(
       {
+        slug: Slug.createFromText(props.name),
+        cnpj: "00000000000000",
+        timezone: "America/Sao_Paulo",
+        status: "ACTIVE",
         ...props,
-        createdAt: new Date(),
+        createdAt: props.createdAt ?? new Date(),
       },
       id,
     );

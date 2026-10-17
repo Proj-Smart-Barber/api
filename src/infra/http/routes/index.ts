@@ -8,6 +8,8 @@ import { invitationRoutes } from "./invitation.routes";
 import { notificationRoutes } from "./notification.routes";
 import { operationAttemptRoutes } from "./operation-attempt.routes";
 import { barberRoutes } from "./barber.routes";
+import { geocodingRoutes } from "./geocoding.routes";
+import { internalRoutes } from "./internal.routes";
 
 const routes = Router();
 
@@ -21,5 +23,7 @@ routes.use("/bookings", bookingRoutes);
 routes.use("/barbershops/:shopId", scheduleRoutes);
 routes.use("/barbershops/:shopId", barbershopInvitationRoutes);
 routes.use("/operation-attempts", operationAttemptRoutes);
+routes.use("/geocoding", geocodingRoutes);
+routes.use("/internal", internalRoutes);
 
 export { routes };
