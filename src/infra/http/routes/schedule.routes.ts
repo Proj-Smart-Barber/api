@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { ensureUserIsAuthenticated } from "../middlewares/ensure-user-is-authenticated";
+import { validateScheduleScope } from "../middlewares/validate-schedule-scope";
 import { adaptRoute } from "../../../core/infra/adapters/express-route-adapter";
 import { makeUpdateBarbershopScheduleController } from "../factories/make-update-barbershop-schedule-controller";
 import { makeCreateScheduleExceptionController } from "../factories/make-create-schedule-exception-controller";
@@ -12,15 +13,24 @@ import { makeFetchScheduleExceptionsController } from "../factories/make-fetch-s
 const scheduleRoutes = Router({ mergeParams: true });
 
 // 1. GET /barbershops/:shopId/schedules?barbermanId=
+// Política de Leitura Pública (TEC-17):
+// - Endpoint público (não exige JWT nem membership).
+// - Sem filtro `?barbermanId=`: retorna todos os registros de jornada da unidade
+//   (gerais com `barbermanId: null` e individuais dos profissionais).
+// - Com `?barbermanId=:id`: retorna apenas os turnos daquele profissional.
 scheduleRoutes.get(
   "/schedules",
+  validateScheduleScope,
   adaptRoute(makeFetchBarbershopSchedulesController()),
 );
 
-// 2. PUT /barbershops/:shopId/schedules
+// 2. PUT /barbershops/:shopId/schedules?barbermanId=
+// - Exige autenticação JWT (`ensureUserIsAuthenticated`).
+// - Valida precedência e não-divergência de escopo (`validateScheduleScope`).
 scheduleRoutes.put(
   "/schedules",
   ensureUserIsAuthenticated,
+  validateScheduleScope,
   adaptRoute(makeUpdateBarbershopScheduleController()),
 );
 

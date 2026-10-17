@@ -939,20 +939,24 @@ export const swaggerDocument = {
     "/api/barbershops/{shopId}/schedules": {
       get: {
         tags: ["Schedules"],
-        summary: "Fetch barbershop schedules",
+        summary: "Fetch barbershop schedules (Public)",
         description:
-          "Fetch weekly schedules for a barbershop, optionally filtered by barberman",
+          "Endpoint público (não exige JWT nem membership). Sem o filtro '?barbermanId=', retorna todos os registros de jornada da unidade (horários gerais com 'barbermanId: null' e turnos individuais dos profissionais). Com '?barbermanId=:id', retorna apenas os turnos daquele profissional.",
+        security: [],
         parameters: [
           {
             name: "shopId",
             in: "path",
             required: true,
+            description: "ID canônico da barbearia",
             schema: { type: "string", format: "uuid" },
           },
           {
             name: "barbermanId",
             in: "query",
             required: false,
+            description:
+              "Opcional. Se omitido, retorna todas as jornadas da unidade (gerais com barbermanId: null e individuais). Se informado, retorna apenas os turnos daquele profissional.",
             schema: { type: "string", format: "uuid" },
           },
         ],
@@ -1009,7 +1013,7 @@ export const swaggerDocument = {
             },
           },
           "400": {
-            description: "Validation error",
+            description: "Validation error or scope conflict",
             content: {
               "application/json": {
                 schema: {
@@ -1039,6 +1043,8 @@ export const swaggerDocument = {
       put: {
         tags: ["Schedules"],
         summary: "Update barbershop schedules",
+        description:
+          "Substitui a grade semanal da barbearia (quando barbermanId omitido/null, restrito ao OWNER) ou a jornada individual do barbeiro ('?barbermanId=:id' na query como fonte canônica). Rejeita divergências de shopId/barbermanId com 400 e colisões com reservas futuras com 409 (SCHEDULE_BOOKING_CONFLICT).",
         security: [{ bearerAuth: [] }],
         parameters: [
           {
@@ -1051,6 +1057,8 @@ export const swaggerDocument = {
             name: "barbermanId",
             in: "query",
             required: false,
+            description:
+              "Fonte canônica do profissional cuja jornada será atualizada. Se omitido, atualiza a jornada geral da barbearia (apenas OWNER).",
             schema: { type: "string", format: "uuid" },
           },
         ],
@@ -1093,13 +1101,20 @@ export const swaggerDocument = {
             description: "Schedules updated successfully",
           },
           "400": {
-            description: "Validation error",
+            description: "Validation error or scope conflict",
+          },
+          "401": {
+            description: "Unauthorized (Missing or invalid JWT)",
           },
           "403": {
             description: "Forbidden (Not Allowed)",
           },
           "404": {
             description: "Barbershop not found",
+          },
+          "409": {
+            description:
+              "Conflict with future bookings (SCHEDULE_BOOKING_CONFLICT)",
           },
         },
       },
