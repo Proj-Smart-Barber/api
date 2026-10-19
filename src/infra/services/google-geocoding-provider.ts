@@ -2,6 +2,7 @@ import type {
   GeocodingProvider,
   GeocodingResult,
 } from "../../domain/application/services/geocoding-provider";
+import { LocationServiceUnavailableError } from "../../domain/application/use-cases/_errors/location-service-unavailable-error";
 
 export class GoogleGeocodingProvider implements GeocodingProvider {
   private apiKey?: string;
@@ -14,16 +15,10 @@ export class GoogleGeocodingProvider implements GeocodingProvider {
   }
 
   async geocode(address: string): Promise<GeocodingResult[]> {
-    if (!this.apiKey) {
-      // Quando a chave não estiver configurada no ambiente local, gera candidato de demonstração consistente em São Paulo
-      return [
-        {
-          latitude: -23.55052,
-          longitude: -46.633308,
-          placeId: `mock_place_${Buffer.from(address).toString("hex").slice(0, 16)}`,
-          formattedAddress: address,
-        },
-      ];
+    if (!this.apiKey || this.apiKey.trim() === "") {
+      throw new LocationServiceUnavailableError(
+        "Serviço de geocodificação não configurado no servidor (chave ausente).",
+      );
     }
 
     const controller = new AbortController();
@@ -36,17 +31,50 @@ export class GoogleGeocodingProvider implements GeocodingProvider {
       url.searchParams.set("region", "br");
       url.searchParams.set("language", "pt-BR");
 
-      const response = await fetch(url.toString(), {
-        signal: controller.signal,
-      });
+      let response: Response;
+      try {
+        response = await fetch(url.toString(), {
+          signal: controller.signal,
+        });
+      } catch (err: any) {
+        if (err.name === "AbortError") {
+          throw new LocationServiceUnavailableError(
+            "Tempo limite excedido na consulta à API de geocodificação.",
+          );
+        }
+        throw new LocationServiceUnavailableError(
+          "Falha na comunicação com o serviço de geocodificação.",
+        );
+      }
 
       if (!response.ok) {
-        return [];
+        throw new LocationServiceUnavailableError(
+          `Serviço de geocodificação indisponível (HTTP ${response.status}).`,
+        );
       }
 
       const data = (await response.json()) as any;
-      if (data.status !== "OK" || !Array.isArray(data.results)) {
+
+      if (data.status === "ZERO_RESULTS") {
         return [];
+      }
+
+      if (data.status === "OVER_QUERY_LIMIT") {
+        throw new LocationServiceUnavailableError(
+          "Limite de consultas do provedor de geocodificação foi atingido.",
+        );
+      }
+
+      if (data.status === "REQUEST_DENIED") {
+        throw new LocationServiceUnavailableError(
+          "Acesso negado à API de geocodificação (credencial inválida ou sem permissão).",
+        );
+      }
+
+      if (data.status !== "OK" || !Array.isArray(data.results)) {
+        throw new LocationServiceUnavailableError(
+          `Erro retornado pelo provedor de geocodificação: ${data.status ?? "UNKNOWN"}.`,
+        );
       }
 
       return data.results.slice(0, 5).map((r: any) => ({
@@ -55,8 +83,6 @@ export class GoogleGeocodingProvider implements GeocodingProvider {
         placeId: r.place_id,
         formattedAddress: r.formatted_address,
       }));
-    } catch (_error) {
-      return [];
     } finally {
       clearTimeout(timeout);
     }

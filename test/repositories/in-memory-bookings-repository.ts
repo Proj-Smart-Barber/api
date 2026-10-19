@@ -171,11 +171,13 @@ export class InMemoryBookingsRepository implements BookingsRepository {
           return false;
         }
 
-        const ends = b.endsAt
-          ? b.endsAt.getTime()
-          : b.startsAt.getTime() + 30 * 60 * 1000;
         const starts = b.startsAt.getTime();
-        return ends > now.getTime() || starts >= now.getTime();
+        return (
+          starts >= now.getTime() ||
+          (b.endsAt !== null &&
+            b.endsAt !== undefined &&
+            b.endsAt.getTime() > now.getTime())
+        );
       });
 
       customerBookings.sort((a, b) => {

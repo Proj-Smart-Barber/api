@@ -2,25 +2,30 @@ import type {
   BarbershopLocationsRepository,
   BarbershopLocationPersistence,
 } from "../../src/domain/application/repositories/barbershop-locations-repository";
-import type {
-  LocationState,
-  SetLocationCommand,
-} from "../../src/domain/application/services/discovery-contract";
+import type { LocationState } from "../../src/domain/application/services/discovery-contract";
 
 export class InMemoryBarbershopLocationsRepository
   implements BarbershopLocationsRepository
 {
   public items: BarbershopLocationPersistence[] = [];
 
+  public addresses = new Map<string, string>();
+
   async findByBarbershopId(
     barbershopId: string,
+    _tx?: any,
   ): Promise<BarbershopLocationPersistence | null> {
     const item = this.items.find((l) => l.barbershopId === barbershopId);
     return item ?? null;
   }
 
   async saveLocation(
-    data: Partial<BarbershopLocationPersistence> & { barbershopId: string },
+    data: Partial<BarbershopLocationPersistence> & {
+      barbershopId: string;
+      address?: string;
+    },
+    _tx?: any,
+    expectedVersion?: number,
   ): Promise<BarbershopLocationPersistence> {
     const existingIndex = this.items.findIndex(
       (l) => l.barbershopId === data.barbershopId,
@@ -28,6 +33,18 @@ export class InMemoryBarbershopLocationsRepository
 
     const now = new Date();
     const existing = existingIndex >= 0 ? this.items[existingIndex] : null;
+
+    if (
+      existing &&
+      expectedVersion !== undefined &&
+      existing.version !== expectedVersion
+    ) {
+      throw new Error("LOCATION_VERSION_CONFLICT");
+    }
+
+    if (typeof data.address === "string") {
+      this.addresses.set(data.barbershopId, data.address);
+    }
 
     const record: BarbershopLocationPersistence = {
       id: existing ? existing.id : crypto.randomUUID(),
@@ -96,13 +113,16 @@ export class InMemoryBarbershopLocationsRepository
     return record;
   }
 
-  async findLocationState(barbershopId: string): Promise<LocationState | null> {
+  async findLocationState(
+    barbershopId: string,
+    _tx?: any,
+  ): Promise<LocationState | null> {
     const item = await this.findByBarbershopId(barbershopId);
     if (!item) return null;
 
     return {
       shopId: item.barbershopId,
-      address: "",
+      address: this.addresses.get(barbershopId) ?? "",
       status: item.status,
       source: item.source as any,
       version: item.version,

@@ -1,4 +1,4 @@
-import { and, eq, lte, sql } from "drizzle-orm";
+import { and, asc, eq, lte, or, sql } from "drizzle-orm";
 import { db } from "../index";
 import { geocodingCandidates, geocodingUsageBuckets } from "../schema";
 import type {
@@ -79,19 +79,36 @@ export class DrizzleGeocodingCandidatesRepository
     };
   }
 
-  async consume(id: string, tx?: any): Promise<void> {
+  async consume(id: string, tx?: any): Promise<boolean> {
     const executor = tx ?? this.database;
-    await executor
+    const result = await executor
       .update(geocodingCandidates)
       .set({ consumedAt: new Date() })
-      .where(eq(geocodingCandidates.id, id));
+      .where(
+        and(
+          eq(geocodingCandidates.id, id),
+          sql`${geocodingCandidates.consumedAt} IS NULL`,
+        ),
+      )
+      .returning({ id: geocodingCandidates.id });
+
+    return result.length > 0;
   }
 
   async deleteExpired(now: Date = new Date(), tx?: any): Promise<number> {
     const executor = tx ?? this.database;
     const result = await executor
       .delete(geocodingCandidates)
-      .where(lte(geocodingCandidates.expiresAt, now))
+      .where(
+        and(
+          lte(geocodingCandidates.expiresAt, now),
+          sql`${geocodingCandidates.id} IN (
+            SELECT id FROM ${geocodingCandidates}
+            WHERE ${geocodingCandidates.expiresAt} <= ${now}
+            LIMIT 500
+          )`,
+        ),
+      )
       .returning({ id: geocodingCandidates.id });
 
     return result.length;
@@ -103,7 +120,6 @@ export class DrizzleGeocodingCandidatesRepository
     limitPerDay = 100,
     tx?: any,
   ): Promise<boolean> {
-    const executor = tx ?? this.database;
     const now = new Date();
 
     // Início da hora atual
@@ -132,82 +148,100 @@ export class DrizzleGeocodingCandidatesRepository
     );
     const dayExpiresAt = new Date(dayStart.getTime() + 25 * 60 * 60 * 1000);
 
-    // Verificar bucket horário
-    const [hourBucket] = await executor
-      .select({ count: geocodingUsageBuckets.count })
-      .from(geocodingUsageBuckets)
-      .where(
-        and(
-          eq(geocodingUsageBuckets.scope, "ACTOR"),
-          eq(geocodingUsageBuckets.scopeId, actorId),
-          eq(geocodingUsageBuckets.windowType, "HOURLY"),
-          eq(geocodingUsageBuckets.windowStart, hourStart),
-        ),
-      );
+    const targetBucketsCondition = or(
+      and(
+        eq(geocodingUsageBuckets.windowType, "HOURLY"),
+        eq(geocodingUsageBuckets.windowStart, hourStart),
+      ),
+      and(
+        eq(geocodingUsageBuckets.windowType, "DAILY"),
+        eq(geocodingUsageBuckets.windowStart, dayStart),
+      ),
+    );
 
-    if (hourBucket && hourBucket.count >= limitPerHour) {
-      return false;
+    const runInTx = async (txRunner: any) => {
+      // 1. Garantir que os buckets existem (sem conflito)
+      await txRunner
+        .insert(geocodingUsageBuckets)
+        .values([
+          {
+            scope: "ACTOR",
+            scopeId: actorId,
+            windowType: "HOURLY",
+            windowStart: hourStart,
+            count: 0,
+            expiresAt: hourExpiresAt,
+          },
+          {
+            scope: "ACTOR",
+            scopeId: actorId,
+            windowType: "DAILY",
+            windowStart: dayStart,
+            count: 0,
+            expiresAt: dayExpiresAt,
+          },
+        ])
+        .onConflictDoNothing();
+
+      // 2. Travar exatamente os pares (windowType, windowStart) do ator com FOR UPDATE
+      const rows = await txRunner
+        .select({
+          windowType: geocodingUsageBuckets.windowType,
+          windowStart: geocodingUsageBuckets.windowStart,
+          count: geocodingUsageBuckets.count,
+        })
+        .from(geocodingUsageBuckets)
+        .where(
+          and(
+            eq(geocodingUsageBuckets.scope, "ACTOR"),
+            eq(geocodingUsageBuckets.scopeId, actorId),
+            targetBucketsCondition,
+          ),
+        )
+        .orderBy(
+          asc(geocodingUsageBuckets.windowType),
+          asc(geocodingUsageBuckets.windowStart),
+        )
+        .for("update");
+
+      const hourCount =
+        rows.find(
+          (r: any) =>
+            r.windowType === "HOURLY" &&
+            new Date(r.windowStart).getTime() === hourStart.getTime(),
+        )?.count ?? 0;
+      const dayCount =
+        rows.find(
+          (r: any) =>
+            r.windowType === "DAILY" &&
+            new Date(r.windowStart).getTime() === dayStart.getTime(),
+        )?.count ?? 0;
+
+      if (hourCount >= limitPerHour || dayCount >= limitPerDay) {
+        return false;
+      }
+
+      // 3. Incremento atômico garantido apenas para os dois buckets ativos sob lock exclusivo
+      await txRunner
+        .update(geocodingUsageBuckets)
+        .set({ count: sql`${geocodingUsageBuckets.count} + 1` })
+        .where(
+          and(
+            eq(geocodingUsageBuckets.scope, "ACTOR"),
+            eq(geocodingUsageBuckets.scopeId, actorId),
+            targetBucketsCondition,
+          ),
+        );
+
+      return true;
+    };
+
+    if (tx) {
+      return runInTx(tx);
     }
 
-    // Verificar bucket diário
-    const [dayBucket] = await executor
-      .select({ count: geocodingUsageBuckets.count })
-      .from(geocodingUsageBuckets)
-      .where(
-        and(
-          eq(geocodingUsageBuckets.scope, "ACTOR"),
-          eq(geocodingUsageBuckets.scopeId, actorId),
-          eq(geocodingUsageBuckets.windowType, "DAILY"),
-          eq(geocodingUsageBuckets.windowStart, dayStart),
-        ),
-      );
-
-    if (dayBucket && dayBucket.count >= limitPerDay) {
-      return false;
-    }
-
-    // Incrementar bucket horário
-    await executor
-      .insert(geocodingUsageBuckets)
-      .values({
-        scope: "ACTOR",
-        scopeId: actorId,
-        windowType: "HOURLY",
-        windowStart: hourStart,
-        count: 1,
-        expiresAt: hourExpiresAt,
-      })
-      .onConflictDoUpdate({
-        target: [
-          geocodingUsageBuckets.scope,
-          geocodingUsageBuckets.scopeId,
-          geocodingUsageBuckets.windowType,
-          geocodingUsageBuckets.windowStart,
-        ],
-        set: { count: sql`${geocodingUsageBuckets.count} + 1` },
-      });
-
-    // Incrementar bucket diário
-    await executor
-      .insert(geocodingUsageBuckets)
-      .values({
-        scope: "ACTOR",
-        scopeId: actorId,
-        windowType: "DAILY",
-        windowStart: dayStart,
-        count: 1,
-        expiresAt: dayExpiresAt,
-      })
-      .onConflictDoUpdate({
-        target: [
-          geocodingUsageBuckets.scope,
-          geocodingUsageBuckets.scopeId,
-          geocodingUsageBuckets.windowType,
-          geocodingUsageBuckets.windowStart,
-        ],
-        set: { count: sql`${geocodingUsageBuckets.count} + 1` },
-      });
-
-    return true;
+    return await this.database.transaction(async (innerTx: any) =>
+      runInTx(innerTx),
+    );
   }
 }

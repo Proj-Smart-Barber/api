@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   UpdateBarbershopLocationUseCase,
@@ -52,11 +53,15 @@ describe("UpdateBarbershopLocationUseCase", () => {
     });
     await membershipsRepository.create(membership);
 
+    const addressHash = createHash("sha256")
+      .update("Avenida Paulista, 1500".toLowerCase())
+      .digest("hex");
+
     const candidate = await candidatesRepository.create({
       id: "candidate-1",
       actorId: "owner-1",
       barbershopId: "shop-1",
-      addressHash: "hash-addr",
+      addressHash,
       latitude: -23.55052,
       longitude: -46.633308,
       placeId: "google-place-1",
@@ -86,9 +91,9 @@ describe("UpdateBarbershopLocationUseCase", () => {
       expect(result.value.version).toBe(1);
       expect(result.value.point?.latitude).toBe(-23.55052);
       expect(result.value.source).toBe("GOOGLE");
-      // Candidato consumido não é mais retornado em findById
+      // Candidato consumido tem consumedAt preenchido
       const candidateAfter = await candidatesRepository.findById("candidate-1");
-      expect(candidateAfter).toBeNull();
+      expect(candidateAfter?.consumedAt).toBeTruthy();
       // Endereço cadastral da barbearia atualizado
       const updatedShop = await barbershopsRepository.findById("shop-1");
       expect(updatedShop?.location).toBe("Avenida Paulista, 1500");
@@ -183,12 +188,16 @@ describe("UpdateBarbershopLocationUseCase", () => {
   it("deve rejeitar candidato que pertença a outro usuário", async () => {
     await setupShopAndOwner();
 
+    const addressHash = createHash("sha256")
+      .update("Avenida Paulista, 1500".toLowerCase())
+      .digest("hex");
+
     // Criar candidato emitido para outro ator
     await candidatesRepository.create({
       id: "candidate-outro-ator",
       actorId: "outro-usuario",
       barbershopId: "shop-1",
-      addressHash: "hash-addr",
+      addressHash,
       latitude: -23.55052,
       longitude: -46.633308,
       placeId: "google-place-2",
@@ -229,6 +238,144 @@ describe("UpdateBarbershopLocationUseCase", () => {
       expect(result.value.message).toContain(
         "Coordenadas geográficas inválidas",
       );
+    }
+  });
+
+  it("Regressão R6: deve rejeitar candidato já consumido", async () => {
+    await setupShopAndOwner();
+
+    // Consumir o candidato previamente
+    await candidatesRepository.consume("candidate-1");
+
+    const result = await sut.execute({
+      shopId: "shop-1",
+      actorId: "owner-1",
+      address: "Avenida Paulista, 1500",
+      candidateId: "candidate-1",
+      latitude: -23.55052,
+      longitude: -46.633308,
+      expectedVersion: 0,
+      mutationId: "mut-004",
+    });
+
+    expect(result.isLeft()).toBe(true);
+    if (result.isLeft()) {
+      expect(result.value.message).toContain("já foi utilizado");
+    }
+  });
+
+  it("Regressão R6: deve rejeitar candidato com addressHash incompatível com o endereço", async () => {
+    await setupShopAndOwner();
+
+    const result = await sut.execute({
+      shopId: "shop-1",
+      actorId: "owner-1",
+      address: "Rua Diferente, 777", // Diferente do hash gerado para Avenida Paulista, 1500
+      candidateId: "candidate-1",
+      latitude: -23.55052,
+      longitude: -46.633308,
+      expectedVersion: 0,
+      mutationId: "mut-005",
+    });
+
+    expect(result.isLeft()).toBe(true);
+    if (result.isLeft()) {
+      expect(result.value.message).toContain(
+        "não corresponde ao endereço validado",
+      );
+    }
+  });
+
+  it("Regressão R4: OWNER com vínculo INACTIVE deve ser rejeitado ao tentar atualizar localização", async () => {
+    const shop = Barbershop.create(
+      {
+        name: "Shop Inactive Owner",
+        ownerId: new UniqueEntityId("owner-inactive"),
+        location: "Endereço",
+      },
+      new UniqueEntityId("shop-inactive-owner"),
+    );
+    await barbershopsRepository.create(shop);
+
+    const membership = Membership.create({
+      barbershopId: new UniqueEntityId("shop-inactive-owner"),
+      userId: new UniqueEntityId("owner-inactive"),
+      role: Role.OWNER,
+      state: "INACTIVE",
+    });
+    await membershipsRepository.create(membership);
+
+    const addressHash = createHash("sha256")
+      .update("Avenida Paulista, 1500".toLowerCase())
+      .digest("hex");
+
+    await candidatesRepository.create({
+      id: "candidate-inactive",
+      actorId: "owner-inactive",
+      barbershopId: "shop-inactive-owner",
+      addressHash,
+      latitude: -23.55052,
+      longitude: -46.633308,
+      placeId: "google-place-1",
+      expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+    });
+
+    const result = await sut.execute({
+      shopId: "shop-inactive-owner",
+      actorId: "owner-inactive",
+      address: "Avenida Paulista, 1500",
+      candidateId: "candidate-inactive",
+      latitude: -23.55052,
+      longitude: -46.633308,
+      expectedVersion: 0,
+      mutationId: "mut-inactive",
+    });
+
+    expect(result.isLeft()).toBe(true);
+    if (result.isLeft()) {
+      expect(result.value).toBeInstanceOf(NotAllowedError);
+      expect(result.value.message).toContain("vínculo inativo");
+    }
+  });
+
+  it("Regressão A6: deve aceitar confirmação usando o displayAddress formatado retornado pelo Google", async () => {
+    await setupShopAndOwner();
+
+    const queryHash = createHash("sha256")
+      .update("av paulista 1000")
+      .digest("hex");
+    const formattedAddress =
+      "Av. Paulista, 1000 - Bela Vista, São Paulo - SP, 01310-100, Brasil";
+    const formattedHash = createHash("sha256")
+      .update(formattedAddress.toLowerCase())
+      .digest("hex");
+
+    await candidatesRepository.create({
+      id: "candidate-formatted",
+      actorId: "owner-1",
+      barbershopId: "shop-1",
+      addressHash: `${queryHash}:${formattedHash}`,
+      latitude: -23.5648865,
+      longitude: -46.651918,
+      placeId: "ChIJ-formatted",
+      expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+    });
+
+    const result = await sut.execute({
+      shopId: "shop-1",
+      actorId: "owner-1",
+      address: formattedAddress,
+      candidateId: "candidate-formatted",
+      latitude: -23.5648865,
+      longitude: -46.651918,
+      expectedVersion: 0,
+      mutationId: "mut-formatted",
+    });
+
+    expect(result.isRight()).toBe(true);
+    if (result.isRight()) {
+      expect(result.value.address).toBe(formattedAddress);
+      expect(result.value.version).toBe(1);
     }
   });
 });

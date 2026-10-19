@@ -12,13 +12,19 @@ import {
 import type { Booking } from "../../../../enterprise/entities/booking";
 import { Role } from "../../../../enterprise/entities/membership";
 import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
+import { isValidUuidV7 } from "../../../../../core/security/uuidv7";
 import { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
 import { NotAllowedError } from "../../_errors/not-allowed-error";
 import {
   ScheduleBookingConflictError,
   type ConflictingBooking,
 } from "../../_errors/schedule-booking-conflict-error";
+import {
+  ScheduleCustomConflictError,
+  type ConflictingCustomSchedule,
+} from "../../_errors/schedule-custom-conflict-error";
 import { ScheduleVersionConflictError } from "../../_errors/schedule-version-conflict-error";
+import { EffectiveScheduleResolver } from "../../../services/effective-schedule-resolver";
 import {
   IdempotencyKeyError,
   type OperationAttemptService,
@@ -52,6 +58,7 @@ export type UpdateBarbershopScheduleResponse = Either<
   | ResourceNotFoundError
   | NotAllowedError
   | ScheduleBookingConflictError
+  | ScheduleCustomConflictError
   | ScheduleVersionConflictError
   | IdempotencyKeyError
   | Error,
@@ -247,7 +254,24 @@ export class UpdateBarbershopScheduleUseCase {
           },
         );
 
-        if (attemptResult.resource?.data) {
+        if (attemptResult.accessChanged) {
+          return left(
+            new NotAllowedError(
+              "Acesso ao recurso revogado durante o processamento da tentativa.",
+            ),
+          );
+        }
+
+        if (attemptResult.state === "PENDING") {
+          return left(
+            new IdempotencyKeyError(
+              "OPERATION_ALREADY_CLOSED",
+              "Operação em processamento ou pendente de resolução.",
+            ),
+          );
+        }
+
+        if (attemptResult.state === "APPLIED" && attemptResult.resource?.data) {
           const data = attemptResult.resource.data;
           const schedules = data.schedules.map((s: any) =>
             BarbershopSchedule.create(
@@ -290,11 +314,16 @@ export class UpdateBarbershopScheduleUseCase {
             serverTime: attemptResult.serverTime,
           });
         }
+
+        return left(
+          new Error("Falha ao recuperar o resultado da tentativa de operação."),
+        );
       } catch (err: any) {
         if (
           err instanceof ResourceNotFoundError ||
           err instanceof NotAllowedError ||
           err instanceof ScheduleBookingConflictError ||
+          err instanceof ScheduleCustomConflictError ||
           err instanceof ScheduleVersionConflictError ||
           err instanceof IdempotencyKeyError
         ) {
@@ -339,14 +368,23 @@ export class UpdateBarbershopScheduleUseCase {
         await this.membershipsRepository.findByBarbershopAndUser(
           dto.barbershopId,
           dto.createdBy,
+          tx,
         );
+
+      if (actorMembership && actorMembership.state === "INACTIVE") {
+        return left(
+          new NotAllowedError("Usuário com vínculo inativo nesta unidade."),
+        );
+      }
 
       const isOwnerActive =
         actorMembership &&
         actorMembership.role === Role.OWNER &&
         actorMembership.state === "ACTIVE";
 
-      const isLegacyOwner = barbershop.ownerId.toString() === dto.createdBy;
+      const isLegacyOwner =
+        actorMembership === null &&
+        barbershop.ownerId.toString() === dto.createdBy;
       isOwner = Boolean(isOwnerActive || isLegacyOwner);
 
       const isBarberActive =
@@ -382,6 +420,7 @@ export class UpdateBarbershopScheduleUseCase {
           await this.membershipsRepository.findByBarbershopAndUser(
             dto.barbershopId,
             dto.barbermanId,
+            tx,
           );
 
         if (!targetMembership || targetMembership.state !== "ACTIVE") {
@@ -401,6 +440,36 @@ export class UpdateBarbershopScheduleUseCase {
       }
     }
 
+    // Se for autoedição de barbeiro, contrato estrito obrigatório
+    if (isSelfBarber) {
+      if (!dto.state || !["INHERIT", "CUSTOM", "CLOSED"].includes(dto.state)) {
+        return left(
+          new Error(
+            "O estado da jornada (INHERIT, CUSTOM ou CLOSED) deve ser informado explicitamente.",
+          ),
+        );
+      }
+      if (
+        dto.expectedVersion === undefined ||
+        dto.expectedVersion === null ||
+        !Number.isInteger(dto.expectedVersion) ||
+        dto.expectedVersion < 0
+      ) {
+        return left(
+          new Error(
+            "expectedVersion é obrigatório e deve ser um número inteiro maior ou igual a zero para barbeiro.",
+          ),
+        );
+      }
+      if (!dto.requestId || !isValidUuidV7(dto.requestId)) {
+        return left(
+          new Error(
+            "requestId (UUIDv7 válido) é obrigatório para o fluxo de autoedição do barbeiro.",
+          ),
+        );
+      }
+    }
+
     // 2. Resolução de estado e validação de escopo
     let resolvedState: ScheduleScopeState = "CUSTOM";
 
@@ -413,7 +482,13 @@ export class UpdateBarbershopScheduleUseCase {
           ),
         );
       }
-      resolvedState = dto.schedules.length === 0 ? "CLOSED" : "CUSTOM";
+      resolvedState =
+        dto.state === "CLOSED" || dto.schedules.length === 0
+          ? "CLOSED"
+          : "CUSTOM";
+      if (resolvedState === "CLOSED") {
+        dto.schedules = [];
+      }
     } else {
       // Jornada individual do profissional
       if (dto.state === "INHERIT") {
@@ -487,21 +562,43 @@ export class UpdateBarbershopScheduleUseCase {
     const generalSchedules = allBarbershopSchedules.filter(
       (s) => !s.barbermanId,
     );
+    const generalScope = await this.schedulesRepository.findScope(
+      dto.barbershopId,
+      null,
+      tx,
+    );
 
     if (
       dto.barbermanId &&
       resolvedState === "CUSTOM" &&
       dto.schedules.length > 0
     ) {
+      if (generalScope?.state === "CLOSED" || generalSchedules.length === 0) {
+        return left(
+          new Error(
+            "O período informado está fora do horário de funcionamento geral da barbearia.",
+          ),
+        );
+      }
+
       for (const item of dto.schedules) {
-        const matchingGeneralInterval = generalSchedules.find(
-          (gen) =>
-            gen.dayOfWeek === item.dayOfWeek &&
-            item.openTime >= gen.openTime &&
-            item.closeTime <= gen.closeTime,
+        const mergedGeneralForDay =
+          EffectiveScheduleResolver.mergeContiguousIntervals(
+            generalSchedules
+              .filter((gen) => gen.dayOfWeek === item.dayOfWeek)
+              .map((gen) => ({
+                openTime: gen.openTime,
+                closeTime: gen.closeTime,
+              })),
+          );
+
+        const fitsGeneral = EffectiveScheduleResolver.isIntervalWithinShifts(
+          item.openTime,
+          item.closeTime,
+          mergedGeneralForDay,
         );
 
-        if (!matchingGeneralInterval) {
+        if (!fitsGeneral) {
           return left(
             new Error(
               "O período informado está fora do horário de funcionamento geral da barbearia.",
@@ -511,12 +608,89 @@ export class UpdateBarbershopScheduleUseCase {
       }
     }
 
+    // Se for alteração da jornada geral (barbermanId === null), verificar impacto sobre jornadas CUSTOM existentes
+    if (!dto.barbermanId) {
+      const individualSchedules = allBarbershopSchedules.filter(
+        (s) => s.barbermanId !== null,
+      );
+      const schedulesByProfessional = new Map<string, BarbershopSchedule[]>();
+      for (const s of individualSchedules) {
+        const profId = s.barbermanId!.toString();
+        const existing = schedulesByProfessional.get(profId) ?? [];
+        existing.push(s);
+        schedulesByProfessional.set(profId, existing);
+      }
+
+      const conflictingCustomSchedules: ConflictingCustomSchedule[] = [];
+
+      for (const [profId, profShifts] of schedulesByProfessional.entries()) {
+        if (this.membershipsRepository) {
+          const profMembership =
+            await this.membershipsRepository.findByBarbershopAndUser(
+              dto.barbershopId,
+              profId,
+              tx,
+            );
+          if (profMembership && profMembership.state === "INACTIVE") {
+            continue;
+          }
+        }
+
+        const profScope = await this.schedulesRepository.findScope(
+          dto.barbershopId,
+          profId,
+          tx,
+        );
+        if (profScope && profScope.state !== "CUSTOM") {
+          continue;
+        }
+
+        for (const profShift of profShifts) {
+          const mergedNewGeneralForDay =
+            resolvedState === "CLOSED"
+              ? []
+              : EffectiveScheduleResolver.mergeContiguousIntervals(
+                  dto.schedules
+                    .filter((g) => g.dayOfWeek === profShift.dayOfWeek)
+                    .map((g) => ({
+                      openTime: g.openTime,
+                      closeTime: g.closeTime,
+                    })),
+                );
+
+          const fitsNewGeneral =
+            EffectiveScheduleResolver.isIntervalWithinShifts(
+              profShift.openTime,
+              profShift.closeTime,
+              mergedNewGeneralForDay,
+            );
+
+          if (!fitsNewGeneral) {
+            conflictingCustomSchedules.push({
+              barbermanId: profId,
+              dayOfWeek: profShift.dayOfWeek,
+              openTime: profShift.openTime,
+              closeTime: profShift.closeTime,
+            });
+          }
+        }
+      }
+
+      if (conflictingCustomSchedules.length > 0) {
+        return left(
+          new ScheduleCustomConflictError(conflictingCustomSchedules),
+        );
+      }
+    }
+
     // 4. Controle de versão otimista
-    const currentScope = await this.schedulesRepository.findScope(
-      dto.barbershopId,
-      dto.barbermanId,
-      tx,
-    );
+    const currentScope = dto.barbermanId
+      ? await this.schedulesRepository.findScope(
+          dto.barbershopId,
+          dto.barbermanId,
+          tx,
+        )
+      : generalScope;
     const currentVersion = currentScope ? currentScope.version : 1;
 
     if (dto.expectedVersion !== undefined) {
@@ -548,25 +722,30 @@ export class UpdateBarbershopScheduleUseCase {
       if (resolvedState === "CLOSED") {
         candidateShifts = [];
       } else if (resolvedState === "INHERIT") {
-        candidateShifts = generalSchedules.map((s) => ({
-          dayOfWeek: s.dayOfWeek,
-          openTime: s.openTime,
-          closeTime: s.closeTime,
-        }));
+        candidateShifts =
+          generalScope?.state === "CLOSED"
+            ? []
+            : generalSchedules.map((s) => ({
+                dayOfWeek: s.dayOfWeek,
+                openTime: s.openTime,
+                closeTime: s.closeTime,
+              }));
       } else {
         candidateShifts = dto.schedules;
       }
 
       for (const booking of futureBookings) {
         const local = getBookingLocalInterval(booking, timeZone);
-        const dayShifts = candidateShifts.filter(
-          (s) => s.dayOfWeek === local.dayOfWeek,
+        const dayShifts = EffectiveScheduleResolver.mergeContiguousIntervals(
+          candidateShifts
+            .filter((s) => s.dayOfWeek === local.dayOfWeek)
+            .map((s) => ({ openTime: s.openTime, closeTime: s.closeTime })),
         );
 
-        const fits = dayShifts.some(
-          (shift) =>
-            shift.openTime <= local.startTime &&
-            shift.closeTime >= local.endTime,
+        const fits = EffectiveScheduleResolver.isIntervalWithinShifts(
+          local.startTime,
+          local.endTime,
+          dayShifts,
         );
 
         if (!fits) {
@@ -630,7 +809,12 @@ export class UpdateBarbershopScheduleUseCase {
     }
 
     let effectiveSchedules: BarbershopSchedule[] = [];
-    if (resolvedState === "INHERIT") {
+    if (!dto.barbermanId) {
+      effectiveSchedules =
+        resolvedState === "CLOSED" ? [] : barbershopSchedules;
+    } else if (generalScope?.state === "CLOSED") {
+      effectiveSchedules = [];
+    } else if (resolvedState === "INHERIT") {
       effectiveSchedules = generalSchedules;
     } else if (resolvedState === "CLOSED") {
       effectiveSchedules = [];

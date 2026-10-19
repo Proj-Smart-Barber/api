@@ -17,7 +17,7 @@ export interface GeocodingCandidatesRepository {
     candidate: Omit<GeocodingCandidatePersistence, "createdAt" | "consumedAt">,
     tx?: any,
   ): Promise<GeocodingCandidatePersistence>;
-  consume(id: string, tx?: any): Promise<void>;
+  consume(id: string, tx?: any): Promise<boolean>;
   deleteExpired(now?: Date, tx?: any): Promise<number>;
   checkAndIncrementUsage(
     actorId: string,

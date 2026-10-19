@@ -6,12 +6,12 @@ export interface BarbershopsRepository {
     barbershop: Barbershop,
     ownerMembership: Membership,
   ): Promise<Barbershop>;
-  findById(id: string): Promise<Barbershop | null>;
+  findById(id: string, tx?: unknown): Promise<Barbershop | null>;
   findBySlugOrCnpj(slug: string, cnpj: string): Promise<Barbershop | null>;
   findManyByOwnerId(ownerId: string): Promise<Barbershop[]>;
   findManyByStaffId(
     staffId: string,
   ): Promise<Array<{ barbershop: Barbershop; role: string }>>;
-  save(barbershop: Barbershop): Promise<void>;
+  save(barbershop: Barbershop, tx?: unknown): Promise<void>;
   create?(barbershop: Barbershop): Promise<Barbershop>;
 }

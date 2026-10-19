@@ -11,6 +11,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -243,6 +244,9 @@ export const barbershopScheduleScopes = pgTable(
       table.barbershopId,
       table.barbermanId,
     ),
+    uniqueIndex("barbershop_schedule_scopes_general_unique")
+      .on(table.barbershopId)
+      .where(sql`${table.barbermanId} IS NULL`),
     index("barbershop_schedule_scopes_lookup_idx").on(
       table.barbershopId,
       table.barbermanId,

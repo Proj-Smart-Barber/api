@@ -8,6 +8,7 @@ import { Membership, Role } from "../../../../enterprise/entities/membership";
 import { Booking } from "../../../../enterprise/entities/booking";
 import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
 import { Slug } from "../../../../enterprise/entities/value-objects/slug";
+import { generateUuidV7 } from "../../../../../core/security/uuidv7";
 
 let inMemorySchedulesRepository: InMemorySchedulesRepository;
 let inMemoryBarbershopsRepository: InMemoryBarbershopsRepository;
@@ -229,6 +230,8 @@ describe("Update Barbershop Schedule", () => {
         createdBy: barberUserId,
         barbermanId: barberUserId,
         state: "CUSTOM",
+        expectedVersion: 1,
+        requestId: generateUuidV7(),
         schedules: [
           { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "17:00" },
         ],
@@ -266,6 +269,8 @@ describe("Update Barbershop Schedule", () => {
         createdBy: barberUserId,
         barbermanId: colleagueUserId,
         state: "CUSTOM",
+        expectedVersion: 1,
+        requestId: generateUuidV7(),
         schedules: [
           { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "17:00" },
         ],
@@ -284,6 +289,8 @@ describe("Update Barbershop Schedule", () => {
         createdBy: clientUserId,
         barbermanId: clientUserId,
         state: "CUSTOM",
+        expectedVersion: 1,
+        requestId: generateUuidV7(),
         schedules: [
           { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "17:00" },
         ],
@@ -296,6 +303,8 @@ describe("Update Barbershop Schedule", () => {
         createdBy: inactiveBarberUserId,
         barbermanId: inactiveBarberUserId,
         state: "CUSTOM",
+        expectedVersion: 1,
+        requestId: generateUuidV7(),
         schedules: [
           { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "17:00" },
         ],
@@ -338,6 +347,8 @@ describe("Update Barbershop Schedule", () => {
         createdBy: barberUserId,
         barbermanId: barberUserId,
         state: "INHERIT",
+        expectedVersion: 1,
+        requestId: generateUuidV7(),
         schedules: [],
       });
 
@@ -355,6 +366,8 @@ describe("Update Barbershop Schedule", () => {
         createdBy: barberUserId,
         barbermanId: barberUserId,
         state: "CLOSED",
+        expectedVersion: 1,
+        requestId: generateUuidV7(),
         schedules: [],
       });
 
@@ -372,6 +385,8 @@ describe("Update Barbershop Schedule", () => {
         createdBy: barberUserId,
         barbermanId: barberUserId,
         state: "CUSTOM",
+        expectedVersion: 1,
+        requestId: generateUuidV7(),
         schedules: [],
       });
 
@@ -390,6 +405,8 @@ describe("Update Barbershop Schedule", () => {
         createdBy: barberUserId,
         barbermanId: barberUserId,
         state: "CUSTOM",
+        expectedVersion: 1,
+        requestId: generateUuidV7(),
         schedules: [
           { dayOfWeek: "MONDAY", openTime: "07:00", closeTime: "16:00" },
         ],
@@ -405,8 +422,6 @@ describe("Update Barbershop Schedule", () => {
 
     it("Conflito de agendamento futuro: rejeita alteração se houver agendamento confirmado fora do novo horário", async () => {
       const now = new Date();
-      // Criar um agendamento futuro para a próxima segunda-feira às 16:00
-      // Próxima segunda:
       const daysUntilMonday = (1 + 7 - now.getDay()) % 7 || 7;
       const nextMonday = new Date(
         now.getTime() + daysUntilMonday * 24 * 60 * 60 * 1000,
@@ -431,6 +446,8 @@ describe("Update Barbershop Schedule", () => {
         createdBy: barberUserId,
         barbermanId: barberUserId,
         state: "CUSTOM",
+        expectedVersion: 1,
+        requestId: generateUuidV7(),
         schedules: [
           { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "15:00" },
         ],
@@ -454,6 +471,8 @@ describe("Update Barbershop Schedule", () => {
         createdBy: barberUserId,
         barbermanId: barberUserId,
         state: "CUSTOM",
+        expectedVersion: 1,
+        requestId: generateUuidV7(),
         schedules: [
           { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "17:00" },
         ],
@@ -466,6 +485,7 @@ describe("Update Barbershop Schedule", () => {
         barbermanId: barberUserId,
         state: "CUSTOM",
         expectedVersion: 999,
+        requestId: generateUuidV7(),
         schedules: [
           { dayOfWeek: "MONDAY", openTime: "10:00", closeTime: "16:00" },
         ],
@@ -475,6 +495,208 @@ describe("Update Barbershop Schedule", () => {
       if (result.isLeft()) {
         expect(result.value.name).toBe("ScheduleVersionConflictError");
       }
+    });
+
+    it("Regressão R3: BARBERMAN sem expectedVersion ou sem requestId deve ser rejeitado", async () => {
+      const noVersion = await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: barberUserId,
+        barbermanId: barberUserId,
+        state: "CUSTOM",
+        requestId: generateUuidV7(),
+        schedules: [
+          { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "17:00" },
+        ],
+      });
+      expect(noVersion.isLeft()).toBe(true);
+      if (noVersion.isLeft()) {
+        expect(noVersion.value.message).toContain(
+          "expectedVersion é obrigatório",
+        );
+      }
+
+      const noRequestId = await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: barberUserId,
+        barbermanId: barberUserId,
+        state: "CUSTOM",
+        expectedVersion: 1,
+        schedules: [
+          { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "17:00" },
+        ],
+      });
+      expect(noRequestId.isLeft()).toBe(true);
+      if (noRequestId.isLeft()) {
+        expect(noRequestId.value.message).toContain(
+          "requestId (UUIDv7 válido) é obrigatório",
+        );
+      }
+    });
+
+    it("Regressão R4: OWNER com vínculo INACTIVE deve ser rejeitado mesmo com ownerId da barbearia", async () => {
+      const inactiveOwnerId = "inactive-owner-user";
+      const inactiveShop = Barbershop.create(
+        {
+          name: "Inactive Owner Shop",
+          slug: Slug.create("inactive-owner-shop"),
+          timezone: "America/Sao_Paulo",
+          ownerId: new UniqueEntityId(inactiveOwnerId),
+          status: "ACTIVE",
+          cnpj: "12.345.678/0001-99",
+          location: "Rua Inativa, 456",
+        },
+        new UniqueEntityId("shop-inactive"),
+      );
+      inMemoryBarbershopsRepository.items.push(inactiveShop);
+
+      await inMemoryMembershipsRepository.create(
+        Membership.create({
+          barbershopId: new UniqueEntityId("shop-inactive"),
+          userId: new UniqueEntityId(inactiveOwnerId),
+          role: Role.OWNER,
+          state: "INACTIVE",
+        }),
+      );
+
+      const result = await authorizedSut.execute({
+        barbershopId: "shop-inactive",
+        createdBy: inactiveOwnerId,
+        barbermanId: null,
+        state: "CUSTOM",
+        schedules: [
+          { dayOfWeek: "MONDAY", openTime: "08:00", closeTime: "18:00" },
+        ],
+      });
+
+      expect(result.isLeft()).toBe(true);
+      if (result.isLeft()) {
+        expect(result.value.name).toBe("NotAllowedError");
+        expect(result.value.message).toContain("vínculo inativo");
+      }
+    });
+
+    it("Regressão A1: redução ou fechamento da jornada geral incompatível com jornada CUSTOM ativa deve ser rejeitada com ScheduleCustomConflictError", async () => {
+      // Barbeiro define jornada CUSTOM 09:00 às 16:00 na segunda-feira
+      const customSetup = await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: barberUserId,
+        barbermanId: barberUserId,
+        state: "CUSTOM",
+        expectedVersion: 1,
+        requestId: generateUuidV7(),
+        schedules: [
+          { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "16:00" },
+        ],
+      });
+      expect(customSetup.isRight()).toBe(true);
+
+      // OWNER tenta encurtar segunda-feira da unidade para 09:00 às 12:00
+      const shrinkResult = await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: ownerUserId,
+        barbermanId: null,
+        state: "CUSTOM",
+        schedules: [
+          { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "12:00" },
+        ],
+      });
+
+      expect(shrinkResult.isLeft()).toBe(true);
+      if (shrinkResult.isLeft()) {
+        expect(shrinkResult.value.name).toBe("ScheduleCustomConflictError");
+        const conflictErr = shrinkResult.value as any;
+        expect(conflictErr.code).toBe("SCHEDULE_CUSTOM_CONFLICT");
+        expect(conflictErr.conflictingBarbers).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              barbermanId: barberUserId,
+              dayOfWeek: "MONDAY",
+              openTime: "09:00",
+              closeTime: "16:00",
+            }),
+          ]),
+        );
+      }
+
+      // OWNER tenta fechar a unidade (CLOSED) enquanto barbeiro tem CUSTOM ativo
+      const closeResult = await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: ownerUserId,
+        barbermanId: null,
+        state: "CLOSED",
+        schedules: [],
+      });
+
+      expect(closeResult.isLeft()).toBe(true);
+      if (closeResult.isLeft()) {
+        expect(closeResult.value.name).toBe("ScheduleCustomConflictError");
+      }
+    });
+
+    it("Regressão A1: intervalos gerais contíguos (09:00-10:00 e 10:00-12:00) devem permitir CUSTOM 09:00-12:00, enquanto pausa real rejeita", async () => {
+      // Configurar jornada geral com dois blocos contíguos na segunda
+      const generalContiguous = await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: ownerUserId,
+        barbermanId: null,
+        state: "CUSTOM",
+        schedules: [
+          { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "10:00" },
+          { dayOfWeek: "MONDAY", openTime: "10:00", closeTime: "12:00" },
+        ],
+      });
+      expect(generalContiguous.isRight()).toBe(true);
+
+      // Barbeiro define 09:00-12:00 contínuo -> aceito!
+      const barberContiguous = await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: barberUserId,
+        barbermanId: barberUserId,
+        state: "CUSTOM",
+        expectedVersion: 1,
+        requestId: generateUuidV7(),
+        schedules: [
+          { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "12:00" },
+        ],
+      });
+      expect(barberContiguous.isRight()).toBe(true);
+
+      // Agora barbeiro volta para INHERIT para permitir que a unidade crie pausa real
+      await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: barberUserId,
+        barbermanId: barberUserId,
+        state: "INHERIT",
+        expectedVersion: 2,
+        requestId: generateUuidV7(),
+        schedules: [],
+      });
+
+      // Unidade define pausa real 09:00-10:00 e 10:30-12:00
+      await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: ownerUserId,
+        barbermanId: null,
+        state: "CUSTOM",
+        schedules: [
+          { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "10:00" },
+          { dayOfWeek: "MONDAY", openTime: "10:30", closeTime: "12:00" },
+        ],
+      });
+
+      // Barbeiro tenta 09:00-12:00 atravessando pausa -> rejeitado!
+      const barberAcrossBreak = await authorizedSut.execute({
+        barbershopId: shopId,
+        createdBy: barberUserId,
+        barbermanId: barberUserId,
+        state: "CUSTOM",
+        expectedVersion: 3,
+        requestId: generateUuidV7(),
+        schedules: [
+          { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "12:00" },
+        ],
+      });
+      expect(barberAcrossBreak.isLeft()).toBe(true);
     });
   });
 });

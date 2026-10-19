@@ -149,9 +149,61 @@ describe("Fetch Barbershop Schedules", () => {
 
     expect(result.isRight()).toBe(true);
     if (result.isRight()) {
-      expect(result.value.state).toBe("INHERIT");
+      expect(result.value.state).toBe("CLOSED");
       expect(result.value.needsReview).toBe(true);
+      expect(result.value.effectiveSchedules).toHaveLength(0);
+    }
+  });
+
+  it("should bound CUSTOM barberman schedules to unit general opening hours in effectiveSchedules", async () => {
+    // 1. Jornada geral da unidade: 09:00 as 18:00
+    inMemorySchedulesRepository.items.push(
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        createdBy: new UniqueEntityId("owner-1"),
+        dayOfWeek: "MONDAY",
+        openTime: "09:00",
+        closeTime: "18:00",
+      }),
+    );
+
+    // 2. Jornada customizada do barbeiro: 07:00 as 20:00 (mais ampla que a unidade)
+    inMemorySchedulesRepository.items.push(
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        barbermanId: new UniqueEntityId("barber-custom"),
+        createdBy: new UniqueEntityId("owner-1"),
+        dayOfWeek: "MONDAY",
+        openTime: "07:00",
+        closeTime: "20:00",
+      }),
+    );
+
+    await inMemorySchedulesRepository.saveScope(
+      BarbershopScheduleScope.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        barbermanId: new UniqueEntityId("barber-custom"),
+        state: "CUSTOM",
+        version: 1,
+      }),
+    );
+
+    const result = await sut.execute({
+      barbershopId: "shop-1",
+      barbermanId: "barber-custom",
+    });
+
+    expect(result.isRight()).toBe(true);
+    if (result.isRight()) {
+      expect(result.value.state).toBe("CUSTOM");
+      expect(result.value.schedules).toHaveLength(1);
+      // Os horários salvos permanecem os cadastrados
+      expect(result.value.schedules[0].openTime).toBe("07:00");
+      expect(result.value.schedules[0].closeTime).toBe("20:00");
+      // Os horários efetivos são delimitados pelo funcionamento da unidade
       expect(result.value.effectiveSchedules).toHaveLength(1);
+      expect(result.value.effectiveSchedules[0].openTime).toBe("09:00");
+      expect(result.value.effectiveSchedules[0].closeTime).toBe("18:00");
     }
   });
 });

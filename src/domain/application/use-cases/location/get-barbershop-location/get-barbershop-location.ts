@@ -33,6 +33,10 @@ export class GetBarbershopLocationUseCase {
       return left(new ResourceNotFoundError("Barbearia não encontrada."));
     }
 
+    if (barbershop.status && barbershop.status !== "ACTIVE") {
+      return left(new NotAllowedError("A barbearia informada não está ativa."));
+    }
+
     if (this.membershipsRepository) {
       const actorMembership =
         await this.membershipsRepository.findByBarbershopAndUser(
@@ -40,12 +44,19 @@ export class GetBarbershopLocationUseCase {
           actorId,
         );
 
+      if (actorMembership && actorMembership.state === "INACTIVE") {
+        return left(
+          new NotAllowedError("Usuário com vínculo inativo nesta unidade."),
+        );
+      }
+
       const isOwnerActive =
         actorMembership &&
         actorMembership.role === Role.OWNER &&
         actorMembership.state === "ACTIVE";
 
-      const isLegacyOwner = barbershop.ownerId.toString() === actorId;
+      const isLegacyOwner =
+        actorMembership === null && barbershop.ownerId.toString() === actorId;
 
       if (!isOwnerActive && !isLegacyOwner) {
         return left(

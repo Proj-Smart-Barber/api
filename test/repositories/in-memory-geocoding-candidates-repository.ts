@@ -10,9 +10,7 @@ export class InMemoryGeocodingCandidatesRepository
   public usageMap = new Map<string, number>();
 
   async findById(id: string): Promise<GeocodingCandidatePersistence | null> {
-    const item = this.items.find(
-      (candidate) => candidate.id === id && !candidate.consumedAt,
-    );
+    const item = this.items.find((candidate) => candidate.id === id);
     return item ?? null;
   }
 
@@ -28,11 +26,13 @@ export class InMemoryGeocodingCandidatesRepository
     return record;
   }
 
-  async consume(id: string): Promise<void> {
+  async consume(id: string): Promise<boolean> {
     const item = this.items.find((candidate) => candidate.id === id);
-    if (item) {
-      item.consumedAt = new Date();
+    if (!item || item.consumedAt) {
+      return false;
     }
+    item.consumedAt = new Date();
+    return true;
   }
 
   async deleteExpired(now: Date = new Date()): Promise<number> {

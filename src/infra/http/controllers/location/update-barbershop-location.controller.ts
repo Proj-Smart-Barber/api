@@ -30,11 +30,28 @@ export class UpdateBarbershopLocationController implements Controller {
       latitude: z.number().min(-90).max(90),
       longitude: z.number().min(-180).max(180),
       expectedVersion: z.number().int().min(0),
-      mutationId: z.string().min(1).max(128),
+      mutationId: z.string().min(1).max(128).optional(),
     });
 
     try {
       const parsed = schema.parse(request);
+      const mutationId =
+        parsed.mutationId ||
+        (request.headers?.["idempotency-key"] as string | undefined) ||
+        (request.headers?.["x-idempotency-key"] as string | undefined);
+
+      if (!mutationId || mutationId.length < 1 || mutationId.length > 128) {
+        return clientError({
+          code: "VALIDATION_ERROR",
+          message:
+            "Erro de validação dos parâmetros de atualização da localização comercial.",
+          error: {
+            code: "VALIDATION_ERROR",
+            message:
+              "Erro de validação dos parâmetros de atualização da localização comercial.",
+          },
+        });
+      }
 
       const result = await this.updateBarbershopLocationUseCase.execute({
         shopId: parsed.shopId,
@@ -44,7 +61,7 @@ export class UpdateBarbershopLocationController implements Controller {
         latitude: parsed.latitude,
         longitude: parsed.longitude,
         expectedVersion: parsed.expectedVersion,
-        mutationId: parsed.mutationId,
+        mutationId,
       });
 
       if (result.isLeft()) {

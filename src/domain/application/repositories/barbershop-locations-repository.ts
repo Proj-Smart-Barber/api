@@ -28,10 +28,15 @@ export interface BarbershopLocationPersistence {
 export interface BarbershopLocationsRepository {
   findByBarbershopId(
     barbershopId: string,
+    tx?: any,
   ): Promise<BarbershopLocationPersistence | null>;
   saveLocation(
     data: Partial<BarbershopLocationPersistence> & { barbershopId: string },
     tx?: any,
+    expectedVersion?: number,
   ): Promise<BarbershopLocationPersistence>;
-  findLocationState(barbershopId: string): Promise<LocationState | null>;
+  findLocationState(
+    barbershopId: string,
+    tx?: any,
+  ): Promise<LocationState | null>;
 }

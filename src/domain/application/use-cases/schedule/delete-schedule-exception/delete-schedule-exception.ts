@@ -32,9 +32,13 @@ export class DeleteScheduleExceptionUseCase {
     barbershopId,
     staffId,
   }: DeleteScheduleExceptionDTO): Promise<DeleteScheduleExceptionResponse> {
-    const action = async (): Promise<DeleteScheduleExceptionResponse> => {
-      const exception =
-        await this.scheduleExceptionsRepository.findById(exceptionId);
+    const action = async (
+      tx?: unknown,
+    ): Promise<DeleteScheduleExceptionResponse> => {
+      const exception = await this.scheduleExceptionsRepository.findById(
+        exceptionId,
+        tx,
+      );
 
       if (!exception) {
         return left(new ResourceNotFoundError());
@@ -44,8 +48,10 @@ export class DeleteScheduleExceptionUseCase {
         return left(new NotAllowedError());
       }
 
-      const barbershop =
-        await this.barbershopsRepository.findById(barbershopId);
+      const barbershop = await this.barbershopsRepository.findById(
+        barbershopId,
+        tx,
+      );
       if (!barbershop) {
         return left(new ResourceNotFoundError());
       }
@@ -55,6 +61,7 @@ export class DeleteScheduleExceptionUseCase {
           await this.membershipsRepository.findByBarbershopAndUser(
             barbershopId,
             staffId,
+            tx,
           );
 
         const isOwnerActive =
@@ -71,7 +78,7 @@ export class DeleteScheduleExceptionUseCase {
         return left(new NotAllowedError());
       }
 
-      await this.scheduleExceptionsRepository.delete(exception);
+      await this.scheduleExceptionsRepository.delete(exception, tx);
 
       return right(null);
     };

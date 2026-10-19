@@ -42,9 +42,13 @@ export class CreateScheduleExceptionUseCase {
     reason,
     barbermanId,
   }: CreateScheduleExceptionDTO): Promise<CreateScheduleExceptionResponse> {
-    const action = async (): Promise<CreateScheduleExceptionResponse> => {
-      const barbershop =
-        await this.barbershopsRepository.findById(barbershopId);
+    const action = async (
+      tx?: unknown,
+    ): Promise<CreateScheduleExceptionResponse> => {
+      const barbershop = await this.barbershopsRepository.findById(
+        barbershopId,
+        tx,
+      );
 
       if (!barbershop) {
         return left(new ResourceNotFoundError("Barbearia não encontrada."));
@@ -55,6 +59,7 @@ export class CreateScheduleExceptionUseCase {
           await this.membershipsRepository.findByBarbershopAndUser(
             barbershopId,
             staffId,
+            tx,
           );
 
         const isOwnerActive =
@@ -80,6 +85,7 @@ export class CreateScheduleExceptionUseCase {
           await this.membershipsRepository.findByBarbershopAndUser(
             barbershopId,
             barbermanId,
+            tx,
           );
 
         if (!targetMembership || targetMembership.state !== "ACTIVE") {
@@ -112,7 +118,7 @@ export class CreateScheduleExceptionUseCase {
         barbermanId: barbermanId ? new UniqueEntityId(barbermanId) : null,
       });
 
-      await this.scheduleExceptionsRepository.create(exception);
+      await this.scheduleExceptionsRepository.create(exception, tx);
 
       return right({ exception });
     };

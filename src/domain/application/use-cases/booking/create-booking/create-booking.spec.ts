@@ -2,8 +2,12 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
 import { InMemoryBookingsRepository } from "../../../../../../test/repositories/in-memory-bookings-repository";
 import { InMemoryServicesRepository } from "../../../../../../test/repositories/in-memory-services-repository";
+import { InMemorySchedulesRepository } from "../../../../../../test/repositories/in-memory-schedules-repository";
+import { InMemoryBarbershopsRepository } from "../../../../../../test/repositories/in-memory-barbershops-repository";
 import { Booking } from "../../../../enterprise/entities/booking";
 import { Service } from "../../../../enterprise/entities/service";
+import { Barbershop } from "../../../../enterprise/entities/barbershop";
+import { BarbershopSchedule } from "../../../../enterprise/entities/barbershop-schedule";
 import { BookingConflictError } from "../../_errors/booking-conflict-error";
 import {
   QuoteChangedError,
@@ -251,5 +255,93 @@ describe("Create Booking Use Case", () => {
 
     expect(result.isLeft()).toBe(true);
     expect(result.value).toBeInstanceOf(QuoteChangedError);
+  });
+
+  it("Regressão A2: deve rejeitar agendamento quando endTime enviado pelo cliente divergir da duração autoritativa ou ultrapassar fechamento", async () => {
+    const schedulesRepo = new InMemorySchedulesRepository();
+    const barbershopsRepo = new InMemoryBarbershopsRepository();
+
+    await barbershopsRepo.create(
+      Barbershop.create(
+        {
+          name: "Barbearia A2",
+          ownerId: new UniqueEntityId("owner-1"),
+          location: "Rua A2",
+          timezone: "America/Sao_Paulo",
+          status: "ACTIVE",
+        },
+        new UniqueEntityId("barbershop-1"),
+      ),
+    );
+
+    // Sábado (2027-09-11 é sábado) fecha às 12:00
+    await schedulesRepo.create(
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("barbershop-1"),
+        barbermanId: null,
+        dayOfWeek: "SATURDAY",
+        openTime: "09:00",
+        closeTime: "12:00",
+        createdBy: new UniqueEntityId("owner-1"),
+      }),
+    );
+
+    const service60 = Service.create(
+      {
+        barbershopId: new UniqueEntityId("barbershop-1"),
+        title: "Combo 60m",
+        priceInCents: 8000,
+        durationInMinutes: 60,
+        isActive: true,
+      },
+      new UniqueEntityId("service-60"),
+    );
+    await inMemoryServicesRepository.create(service60);
+
+    const strictSut = new CreateBookingUseCase(
+      inMemoryBookingsRepository,
+      inMemoryServicesRepository,
+      undefined,
+      undefined,
+      barbershopsRepo,
+      undefined,
+      undefined,
+      schedulesRepo,
+    );
+
+    // 1. Tentativa com endTime forjado "11:31" para serviço de 60min iniciando às 11:30 (fechamento 12:00)
+    const forgedRes = await strictSut.execute({
+      customerId: "customer-1",
+      barbermanId: "barberman-1",
+      serviceId: "service-60",
+      date: FUTURE_TEST_DATE,
+      startTime: "11:30",
+      endTime: "11:31",
+    });
+    expect(forgedRes.isLeft()).toBe(true);
+    expect(forgedRes.value).toBeInstanceOf(SlotUnavailableError);
+
+    // 2. Tentativa sem endTime para serviço de 60min iniciando às 11:30 (termina 12:30 > 12:00)
+    const withoutEndRes = await strictSut.execute({
+      customerId: "customer-1",
+      barbermanId: "barberman-1",
+      serviceId: "service-60",
+      date: FUTURE_TEST_DATE,
+      startTime: "11:30",
+    });
+    expect(withoutEndRes.isLeft()).toBe(true);
+    expect(withoutEndRes.value).toBeInstanceOf(SlotUnavailableError);
+
+    // 3. Tentativa que cruza meia-noite (23:30 + 60m)
+    const midnightRes = await strictSut.execute({
+      customerId: "customer-1",
+      barbermanId: "barberman-1",
+      serviceId: "service-60",
+      date: FUTURE_TEST_DATE,
+      startTime: "23:30",
+    });
+    expect(midnightRes.isLeft()).toBe(true);
+    expect(midnightRes.value).toBeInstanceOf(SlotUnavailableError);
+    expect(inMemoryBookingsRepository.items).toHaveLength(0);
   });
 });

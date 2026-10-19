@@ -9,6 +9,8 @@ import {
   fail,
 } from "../../../../core/infra/http-response";
 import type { SearchGeocodingAddressUseCase } from "../../../../domain/application/use-cases/location/search-geocoding-address/search-geocoding-address";
+import { GeocodingQuotaExceededError } from "../../../../domain/application/use-cases/_errors/geocoding-quota-exceeded-error";
+import { LocationServiceUnavailableError } from "../../../../domain/application/use-cases/_errors/location-service-unavailable-error";
 import { NotAllowedError } from "../../../../domain/application/use-cases/_errors/not-allowed-error";
 import { ResourceNotFoundError } from "../../../../domain/application/use-cases/_errors/resource-not-found-error";
 
@@ -52,6 +54,39 @@ export class SearchGeocodingAddressController implements Controller {
           });
         }
 
+        if (error instanceof GeocodingQuotaExceededError) {
+          return {
+            statusCode: 429,
+            headers: {
+              "Retry-After": String(error.retryAfterSeconds),
+            },
+            body: {
+              code: error.code,
+              message: error.message,
+              retryAfterSeconds: error.retryAfterSeconds,
+              error: {
+                code: error.code,
+                message: error.message,
+                retryAfterSeconds: error.retryAfterSeconds,
+              },
+            },
+          };
+        }
+
+        if (error instanceof LocationServiceUnavailableError) {
+          return {
+            statusCode: 503,
+            body: {
+              code: error.code,
+              message: error.message,
+              error: {
+                code: error.code,
+                message: error.message,
+              },
+            },
+          };
+        }
+
         return clientError({
           code: "BAD_REQUEST",
           message: error.message,
@@ -75,6 +110,20 @@ export class SearchGeocodingAddressController implements Controller {
             details: err.issues,
           },
         });
+      }
+
+      if (err instanceof LocationServiceUnavailableError) {
+        return {
+          statusCode: 503,
+          body: {
+            code: err.code,
+            message: err.message,
+            error: {
+              code: err.code,
+              message: err.message,
+            },
+          },
+        };
       }
 
       return fail(err as Error);

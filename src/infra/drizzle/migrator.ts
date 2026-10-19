@@ -658,13 +658,26 @@ export async function runSchemaMigrations(targetDb: any = db) {
         IF NOT EXISTS (
           SELECT 1 FROM pg_enum e
           JOIN pg_type t ON t.oid = e.enumtypid
-          WHERE t.typname = 'operation_resource_kind' AND e.enumlabel = 'SCHEDULE'
+          JOIN pg_namespace n ON n.oid = t.typnamespace
+          WHERE t.typname = 'operation_resource_kind'
+            AND e.enumlabel = 'SCHEDULE'
+            AND n.nspname = current_schema()
         ) THEN
-          ALTER TYPE "operation_resource_kind" ADD VALUE 'SCHEDULE';
+          IF EXISTS (
+            SELECT 1 FROM pg_type t
+            JOIN pg_namespace n ON n.oid = t.typnamespace
+            WHERE t.typname = 'operation_resource_kind'
+              AND n.nspname = current_schema()
+          ) THEN
+            ALTER TYPE "operation_resource_kind" ADD VALUE 'SCHEDULE';
+          END IF;
         END IF;
 
         IF NOT EXISTS (
-          SELECT 1 FROM pg_type WHERE typname = 'barbershop_schedule_state'
+          SELECT 1 FROM pg_type t
+          JOIN pg_namespace n ON n.oid = t.typnamespace
+          WHERE t.typname = 'barbershop_schedule_state'
+            AND n.nspname = current_schema()
         ) THEN
           CREATE TYPE "barbershop_schedule_state" AS ENUM ('INHERIT', 'CUSTOM', 'CLOSED');
         END IF;
@@ -682,6 +695,10 @@ export async function runSchemaMigrations(targetDb: any = db) {
         "updated_at" timestamp with time zone DEFAULT now(),
         CONSTRAINT "barbershop_schedule_scopes_shop_barberman_unique" UNIQUE ("barbershop_id", "barberman_id")
       );
+
+      CREATE UNIQUE INDEX IF NOT EXISTS "barbershop_schedule_scopes_general_unique"
+      ON "barbershop_schedule_scopes" ("barbershop_id")
+      WHERE "barberman_id" IS NULL;
 
       CREATE INDEX IF NOT EXISTS "barbershop_schedule_scopes_lookup_idx"
       ON "barbershop_schedule_scopes" ("barbershop_id", "barberman_id");

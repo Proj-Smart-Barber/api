@@ -12,6 +12,7 @@ import type { UpdateBarbershopScheduleUseCase } from "../../../../domain/applica
 import { NotAllowedError } from "../../../../domain/application/use-cases/_errors/not-allowed-error";
 import { ResourceNotFoundError } from "../../../../domain/application/use-cases/_errors/resource-not-found-error";
 import { ScheduleBookingConflictError } from "../../../../domain/application/use-cases/_errors/schedule-booking-conflict-error";
+import { ScheduleCustomConflictError } from "../../../../domain/application/use-cases/_errors/schedule-custom-conflict-error";
 import { ScheduleVersionConflictError } from "../../../../domain/application/use-cases/_errors/schedule-version-conflict-error";
 import { IdempotencyKeyError } from "../../../../domain/application/services/operation-attempt-service";
 import { z } from "zod";
@@ -102,6 +103,20 @@ export class UpdateBarbershopScheduleController implements Controller {
           });
         }
 
+        if (error instanceof ScheduleCustomConflictError) {
+          return conflict({
+            code: error.code,
+            message: error.message,
+            conflicts: error.conflictingSchedules,
+            conflictingBarbers: error.conflictingSchedules,
+            error: {
+              code: error.code,
+              message: error.message,
+              details: error.conflictingSchedules,
+            },
+          });
+        }
+
         if (error instanceof ScheduleVersionConflictError) {
           return conflict({
             code: error.code,
@@ -111,6 +126,17 @@ export class UpdateBarbershopScheduleController implements Controller {
         }
 
         if (error instanceof IdempotencyKeyError) {
+          if (
+            error.code === "IDEMPOTENCY_PAYLOAD_MISMATCH" ||
+            error.code === "OPERATION_ALREADY_CLOSED"
+          ) {
+            return conflict({
+              code: error.code,
+              message: error.message,
+              error: { code: error.code, message: error.message },
+            });
+          }
+
           return clientError({
             code: error.code,
             message: error.message,

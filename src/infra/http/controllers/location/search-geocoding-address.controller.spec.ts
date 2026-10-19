@@ -3,7 +3,8 @@ import { SearchGeocodingAddressController } from "./search-geocoding-address.con
 import type { SearchGeocodingAddressUseCase } from "../../../../domain/application/use-cases/location/search-geocoding-address/search-geocoding-address";
 import { right, left } from "../../../../core/logic/either";
 import { NotAllowedError } from "../../../../domain/application/use-cases/_errors/not-allowed-error";
-import { ResourceNotFoundError } from "../../../../domain/application/use-cases/_errors/resource-not-found-error";
+import { GeocodingQuotaExceededError } from "../../../../domain/application/use-cases/_errors/geocoding-quota-exceeded-error";
+import { LocationServiceUnavailableError } from "../../../../domain/application/use-cases/_errors/location-service-unavailable-error";
 
 describe("SearchGeocodingAddressController", () => {
   it("deve retornar 200 com candidatos", async () => {
@@ -66,5 +67,46 @@ describe("SearchGeocodingAddressController", () => {
 
     expect(response.statusCode).toBe(403);
     expect((response.body as any).code).toBe("FORBIDDEN");
+  });
+
+  it("Regressão A6: deve retornar 429 com Retry-After quando quota for excedida", async () => {
+    const fakeUseCase = {
+      execute: vi
+        .fn()
+        .mockResolvedValue(
+          left(new GeocodingQuotaExceededError(undefined, 3600)),
+        ),
+    } as unknown as SearchGeocodingAddressUseCase;
+
+    const controller = new SearchGeocodingAddressController(fakeUseCase);
+    const response = await controller.handle({
+      userId: "11111111-1111-4111-8111-111111111111",
+      address: "Av Paulista, 1000",
+    });
+
+    expect(response.statusCode).toBe(429);
+    expect((response.body as any).code).toBe("GEOCODING_QUOTA_EXCEEDED");
+    expect(response.headers?.["Retry-After"]).toBe("3600");
+  });
+
+  it("Regressão A6: deve retornar 503 quando o provedor Google estiver indisponível", async () => {
+    const fakeUseCase = {
+      execute: vi
+        .fn()
+        .mockResolvedValue(
+          left(
+            new LocationServiceUnavailableError("GOOGLE_MAPS_API_KEY ausente."),
+          ),
+        ),
+    } as unknown as SearchGeocodingAddressUseCase;
+
+    const controller = new SearchGeocodingAddressController(fakeUseCase);
+    const response = await controller.handle({
+      userId: "11111111-1111-4111-8111-111111111111",
+      address: "Av Paulista, 1000",
+    });
+
+    expect(response.statusCode).toBe(503);
+    expect((response.body as any).code).toBe("LOCATION_SERVICE_UNAVAILABLE");
   });
 });

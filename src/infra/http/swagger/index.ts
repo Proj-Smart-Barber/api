@@ -2367,7 +2367,7 @@ export const swaggerDocument = {
           },
           "409": {
             description:
-              "Conflict: SCHEDULE_BOOKING_CONFLICT (with conflicting bookings array) or SCHEDULE_VERSION_CONFLICT",
+              "Conflict: SCHEDULE_BOOKING_CONFLICT, SCHEDULE_CUSTOM_CONFLICT, SCHEDULE_VERSION_CONFLICT, OPERATION_IN_PROGRESS, or IDEMPOTENCY_PAYLOAD_MISMATCH",
             content: {
               "application/json": {
                 schema: {
@@ -2375,6 +2375,13 @@ export const swaggerDocument = {
                   properties: {
                     code: {
                       type: "string",
+                      enum: [
+                        "SCHEDULE_BOOKING_CONFLICT",
+                        "SCHEDULE_CUSTOM_CONFLICT",
+                        "SCHEDULE_VERSION_CONFLICT",
+                        "OPERATION_IN_PROGRESS",
+                        "IDEMPOTENCY_PAYLOAD_MISMATCH",
+                      ],
                       example: "SCHEDULE_BOOKING_CONFLICT",
                     },
                     message: { type: "string" },
@@ -2387,6 +2394,18 @@ export const swaggerDocument = {
                           startsAt: { type: "string", format: "date-time" },
                           endsAt: { type: "string", format: "date-time" },
                           status: { type: "string" },
+                        },
+                      },
+                    },
+                    customScheduleConflicts: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          barbermanId: { type: "string", format: "uuid" },
+                          dayOfWeek: { type: "string" },
+                          openTime: { type: "string" },
+                          closeTime: { type: "string" },
                         },
                       },
                     },
@@ -3508,13 +3527,75 @@ export const swaggerDocument = {
         responses: {
           "200": {
             description: "Localização atualizada e confirmada com sucesso",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: [
+                    "shopId",
+                    "address",
+                    "status",
+                    "source",
+                    "version",
+                  ],
+                  properties: {
+                    shopId: { type: "string", format: "uuid" },
+                    address: { type: "string" },
+                    status: {
+                      type: "string",
+                      enum: ["CONFIRMED", "UNCONFIRMED", "NEEDS_REVIEW"],
+                      example: "CONFIRMED",
+                    },
+                    source: {
+                      type: "string",
+                      enum: ["GOOGLE", "MANUAL"],
+                      example: "GOOGLE",
+                    },
+                    version: { type: "integer", example: 1 },
+                    point: {
+                      type: "object",
+                      nullable: true,
+                      required: ["latitude", "longitude"],
+                      properties: {
+                        latitude: { type: "number", example: -23.55052 },
+                        longitude: { type: "number", example: -46.633308 },
+                      },
+                    },
+                    confirmedAt: {
+                      type: "string",
+                      format: "date-time",
+                      nullable: true,
+                    },
+                    acquiredAt: {
+                      type: "string",
+                      format: "date-time",
+                      nullable: true,
+                    },
+                    validUntil: {
+                      type: "string",
+                      format: "date-time",
+                      nullable: true,
+                    },
+                    lastOwnerMutation: {
+                      type: "object",
+                      nullable: true,
+                      properties: {
+                        id: { type: "string" },
+                        commandHash: { type: "string" },
+                        savedVersion: { type: "integer" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
           "400": {
-            description: "Parâmetros inválidos ou candidato expirado",
+            description: "Parâmetros inválidos ou candidato expirado/utilizado",
           },
           "403": {
             description:
-              "Proibido: Não autorizado ou candidato pertence a outro usuário/unidade",
+              "Proibido: Não autorizado, unidade/vínculo inativo ou candidato pertence a outro usuário/unidade",
           },
           "404": {
             description:
@@ -3530,6 +3611,10 @@ export const swaggerDocument = {
                   properties: {
                     code: {
                       type: "string",
+                      enum: [
+                        "LOCATION_VERSION_CONFLICT",
+                        "IDEMPOTENCY_PAYLOAD_MISMATCH",
+                      ],
                       example: "LOCATION_VERSION_CONFLICT",
                     },
                     message: { type: "string" },
@@ -3564,23 +3649,47 @@ export const swaggerDocument = {
         responses: {
           "200": {
             description:
-              "Candidatos encontrados retornados com validade efêmera",
+              "Candidatos encontrados retornados com validade efêmera (15 minutos)",
             content: {
               "application/json": {
                 schema: {
                   type: "object",
+                  required: ["candidates", "serverTime"],
                   properties: {
                     candidates: {
                       type: "array",
                       items: {
                         type: "object",
+                        required: [
+                          "candidateId",
+                          "displayAddress",
+                          "point",
+                          "expiresAt",
+                          "attribution",
+                        ],
                         properties: {
-                          id: { type: "string", format: "uuid" },
-                          formattedAddress: { type: "string" },
-                          latitude: { type: "number" },
-                          longitude: { type: "number" },
-                          placeId: { type: "string" },
+                          candidateId: { type: "string", format: "uuid" },
+                          displayAddress: {
+                            type: "string",
+                            example:
+                              "Av. Paulista, 1000 - Bela Vista, São Paulo - SP, Brasil",
+                          },
+                          point: {
+                            type: "object",
+                            required: ["latitude", "longitude"],
+                            properties: {
+                              latitude: { type: "number", example: -23.564886 },
+                              longitude: {
+                                type: "number",
+                                example: -46.651918,
+                              },
+                            },
+                          },
                           expiresAt: { type: "string", format: "date-time" },
+                          attribution: {
+                            type: "string",
+                            example: "Google Maps",
+                          },
                         },
                       },
                     },
@@ -3591,14 +3700,58 @@ export const swaggerDocument = {
             },
           },
           "400": {
-            description: "Erro de validação dos parâmetros",
+            description: "Erro de validação dos parâmetros (VALIDATION_ERROR)",
           },
           "403": {
             description:
-              "Proibido: Usuário não tem permissão na unidade informada",
+              "Proibido (FORBIDDEN): Usuário sem elegibilidade de onboarding de proprietário, sem vínculo ativo de OWNER ou unidade inativa",
+          },
+          "404": {
+            description: "Barbearia não encontrada (NOT_FOUND)",
           },
           "429": {
-            description: "Limite de requisições ao provedor atingido",
+            description:
+              "Quota local de buscas excedida (GEOCODING_QUOTA_EXCEEDED: 30/hora ou 100/dia)",
+            headers: {
+              "Retry-After": {
+                schema: { type: "string", example: "3600" },
+                description:
+                  "Segundos recomendados de espera até liberação da janela de quota",
+              },
+            },
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    code: {
+                      type: "string",
+                      example: "GEOCODING_QUOTA_EXCEEDED",
+                    },
+                    message: { type: "string" },
+                    retryAfterSeconds: { type: "integer", example: 3600 },
+                  },
+                },
+              },
+            },
+          },
+          "503": {
+            description:
+              "Serviço de geocodificação indisponível, sem chave configurada ou timeout (LOCATION_SERVICE_UNAVAILABLE)",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    code: {
+                      type: "string",
+                      example: "LOCATION_SERVICE_UNAVAILABLE",
+                    },
+                    message: { type: "string" },
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -3607,7 +3760,7 @@ export const swaggerDocument = {
       get: {
         tags: ["Internal"],
         summary:
-          "Varredura periódica de manutenção geográfica (expirações e health heartbeat)",
+          "Varredura periódica de manutenção geográfica (expirações em lote e health heartbeat)",
         security: [{ bearerAuth: [] }],
         responses: {
           "200": {
@@ -3616,18 +3769,30 @@ export const swaggerDocument = {
               "application/json": {
                 schema: {
                   type: "object",
+                  required: [
+                    "status",
+                    "sweptLocationsCount",
+                    "deletedCandidatesCount",
+                    "deletedBucketsCount",
+                    "heartbeatAt",
+                  ],
                   properties: {
                     status: { type: "string", example: "OK" },
                     sweptLocationsCount: { type: "integer", example: 0 },
                     deletedCandidatesCount: { type: "integer", example: 5 },
+                    deletedBucketsCount: { type: "integer", example: 2 },
                     heartbeatAt: { type: "string", format: "date-time" },
                   },
                 },
               },
             },
           },
+          "400": {
+            description:
+              "Falha durante execução da manutenção (MAINTENANCE_ERROR)",
+          },
           "401": {
-            description: "Token CRON_SECRET ausente ou inválido",
+            description: "Token CRON_SECRET ausente ou inválido (UNAUTHORIZED)",
           },
         },
       },

@@ -71,8 +71,18 @@ describe("Cancel Booking Use Case", () => {
     expect(result.isRight()).toBe(true);
     expect(inMemoryBookingsRepository.items[0].status).toBe("CANCELLED");
     expect(inMemoryBookingsRepository.items[0].version).toBe(1);
-    expect(inMemoryNotificationsRepository.items.map(n => n.userId.toString()).sort()).toEqual(["barberman-1", "client-1", "owner-1"]);
-    expect(inMemoryNotificationsRepository.items.every(n => n.type === "BOOKING_CANCELLED" && n.referenceId?.toString() === "booking-1")).toBe(true);
+    expect(
+      inMemoryNotificationsRepository.items
+        .map((n) => n.userId.toString())
+        .sort(),
+    ).toEqual(["barberman-1", "client-1", "owner-1"]);
+    expect(
+      inMemoryNotificationsRepository.items.every(
+        (n) =>
+          n.type === "BOOKING_CANCELLED" &&
+          n.referenceId?.toString() === "booking-1",
+      ),
+    ).toBe(true);
   });
 
   it("should not be able to cancel a booking from another barberman", async () => {

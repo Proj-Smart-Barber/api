@@ -140,4 +140,50 @@ describe("GetBarbershopLocationUseCase", () => {
     expect(result.isLeft()).toBe(true);
     expect(result.value).toBeInstanceOf(NotAllowedError);
   });
+
+  it("Regressão A6: deve rejeitar OWNER com vínculo INACTIVE ou barbearia INACTIVE ao consultar localização", async () => {
+    const shop = Barbershop.create(
+      {
+        name: "Barbearia Vintage",
+        ownerId: new UniqueEntityId("owner-inativo"),
+        location: "Rua Augusta, 500",
+      },
+      new UniqueEntityId("shop-1"),
+    );
+    await barbershopsRepository.create(shop);
+
+    await membershipsRepository.create(
+      Membership.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        userId: new UniqueEntityId("owner-inativo"),
+        role: Role.OWNER,
+        state: "INACTIVE",
+      }),
+    );
+
+    const inactiveOwnerRes = await sut.execute({
+      shopId: "shop-1",
+      actorId: "owner-inativo",
+    });
+    expect(inactiveOwnerRes.isLeft()).toBe(true);
+    expect(inactiveOwnerRes.value).toBeInstanceOf(NotAllowedError);
+
+    const inactiveShop = Barbershop.create(
+      {
+        name: "Barbearia Desativada",
+        ownerId: new UniqueEntityId("owner-ativo"),
+        location: "Rua Augusta, 500",
+        status: "INACTIVE",
+      },
+      new UniqueEntityId("shop-desativada"),
+    );
+    await barbershopsRepository.create(inactiveShop);
+
+    const inactiveShopRes = await sut.execute({
+      shopId: "shop-desativada",
+      actorId: "owner-ativo",
+    });
+    expect(inactiveShopRes.isLeft()).toBe(true);
+    expect(inactiveShopRes.value).toBeInstanceOf(NotAllowedError);
+  });
 });

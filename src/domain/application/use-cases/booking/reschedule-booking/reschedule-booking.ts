@@ -1,4 +1,7 @@
 import type { BarbershopsRepository } from "../../../repositories/barbershops-repository";
+import type { SchedulesRepository } from "../../../repositories/schedules-repository";
+import type { ScheduleExceptionsRepository } from "../../../repositories/schedule-exceptions-repository";
+import { EffectiveScheduleResolver } from "../../../services/effective-schedule-resolver";
 import { NotifyBookingEventUseCase } from "../../notifications/notify-booking-event/notify-booking-event";
 import { slotMatchesLocalTime } from "../../../services/booking-slot";
 import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
@@ -39,10 +42,19 @@ export type RescheduleBookingUseCaseResponse = Either<
   RescheduleBookingSuccess
 >;
 
-function addMinutesToTime(time: string, minutes: number): string {
+function addMinutesToTimeWithinDay(
+  time: string,
+  minutes: number,
+): string | null {
   const [h, m] = time.split(":").map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m) || minutes <= 0) {
+    return null;
+  }
   const total = h * 60 + m + minutes;
-  const newH = Math.floor(total / 60) % 24;
+  if (total > 24 * 60 - 1) {
+    return null;
+  }
+  const newH = Math.floor(total / 60);
   const newM = total % 60;
   return `${String(newH).padStart(2, "0")}:${String(newM).padStart(2, "0")}`;
 }
@@ -74,6 +86,8 @@ export class RescheduleBookingUseCase {
     private notificationsRepository?: NotificationsRepository,
     private unitOfWork?: ProfessionalMembershipUnitOfWork,
     private barbershopsRepository?: BarbershopsRepository,
+    private schedulesRepository?: SchedulesRepository,
+    private scheduleExceptionsRepository?: ScheduleExceptionsRepository,
   ) {}
 
   async execute(
@@ -119,6 +133,7 @@ export class RescheduleBookingUseCase {
         await this.membershipsRepository.findByBarbershopAndUser(
           booking.barbershopId.toString(),
           actorId,
+          dto.tx,
         );
 
       if (!membership || membership.state !== "ACTIVE") {
@@ -172,6 +187,7 @@ export class RescheduleBookingUseCase {
         await this.membershipsRepository.findByBarbershopAndUser(
           booking.barbershopId.toString(),
           targetBarbermanId,
+          dto.tx,
         );
       if (!targetMembership || targetMembership.state !== "ACTIVE") {
         return left(
@@ -279,10 +295,18 @@ export class RescheduleBookingUseCase {
       );
     }
 
-    const calculatedEndTime = addMinutesToTime(
+    const calculatedEndTime = addMinutesToTimeWithinDay(
       dto.startTime,
       authoritativeTotalDurationInMinutes,
     );
+
+    if (!calculatedEndTime || dto.startTime >= calculatedEndTime) {
+      return left(
+        new SlotUnavailableError(
+          "Horário do atendimento ultrapassa o limite do dia local (meia-noite).",
+        ),
+      );
+    }
 
     const timezone = booking.timezone ?? "America/Sao_Paulo";
     const offset = getOffsetForTimezone(dto.date, timezone);
@@ -347,6 +371,104 @@ export class RescheduleBookingUseCase {
             booking.version,
           ),
         );
+      }
+
+      // Validar jornada de trabalho e exceções efetivas (R1/A1/A2) dentro da transação com lock
+      if (this.schedulesRepository) {
+        const allSchedules =
+          await this.schedulesRepository.findManyByBarbershopId(
+            booking.barbershopId.toString(),
+            tx,
+          );
+
+        const generalScope = await this.schedulesRepository.findScope(
+          booking.barbershopId.toString(),
+          null,
+          tx,
+        );
+        const generalScopeState = generalScope?.state ?? null;
+
+        let scopeState = null;
+        if (targetBarbermanId) {
+          const scope = await this.schedulesRepository.findScope(
+            booking.barbershopId.toString(),
+            targetBarbermanId,
+            tx,
+          );
+          if (scope) scopeState = scope.state;
+        }
+
+        const targetDate = new Date(`${dto.date}T12:00:00${offset}`);
+        const dayOfWeekIndex = targetDate.getUTCDay();
+        const daysMap = [
+          "SUNDAY",
+          "MONDAY",
+          "TUESDAY",
+          "WEDNESDAY",
+          "THURSDAY",
+          "FRIDAY",
+          "SATURDAY",
+        ];
+        const dayOfWeek = daysMap[dayOfWeekIndex];
+
+        const { intervals } =
+          EffectiveScheduleResolver.resolveEffectiveDayIntervals({
+            dayOfWeek,
+            allSchedules,
+            barbermanId: targetBarbermanId,
+            scopeState,
+            generalScopeState,
+          });
+
+        const isWithinShifts = EffectiveScheduleResolver.isIntervalWithinShifts(
+          dto.startTime,
+          calculatedEndTime,
+          intervals,
+        );
+
+        if (!isWithinShifts) {
+          return left(
+            new SlotUnavailableError(
+              "Horário fora do expediente ou jornada indisponível para o profissional.",
+            ),
+          );
+        }
+      }
+
+      if (this.scheduleExceptionsRepository) {
+        const allExceptions =
+          await this.scheduleExceptionsRepository.findManyByBarbershopId(
+            booking.barbershopId.toString(),
+            tx,
+          );
+
+        const dayExceptions = allExceptions.filter((e) => {
+          const eDate = new Date(e.date).toISOString().split("T")[0];
+          const matchBarberman =
+            !e.barbermanId ||
+            (targetBarbermanId &&
+              e.barbermanId.toString() === targetBarbermanId);
+          return eDate === dto.date && matchBarberman;
+        });
+
+        const overlapsException = EffectiveScheduleResolver.overlapsException(
+          dto.startTime,
+          calculatedEndTime,
+          dayExceptions.map((ex) => ({
+            startTime: ex.startTime,
+            endTime: ex.endTime,
+            barbermanId: ex.barbermanId?.toString() ?? null,
+          })),
+          targetBarbermanId,
+        );
+
+        if (overlapsException) {
+          return left(
+            new SlotUnavailableError(
+              "Horário indisponível devido a bloqueio/exceção na data.",
+            ),
+          );
+        }
       }
 
       // Validar sobreposição do novo slot (excluindo a própria reserva)

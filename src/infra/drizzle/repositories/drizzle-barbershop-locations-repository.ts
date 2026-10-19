@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "../index";
 import { barbershops, barbershopLocations } from "../schema";
 import type {
@@ -125,12 +125,21 @@ export class DrizzleBarbershopLocationsRepository
   async saveLocation(
     data: Partial<BarbershopLocationPersistence> & { barbershopId: string },
     tx?: any,
+    expectedVersion?: number,
   ): Promise<BarbershopLocationPersistence> {
     const executor = tx ?? this.database;
 
     const existing = await this.findByBarbershopId(data.barbershopId, tx);
 
     if (existing) {
+      const updateCondition =
+        expectedVersion !== undefined
+          ? and(
+              eq(barbershopLocations.barbershopId, data.barbershopId),
+              eq(barbershopLocations.version, expectedVersion),
+            )
+          : eq(barbershopLocations.barbershopId, data.barbershopId);
+
       const [updated] = await executor
         .update(barbershopLocations)
         .set({
@@ -183,8 +192,12 @@ export class DrizzleBarbershopLocationsRepository
               : existing.lastMutationSavedVersion,
           updatedAt: new Date(),
         })
-        .where(eq(barbershopLocations.barbershopId, data.barbershopId))
+        .where(updateCondition)
         .returning();
+
+      if (!updated) {
+        throw new Error("LOCATION_VERSION_CONFLICT");
+      }
 
       return {
         id: updated.id,

@@ -23,6 +23,11 @@ describe("RefreshLocationsMaintenanceUseCase", () => {
           onConflictDoUpdate: vi.fn().mockResolvedValue([]),
         }),
       }),
+      delete: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([]),
+        }),
+      }),
     };
 
     sut = new RefreshLocationsMaintenanceUseCase(candidatesRepository, fakeDb);

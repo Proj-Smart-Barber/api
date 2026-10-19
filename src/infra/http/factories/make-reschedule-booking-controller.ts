@@ -10,11 +10,17 @@ import { DrizzleOperationAttemptsRepository } from "../../drizzle/repositories/d
 import { DrizzleResourceAccessValidator } from "../../drizzle/services/drizzle-resource-access-validator";
 import { OperationAttemptService } from "../../../domain/application/services/operation-attempt-service";
 
+import { DrizzleSchedulesRepository } from "../../drizzle/repositories/drizzle-schedules-repository";
+import { DrizzleScheduleExceptionsRepository } from "../../drizzle/repositories/drizzle-schedule-exceptions-repository";
+
 export function makeRescheduleBookingController() {
   const drizzleBookingsRepository = new DrizzleBookingsRepository();
   const drizzleServicesRepository = new DrizzleServicesRepository();
   const drizzleMembershipsRepository = new DrizzleMembershipsRepository();
   const drizzleNotificationsRepository = new DrizzleNotificationsRepository();
+  const drizzleSchedulesRepository = new DrizzleSchedulesRepository();
+  const drizzleScheduleExceptionsRepository =
+    new DrizzleScheduleExceptionsRepository();
   const unitOfWork = new DrizzleProfessionalMembershipUnitOfWork();
   const accessValidator = new DrizzleResourceAccessValidator();
 
@@ -25,6 +31,8 @@ export function makeRescheduleBookingController() {
     drizzleNotificationsRepository,
     unitOfWork,
     new DrizzleBarbershopsRepository(),
+    drizzleSchedulesRepository,
+    drizzleScheduleExceptionsRepository,
   );
 
   const attemptsRepository = new DrizzleOperationAttemptsRepository();

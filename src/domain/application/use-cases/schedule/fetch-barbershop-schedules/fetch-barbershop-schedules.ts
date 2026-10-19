@@ -1,7 +1,9 @@
 import type { SchedulesRepository } from "../../../repositories/schedules-repository";
-import type { BarbershopSchedule } from "../../../../enterprise/entities/barbershop-schedule";
+import { BarbershopSchedule } from "../../../../enterprise/entities/barbershop-schedule";
 import type { ScheduleScopeState } from "../../../../enterprise/entities/barbershop-schedule-scope";
 import { type Either, right } from "../../../../../core/logic/either";
+import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
+import { EffectiveScheduleResolver } from "../../../services/effective-schedule-resolver";
 
 export interface FetchBarbershopSchedulesUseCaseRequest {
   barbershopId: string;
@@ -34,21 +36,25 @@ export class FetchBarbershopSchedulesUseCase {
     const generalSchedules = allSchedules.filter((s) => !s.barbermanId);
     const serverTime = new Date().toISOString();
 
+    const generalScope = await this.schedulesRepository.findScope(
+      barbershopId,
+      null,
+    );
+    const generalScopeState: ScheduleScopeState | null =
+      generalScope?.state ?? null;
+
     if (!barbermanId) {
-      const scope = await this.schedulesRepository.findScope(
-        barbershopId,
-        null,
-      );
-      const state: ScheduleScopeState = scope
-        ? scope.state
+      const state: ScheduleScopeState = generalScope
+        ? generalScope.state
         : generalSchedules.length === 0
           ? "CLOSED"
           : "CUSTOM";
-      const version = scope ? scope.version : 1;
+      const version = generalScope ? generalScope.version : 1;
+      const effectiveGeneral = state === "CLOSED" ? [] : generalSchedules;
 
       return right({
-        schedules: generalSchedules,
-        effectiveSchedules: generalSchedules,
+        schedules: state === "CLOSED" ? [] : generalSchedules,
+        effectiveSchedules: effectiveGeneral,
         state,
         version,
         needsReview: false,
@@ -70,13 +76,20 @@ export class FetchBarbershopSchedulesUseCase {
 
       if (scope.state === "INHERIT") {
         schedulesToReturn = [];
-        effectiveSchedules = generalSchedules;
+        effectiveSchedules =
+          generalScopeState === "CLOSED" ? [] : generalSchedules;
       } else if (scope.state === "CLOSED") {
         schedulesToReturn = [];
         effectiveSchedules = [];
       } else {
         schedulesToReturn = barbermanSchedules;
-        effectiveSchedules = barbermanSchedules;
+        effectiveSchedules = this.computeEffectiveCustomSchedules(
+          barbermanSchedules,
+          generalSchedules,
+          barbershopId,
+          barbermanId,
+          generalScopeState,
+        );
       }
 
       return right({
@@ -89,11 +102,19 @@ export class FetchBarbershopSchedulesUseCase {
       });
     }
 
-    // Caso de legado ambíguo: se possui jornadas próprias, é CUSTOM
+    // Caso de legado ambíguo: se possui jornadas próprias, é CUSTOM delimitado pelo geral
     if (barbermanSchedules.length > 0) {
+      const effectiveSchedules = this.computeEffectiveCustomSchedules(
+        barbermanSchedules,
+        generalSchedules,
+        barbershopId,
+        barbermanId,
+        generalScopeState,
+      );
+
       return right({
         schedules: barbermanSchedules,
-        effectiveSchedules: barbermanSchedules,
+        effectiveSchedules,
         state: "CUSTOM",
         version: 1,
         needsReview: false,
@@ -101,14 +122,60 @@ export class FetchBarbershopSchedulesUseCase {
       });
     }
 
-    // Caso de legado ambíguo sem jornadas individuais: manter comportamento efetivo e sinalizar revisão
+    // Caso de legado ambíguo sem jornadas individuais:
+    // Não abre horários automaticamente. Trata como CLOSED e sinaliza necessidade de revisão explícita.
     return right({
       schedules: [],
-      effectiveSchedules: generalSchedules,
-      state: "INHERIT",
+      effectiveSchedules: [],
+      state: "CLOSED",
       version: 1,
       needsReview: true,
       serverTime,
     });
+  }
+
+  private computeEffectiveCustomSchedules(
+    barberSchedules: BarbershopSchedule[],
+    generalSchedules: BarbershopSchedule[],
+    barbershopId: string,
+    barbermanId: string,
+    generalScopeState?: ScheduleScopeState | null,
+  ): BarbershopSchedule[] {
+    const days = [
+      "SUNDAY",
+      "MONDAY",
+      "TUESDAY",
+      "WEDNESDAY",
+      "THURSDAY",
+      "FRIDAY",
+      "SATURDAY",
+    ];
+    const effective: BarbershopSchedule[] = [];
+
+    for (const day of days) {
+      const { intervals } =
+        EffectiveScheduleResolver.resolveEffectiveDayIntervals({
+          dayOfWeek: day,
+          allSchedules: [...generalSchedules, ...barberSchedules],
+          barbermanId,
+          scopeState: "CUSTOM",
+          generalScopeState,
+        });
+
+      for (const interval of intervals) {
+        effective.push(
+          BarbershopSchedule.create({
+            barbershopId: new UniqueEntityId(barbershopId),
+            barbermanId: new UniqueEntityId(barbermanId),
+            dayOfWeek: day,
+            openTime: interval.openTime,
+            closeTime: interval.closeTime,
+            createdBy: new UniqueEntityId(barbermanId),
+          }),
+        );
+      }
+    }
+
+    return effective;
   }
 }

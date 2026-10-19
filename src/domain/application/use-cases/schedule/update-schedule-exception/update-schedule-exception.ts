@@ -40,9 +40,13 @@ export class UpdateScheduleExceptionUseCase {
     endTime,
     reason,
   }: UpdateScheduleExceptionDTO): Promise<UpdateScheduleExceptionResponse> {
-    const action = async (): Promise<UpdateScheduleExceptionResponse> => {
-      const exception =
-        await this.scheduleExceptionsRepository.findById(exceptionId);
+    const action = async (
+      tx?: unknown,
+    ): Promise<UpdateScheduleExceptionResponse> => {
+      const exception = await this.scheduleExceptionsRepository.findById(
+        exceptionId,
+        tx,
+      );
 
       if (!exception) {
         return left(new ResourceNotFoundError());
@@ -52,8 +56,10 @@ export class UpdateScheduleExceptionUseCase {
         return left(new NotAllowedError());
       }
 
-      const barbershop =
-        await this.barbershopsRepository.findById(barbershopId);
+      const barbershop = await this.barbershopsRepository.findById(
+        barbershopId,
+        tx,
+      );
       if (!barbershop || barbershop.ownerId.toString() !== staffId) {
         return left(new NotAllowedError());
       }
@@ -98,7 +104,7 @@ export class UpdateScheduleExceptionUseCase {
         }
       }
 
-      await this.scheduleExceptionsRepository.save(exception);
+      await this.scheduleExceptionsRepository.save(exception, tx);
 
       return right({
         scheduleException: exception,
