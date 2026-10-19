@@ -4,6 +4,8 @@ export class LocationServiceUnavailableError
   extends Error
   implements UseCaseError
 {
+  readonly code = "LOCATION_SERVICE_UNAVAILABLE";
+
   constructor(message?: string) {
     super(
       message ??

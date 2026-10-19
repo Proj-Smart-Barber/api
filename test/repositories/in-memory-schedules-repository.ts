@@ -1,8 +1,10 @@
 import type { SchedulesRepository } from "../../src/domain/application/repositories/schedules-repository";
 import type { BarbershopSchedule } from "../../src/domain/enterprise/entities/barbershop-schedule";
+import type { BarbershopScheduleScope } from "../../src/domain/enterprise/entities/barbershop-schedule-scope";
 
 export class InMemorySchedulesRepository implements SchedulesRepository {
   public items: BarbershopSchedule[] = [];
+  public scopes: BarbershopScheduleScope[] = [];
 
   async create(schedule: BarbershopSchedule): Promise<void> {
     this.items.push(schedule);
@@ -63,5 +65,37 @@ export class InMemorySchedulesRepository implements SchedulesRepository {
 
     // Insere os novos
     this.items.push(...schedules);
+  }
+
+  async findScope(
+    barbershopId: string,
+    barbermanId: string | null,
+  ): Promise<BarbershopScheduleScope | null> {
+    const scope = this.scopes.find((s) => {
+      const matchShop = s.barbershopId.toString() === barbershopId;
+      const matchBarber = barbermanId
+        ? s.barbermanId?.toString() === barbermanId
+        : !s.barbermanId;
+      return matchShop && matchBarber;
+    });
+
+    return scope ?? null;
+  }
+
+  async saveScope(scope: BarbershopScheduleScope): Promise<void> {
+    const index = this.scopes.findIndex((s) => {
+      const matchShop =
+        s.barbershopId.toString() === scope.barbershopId.toString();
+      const matchBarber = scope.barbermanId
+        ? s.barbermanId?.toString() === scope.barbermanId.toString()
+        : !s.barbermanId;
+      return matchShop && matchBarber;
+    });
+
+    if (index >= 0) {
+      this.scopes[index] = scope;
+    } else {
+      this.scopes.push(scope);
+    }
   }
 }

@@ -11,13 +11,23 @@ import { DrizzleMembershipMapper } from "../mappers/drizzle-membership-mapper";
 import { barbershops, membership, users } from "../schema";
 
 export class DrizzleBarbershopsRepository implements BarbershopsRepository {
+  private customDb?: any;
+
+  constructor(customDb?: any) {
+    this.customDb = customDb;
+  }
+
+  private get database() {
+    return this.customDb ?? db;
+  }
+
   async createWithOwnerMembership(
     barbershop: Barbershop,
     ownerMembership: Membership,
   ): Promise<Barbershop> {
     this.validateOwnerMembership(barbershop, ownerMembership);
 
-    return db.transaction(async (transaction) => {
+    return this.database.transaction(async (transaction: any) => {
       const [createdBarbershop] = await transaction
         .insert(barbershops)
         .values(DrizzleBarbershopMapper.toDrizzle(barbershop))
@@ -51,8 +61,9 @@ export class DrizzleBarbershopsRepository implements BarbershopsRepository {
     });
   }
 
-  async findById(id: string): Promise<Barbershop | null> {
-    const [barbershop] = await db
+  async findById(id: string, tx?: any): Promise<Barbershop | null> {
+    const executor = tx ?? this.database;
+    const [barbershop] = await executor
       .select()
       .from(barbershops)
       .where(eq(barbershops.id, id));
@@ -68,7 +79,7 @@ export class DrizzleBarbershopsRepository implements BarbershopsRepository {
     slug: string,
     cnpj: string,
   ): Promise<Barbershop | null> {
-    const [barbershop] = await db
+    const [barbershop] = await this.database
       .select()
       .from(barbershops)
       .where(or(eq(barbershops.slug, slug), eq(barbershops.cnpj, cnpj)));
@@ -81,7 +92,7 @@ export class DrizzleBarbershopsRepository implements BarbershopsRepository {
   }
 
   async findManyByOwnerId(ownerId: string): Promise<Barbershop[]> {
-    const results = await db
+    const results = await this.database
       .select()
       .from(barbershops)
       .where(eq(barbershops.ownerId, ownerId));
@@ -92,7 +103,7 @@ export class DrizzleBarbershopsRepository implements BarbershopsRepository {
   async findManyByStaffId(
     staffId: string,
   ): Promise<Array<{ barbershop: Barbershop; role: string }>> {
-    const rows = await db
+    const rows = await this.database
       .select({
         barbershop: barbershops,
         role: membership.role,
@@ -103,10 +114,25 @@ export class DrizzleBarbershopsRepository implements BarbershopsRepository {
         and(eq(membership.userId, staffId), eq(membership.state, "ACTIVE")),
       );
 
-    return rows.map((row) => ({
+    return rows.map((row: any) => ({
       barbershop: DrizzleBarbershopMapper.toDomain(row.barbershop),
       role: row.role,
     }));
+  }
+
+  async save(barbershop: Barbershop, tx?: any): Promise<void> {
+    const executor = tx ?? this.database;
+    await executor
+      .update(barbershops)
+      .set({
+        name: barbershop.name,
+        location: barbershop.location,
+        avatarUrl: barbershop.avatarUrl,
+        slug: barbershop.slug.value,
+        cnpj: barbershop.cnpj,
+        status: barbershop.status,
+      })
+      .where(eq(barbershops.id, barbershop.id.toString()));
   }
 
   private validateOwnerMembership(

@@ -31,16 +31,37 @@ export class FetchBarbershopSchedulesController implements Controller {
         return fail(new Error("Failed to fetch schedules"));
       }
 
-      const schedules = result.value.schedules.map((s) => ({
-        id: s.id.toString(),
-        barbershopId: s.barbershopId.toString(),
-        barbermanId: s.barbermanId?.toString() ?? null,
-        dayOfWeek: s.dayOfWeek,
-        openTime: s.openTime,
-        closeTime: s.closeTime,
-      }));
+      const {
+        schedules,
+        effectiveSchedules,
+        state,
+        version,
+        needsReview,
+        serverTime,
+      } = result.value;
 
-      return ok({ schedules });
+      return ok({
+        schedules: schedules.map((s) => ({
+          id: s.id.toString(),
+          barbershopId: s.barbershopId.toString(),
+          barbermanId: s.barbermanId?.toString() ?? null,
+          dayOfWeek: s.dayOfWeek,
+          openTime: s.openTime,
+          closeTime: s.closeTime,
+        })),
+        effectiveSchedules: effectiveSchedules.map((s) => ({
+          id: s.id.toString(),
+          barbershopId: s.barbershopId.toString(),
+          barbermanId: s.barbermanId?.toString() ?? null,
+          dayOfWeek: s.dayOfWeek,
+          openTime: s.openTime,
+          closeTime: s.closeTime,
+        })),
+        state,
+        version,
+        needsReview,
+        serverTime,
+      });
     } catch (err: unknown) {
       if (err instanceof z.ZodError) {
         return clientError({ errors: err.issues });

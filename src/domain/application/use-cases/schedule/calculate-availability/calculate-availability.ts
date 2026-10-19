@@ -4,6 +4,7 @@ import type { ScheduleExceptionsRepository } from "../../../repositories/schedul
 import type { ServicesRepository } from "../../../repositories/services-repository";
 import type { BookingsRepository } from "../../../repositories/bookings-repository";
 import type { BarbershopsRepository } from "../../../repositories/barbershops-repository";
+import { EffectiveScheduleResolver } from "../../../services/effective-schedule-resolver";
 
 function timeToMinutes(time: string): number {
   const [hours, minutes] = time.split(":").map(Number);
@@ -112,19 +113,35 @@ export class CalculateAvailabilityUseCase {
     const allSchedules =
       await this.schedulesRepository.findManyByBarbershopId(barbershopId);
 
-    const daySchedules = allSchedules.filter(
-      (s) =>
-        s.dayOfWeek === dayOfWeek &&
-        (barbermanId
-          ? s.barbermanId?.toString() === barbermanId
-          : !s.barbermanId),
+    const generalScope = await this.schedulesRepository.findScope(
+      barbershopId,
+      null,
     );
+    const generalScopeState = generalScope?.state ?? null;
 
-    if (daySchedules.length === 0) {
+    let scopeState = generalScopeState;
+    if (barbermanId) {
+      const scope = await this.schedulesRepository.findScope(
+        barbershopId,
+        barbermanId,
+      );
+      scopeState = scope ? scope.state : null;
+    }
+
+    const { intervals } =
+      EffectiveScheduleResolver.resolveEffectiveDayIntervals({
+        dayOfWeek,
+        allSchedules,
+        barbermanId,
+        scopeState,
+        generalScopeState,
+      });
+
+    if (intervals.length === 0) {
       return right({ availableSlots: [] });
     }
 
-    // 3. Buscar exceções do dia
+    // 3. Buscar exceções do dia (tanto gerais da unidade quanto individuais)
     const allExceptions =
       await this.scheduleExceptionsRepository.findManyByBarbershopId(
         barbershopId,
@@ -132,11 +149,10 @@ export class CalculateAvailabilityUseCase {
 
     const dayExceptions = allExceptions.filter((e) => {
       const eDate = new Date(e.date).toISOString().split("T")[0];
-      const tDate = date; // date from parameter
-      const matchBarberman = barbermanId
-        ? e.barbermanId?.toString() === barbermanId
-        : !e.barbermanId;
-      return eDate === tDate && matchBarberman;
+      const matchBarberman =
+        !e.barbermanId ||
+        (barbermanId && e.barbermanId?.toString() === barbermanId);
+      return eDate === date && matchBarberman;
     });
 
     const closedAllDay = dayExceptions.some((e) => !e.startTime && !e.endTime);
@@ -156,7 +172,7 @@ export class CalculateAvailabilityUseCase {
     const availableSlots: AvailabilitySlotDTO[] = [];
     const SLOT_STEP_MINUTES = 30; // Fatias geradas a cada 30 minutos
 
-    for (const schedule of daySchedules) {
+    for (const schedule of intervals) {
       const openMinutes = timeToMinutes(schedule.openTime);
       const closeMinutes = timeToMinutes(schedule.closeTime);
 
@@ -164,13 +180,19 @@ export class CalculateAvailabilityUseCase {
 
       while (currentStartMinutes + totalDurationInMinutes <= closeMinutes) {
         const currentEndMinutes = currentStartMinutes + totalDurationInMinutes;
+        const startStr = minutesToTime(currentStartMinutes);
+        const endStr = minutesToTime(currentEndMinutes);
 
-        const overlapsException = dayExceptions.some((ex) => {
-          if (!ex.startTime || !ex.endTime) return true;
-          const exStart = timeToMinutes(ex.startTime);
-          const exEnd = timeToMinutes(ex.endTime);
-          return currentStartMinutes < exEnd && currentEndMinutes > exStart;
-        });
+        const overlapsException = EffectiveScheduleResolver.overlapsException(
+          startStr,
+          endStr,
+          dayExceptions.map((ex) => ({
+            startTime: ex.startTime,
+            endTime: ex.endTime,
+            barbermanId: ex.barbermanId?.toString() ?? null,
+          })),
+          barbermanId,
+        );
 
         const overlapsBooking = dayBookings.some((booking) => {
           const bStart = timeToMinutes(booking.startTime);
@@ -179,9 +201,6 @@ export class CalculateAvailabilityUseCase {
         });
 
         if (!overlapsException && !overlapsBooking) {
-          const startStr = minutesToTime(currentStartMinutes);
-          const endStr = minutesToTime(currentEndMinutes);
-
           availableSlots.push({
             start: `${date}T${startStr}:00${offset}`,
             end: `${date}T${endStr}:00${offset}`,

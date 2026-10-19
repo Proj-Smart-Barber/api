@@ -5,6 +5,7 @@ import { InMemoryBookingsRepository } from "../../../../../../test/repositories/
 import { InMemoryBarbershopsRepository } from "../../../../../../test/repositories/in-memory-barbershops-repository";
 import { CalculateAvailabilityUseCase } from "./calculate-availability";
 import { BarbershopSchedule } from "../../../../enterprise/entities/barbershop-schedule";
+import { BarbershopScheduleScope } from "../../../../enterprise/entities/barbershop-schedule-scope";
 import { ScheduleException } from "../../../../enterprise/entities/schedule-exception";
 import { Service } from "../../../../enterprise/entities/service";
 import { Booking } from "../../../../enterprise/entities/booking";
@@ -447,6 +448,249 @@ describe("Calculate Availability", () => {
       expect(result.value.message).toBe(
         "Um ou mais serviços não foram encontrados ou estão inativos para esta barbearia.",
       );
+    }
+  });
+
+  it("should produce slots from general schedule when barberman has scope INHERIT", async () => {
+    // 1. Horário geral: Terça-feira (2026-09-15) das 08:00 às 10:00
+    inMemorySchedulesRepository.items.push(
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        createdBy: new UniqueEntityId("owner-1"),
+        dayOfWeek: "TUESDAY",
+        openTime: "08:00",
+        closeTime: "10:00",
+      }),
+    );
+
+    // 2. Barbeiro sem horários customizados mas com scope INHERIT
+    await inMemorySchedulesRepository.saveScope(
+      BarbershopScheduleScope.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        barbermanId: new UniqueEntityId("barber-inherit"),
+        state: "INHERIT",
+        version: 1,
+      }),
+    );
+
+    inMemoryServicesRepository.items.push(
+      Service.create(
+        {
+          barbershopId: new UniqueEntityId("shop-1"),
+          title: "Corte Cabelo",
+          durationInMinutes: 30,
+          priceInCents: 5000,
+        },
+        new UniqueEntityId("service-1"),
+      ),
+    );
+
+    const result = await sut.execute({
+      barbershopId: "shop-1",
+      barbermanId: "barber-inherit",
+      date: "2026-09-15",
+      serviceIds: ["service-1"],
+    });
+
+    expect(result.isRight()).toBe(true);
+    if (result.isRight()) {
+      // 08:00-08:30, 08:30-09:00, 09:00-09:30, 09:30-10:00 -> 4 slots
+      expect(result.value.availableSlots).toHaveLength(4);
+      expect(result.value.availableSlots[0].start).toContain("08:00");
+    }
+  });
+
+  it("should return 0 slots when barberman has scope CLOSED", async () => {
+    // Horário geral existe
+    inMemorySchedulesRepository.items.push(
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        createdBy: new UniqueEntityId("owner-1"),
+        dayOfWeek: "TUESDAY",
+        openTime: "08:00",
+        closeTime: "18:00",
+      }),
+    );
+
+    // Barbeiro com semana fechada
+    await inMemorySchedulesRepository.saveScope(
+      BarbershopScheduleScope.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        barbermanId: new UniqueEntityId("barber-closed"),
+        state: "CLOSED",
+        version: 1,
+      }),
+    );
+
+    inMemoryServicesRepository.items.push(
+      Service.create(
+        {
+          barbershopId: new UniqueEntityId("shop-1"),
+          title: "Corte Cabelo",
+          durationInMinutes: 30,
+          priceInCents: 5000,
+        },
+        new UniqueEntityId("service-1"),
+      ),
+    );
+
+    const result = await sut.execute({
+      barbershopId: "shop-1",
+      barbermanId: "barber-closed",
+      date: "2026-09-15",
+      serviceIds: ["service-1"],
+    });
+
+    expect(result.isRight()).toBe(true);
+    if (result.isRight()) {
+      expect(result.value.availableSlots).toHaveLength(0);
+    }
+  });
+
+  it("should bound CUSTOM barberman availability by unit general schedule hours (R2)", async () => {
+    // Unidade abre 09:00 as 12:00
+    inMemorySchedulesRepository.items.push(
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        createdBy: new UniqueEntityId("owner-1"),
+        dayOfWeek: "TUESDAY",
+        openTime: "09:00",
+        closeTime: "12:00",
+      }),
+    );
+
+    // Barbeiro com CUSTOM das 08:00 as 15:00
+    inMemorySchedulesRepository.items.push(
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        barbermanId: new UniqueEntityId("barber-wide"),
+        createdBy: new UniqueEntityId("owner-1"),
+        dayOfWeek: "TUESDAY",
+        openTime: "08:00",
+        closeTime: "15:00",
+      }),
+    );
+
+    await inMemorySchedulesRepository.saveScope(
+      BarbershopScheduleScope.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        barbermanId: new UniqueEntityId("barber-wide"),
+        state: "CUSTOM",
+        version: 1,
+      }),
+    );
+
+    inMemoryServicesRepository.items.push(
+      Service.create(
+        {
+          barbershopId: new UniqueEntityId("shop-1"),
+          title: "Corte Cabelo",
+          durationInMinutes: 30,
+          priceInCents: 5000,
+        },
+        new UniqueEntityId("service-1"),
+      ),
+    );
+
+    const result = await sut.execute({
+      barbershopId: "shop-1",
+      barbermanId: "barber-wide",
+      date: "2026-09-15", // Tuesday
+      serviceIds: ["service-1"],
+    });
+
+    expect(result.isRight()).toBe(true);
+    if (result.isRight()) {
+      const starts = result.value.availableSlots.map((s) => s.start);
+      // Não deve conter horários antes das 09:00 nem depois das 12:00
+      expect(starts).not.toContain("2026-09-15T08:00:00-03:00");
+      expect(starts).not.toContain("2026-09-15T08:30:00-03:00");
+      expect(starts).toContain("2026-09-15T09:00:00-03:00");
+      expect(starts).toContain("2026-09-15T11:30:00-03:00");
+      expect(starts).not.toContain("2026-09-15T12:00:00-03:00");
+    }
+  });
+
+  it("should apply unit-wide exceptions even when querying specific barberman (R2)", async () => {
+    // Unidade abre 09:00 as 18:00
+    inMemorySchedulesRepository.items.push(
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        createdBy: new UniqueEntityId("owner-1"),
+        dayOfWeek: "TUESDAY",
+        openTime: "09:00",
+        closeTime: "18:00",
+      }),
+    );
+
+    // Exceção geral na unidade: feriado / fechado o dia todo (barbermanId null)
+    inMemoryScheduleExceptionsRepository.items.push(
+      ScheduleException.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        barbermanId: null,
+        date: new Date("2026-09-15T12:00:00.000Z"),
+        reason: "Feriado Municipal",
+      }),
+    );
+
+    inMemoryServicesRepository.items.push(
+      Service.create(
+        {
+          barbershopId: new UniqueEntityId("shop-1"),
+          title: "Corte Cabelo",
+          durationInMinutes: 30,
+          priceInCents: 5000,
+        },
+        new UniqueEntityId("service-1"),
+      ),
+    );
+
+    const result = await sut.execute({
+      barbershopId: "shop-1",
+      barbermanId: "barber-1",
+      date: "2026-09-15",
+      serviceIds: ["service-1"],
+    });
+
+    expect(result.isRight()).toBe(true);
+    if (result.isRight()) {
+      expect(result.value.availableSlots).toHaveLength(0);
+    }
+  });
+
+  it("should return 0 slots for legacy ambiguous barberman without scope and without schedules (R2)", async () => {
+    inMemorySchedulesRepository.items.push(
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        createdBy: new UniqueEntityId("owner-1"),
+        dayOfWeek: "TUESDAY",
+        openTime: "09:00",
+        closeTime: "18:00",
+      }),
+    );
+
+    inMemoryServicesRepository.items.push(
+      Service.create(
+        {
+          barbershopId: new UniqueEntityId("shop-1"),
+          title: "Corte Cabelo",
+          durationInMinutes: 30,
+          priceInCents: 5000,
+        },
+        new UniqueEntityId("service-1"),
+      ),
+    );
+
+    const result = await sut.execute({
+      barbershopId: "shop-1",
+      barbermanId: "barber-without-schedule-or-scope",
+      date: "2026-09-15",
+      serviceIds: ["service-1"],
+    });
+
+    expect(result.isRight()).toBe(true);
+    if (result.isRight()) {
+      expect(result.value.availableSlots).toHaveLength(0);
     }
   });
 });

@@ -8,17 +8,19 @@ import { DrizzleScheduleExceptionMapper } from "../mappers/drizzle-schedule-exce
 export class DrizzleScheduleExceptionsRepository
   implements ScheduleExceptionsRepository
 {
-  async create(exception: ScheduleException): Promise<void> {
+  async create(exception: ScheduleException, tx?: any): Promise<void> {
+    const client = tx ?? db;
     const data = DrizzleScheduleExceptionMapper.toDrizzle(exception);
-    await db.insert(scheduleExceptions).values({
+    await client.insert(scheduleExceptions).values({
       ...data,
       createdAt: data.createdAt ?? new Date(),
     });
   }
 
-  async save(exception: ScheduleException): Promise<void> {
+  async save(exception: ScheduleException, tx?: any): Promise<void> {
+    const client = tx ?? db;
     const data = DrizzleScheduleExceptionMapper.toDrizzle(exception);
-    await db
+    await client
       .update(scheduleExceptions)
       .set({
         ...data,
@@ -27,8 +29,9 @@ export class DrizzleScheduleExceptionsRepository
       .where(eq(scheduleExceptions.id, data.id));
   }
 
-  async findById(id: string): Promise<ScheduleException | null> {
-    const results = await db
+  async findById(id: string, tx?: any): Promise<ScheduleException | null> {
+    const client = tx ?? db;
+    const results = await client
       .select()
       .from(scheduleExceptions)
       .where(eq(scheduleExceptions.id, id));
@@ -44,8 +47,10 @@ export class DrizzleScheduleExceptionsRepository
 
   async findManyByBarbershopId(
     barbershopId: string,
+    tx?: any,
   ): Promise<ScheduleException[]> {
-    const exceptions = await db
+    const client = tx ?? db;
+    const exceptions = await client
       .select()
       .from(scheduleExceptions)
       .where(eq(scheduleExceptions.barbershopId, barbershopId));
@@ -53,8 +58,9 @@ export class DrizzleScheduleExceptionsRepository
     return exceptions.map(DrizzleScheduleExceptionMapper.toDomain);
   }
 
-  async delete(exception: ScheduleException): Promise<void> {
-    await db
+  async delete(exception: ScheduleException, tx?: any): Promise<void> {
+    const client = tx ?? db;
+    await client
       .delete(scheduleExceptions)
       .where(eq(scheduleExceptions.id, exception.id.toString()));
   }

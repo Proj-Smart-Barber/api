@@ -163,20 +163,21 @@ export class InMemoryBookingsRepository implements BookingsRepository {
 
     if (options?.view === "upcoming") {
       const now = new Date();
-      const terminal = ["CANCELLED", "COMPLETED", "NO_SHOW"];
       customerBookings = customerBookings.filter((b) => {
-        if (b.status && terminal.includes(b.status)) return false;
-        if (b.status && !["CONFIRMED", "IN_PROGRESS"].includes(b.status)) {
+        if (!b.status || !["CONFIRMED", "IN_PROGRESS"].includes(b.status)) {
+          return false;
+        }
+        if (!b.startsAt) {
           return false;
         }
 
-        const ends = b.endsAt
-          ? b.endsAt.getTime()
-          : b.startsAt
-            ? b.startsAt.getTime() + 30 * 60 * 1000
-            : 0;
-        const starts = b.startsAt ? b.startsAt.getTime() : 0;
-        return ends > now.getTime() || starts >= now.getTime();
+        const starts = b.startsAt.getTime();
+        return (
+          starts >= now.getTime() ||
+          (b.endsAt !== null &&
+            b.endsAt !== undefined &&
+            b.endsAt.getTime() > now.getTime())
+        );
       });
 
       customerBookings.sort((a, b) => {
@@ -327,10 +328,27 @@ export class InMemoryBookingsRepository implements BookingsRepository {
     barbermanId: string,
     now: Date,
   ): Promise<Booking[]> {
+    return this.findActiveAndFutureBookings({
+      barbershopId,
+      barbermanId,
+      now,
+    });
+  }
+
+  async findActiveAndFutureBookings({
+    barbershopId,
+    barbermanId,
+    now = new Date(),
+  }: {
+    barbershopId: string;
+    barbermanId?: string | null;
+    now?: Date;
+    tx?: any;
+  }): Promise<Booking[]> {
     const terminal = ["CANCELLED", "COMPLETED", "NO_SHOW"];
     return this.items.filter((b) => {
       if (b.barbershopId.toString() !== barbershopId) return false;
-      if (b.barbermanId.toString() !== barbermanId) return false;
+      if (barbermanId && b.barbermanId.toString() !== barbermanId) return false;
       if (b.status && terminal.includes(b.status)) return false;
 
       const ends = b.endsAt

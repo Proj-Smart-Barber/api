@@ -19,6 +19,8 @@ import {
   bookingEvents,
   notifications,
   operationAttempts,
+  barbershopSchedules,
+  barbershopScheduleScopes,
 } from "../drizzle/schema";
 
 function generateValidCpf(): string {
@@ -170,6 +172,55 @@ describe("Booking Actions Contract & Idempotency E2E (Task I2)", () => {
     ownerToken = sign({ sub: ownerUserId, version: 0 }, env.JWT_SECRET);
     barberToken = sign({ sub: barberUserId, version: 0 }, env.JWT_SECRET);
     customerToken = sign({ sub: customerUserId, version: 0 }, env.JWT_SECRET);
+
+    const days = [
+      "SUNDAY",
+      "MONDAY",
+      "TUESDAY",
+      "WEDNESDAY",
+      "THURSDAY",
+      "FRIDAY",
+      "SATURDAY",
+    ];
+
+    await db.insert(barbershopScheduleScopes).values([
+      {
+        id: randomUUID(),
+        barbershopId: shopId,
+        barbermanId: null,
+        state: "CUSTOM",
+        version: 1,
+      },
+      {
+        id: randomUUID(),
+        barbershopId: shopId,
+        barbermanId: barberUserId,
+        state: "CUSTOM",
+        version: 1,
+      },
+    ]);
+
+    for (const day of days) {
+      await db.insert(barbershopSchedules).values([
+        {
+          id: randomUUID(),
+          barbershopId: shopId,
+          createdBy: ownerUserId,
+          dayOfWeek: day,
+          openTime: "07:00",
+          closeTime: "22:00",
+        },
+        {
+          id: randomUUID(),
+          barbershopId: shopId,
+          barbermanId: barberUserId,
+          createdBy: barberUserId,
+          dayOfWeek: day,
+          openTime: "07:00",
+          closeTime: "22:00",
+        },
+      ]);
+    }
   });
 
   afterAll(async () => {
@@ -197,6 +248,12 @@ describe("Booking Actions Contract & Idempotency E2E (Task I2)", () => {
       await db.delete(services).where(inArray(services.id, testServiceIds));
     }
     if (testShopIds.length > 0) {
+      await db
+        .delete(barbershopSchedules)
+        .where(inArray(barbershopSchedules.barbershopId, testShopIds));
+      await db
+        .delete(barbershopScheduleScopes)
+        .where(inArray(barbershopScheduleScopes.barbershopId, testShopIds));
       await db
         .delete(membership)
         .where(inArray(membership.barbershopId, testShopIds));

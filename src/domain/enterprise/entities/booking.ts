@@ -38,9 +38,9 @@ export interface BookingProps {
 
   // Legacy fields for backward compatibility
   shoppingCartId?: UniqueEntityId | null;
-  date: Date;
-  startTime: string;
-  endTime: string;
+  date?: Date;
+  startTime?: string;
+  endTime?: string;
   paymentStatus?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
@@ -136,15 +136,25 @@ export class Booking extends Entity<BookingProps> {
   }
 
   get date(): Date {
-    return this.props.date;
+    return this.props.date ?? this.props.startsAt ?? new Date();
   }
 
   get startTime(): string {
-    return this.props.startTime;
+    return (
+      this.props.startTime ??
+      (this.props.startsAt
+        ? this.props.startsAt.toTimeString().slice(0, 5)
+        : "00:00")
+    );
   }
 
   get endTime(): string {
-    return this.props.endTime;
+    return (
+      this.props.endTime ??
+      (this.props.endsAt
+        ? this.props.endsAt.toTimeString().slice(0, 5)
+        : "00:00")
+    );
   }
 
   get paymentStatus(): string | null | undefined {
@@ -220,9 +230,22 @@ export class Booking extends Entity<BookingProps> {
     props: Optional<BookingProps, "createdAt" | "version" | "timezone">,
     id?: UniqueEntityId,
   ): Booking {
+    const startsAt = props.startsAt;
+    const endsAt = props.endsAt;
+    const derivedDate = props.date ?? (startsAt ? startsAt : new Date());
+    const derivedStartTime =
+      props.startTime ??
+      (startsAt ? startsAt.toISOString().substring(11, 16) : "00:00");
+    const derivedEndTime =
+      props.endTime ??
+      (endsAt ? endsAt.toISOString().substring(11, 16) : "00:30");
+
     const booking = new Booking(
       {
         ...props,
+        date: derivedDate,
+        startTime: derivedStartTime,
+        endTime: derivedEndTime,
         timezone: props.timezone ?? "America/Sao_Paulo",
         version: props.version ?? 1,
         services: props.services ?? [],

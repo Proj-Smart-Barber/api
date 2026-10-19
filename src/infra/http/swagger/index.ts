@@ -1611,7 +1611,9 @@ export const swaggerDocument = {
               },
             },
           },
-          "400": { description: "Validation error or invalid invitation state" },
+          "400": {
+            description: "Validation error or invalid invitation state",
+          },
           "401": { description: "Unauthorized" },
           "403": { description: "Forbidden - not unit owner" },
           "404": { description: "Invitation or barbershop not found" },
@@ -1622,7 +1624,11 @@ export const swaggerDocument = {
                 schema: {
                   type: "object",
                   properties: {
-                    error: { type: "string", example: "Aguarde 60 segundos antes de reenviar este convite." },
+                    error: {
+                      type: "string",
+                      example:
+                        "Aguarde 60 segundos antes de reenviar este convite.",
+                    },
                     code: { type: "string", example: "RESEND_COOLDOWN" },
                     retryAfterSeconds: { type: "integer", example: 60 },
                   },
@@ -2179,9 +2185,78 @@ export const swaggerDocument = {
       },
     },
     "/api/barbershops/{shopId}/schedules": {
+      get: {
+        tags: ["Schedules"],
+        summary:
+          "Fetch barbershop general schedule or professional schedule scope",
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "barbermanId",
+            in: "query",
+            required: false,
+            schema: { type: "string", format: "uuid" },
+            description:
+              "Optional professional ID to fetch individual schedule scope",
+          },
+        ],
+        responses: {
+          "200": {
+            description:
+              "Schedules retrieved successfully with state and effective intervals",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    schedules: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: { type: "string", format: "uuid" },
+                          dayOfWeek: { type: "string" },
+                          openTime: { type: "string" },
+                          closeTime: { type: "string" },
+                        },
+                      },
+                    },
+                    effectiveSchedules: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          dayOfWeek: { type: "string" },
+                          openTime: { type: "string" },
+                          closeTime: { type: "string" },
+                        },
+                      },
+                    },
+                    state: {
+                      type: "string",
+                      enum: ["INHERIT", "CUSTOM", "CLOSED"],
+                    },
+                    version: { type: "integer" },
+                    needsReview: { type: "boolean" },
+                    serverTime: { type: "string", format: "date-time" },
+                  },
+                },
+              },
+            },
+          },
+          "404": {
+            description: "Barbershop not found",
+          },
+        },
+      },
       put: {
         tags: ["Schedules"],
-        summary: "Update barbershop schedules",
+        summary: "Update general barbershop schedule or professional schedule",
         security: [{ bearerAuth: [] }],
         parameters: [
           {
@@ -2195,6 +2270,16 @@ export const swaggerDocument = {
             in: "query",
             required: false,
             schema: { type: "string", format: "uuid" },
+            description:
+              "Target professional ID. If omitted, targets unit general schedule (OWNER only)",
+          },
+          {
+            name: "Idempotency-Key",
+            in: "header",
+            required: false,
+            schema: { type: "string" },
+            description:
+              "Optional UUIDv7 idempotency key for durable execution",
           },
         ],
         requestBody: {
@@ -2204,10 +2289,24 @@ export const swaggerDocument = {
               schema: {
                 type: "object",
                 properties: {
+                  state: {
+                    type: "string",
+                    enum: ["INHERIT", "CUSTOM", "CLOSED"],
+                    description: "Explicit individual schedule state",
+                  },
+                  expectedVersion: {
+                    type: "integer",
+                    description: "Optimistic concurrency control version",
+                  },
+                  requestId: {
+                    type: "string",
+                    description: "Optional request identifier",
+                  },
                   schedules: {
                     type: "array",
                     items: {
                       type: "object",
+                      required: ["dayOfWeek", "openTime", "closeTime"],
                       properties: {
                         dayOfWeek: {
                           type: "string",
@@ -2234,15 +2333,86 @@ export const swaggerDocument = {
         responses: {
           "200": {
             description: "Schedules updated successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean" },
+                    state: {
+                      type: "string",
+                      enum: ["INHERIT", "CUSTOM", "CLOSED"],
+                    },
+                    version: { type: "integer" },
+                    schedules: { type: "array", items: { type: "object" } },
+                    effectiveSchedules: {
+                      type: "array",
+                      items: { type: "object" },
+                    },
+                    serverTime: { type: "string", format: "date-time" },
+                  },
+                },
+              },
+            },
           },
           "400": {
-            description: "Validation error",
+            description: "Validation error or invalid schedule containment",
           },
           "403": {
-            description: "Forbidden (Not Allowed)",
+            description:
+              "Forbidden (Not Allowed: Inactive membership, colleague, or unit mismatch)",
           },
           "404": {
             description: "Barbershop not found",
+          },
+          "409": {
+            description:
+              "Conflict: SCHEDULE_BOOKING_CONFLICT, SCHEDULE_CUSTOM_CONFLICT, SCHEDULE_VERSION_CONFLICT, OPERATION_IN_PROGRESS, or IDEMPOTENCY_PAYLOAD_MISMATCH",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    code: {
+                      type: "string",
+                      enum: [
+                        "SCHEDULE_BOOKING_CONFLICT",
+                        "SCHEDULE_CUSTOM_CONFLICT",
+                        "SCHEDULE_VERSION_CONFLICT",
+                        "OPERATION_IN_PROGRESS",
+                        "IDEMPOTENCY_PAYLOAD_MISMATCH",
+                      ],
+                      example: "SCHEDULE_BOOKING_CONFLICT",
+                    },
+                    message: { type: "string" },
+                    conflicts: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          bookingId: { type: "string", format: "uuid" },
+                          startsAt: { type: "string", format: "date-time" },
+                          endsAt: { type: "string", format: "date-time" },
+                          status: { type: "string" },
+                        },
+                      },
+                    },
+                    customScheduleConflicts: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          barbermanId: { type: "string", format: "uuid" },
+                          dayOfWeek: { type: "string" },
+                          openTime: { type: "string" },
+                          closeTime: { type: "string" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -3232,6 +3402,397 @@ export const swaggerDocument = {
           "409": {
             description:
               "Conflict (ACTION_DEADLINE_PASSED, BOOKING_VERSION_CONFLICT, TERMINAL_BOOKING_STATE)",
+          },
+        },
+      },
+    },
+    "/api/barbershops/{shopId}/location": {
+      get: {
+        tags: ["Location", "Barbershops"],
+        summary: "Consultar estado da localização comercial da barbearia",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+            description: "ID da unidade barbearia",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Estado da localização retornado com sucesso",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    shopId: { type: "string", format: "uuid" },
+                    address: { type: "string" },
+                    status: {
+                      type: "string",
+                      enum: ["CONFIRMED", "UNCONFIRMED", "NEEDS_REVIEW"],
+                    },
+                    source: {
+                      type: "string",
+                      enum: ["GOOGLE", "MANUAL"],
+                    },
+                    version: { type: "integer" },
+                    point: {
+                      type: "object",
+                      nullable: true,
+                      properties: {
+                        latitude: { type: "number" },
+                        longitude: { type: "number" },
+                      },
+                    },
+                    confirmedAt: {
+                      type: "string",
+                      format: "date-time",
+                      nullable: true,
+                    },
+                    acquiredAt: {
+                      type: "string",
+                      format: "date-time",
+                      nullable: true,
+                    },
+                    validUntil: {
+                      type: "string",
+                      format: "date-time",
+                      nullable: true,
+                    },
+                    lastOwnerMutation: {
+                      type: "object",
+                      nullable: true,
+                      properties: {
+                        id: { type: "string" },
+                        commandHash: { type: "string" },
+                        savedVersion: { type: "integer" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "403": {
+            description:
+              "Proibido: Apenas proprietário ativo da unidade pode consultar a localização comercial",
+          },
+          "404": {
+            description: "Barbearia não encontrada",
+          },
+        },
+      },
+      patch: {
+        tags: ["Location", "Barbershops"],
+        summary: "Atualizar e confirmar localização comercial da barbearia",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+            description: "ID da unidade barbearia",
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: [
+                  "address",
+                  "candidateId",
+                  "latitude",
+                  "longitude",
+                  "expectedVersion",
+                  "mutationId",
+                ],
+                properties: {
+                  address: { type: "string", minLength: 3, maxLength: 255 },
+                  candidateId: { type: "string", format: "uuid" },
+                  latitude: { type: "number", minimum: -90, maximum: 90 },
+                  longitude: { type: "number", minimum: -180, maximum: 180 },
+                  expectedVersion: { type: "integer", minimum: 0 },
+                  mutationId: { type: "string", minLength: 1, maxLength: 128 },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Localização atualizada e confirmada com sucesso",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: [
+                    "shopId",
+                    "address",
+                    "status",
+                    "source",
+                    "version",
+                  ],
+                  properties: {
+                    shopId: { type: "string", format: "uuid" },
+                    address: { type: "string" },
+                    status: {
+                      type: "string",
+                      enum: ["CONFIRMED", "UNCONFIRMED", "NEEDS_REVIEW"],
+                      example: "CONFIRMED",
+                    },
+                    source: {
+                      type: "string",
+                      enum: ["GOOGLE", "MANUAL"],
+                      example: "GOOGLE",
+                    },
+                    version: { type: "integer", example: 1 },
+                    point: {
+                      type: "object",
+                      nullable: true,
+                      required: ["latitude", "longitude"],
+                      properties: {
+                        latitude: { type: "number", example: -23.55052 },
+                        longitude: { type: "number", example: -46.633308 },
+                      },
+                    },
+                    confirmedAt: {
+                      type: "string",
+                      format: "date-time",
+                      nullable: true,
+                    },
+                    acquiredAt: {
+                      type: "string",
+                      format: "date-time",
+                      nullable: true,
+                    },
+                    validUntil: {
+                      type: "string",
+                      format: "date-time",
+                      nullable: true,
+                    },
+                    lastOwnerMutation: {
+                      type: "object",
+                      nullable: true,
+                      properties: {
+                        id: { type: "string" },
+                        commandHash: { type: "string" },
+                        savedVersion: { type: "integer" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Parâmetros inválidos ou candidato expirado/utilizado",
+          },
+          "403": {
+            description:
+              "Proibido: Não autorizado, unidade/vínculo inativo ou candidato pertence a outro usuário/unidade",
+          },
+          "404": {
+            description:
+              "Barbearia ou candidato de geocodificação não encontrado",
+          },
+          "409": {
+            description:
+              "Conflito: LOCATION_VERSION_CONFLICT ou IDEMPOTENCY_PAYLOAD_MISMATCH",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    code: {
+                      type: "string",
+                      enum: [
+                        "LOCATION_VERSION_CONFLICT",
+                        "IDEMPOTENCY_PAYLOAD_MISMATCH",
+                      ],
+                      example: "LOCATION_VERSION_CONFLICT",
+                    },
+                    message: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/geocoding/search": {
+      post: {
+        tags: ["Location"],
+        summary: "Buscar candidatos de endereço via Google Geocoding",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["address"],
+                properties: {
+                  address: { type: "string", minLength: 3, maxLength: 255 },
+                  shopId: { type: "string", format: "uuid", nullable: true },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description:
+              "Candidatos encontrados retornados com validade efêmera (15 minutos)",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["candidates", "serverTime"],
+                  properties: {
+                    candidates: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        required: [
+                          "candidateId",
+                          "displayAddress",
+                          "point",
+                          "expiresAt",
+                          "attribution",
+                        ],
+                        properties: {
+                          candidateId: { type: "string", format: "uuid" },
+                          displayAddress: {
+                            type: "string",
+                            example:
+                              "Av. Paulista, 1000 - Bela Vista, São Paulo - SP, Brasil",
+                          },
+                          point: {
+                            type: "object",
+                            required: ["latitude", "longitude"],
+                            properties: {
+                              latitude: { type: "number", example: -23.564886 },
+                              longitude: {
+                                type: "number",
+                                example: -46.651918,
+                              },
+                            },
+                          },
+                          expiresAt: { type: "string", format: "date-time" },
+                          attribution: {
+                            type: "string",
+                            example: "Google Maps",
+                          },
+                        },
+                      },
+                    },
+                    serverTime: { type: "string", format: "date-time" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Erro de validação dos parâmetros (VALIDATION_ERROR)",
+          },
+          "403": {
+            description:
+              "Proibido (FORBIDDEN): Usuário sem elegibilidade de onboarding de proprietário, sem vínculo ativo de OWNER ou unidade inativa",
+          },
+          "404": {
+            description: "Barbearia não encontrada (NOT_FOUND)",
+          },
+          "429": {
+            description:
+              "Quota local de buscas excedida (GEOCODING_QUOTA_EXCEEDED: 30/hora ou 100/dia)",
+            headers: {
+              "Retry-After": {
+                schema: { type: "string", example: "3600" },
+                description:
+                  "Segundos recomendados de espera até liberação da janela de quota",
+              },
+            },
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    code: {
+                      type: "string",
+                      example: "GEOCODING_QUOTA_EXCEEDED",
+                    },
+                    message: { type: "string" },
+                    retryAfterSeconds: { type: "integer", example: 3600 },
+                  },
+                },
+              },
+            },
+          },
+          "503": {
+            description:
+              "Serviço de geocodificação indisponível, sem chave configurada ou timeout (LOCATION_SERVICE_UNAVAILABLE)",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    code: {
+                      type: "string",
+                      example: "LOCATION_SERVICE_UNAVAILABLE",
+                    },
+                    message: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/internal/locations/refresh": {
+      get: {
+        tags: ["Internal"],
+        summary:
+          "Varredura periódica de manutenção geográfica (expirações em lote e health heartbeat)",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Varredura de manutenção executada com sucesso",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: [
+                    "status",
+                    "sweptLocationsCount",
+                    "deletedCandidatesCount",
+                    "deletedBucketsCount",
+                    "heartbeatAt",
+                  ],
+                  properties: {
+                    status: { type: "string", example: "OK" },
+                    sweptLocationsCount: { type: "integer", example: 0 },
+                    deletedCandidatesCount: { type: "integer", example: 5 },
+                    deletedBucketsCount: { type: "integer", example: 2 },
+                    heartbeatAt: { type: "string", format: "date-time" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description:
+              "Falha durante execução da manutenção (MAINTENANCE_ERROR)",
+          },
+          "401": {
+            description: "Token CRON_SECRET ausente ou inválido (UNAUTHORIZED)",
           },
         },
       },

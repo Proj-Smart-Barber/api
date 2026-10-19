@@ -7,6 +7,7 @@ import {
   gt,
   ne,
   isNull,
+  isNotNull,
   notInArray,
   inArray,
   or,
@@ -41,6 +42,16 @@ import { ShoppingCartMapper } from "../../../domain/enterprise/mappers/shopping-
 import { UniqueEntityId } from "../../../core/entities/unique-entity-id";
 
 export class DrizzleBookingsRepository implements BookingsRepository {
+  private customDb?: any;
+
+  constructor(customDb?: any) {
+    this.customDb = customDb;
+  }
+
+  private get database(): any {
+    return this.customDb ?? db;
+  }
+
   async findManyByBarbermanAndDate({
     barbermanId,
     date,
@@ -518,45 +529,45 @@ export class DrizzleBookingsRepository implements BookingsRepository {
       const now = new Date();
       const limit = options.limit ?? 1;
 
-      const rows = await db
-        .select({ id: bookings.id })
-        .from(bookings)
-        .leftJoin(shoppingCarts, eq(bookings.shoppingCartId, shoppingCarts.id))
-        .where(
-          and(
-            or(
-              eq(bookings.customerId, customerId),
-              eq(shoppingCarts.userId, customerId),
-            ),
-            or(
-              isNull(bookings.status),
-              inArray(bookings.status, ["CONFIRMED", "IN_PROGRESS"]),
-            ),
-            or(
-              gt(bookings.endsAt, now),
+      return this.database.transaction(
+        async (tx: any) => {
+          const rows = await tx
+            .select({ id: bookings.id })
+            .from(bookings)
+            .leftJoin(
+              shoppingCarts,
+              eq(bookings.shoppingCartId, shoppingCarts.id),
+            )
+            .where(
               and(
-                isNull(bookings.endsAt),
-                gte(
-                  bookings.startsAt,
-                  new Date(now.getTime() - 60 * 60 * 1000),
+                or(
+                  eq(bookings.customerId, customerId),
+                  eq(shoppingCarts.userId, customerId),
                 ),
+                inArray(bookings.status, ["CONFIRMED", "IN_PROGRESS"]),
+                isNotNull(bookings.startsAt),
+                or(gte(bookings.startsAt, now), gt(bookings.endsAt, now)),
               ),
-              gte(bookings.startsAt, now),
-            ),
-          ),
-        )
-        .orderBy(asc(bookings.startsAt), asc(bookings.id))
-        .limit(limit);
+            )
+            .orderBy(asc(bookings.startsAt), asc(bookings.id))
+            .limit(limit);
 
-      const detailsList: BookingDetails[] = [];
-      for (const row of rows) {
-        const details = await this.getDetails(row.id);
-        if (details) {
-          detailsList.push(details);
-        }
-      }
+          const detailsList: BookingDetails[] = [];
+          for (const row of rows) {
+            const details = await this.getDetails(row.id, tx);
+            if (
+              details &&
+              details.status &&
+              ["CONFIRMED", "IN_PROGRESS"].includes(details.status)
+            ) {
+              detailsList.push(details);
+            }
+          }
 
-      return detailsList;
+          return detailsList;
+        },
+        { isolationLevel: "repeatable read", accessMode: "read only" },
+      );
     }
 
     const page = options?.page ?? 1;
@@ -646,6 +657,48 @@ export class DrizzleBookingsRepository implements BookingsRepository {
           ),
         ),
       );
+
+    return rows.map(BookingMapper.toDomain);
+  }
+
+  async findActiveAndFutureBookings({
+    barbershopId,
+    barbermanId,
+    now = new Date(),
+    tx,
+  }: {
+    barbershopId: string;
+    barbermanId?: string | null;
+    now?: Date;
+    tx?: any;
+  }): Promise<Booking[]> {
+    const terminalStatuses = ["CANCELLED", "COMPLETED", "NO_SHOW"];
+    const executor = tx ?? db;
+
+    const conditions = [
+      eq(bookings.barbershopId, barbershopId),
+      or(
+        isNull(bookings.status),
+        notInArray(bookings.status, terminalStatuses),
+      ),
+      or(
+        gt(bookings.endsAt, now),
+        and(
+          isNull(bookings.endsAt),
+          gte(bookings.startsAt, new Date(now.getTime() - 60 * 60 * 1000)),
+        ),
+        gte(bookings.startsAt, now),
+      ),
+    ];
+
+    if (barbermanId) {
+      conditions.push(eq(bookings.barbermanId, barbermanId));
+    }
+
+    const rows = await executor
+      .select()
+      .from(bookings)
+      .where(and(...conditions));
 
     return rows.map(BookingMapper.toDomain);
   }

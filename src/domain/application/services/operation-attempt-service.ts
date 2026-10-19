@@ -17,7 +17,8 @@ export type OperationResourceKind =
   | "BOOKING"
   | "MEMBERSHIP"
   | "REGISTRATION"
-  | "INVITATION";
+  | "INVITATION"
+  | "SCHEDULE";
 
 export type OperationAttemptState =
   | "PENDING"
