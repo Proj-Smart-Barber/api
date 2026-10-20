@@ -11,5 +11,11 @@
       "source": "/(.*)",
       "destination": "/src/app.ts"
     }
+  ],
+  "crons": [
+    {
+      "schedule": "0 6 * * *",
+      "path": "/api/internal/locations/refresh"
+    }
   ]
 }
