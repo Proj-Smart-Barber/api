@@ -16,6 +16,7 @@ import {
 } from "../schema";
 import app from "../../../app";
 import { DemoSeedEngine } from "./engine";
+import { DEMO_BARBERSHOPS } from "./fixtures";
 
 interface TestReport {
   passed: number;
@@ -67,8 +68,8 @@ async function runVerification() {
   const allCustomers = allUsers.filter((u) => !staffIds.has(u.id));
 
   assert(
-    allShops.length >= 2,
-    `Mínimo de 2 barbearias encontradas (atual: ${allShops.length})`,
+    allShops.length >= DEMO_BARBERSHOPS.length,
+    `Mínimo de ${DEMO_BARBERSHOPS.length} barbearias encontradas (atual: ${allShops.length})`,
   );
   assert(
     allStaffs.length >= 8,

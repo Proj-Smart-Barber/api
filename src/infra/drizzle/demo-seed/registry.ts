@@ -122,6 +122,7 @@ export class SeedRegistryManager {
       "services",
       "barbershop_schedules",
       "membership",
+      "barbershop_locations",
       "barbershops",
       "customers",
       "staffs",

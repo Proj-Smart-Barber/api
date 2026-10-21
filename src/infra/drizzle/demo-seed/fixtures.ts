@@ -1,5 +1,6 @@
 import type {
   DemoBarbershopFixture,
+  DemoMembershipFixture,
   DemoBookingFixture,
   DemoCustomerFixture,
   DemoScheduleExceptionFixture,
@@ -7,6 +8,7 @@ import type {
   DemoServiceFixture,
   DemoStaffFixture,
 } from "./types";
+import { DEMO_REGIONAL_LOCATIONS } from "./regional-locations";
 
 export const DEMO_STAFFS: DemoStaffFixture[] = [
   // ── Unidade Horizonte ─────────────────────────────────────
@@ -109,7 +111,7 @@ export const DEMO_BARBERSHOPS: DemoBarbershopFixture[] = [
     ownerLogicalKey: "horizonte:staff:wellington",
     slug: "barbearia-horizonte-demo",
     cnpj: "11222333000144",
-    location: "Av. Paulista, 1500 - Bela Vista, São Paulo - SP",
+    ...DEMO_REGIONAL_LOCATIONS.horizonte,
     timezone: "America/Sao_Paulo",
     status: "ACTIVE",
   },
@@ -119,11 +121,67 @@ export const DEMO_BARBERSHOPS: DemoBarbershopFixture[] = [
     ownerLogicalKey: "estacao:staff:alvaro",
     slug: "barbearia-estacao-demo",
     cnpj: "55666777000188",
-    location: "Av. Francisco Glicério, 1000 - Centro, Campinas - SP",
+    ...DEMO_REGIONAL_LOCATIONS.estacao,
+    timezone: "America/Sao_Paulo",
+    status: "ACTIVE",
+  },
+  {
+    logicalKey: "norte:barbershop",
+    name: "Barbearia Santana — Demonstração",
+    ownerLogicalKey: "horizonte:staff:wellington",
+    slug: "barbearia-norte-demo",
+    cnpj: "99000001000101",
+    ...DEMO_REGIONAL_LOCATIONS.norte,
+    timezone: "America/Sao_Paulo",
+    status: "ACTIVE",
+  },
+  {
+    logicalKey: "sul:barbershop",
+    name: "Barbearia Santo Amaro — Demonstração",
+    ownerLogicalKey: "estacao:staff:alvaro",
+    slug: "barbearia-sul-demo",
+    cnpj: "99000002000148",
+    ...DEMO_REGIONAL_LOCATIONS.sul,
+    timezone: "America/Sao_Paulo",
+    status: "ACTIVE",
+  },
+  {
+    logicalKey: "oeste:barbershop",
+    name: "Barbearia Pompeia — Demonstração",
+    ownerLogicalKey: "horizonte:staff:wellington",
+    slug: "barbearia-oeste-demo",
+    cnpj: "99000003000192",
+    ...DEMO_REGIONAL_LOCATIONS.oeste,
     timezone: "America/Sao_Paulo",
     status: "ACTIVE",
   },
 ];
+
+export function buildDemoMemberships(): DemoMembershipFixture[] {
+  const original = DEMO_STAFFS.map((staff) => ({
+    logicalKey: `${staff.logicalKey}:membership`,
+    barbershopLogicalKey: `${staff.unitKey}:barbershop`,
+    staffLogicalKey: staff.logicalKey,
+    role: staff.role,
+  }));
+  const additionalOwners = DEMO_BARBERSHOPS.filter(
+    (shop) =>
+      !original.some(
+        (member) =>
+          member.barbershopLogicalKey === shop.logicalKey &&
+          member.staffLogicalKey === shop.ownerLogicalKey,
+      ),
+  );
+  return [
+    ...original,
+    ...additionalOwners.map((shop) => ({
+      logicalKey: `${shop.logicalKey}:owner-membership`,
+      barbershopLogicalKey: shop.logicalKey,
+      staffLogicalKey: shop.ownerLogicalKey,
+      role: "OWNER" as const,
+    })),
+  ];
+}
 
 export const DEMO_SERVICES: DemoServiceFixture[] = [
   // ── Unidade Horizonte (7 serviços: 6 ativos, 1 inativo) ────
@@ -261,6 +319,34 @@ export const DEMO_SERVICES: DemoServiceFixture[] = [
     isActive: false, // inativo conforme especificação
   },
 ];
+
+for (const shop of DEMO_BARBERSHOPS.slice(2)) {
+  DEMO_SERVICES.push(
+    ...[
+      {
+        key: "corte",
+        title: "Corte de demonstração",
+        price: 4500,
+        minutes: 30,
+      },
+      {
+        key: "barba",
+        title: "Barba de demonstração",
+        price: 3500,
+        minutes: 20,
+      },
+    ].map((service) => ({
+      logicalKey: `${shop.logicalKey}:service:${service.key}`,
+      barbershopLogicalKey: shop.logicalKey,
+      title: service.title,
+      description:
+        "Serviço fictício para demonstração do fluxo de agendamento.",
+      priceInCents: service.price,
+      durationInMinutes: service.minutes,
+      isActive: true,
+    })),
+  );
+}
 
 export const DEMO_CUSTOMERS: DemoCustomerFixture[] = [
   // Clientes Horizonte
@@ -584,6 +670,21 @@ export function buildDemoSchedules(): DemoScheduleFixture[] {
     });
   }
 
+  for (const shop of DEMO_BARBERSHOPS.slice(2)) {
+    for (const day of [...hzDays, "SATURDAY" as const]) {
+      for (const professional of [undefined, shop.ownerLogicalKey]) {
+        list.push({
+          logicalKey: `${shop.logicalKey}:schedule:${professional ? "owner" : "general"}:${day.toLowerCase()}`,
+          barbershopLogicalKey: shop.logicalKey,
+          barbermanLogicalKey: professional,
+          createdByLogicalKey: shop.ownerLogicalKey,
+          dayOfWeek: day,
+          openTime: "09:00",
+          closeTime: "18:00",
+        });
+      }
+    }
+  }
   return list;
 }
 
