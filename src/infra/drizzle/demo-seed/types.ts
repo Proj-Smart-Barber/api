@@ -13,7 +13,23 @@ export interface DemoStaffFixture {
   defaultPasswordHash?: string;
 }
 
-export interface DemoBarbershopFixture {
+export interface DemoRegionalLocation {
+  region: "CENTRO" | "NORTE" | "SUL" | "LESTE" | "OESTE";
+  location: string;
+  point: { latitude: number; longitude: number };
+  referenceName: string;
+  addressSourceUrl: string;
+  coordinateSourceUrl: string;
+}
+
+export interface DemoMembershipFixture {
+  logicalKey: string;
+  barbershopLogicalKey: string;
+  staffLogicalKey: string;
+  role: Role;
+}
+
+export interface DemoBarbershopFixture extends DemoRegionalLocation {
   logicalKey: string;
   name: string;
   ownerLogicalKey: string;
@@ -100,7 +116,16 @@ export interface DemoSeedExecutionSummary {
     isLocal: boolean;
   };
   dryRun: boolean;
-  counts: Record<string, { planned: number; created: number; reused: number }>;
+  counts: Record<
+    string,
+    {
+      planned: number;
+      created: number;
+      reused: number;
+      updated?: number;
+      preserved?: number;
+    }
+  >;
   createdIds: Record<string, string>; // logicalKey -> UUID
 }
 

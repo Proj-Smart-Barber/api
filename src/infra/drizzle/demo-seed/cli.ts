@@ -1,3 +1,4 @@
+import { DEMO_BARBERSHOPS } from "./fixtures";
 import "dotenv/config";
 import { DemoSeedEngine } from "./engine";
 
@@ -60,6 +61,8 @@ async function main() {
         Planejados: stat.planned,
         Criados: stat.created,
         Reaproveitados: stat.reused,
+        Atualizados: stat.updated ?? 0,
+        Preservados: stat.preserved ?? 0,
       })),
     );
 
@@ -68,12 +71,11 @@ async function main() {
         "---------------------------------------------------------------",
       );
       console.log("UNIDADES DE DEMONSTRAÇÃO GERADAS:");
-      console.log(
-        `  • Barbearia Horizonte: ${summary.createdIds["horizonte:barbershop"] || "N/A"}`,
-      );
-      console.log(
-        `  • Barbearia Estação:   ${summary.createdIds["estacao:barbershop"] || "N/A"}`,
-      );
+      for (const shop of DEMO_BARBERSHOPS) {
+        console.log(
+          `  • ${shop.name} (${shop.region}): ${summary.createdIds[shop.logicalKey] || "N/A"}`,
+        );
+      }
 
       console.log(
         "---------------------------------------------------------------",

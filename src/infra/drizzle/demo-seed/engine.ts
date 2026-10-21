@@ -21,9 +21,11 @@ import {
   DEMO_EXCEPTIONS,
   DEMO_STAFFS,
   buildDemoSchedules,
+  buildDemoMemberships,
   DEMO_SERVICES,
 } from "./fixtures";
 import { SeedRegistryManager } from "./registry";
+import { reconcileDemoGeography } from "./geography";
 import {
   hashPlainText,
   inspectDatabaseTarget,
@@ -127,13 +129,18 @@ export class DemoSeedEngine {
       ? await this.safeGetRegistryMap(DEMO_SEED_NAMESPACE)
       : await this.registry.getExistingRecords(DEMO_SEED_NAMESPACE);
 
-    const counts: Record<
-      string,
-      { planned: number; created: number; reused: number }
-    > = {
+    const allMemberships = buildDemoMemberships();
+    const counts: DemoSeedExecutionSummary["counts"] = {
       staffs: { planned: DEMO_STAFFS.length, created: 0, reused: 0 },
       barbershops: { planned: DEMO_BARBERSHOPS.length, created: 0, reused: 0 },
-      membership: { planned: DEMO_STAFFS.length, created: 0, reused: 0 },
+      membership: { planned: allMemberships.length, created: 0, reused: 0 },
+      barbershop_locations: {
+        planned: DEMO_BARBERSHOPS.length,
+        created: 0,
+        reused: 0,
+        updated: 0,
+        preserved: 0,
+      },
       barbershop_schedules: { planned: 0, created: 0, reused: 0 },
       services: { planned: DEMO_SERVICES.length, created: 0, reused: 0 },
       customers: { planned: DEMO_CUSTOMERS.length, created: 0, reused: 0 },
@@ -278,9 +285,22 @@ export class DemoSeedEngine {
       }
     }
 
+    for (const shopFixture of DEMO_BARBERSHOPS) {
+      if (isDryRun) continue;
+      const result = await reconcileDemoGeography(
+        db,
+        resolvedIds[shopFixture.logicalKey],
+        shopFixture,
+        resolvedIds[shopFixture.ownerLogicalKey],
+      );
+      const stat = counts.barbershop_locations;
+      stat[result.action] = (stat[result.action] ?? 0) + 1;
+      resolvedIds[`${shopFixture.logicalKey}:location`] = result.locationId;
+    }
+
     // ── 3. Memberships ──────────────────────────────────────────
-    for (const staffFixture of DEMO_STAFFS) {
-      const membershipKey = `${staffFixture.logicalKey}:membership`;
+    for (const membershipFixture of allMemberships) {
+      const membershipKey = membershipFixture.logicalKey;
       const reg = existingRegistry.get(membershipKey);
 
       if (reg) {
@@ -289,9 +309,9 @@ export class DemoSeedEngine {
       } else {
         counts.membership.created++;
         if (!isDryRun) {
-          const shopKey = `${staffFixture.unitKey}:barbershop`;
-          const barbershopId = resolvedIds[shopKey];
-          const staffId = resolvedIds[staffFixture.logicalKey];
+          const barbershopId =
+            resolvedIds[membershipFixture.barbershopLogicalKey];
+          const staffId = resolvedIds[membershipFixture.staffLogicalKey];
 
           const existingMember = await db
             .select({ id: membership.id })
@@ -309,7 +329,7 @@ export class DemoSeedEngine {
               .values({
                 barbershopId,
                 userId: staffId,
-                role: staffFixture.role,
+                role: membershipFixture.role,
               })
               .returning({ id: membership.id });
             memberId = created.id;
