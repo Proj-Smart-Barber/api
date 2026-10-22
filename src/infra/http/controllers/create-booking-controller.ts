@@ -105,7 +105,9 @@ export class CreateBookingController implements Controller {
 
         const payloadHash = canonicalOperationHash({
           action: "CREATE_BOOKING",
-          slotStartAt: parsed.slotStartAt ? new Date(parsed.slotStartAt).toISOString() : undefined,
+          slotStartAt: parsed.slotStartAt
+            ? new Date(parsed.slotStartAt).toISOString()
+            : undefined,
           scope: parsed.scope,
           shopId: resolvedShopId,
           customerId: parsed.customerId ?? parsed.userId,
@@ -144,6 +146,7 @@ export class CreateBookingController implements Controller {
               expectedDurationInMinutes: parsed.expectedDurationInMinutes,
               clientRequestId: rawRequestId,
               tx,
+              clockTime: serverTime,
             });
 
             if (result.isLeft()) {

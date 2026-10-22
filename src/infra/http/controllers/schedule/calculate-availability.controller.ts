@@ -15,15 +15,16 @@ export class CalculateAvailabilityController implements Controller {
 
   async handle(request: unknown): Promise<HttpResponse> {
     const schema = z.object({
-      shopId: z.string(),
-      date: z.string(),
+      shopId: z.uuid(),
+      date: z.iso.date(),
       serviceIds: z
         .union([z.string(), z.array(z.string())])
         .transform((val) => {
           if (typeof val === "string") return val.split(",");
           return val;
-        }),
-      barbermanId: z.string().nullable().optional(),
+        })
+        .pipe(z.array(z.uuid()).min(1)),
+      barbermanId: z.uuid().nullable().optional(),
     });
 
     try {
@@ -41,10 +42,14 @@ export class CalculateAvailabilityController implements Controller {
         return clientError(error.message);
       }
 
-      return ok({
-        slots: result.value.availableSlots,
-        serverTime: new Date().toISOString(),
-      });
+      return {
+        ...ok({
+          slots: result.value.availableSlots,
+          serverTime: result.value.serverTime,
+          timezone: result.value.timezone,
+        }),
+        headers: { "Cache-Control": "no-store", Pragma: "no-cache" },
+      };
     } catch (err: unknown) {
       if (err instanceof z.ZodError) {
         return clientError({ errors: err.issues });

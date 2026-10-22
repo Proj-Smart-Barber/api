@@ -73,7 +73,7 @@ export class InMemoryBookingsRepository implements BookingsRepository {
       }
       if (
         booking.barbermanId.toString() !== barbermanId ||
-        booking.barbershopId.toString() !== barbershopId
+        booking.status === "CANCELLED"
       ) {
         return false;
       }
@@ -107,6 +107,7 @@ export class InMemoryBookingsRepository implements BookingsRepository {
   async findManyByBarbermanAndDate({
     barbermanId,
     date,
+    range,
   }: FindManyByBarbermanAndDateParams): Promise<Booking[]> {
     const targetDateStr = date.toISOString().split("T")[0];
 
@@ -114,7 +115,10 @@ export class InMemoryBookingsRepository implements BookingsRepository {
       const bookingDateStr = booking.date.toISOString().split("T")[0];
       return (
         booking.barbermanId.toString() === barbermanId &&
-        bookingDateStr === targetDateStr
+        booking.status !== "CANCELLED" &&
+        (range && booking.startsAt && booking.endsAt
+          ? booking.startsAt < range.endAt && booking.endsAt > range.startAt
+          : bookingDateStr === targetDateStr)
       );
     });
   }

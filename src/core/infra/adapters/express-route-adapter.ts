@@ -29,7 +29,8 @@ export const adaptRoute = (controller: Controller) => {
       request.originalUrl?.includes("/operation-attempts") ||
       request.originalUrl?.includes("/bookings") ||
       request.originalUrl?.includes("/customers/lookup") ||
-      request.originalUrl?.includes("/barbershops/nearby")
+      request.originalUrl?.includes("/barbershops/nearby") ||
+      request.originalUrl?.includes("/availability")
     ) {
       response.setHeader("Cache-Control", "no-store");
       response.setHeader("Pragma", "no-cache");

@@ -12,6 +12,8 @@ import {
   inArray,
   or,
   asc,
+  sql,
+  getTableColumns,
 } from "drizzle-orm";
 import { db } from "../index";
 import {
@@ -41,6 +43,10 @@ import { ServiceItemMapper } from "../../../domain/enterprise/mappers/service-it
 import { ShoppingCartMapper } from "../../../domain/enterprise/mappers/shopping-cart-mapper";
 import { UniqueEntityId } from "../../../core/entities/unique-entity-id";
 
+// Legacy civil times belong to the booking timezone, never the UTC hour of a new request.
+const blockingStart = sql<Date>`coalesce(${bookings.startsAt}, ((${bookings.date}::date + ${bookings.startTime}::time) at time zone ${bookings.timezone}))`;
+const blockingEnd = sql<Date>`coalesce(${bookings.endsAt}, ((${bookings.date}::date + ${bookings.endTime}::time) at time zone ${bookings.timezone}))`;
+
 export class DrizzleBookingsRepository implements BookingsRepository {
   private customDb?: any;
 
@@ -55,12 +61,37 @@ export class DrizzleBookingsRepository implements BookingsRepository {
   async findManyByBarbermanAndDate({
     barbermanId,
     date,
+    range,
   }: FindManyByBarbermanAndDateParams): Promise<Booking[]> {
+    if (range) {
+      const result = await this.database
+        .select({
+          ...getTableColumns(bookings),
+          startsAt: blockingStart,
+          endsAt: blockingEnd,
+        })
+        .from(bookings)
+        .where(
+          and(
+            eq(bookings.barbermanId, barbermanId),
+            or(ne(bookings.status, "CANCELLED"), isNull(bookings.status)),
+            lt(blockingStart, range.endAt),
+            gt(blockingEnd, range.startAt),
+          ),
+        );
+      return result.map((row: typeof bookings.$inferSelect) =>
+        BookingMapper.toDomain({
+          ...row,
+          startsAt: row.startsAt == null ? null : new Date(row.startsAt),
+          endsAt: row.endsAt == null ? null : new Date(row.endsAt),
+        }),
+      );
+    }
     const dateStr = new Date(date).toISOString().split("T")[0];
     const startOfDay = new Date(`${dateStr}T00:00:00.000Z`);
     const endOfDay = new Date(`${dateStr}T23:59:59.999Z`);
 
-    const result = await db
+    const result = await this.database
       .select()
       .from(bookings)
       .where(
@@ -72,7 +103,9 @@ export class DrizzleBookingsRepository implements BookingsRepository {
         ),
       );
 
-    return result.map((row) => BookingMapper.toDomain(row));
+    return result.map((row: typeof bookings.$inferSelect) =>
+      BookingMapper.toDomain(row),
+    );
   }
 
   async create(booking: Booking): Promise<void> {
@@ -255,32 +288,13 @@ export class DrizzleBookingsRepository implements BookingsRepository {
     excludeBookingId,
     tx,
   }: FindOverlappingParams): Promise<Booking | null> {
-    const client = tx ?? db;
-    const targetDateStr = startAt.toISOString().split("T")[0];
-    const targetStartOfDay = new Date(`${targetDateStr}T00:00:00.000Z`);
-
-    const startHour = String(startAt.getUTCHours()).padStart(2, "0");
-    const startMin = String(startAt.getUTCMinutes()).padStart(2, "0");
-    const targetStartTime = `${startHour}:${startMin}`;
-
-    const endHour = String(endAt.getUTCHours()).padStart(2, "0");
-    const endMin = String(endAt.getUTCMinutes()).padStart(2, "0");
-    const targetEndTime = `${endHour}:${endMin}`;
+    const client = tx ?? this.database;
 
     const filters = [
       eq(bookings.barbermanId, barbermanId),
       or(ne(bookings.status, "CANCELLED"), isNull(bookings.status)),
-      or(
-        and(
-          bookings.startsAt ? lt(bookings.startsAt, endAt) : undefined,
-          bookings.endsAt ? gt(bookings.endsAt, startAt) : undefined,
-        ),
-        and(
-          eq(bookings.date, targetStartOfDay),
-          lt(bookings.startTime, targetEndTime),
-          gt(bookings.endTime, targetStartTime),
-        ),
-      ),
+      lt(blockingStart, endAt),
+      gt(blockingEnd, startAt),
     ];
 
     if (excludeBookingId) {

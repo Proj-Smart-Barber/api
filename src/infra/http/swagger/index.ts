@@ -14,6 +14,79 @@ export const swaggerDocument = {
     },
   ],
   paths: {
+    "/api/barbershops/{shopId}/availability": {
+      get: {
+        tags: ["Schedules"],
+        summary:
+          "List future slots in the shop timezone for selected services and professional",
+        description:
+          "Uncached snapshot, not a hold. Only starts strictly after the returned PostgreSQL serverTime are offered. Booking creation revalidates time and global professional conflicts under transaction locks.",
+        parameters: [
+          {
+            name: "shopId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "date",
+            in: "query",
+            required: true,
+            schema: { type: "string", format: "date" },
+          },
+          {
+            name: "serviceIds",
+            in: "query",
+            required: true,
+            description: "Comma-separated unique service UUIDs",
+            schema: { type: "string" },
+          },
+          {
+            name: "barbermanId",
+            in: "query",
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Current future slots; an empty array is valid",
+            headers: {
+              "Cache-Control": {
+                schema: { type: "string", example: "no-store" },
+              },
+            },
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["slots", "serverTime", "timezone"],
+                  properties: {
+                    slots: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        required: ["start", "end"],
+                        properties: {
+                          start: { type: "string", format: "date-time" },
+                          end: { type: "string", format: "date-time" },
+                        },
+                      },
+                    },
+                    serverTime: { type: "string", format: "date-time" },
+                    timezone: { type: "string", example: "America/Sao_Paulo" },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Invalid date, service or identifier" },
+          "500": {
+            description:
+              "Availability or authoritative clock could not be read",
+          },
+        },
+      },
+    },
     "/": {
       get: {
         tags: ["Health"],

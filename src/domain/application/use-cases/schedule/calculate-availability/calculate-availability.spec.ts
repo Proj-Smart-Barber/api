@@ -19,9 +19,11 @@ let inMemoryServicesRepository: InMemoryServicesRepository;
 let inMemoryBookingsRepository: InMemoryBookingsRepository;
 let inMemoryBarbershopsRepository: InMemoryBarbershopsRepository;
 let sut: CalculateAvailabilityUseCase;
+let serverNow: Date;
 
 describe("Calculate Availability", () => {
   beforeEach(() => {
+    serverNow = new Date("2026-09-01T00:00:00Z");
     inMemorySchedulesRepository = new InMemorySchedulesRepository();
     inMemoryScheduleExceptionsRepository =
       new InMemoryScheduleExceptionsRepository();
@@ -35,6 +37,7 @@ describe("Calculate Availability", () => {
       inMemoryServicesRepository,
       inMemoryBookingsRepository,
       inMemoryBarbershopsRepository,
+      () => serverNow,
     );
 
     inMemoryBarbershopsRepository.items.push(
@@ -51,6 +54,158 @@ describe("Calculate Availability", () => {
         new UniqueEntityId("shop-1"),
       ),
     );
+  });
+
+  it.each([
+    ["2026-10-21T21:57:00Z", []],
+    ["2026-10-21T13:00:00Z", ["10:30", "11:00", "11:30"]],
+    ["2026-10-22T02:59:59Z", []],
+    [
+      "2026-10-20T23:57:00Z",
+      ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30"],
+    ],
+  ])(
+    "filters elapsed instants using shop timezone at %s",
+    async (now, expected) => {
+      serverNow = new Date(now);
+      inMemorySchedulesRepository.items.push(
+        BarbershopSchedule.create({
+          barbershopId: new UniqueEntityId("shop-1"),
+          createdBy: new UniqueEntityId("owner-1"),
+          barbermanId: new UniqueEntityId("barber-1"),
+          dayOfWeek: "WEDNESDAY",
+          openTime: "09:00",
+          closeTime: "12:00",
+        }),
+      );
+      inMemoryServicesRepository.items.push(
+        Service.create(
+          {
+            barbershopId: new UniqueEntityId("shop-1"),
+            title: "Corte",
+            durationInMinutes: 30,
+            priceInCents: 4000,
+          },
+          new UniqueEntityId("service-1"),
+        ),
+      );
+      const result = await sut.execute({
+        barbershopId: "shop-1",
+        date: "2026-10-21",
+        serviceIds: ["service-1"],
+        barbermanId: "barber-1",
+      });
+      expect(result.isRight()).toBe(true);
+      if (result.isRight()) {
+        expect(
+          result.value.availableSlots.map((slot) => slot.start.slice(11, 16)),
+        ).toEqual(expected);
+        expect(result.value.serverTime).toBe(serverNow.toISOString());
+        expect(result.value.timezone).toBe("America/Sao_Paulo");
+      }
+    },
+  );
+
+  it("ignores cancelled bookings and blocks canonical overlap across another unit's civil date", async () => {
+    inMemorySchedulesRepository.items.push(
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        createdBy: new UniqueEntityId("owner-1"),
+        barbermanId: new UniqueEntityId("barber-1"),
+        dayOfWeek: "WEDNESDAY",
+        openTime: "09:00",
+        closeTime: "10:30",
+      }),
+    );
+    inMemoryServicesRepository.items.push(
+      Service.create(
+        {
+          barbershopId: new UniqueEntityId("shop-1"),
+          title: "Corte",
+          durationInMinutes: 30,
+          priceInCents: 4000,
+        },
+        new UniqueEntityId("service-1"),
+      ),
+    );
+    for (const [status, start, end] of [
+      ["CONFIRMED", "12:00", "12:30"],
+      ["CANCELLED", "12:30", "13:00"],
+    ]) {
+      inMemoryBookingsRepository.items.push(
+        Booking.create({
+          barbershopId: new UniqueEntityId("other-shop"),
+          barbermanId: new UniqueEntityId("barber-1"),
+          customerId: new UniqueEntityId("customer"),
+          date: new Date("2026-10-22T00:00:00Z"),
+          startTime: "01:00",
+          endTime: "01:30",
+          timezone: "Pacific/Auckland",
+          status,
+          startsAt: new Date(`2026-10-21T${start}:00Z`),
+          endsAt: new Date(`2026-10-21T${end}:00Z`),
+        }),
+      );
+    }
+    const result = await sut.execute({
+      barbershopId: "shop-1",
+      date: "2026-10-21",
+      serviceIds: ["service-1"],
+      barbermanId: "barber-1",
+    });
+    if (!result.isRight()) throw result.value;
+    expect(
+      result.value.availableSlots.map((slot) => slot.start.slice(11, 16)),
+    ).toEqual(["09:30", "10:00"]);
+  });
+
+  it("keeps the selected civil weekday in UTC+14 instead of using the previous UTC day", async () => {
+    serverNow = new Date("2026-10-20T19:00:00Z");
+    inMemoryBarbershopsRepository.items = [
+      Barbershop.create(
+        {
+          name: "UTC14 fixture",
+          ownerId: new UniqueEntityId("owner-1"),
+          timezone: "Pacific/Kiritimati",
+          slug: Slug.create("utc14-fixture"),
+          cnpj: "12345678901234",
+          location: "Fixture",
+          status: "ACTIVE",
+        },
+        new UniqueEntityId("shop-1"),
+      ),
+    ];
+    inMemorySchedulesRepository.items.push(
+      BarbershopSchedule.create({
+        barbershopId: new UniqueEntityId("shop-1"),
+        barbermanId: new UniqueEntityId("barber-1"),
+        createdBy: new UniqueEntityId("owner-1"),
+        dayOfWeek: "WEDNESDAY",
+        openTime: "09:00",
+        closeTime: "10:00",
+      }),
+    );
+    inMemoryServicesRepository.items.push(
+      Service.create(
+        {
+          barbershopId: new UniqueEntityId("shop-1"),
+          title: "Fixture",
+          durationInMinutes: 30,
+          priceInCents: 4000,
+        },
+        new UniqueEntityId("service-1"),
+      ),
+    );
+    const result = await sut.execute({
+      barbershopId: "shop-1",
+      date: "2026-10-21",
+      serviceIds: ["service-1"],
+      barbermanId: "barber-1",
+    });
+    if (!result.isRight()) throw result.value;
+    expect(result.value.availableSlots).toEqual([
+      { start: "2026-10-21T09:30:00+14:00", end: "2026-10-21T10:00:00+14:00" },
+    ]);
   });
 
   it("should be able to calculate availability for a regular open day", async () => {

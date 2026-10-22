@@ -50,7 +50,11 @@ interface AvailabilitySlotDTO {
 
 type CalculateAvailabilityResponse = Either<
   Error,
-  { availableSlots: AvailabilitySlotDTO[] }
+  {
+    availableSlots: AvailabilitySlotDTO[];
+    serverTime: string;
+    timezone: string;
+  }
 >;
 
 export class CalculateAvailabilityUseCase {
@@ -60,6 +64,7 @@ export class CalculateAvailabilityUseCase {
     private servicesRepository: ServicesRepository,
     private bookingsRepository: BookingsRepository,
     private barbershopsRepository: BarbershopsRepository,
+    private now: () => Date | Promise<Date> = () => new Date(),
   ) {}
 
   async execute({
@@ -97,8 +102,8 @@ export class CalculateAvailabilityUseCase {
     );
 
     // 2. Buscar a jornada para o dia da semana
-    const targetDate = new Date(`${date}T12:00:00${offset}`);
-    const dayOfWeekIndex = targetDate.getUTCDay();
+    const targetDate = new Date(`${date}T12:00:00Z`);
+    const dayOfWeekIndex = new Date(`${date}T12:00:00Z`).getUTCDay();
     const daysMap = [
       "SUNDAY",
       "MONDAY",
@@ -138,7 +143,11 @@ export class CalculateAvailabilityUseCase {
       });
 
     if (intervals.length === 0) {
-      return right({ availableSlots: [] });
+      return right({
+        availableSlots: [],
+        serverTime: (await this.now()).toISOString(),
+        timezone,
+      });
     }
 
     // 3. Buscar exceções do dia (tanto gerais da unidade quanto individuais)
@@ -157,14 +166,27 @@ export class CalculateAvailabilityUseCase {
 
     const closedAllDay = dayExceptions.some((e) => !e.startTime && !e.endTime);
     if (closedAllDay) {
-      return right({ availableSlots: [] });
+      return right({
+        availableSlots: [],
+        serverTime: (await this.now()).toISOString(),
+        timezone,
+      });
     }
 
     // 4. Buscar Bookings do dia
+    const nextDate = new Date(Date.parse(`${date}T00:00:00Z`) + 86400000)
+      .toISOString()
+      .slice(0, 10);
     const dayBookings = barbermanId
       ? await this.bookingsRepository.findManyByBarbermanAndDate({
           barbermanId,
           date: targetDate, // we pass the Date object which represents the correct day
+          range: {
+            startAt: new Date(`${date}T00:00:00${offset}`),
+            endAt: new Date(
+              `${nextDate}T00:00:00${getOffsetForTimezone(nextDate, timezone)}`,
+            ),
+          },
         })
       : [];
 
@@ -182,6 +204,8 @@ export class CalculateAvailabilityUseCase {
         const currentEndMinutes = currentStartMinutes + totalDurationInMinutes;
         const startStr = minutesToTime(currentStartMinutes);
         const endStr = minutesToTime(currentEndMinutes);
+        const start = `${date}T${startStr}:00${offset}`;
+        const end = `${date}T${endStr}:00${offset}`;
 
         const overlapsException = EffectiveScheduleResolver.overlapsException(
           startStr,
@@ -195,6 +219,13 @@ export class CalculateAvailabilityUseCase {
         );
 
         const overlapsBooking = dayBookings.some((booking) => {
+          if (booking.status === "CANCELLED") return false;
+          if (booking.startsAt && booking.endsAt) {
+            return (
+              Date.parse(start) < booking.endsAt.getTime() &&
+              Date.parse(end) > booking.startsAt.getTime()
+            );
+          }
           const bStart = timeToMinutes(booking.startTime);
           const bEnd = timeToMinutes(booking.endTime);
           return currentStartMinutes < bEnd && currentEndMinutes > bStart;
@@ -202,8 +233,8 @@ export class CalculateAvailabilityUseCase {
 
         if (!overlapsException && !overlapsBooking) {
           availableSlots.push({
-            start: `${date}T${startStr}:00${offset}`,
-            end: `${date}T${endStr}:00${offset}`,
+            start,
+            end,
           });
         }
 
@@ -211,6 +242,13 @@ export class CalculateAvailabilityUseCase {
       }
     }
 
-    return right({ availableSlots });
+    const serverTime = await this.now();
+    return right({
+      availableSlots: availableSlots.filter(
+        (slot) => Date.parse(slot.start) > serverTime.getTime(),
+      ),
+      serverTime: serverTime.toISOString(),
+      timezone,
+    });
   }
 }
