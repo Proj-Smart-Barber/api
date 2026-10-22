@@ -5,6 +5,8 @@ import { DrizzleBookingsRepository } from "../../drizzle/repositories/drizzle-bo
 import { DrizzleBarbershopsRepository } from "../../drizzle/repositories/drizzle-barbershops-repository";
 import { CalculateAvailabilityUseCase } from "../../../domain/application/use-cases/schedule/calculate-availability/calculate-availability";
 import { CalculateAvailabilityController } from "../controllers/schedule/calculate-availability.controller";
+import { sql } from "drizzle-orm";
+import { db } from "../../drizzle";
 
 export function makeCalculateAvailabilityController() {
   const schedulesRepository = new DrizzleSchedulesRepository();
@@ -20,6 +22,15 @@ export function makeCalculateAvailabilityController() {
     servicesRepository,
     bookingsRepository,
     barbershopsRepository,
+    async () => {
+      const result = await db.execute(
+        sql`SELECT clock_timestamp() AS server_time`,
+      );
+      const now = new Date(result.rows[0]?.server_time as string);
+      if (!Number.isFinite(now.getTime()))
+        throw new Error("DATABASE_CLOCK_UNAVAILABLE");
+      return now;
+    },
   );
 
   return new CalculateAvailabilityController(calculateAvailabilityUseCase);

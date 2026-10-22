@@ -14,4 +14,5 @@ export interface CreateBookingDTO {
   expectedDurationInMinutes?: number;
   clientRequestId?: string;
   tx?: any;
+  clockTime?: Date;
 }

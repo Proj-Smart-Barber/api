@@ -398,7 +398,7 @@ export class RescheduleBookingUseCase {
           if (scope) scopeState = scope.state;
         }
 
-        const targetDate = new Date(`${dto.date}T12:00:00${offset}`);
+        const targetDate = new Date(`${dto.date}T12:00:00Z`);
         const dayOfWeekIndex = targetDate.getUTCDay();
         const daysMap = [
           "SUNDAY",

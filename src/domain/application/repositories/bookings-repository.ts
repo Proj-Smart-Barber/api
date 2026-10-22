@@ -28,6 +28,7 @@ export interface FindOverlappingParams {
 export interface FindManyByBarbermanAndDateParams {
   barbermanId: string;
   date: Date;
+  range?: { startAt: Date; endAt: Date };
 }
 
 export interface FindManyByShoppingCartParams {
