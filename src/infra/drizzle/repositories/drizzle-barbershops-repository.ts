@@ -127,12 +127,32 @@ export class DrizzleBarbershopsRepository implements BarbershopsRepository {
       .set({
         name: barbershop.name,
         location: barbershop.location,
-        avatarUrl: barbershop.avatarUrl,
+        avatarUrl: barbershop.avatarUrl ?? null,
+        googleMapsUrl: barbershop.googleMapsUrl ?? null,
+        coverUrl: barbershop.coverUrl ?? null,
+        rating: barbershop.rating.toFixed(2),
+        reviewCount: barbershop.reviewCount,
         slug: barbershop.slug.value,
         cnpj: barbershop.cnpj,
         status: barbershop.status,
       })
       .where(eq(barbershops.id, barbershop.id.toString()));
+  }
+
+  async updateRatingMetrics(
+    barbershopId: string,
+    rating: number,
+    reviewCount: number,
+    tx?: any
+  ): Promise<void> {
+    const executor = tx ?? this.database;
+    await executor
+      .update(barbershops)
+      .set({
+        rating: rating.toFixed(2),
+        reviewCount,
+      })
+      .where(eq(barbershops.id, barbershopId));
   }
 
   private validateOwnerMembership(

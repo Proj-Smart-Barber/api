@@ -19,6 +19,10 @@ export class DrizzleBarbershopMapper {
         timezone: raw.timezone,
         status: raw.status,
         avatarUrl: raw.avatarUrl ?? undefined,
+        googleMapsUrl: raw.googleMapsUrl ?? undefined,
+        coverUrl: raw.coverUrl ?? undefined,
+        rating: raw.rating ? Number(parseFloat(raw.rating).toFixed(2)) : 0,
+        reviewCount: raw.reviewCount ?? 0,
         createdAt: raw.createdAt ?? undefined,
       },
       new UniqueEntityId(raw.id),
@@ -36,6 +40,10 @@ export class DrizzleBarbershopMapper {
       timezone: barbershop.timezone,
       status: barbershop.status,
       avatarUrl: barbershop.avatarUrl,
+      googleMapsUrl: barbershop.googleMapsUrl ?? null,
+      coverUrl: barbershop.coverUrl ?? null,
+      rating: barbershop.rating.toFixed(2),
+      reviewCount: barbershop.reviewCount,
       createdAt: barbershop.createdAt,
     };
   }

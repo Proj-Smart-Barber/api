@@ -1,4 +1,4 @@
-import { Router } from "express";
+﻿import { Router } from "express";
 import { adaptRoute } from "../../../core/infra/adapters/express-route-adapter";
 import { ensureUserIsAuthenticated } from "../middlewares/ensure-user-is-authenticated";
 import { optionalUserAuthentication } from "../middlewares/optional-user-authentication";

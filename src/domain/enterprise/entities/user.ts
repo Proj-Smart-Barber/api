@@ -28,6 +28,10 @@ export class User extends Entity<UserProps> {
     return this.props.avatarUrl;
   }
 
+  set avatarUrl(url: string | undefined) {
+    this.props.avatarUrl = url;
+  }
+
   get email(): string {
     return this.props.email;
   }

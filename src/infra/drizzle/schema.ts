@@ -6,6 +6,8 @@ import {
   doublePrecision,
   index,
   integer,
+  jsonb,
+  numeric,
   pgEnum,
   pgTable,
   text,
@@ -201,6 +203,10 @@ export const barbershops = pgTable("barbershops", {
   cnpj: text().notNull().unique(),
   location: text().notNull(),
   timezone: text("timezone").notNull().default("America/Sao_Paulo"),
+  googleMapsUrl: text("google_maps_url"),
+  coverUrl: text("cover_url"),
+  rating: numeric("rating", { precision: 3, scale: 2 }).notNull().default("0.00"),
+  reviewCount: integer("review_count").notNull().default(0),
   status: barbershopStatusEnum("status").notNull().default("ACTIVE"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -905,3 +911,166 @@ export const geocodingCandidatesRelations = relations(
     }),
   }),
 );
+
+export const media = pgTable(
+  "media",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    ownerId: uuid("owner_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    ownerType: text("owner_type").notNull().default("USER"),
+    ownerEntityId: uuid("owner_entity_id"),
+    purpose: text("purpose").notNull(),
+    objectKey: text("object_key").notNull().unique(),
+    publicUrl: text("public_url").notNull(),
+    mimeType: text("mime_type").notNull(),
+    fileSize: integer("file_size").notNull(),
+    width: integer("width"),
+    height: integer("height"),
+    generation: integer("generation").notNull().default(1),
+    variants: jsonb("variants"),
+    leaseToken: text("lease_token"),
+    leaseExpiresAt: timestamp("lease_expires_at", { withTimezone: true }),
+    retryCount: integer("retry_count").notNull().default(0),
+    errorMessage: text("error_message"),
+    status: text("status").notNull().default("PENDING"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("media_owner_id_idx").on(table.ownerId),
+    index("media_owner_scope_idx").on(table.ownerType, table.ownerEntityId),
+    index("media_status_created_idx").on(table.status, table.createdAt),
+    index("media_lease_idx").on(table.status, table.leaseExpiresAt),
+  ]
+);
+
+export const barbershopGallery = pgTable(
+  "barbershop_gallery",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    barbershopId: uuid("barbershop_id")
+      .notNull()
+      .references(() => barbershops.id, { onDelete: "cascade" }),
+    mediaId: uuid("media_id")
+      .notNull()
+      .references(() => media.id, { onDelete: "cascade" }),
+    displayOrder: integer("display_order").notNull().default(0),
+    caption: text("caption"),
+    isCover: boolean("is_cover").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("barbershop_gallery_shop_order_idx").on(table.barbershopId, table.displayOrder),
+    uniqueIndex("barbershop_gallery_unique_cover_idx")
+      .on(table.barbershopId)
+      .where(sql`${table.isCover} = true`),
+    uniqueIndex("barbershop_gallery_shop_media_idx").on(
+      table.barbershopId,
+      table.mediaId
+    ),
+  ]
+);
+
+export const reviews = pgTable(
+  "reviews",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    bookingId: uuid("booking_id")
+      .notNull()
+      .unique()
+      .references(() => bookings.id, { onDelete: "cascade" }),
+    barbershopId: uuid("barbershop_id")
+      .notNull()
+      .references(() => barbershops.id, { onDelete: "cascade" }),
+    customerId: uuid("customer_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    rating: integer("rating").notNull(),
+    comment: text("comment"),
+    status: text("status").notNull().default("PUBLISHED"),
+    version: integer("version").notNull().default(1),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    check("reviews_rating_check", sql`${table.rating} >= 1 AND ${table.rating} <= 5`),
+    index("reviews_barbershop_status_idx").on(table.barbershopId, table.status),
+    index("reviews_customer_idx").on(table.customerId),
+  ]
+);
+
+export const reviewReports = pgTable(
+  "review_reports",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    reviewId: uuid("review_id")
+      .notNull()
+      .references(() => reviews.id, { onDelete: "cascade" }),
+    reporterId: uuid("reporter_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    reason: text("reason").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("review_reports_review_idx").on(table.reviewId),
+  ]
+);
+
+export const reviewModerationLogs = pgTable(
+  "review_moderation_logs",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    reviewId: uuid("review_id")
+      .notNull()
+      .references(() => reviews.id, { onDelete: "cascade" }),
+    adminId: uuid("admin_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    action: text("action").notNull(),
+    reason: text("reason").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("review_moderation_logs_review_idx").on(table.reviewId),
+  ]
+);
+
+export const mediaRelations = relations(media, ({ one }) => ({
+  owner: one(users, {
+    fields: [media.ownerId],
+    references: [users.id],
+  }),
+}));
+
+export const barbershopGalleryRelations = relations(barbershopGallery, ({ one }) => ({
+  barbershop: one(barbershops, {
+    fields: [barbershopGallery.barbershopId],
+    references: [barbershops.id],
+  }),
+  media: one(media, {
+    fields: [barbershopGallery.mediaId],
+    references: [media.id],
+  }),
+}));
+
+export const reviewsRelations = relations(reviews, ({ one, many }) => ({
+  booking: one(bookings, {
+    fields: [reviews.bookingId],
+    references: [bookings.id],
+  }),
+  barbershop: one(barbershops, {
+    fields: [reviews.barbershopId],
+    references: [barbershops.id],
+  }),
+  customer: one(users, {
+    fields: [reviews.customerId],
+    references: [users.id],
+  }),
+  reports: many(reviewReports),
+  moderationLogs: many(reviewModerationLogs),
+}));
+

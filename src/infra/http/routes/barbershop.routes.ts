@@ -17,6 +17,16 @@ import { ensureUserIsAuthenticated } from "../middlewares/ensure-user-is-authent
 import { bookingCustomerLookupLimit } from "../middlewares/booking-customer-lookup-limit";
 import { makeGetBarbershopLocationController } from "../factories/make-get-barbershop-location-controller";
 import { makeUpdateBarbershopLocationController } from "../factories/make-update-barbershop-location-controller";
+import { makeUpdateBarbershopLogoController } from "../factories/make-update-barbershop-logo-controller";
+import { makeUpdateBarbershopGoogleUrlController } from "../factories/make-update-barbershop-google-url-controller";
+import {
+  makeListBarbershopGalleryController,
+  makeAddBarbershopGalleryPhotoController,
+  makeRemoveBarbershopGalleryPhotoController,
+  makeReorderBarbershopGalleryController,
+  makeSetBarbershopGalleryCoverController,
+} from "../factories/make-barbershop-gallery-controllers";
+import { makeListBarbershopReviewsController } from "../factories/make-list-barbershop-reviews-controller";
 import { serviceRoutes } from "./service.routes";
 
 const barbershopRoutes = Router();
@@ -77,6 +87,49 @@ barbershopRoutes.patch(
   "/:shopId/location",
   ensureUserIsAuthenticated,
   adaptRoute(makeUpdateBarbershopLocationController()),
+);
+barbershopRoutes.patch(
+  "/:shopId/logo",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeUpdateBarbershopLogoController()),
+);
+barbershopRoutes.delete(
+  "/:shopId/logo",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeUpdateBarbershopLogoController()),
+);
+barbershopRoutes.patch(
+  "/:shopId/google-url",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeUpdateBarbershopGoogleUrlController()),
+);
+barbershopRoutes.get(
+  "/:shopId/gallery",
+  adaptRoute(makeListBarbershopGalleryController()),
+);
+barbershopRoutes.post(
+  "/:shopId/gallery",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeAddBarbershopGalleryPhotoController()),
+);
+barbershopRoutes.delete(
+  "/:shopId/gallery/:galleryItemId",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeRemoveBarbershopGalleryPhotoController()),
+);
+barbershopRoutes.patch(
+  "/:shopId/gallery/reorder",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeReorderBarbershopGalleryController()),
+);
+barbershopRoutes.patch(
+  "/:shopId/gallery/:galleryItemId/cover",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeSetBarbershopGalleryCoverController()),
+);
+barbershopRoutes.get(
+  "/:shopId/reviews",
+  adaptRoute(makeListBarbershopReviewsController()),
 );
 barbershopRoutes.use("/:shopId/services", serviceRoutes);
 

@@ -1,4 +1,4 @@
-import { Router } from "express";
+﻿import { Router } from "express";
 import { adaptRoute } from "../../../core/infra/adapters/express-route-adapter";
 import { makeFetchNotificationsController } from "../factories/make-fetch-notifications-controller";
 import { makeMarkNotificationAsReadController } from "../factories/make-mark-notification-as-read-controller";

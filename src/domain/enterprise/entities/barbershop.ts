@@ -8,6 +8,10 @@ export type BarbershopStatus = "ACTIVE" | "INACTIVE";
 interface BarbershopProps {
   name: string;
   avatarUrl?: string;
+  googleMapsUrl?: string;
+  coverUrl?: string;
+  rating?: number;
+  reviewCount?: number;
   ownerId: UniqueEntityId;
   slug: Slug;
   cnpj: string;
@@ -24,6 +28,39 @@ export class Barbershop extends Entity<BarbershopProps> {
 
   get avatarUrl(): string | undefined {
     return this.props.avatarUrl;
+  }
+
+  set avatarUrl(url: string | undefined) {
+    this.props.avatarUrl = url;
+  }
+
+  get googleMapsUrl(): string | undefined {
+    return this.props.googleMapsUrl;
+  }
+
+  set googleMapsUrl(url: string | undefined) {
+    this.props.googleMapsUrl = url;
+  }
+
+  get coverUrl(): string | undefined {
+    return this.props.coverUrl;
+  }
+
+  set coverUrl(url: string | undefined) {
+    this.props.coverUrl = url;
+  }
+
+  get rating(): number {
+    return this.props.rating ?? 0;
+  }
+
+  get reviewCount(): number {
+    return this.props.reviewCount ?? 0;
+  }
+
+  updateRatingMetrics(rating: number, count: number): void {
+    this.props.rating = rating;
+    this.props.reviewCount = count;
   }
 
   get ownerId(): UniqueEntityId {

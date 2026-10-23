@@ -92,4 +92,15 @@ export class InMemoryBarbershopsRepository implements BarbershopsRepository {
       this.items.push(barbershop);
     }
   }
+
+  async updateRatingMetrics(
+    barbershopId: string,
+    rating: number,
+    reviewCount: number,
+  ): Promise<void> {
+    const shop = this.items.find((item) => item.id.toString() === barbershopId);
+    if (shop) {
+      shop.updateRatingMetrics(rating, reviewCount);
+    }
+  }
 }

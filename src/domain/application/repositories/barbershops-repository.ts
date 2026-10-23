@@ -14,4 +14,10 @@ export interface BarbershopsRepository {
   ): Promise<Array<{ barbershop: Barbershop; role: string }>>;
   save(barbershop: Barbershop, tx?: unknown): Promise<void>;
   create?(barbershop: Barbershop): Promise<Barbershop>;
+  updateRatingMetrics?(
+    barbershopId: string,
+    rating: number,
+    reviewCount: number,
+    tx?: unknown,
+  ): Promise<void>;
 }
