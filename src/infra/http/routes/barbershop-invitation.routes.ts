@@ -1,4 +1,4 @@
-import { Router } from "express";
+﻿import { Router } from "express";
 import { adaptRoute } from "../../../core/infra/adapters/express-route-adapter";
 import { makeFetchBarbershopInvitationsController } from "../factories/make-fetch-barbershop-invitations-controller";
 import { makeInviteBarbermanController } from "../factories/make-invite-barberman-controller";

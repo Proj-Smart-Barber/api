@@ -20,6 +20,10 @@ export type PublicShop = {
   slug: string;
   location: string;
   avatarUrl: string | null;
+  coverUrl?: string | null;
+  rating?: number | null;
+  reviewCount?: number;
+  googleMapsUrl?: string | null;
   coordinates: GeoPoint | null;
   distanceMeters: number | null;
 };

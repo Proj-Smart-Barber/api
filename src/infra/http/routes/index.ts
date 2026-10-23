@@ -10,6 +10,8 @@ import { operationAttemptRoutes } from "./operation-attempt.routes";
 import { barberRoutes } from "./barber.routes";
 import { geocodingRoutes } from "./geocoding.routes";
 import { internalRoutes } from "./internal.routes";
+import { mediaRoutes } from "./media.routes";
+import { reviewsRoutes } from "./reviews.routes";
 
 const routes = Router();
 
@@ -20,6 +22,8 @@ routes.use("/notifications", notificationRoutes);
 routes.use("/barbershops", barbershopRoutes);
 routes.use("/barbers", barberRoutes);
 routes.use("/bookings", bookingRoutes);
+routes.use("/media", mediaRoutes);
+routes.use("/reviews", reviewsRoutes);
 routes.use("/barbershops/:shopId", scheduleRoutes);
 routes.use("/barbershops/:shopId", barbershopInvitationRoutes);
 routes.use("/operation-attempts", operationAttemptRoutes);

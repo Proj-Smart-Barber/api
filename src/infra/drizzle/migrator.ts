@@ -702,6 +702,92 @@ export async function runSchemaMigrations(targetDb: any = db) {
 
       CREATE INDEX IF NOT EXISTS "barbershop_schedule_scopes_lookup_idx"
       ON "barbershop_schedule_scopes" ("barbershop_id", "barberman_id");
+
+      -- 15. Barbershop media, gallery, ratings and reviews
+      ALTER TABLE "barbershops" ADD COLUMN IF NOT EXISTS "google_maps_url" text;
+      ALTER TABLE "barbershops" ADD COLUMN IF NOT EXISTS "cover_url" text;
+      ALTER TABLE "barbershops" ADD COLUMN IF NOT EXISTS "rating" numeric(3, 2) DEFAULT '0.00' NOT NULL;
+      ALTER TABLE "barbershops" ADD COLUMN IF NOT EXISTS "review_count" integer DEFAULT 0 NOT NULL;
+
+      CREATE TABLE IF NOT EXISTS "media" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+        "owner_id" uuid NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+        "owner_type" text DEFAULT 'USER' NOT NULL,
+        "owner_entity_id" uuid,
+        "purpose" text NOT NULL,
+        "object_key" text NOT NULL UNIQUE,
+        "public_url" text NOT NULL,
+        "mime_type" text NOT NULL,
+        "file_size" integer NOT NULL,
+        "width" integer,
+        "height" integer,
+        "generation" integer DEFAULT 1 NOT NULL,
+        "variants" jsonb,
+        "status" text DEFAULT 'PENDING' NOT NULL,
+        "created_at" timestamp with time zone DEFAULT now() NOT NULL,
+        "updated_at" timestamp with time zone DEFAULT now() NOT NULL
+      );
+      ALTER TABLE "media" ADD COLUMN IF NOT EXISTS "owner_type" text DEFAULT 'USER' NOT NULL;
+      ALTER TABLE "media" ADD COLUMN IF NOT EXISTS "owner_entity_id" uuid;
+      ALTER TABLE "media" ADD COLUMN IF NOT EXISTS "generation" integer DEFAULT 1 NOT NULL;
+      ALTER TABLE "media" ADD COLUMN IF NOT EXISTS "variants" jsonb;
+      ALTER TABLE "media" ADD COLUMN IF NOT EXISTS "lease_token" text;
+      ALTER TABLE "media" ADD COLUMN IF NOT EXISTS "lease_expires_at" timestamp with time zone;
+      ALTER TABLE "media" ADD COLUMN IF NOT EXISTS "retry_count" integer DEFAULT 0 NOT NULL;
+      ALTER TABLE "media" ADD COLUMN IF NOT EXISTS "error_message" text;
+      CREATE INDEX IF NOT EXISTS "media_owner_id_idx" ON "media"("owner_id");
+      CREATE INDEX IF NOT EXISTS "media_owner_scope_idx" ON "media"("owner_type", "owner_entity_id");
+      CREATE INDEX IF NOT EXISTS "media_status_created_idx" ON "media"("status", "created_at");
+      CREATE INDEX IF NOT EXISTS "media_lease_idx" ON "media"("status", "lease_expires_at");
+
+      CREATE TABLE IF NOT EXISTS "barbershop_gallery" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+        "barbershop_id" uuid NOT NULL REFERENCES "barbershops"("id") ON DELETE CASCADE,
+        "media_id" uuid NOT NULL REFERENCES "media"("id") ON DELETE CASCADE,
+        "display_order" integer DEFAULT 0 NOT NULL,
+        "caption" text,
+        "is_cover" boolean DEFAULT false NOT NULL,
+        "created_at" timestamp with time zone DEFAULT now() NOT NULL,
+        "updated_at" timestamp with time zone DEFAULT now() NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS "barbershop_gallery_shop_order_idx" ON "barbershop_gallery"("barbershop_id", "display_order");
+      CREATE UNIQUE INDEX IF NOT EXISTS "barbershop_gallery_unique_cover_idx" ON "barbershop_gallery"("barbershop_id") WHERE "is_cover" = true;
+      CREATE UNIQUE INDEX IF NOT EXISTS "barbershop_gallery_shop_media_idx" ON "barbershop_gallery"("barbershop_id", "media_id");
+
+      CREATE TABLE IF NOT EXISTS "reviews" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+        "booking_id" uuid NOT NULL UNIQUE REFERENCES "bookings"("id") ON DELETE CASCADE,
+        "barbershop_id" uuid NOT NULL REFERENCES "barbershops"("id") ON DELETE CASCADE,
+        "customer_id" uuid NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+        "rating" integer NOT NULL,
+        "comment" text,
+        "status" text DEFAULT 'PUBLISHED' NOT NULL,
+        "version" integer DEFAULT 1 NOT NULL,
+        "created_at" timestamp with time zone DEFAULT now() NOT NULL,
+        "updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+        CONSTRAINT "reviews_rating_check" CHECK ("rating" >= 1 AND "rating" <= 5)
+      );
+      CREATE INDEX IF NOT EXISTS "reviews_barbershop_status_idx" ON "reviews"("barbershop_id", "status");
+      CREATE INDEX IF NOT EXISTS "reviews_customer_idx" ON "reviews"("customer_id");
+
+      CREATE TABLE IF NOT EXISTS "review_reports" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+        "review_id" uuid NOT NULL REFERENCES "reviews"("id") ON DELETE CASCADE,
+        "reporter_id" uuid NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+        "reason" text NOT NULL,
+        "created_at" timestamp with time zone DEFAULT now() NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS "review_reports_review_idx" ON "review_reports"("review_id");
+
+      CREATE TABLE IF NOT EXISTS "review_moderation_logs" (
+        "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+        "review_id" uuid NOT NULL REFERENCES "reviews"("id") ON DELETE CASCADE,
+        "admin_id" uuid NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+        "action" text NOT NULL,
+        "reason" text NOT NULL,
+        "created_at" timestamp with time zone DEFAULT now() NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS "review_moderation_logs_review_idx" ON "review_moderation_logs"("review_id");
     `);
 
     if (isDefaultDb) {

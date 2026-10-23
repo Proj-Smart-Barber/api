@@ -22,6 +22,15 @@ const envSchema = z.object({
   VERIFICATION_TOKEN_EXPIRES_IN: z.string().default("1d"),
   PASSWORD_RECOVERY_TOKEN_EXPIRES_IN: z.string().default("1h"),
   INVITATION_EXPIRES_IN: z.string().default("7d"),
+  STORAGE_ENDPOINT: z.string().optional(),
+  STORAGE_BUCKET: z.string().optional(),
+  STORAGE_STAGING_BUCKET: z.string().optional(),
+  STORAGE_PUBLIC_BUCKET: z.string().optional(),
+  STORAGE_ACCESS_KEY_ID: z.string().optional(),
+  STORAGE_SECRET_ACCESS_KEY: z.string().optional(),
+  STORAGE_PUBLIC_URL: z.string().optional(),
+  STORAGE_REGION: z.string().optional().default("auto"),
+  CRON_SECRET: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);

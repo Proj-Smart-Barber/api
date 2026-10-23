@@ -138,6 +138,10 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
         b.slug,
         b.location,
         b.avatar_url,
+        b.cover_url,
+        b.rating,
+        b.review_count,
+        b.google_maps_url,
         bl.latitude,
         bl.longitude,
         (${eligibilitySql}) AS is_eligible
@@ -159,12 +163,26 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
             }
           : null;
 
+      const rawRating =
+        row.rating !== null && row.rating !== undefined
+          ? parseFloat(String(row.rating))
+          : null;
+      const reviewCount = Number(row.review_count ?? 0);
+      const rating =
+        rawRating !== null && !Number.isNaN(rawRating) && reviewCount > 0
+          ? Number(rawRating.toFixed(2))
+          : null;
+
       return {
         id: row.id,
         name: row.name,
         slug: row.slug,
         location: row.location,
         avatarUrl: row.avatar_url ?? null,
+        coverUrl: row.cover_url ?? null,
+        rating,
+        reviewCount,
+        googleMapsUrl: row.google_maps_url ?? null,
         coordinates,
         distanceMeters: null,
       };
@@ -290,6 +308,10 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
         b.slug,
         b.location,
         b.avatar_url,
+        b.cover_url,
+        b.rating,
+        b.review_count,
+        b.google_maps_url,
         bl.latitude,
         bl.longitude,
         (${haversineSql}) AS distance_meters
@@ -302,18 +324,34 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
       OFFSET ${offset}
     `);
 
-    const items: PublicShop[] = rowsResult.rows.map((row: any) => ({
-      id: row.id,
-      name: row.name,
-      slug: row.slug,
-      location: row.location,
-      avatarUrl: row.avatar_url ?? null,
-      coordinates: {
-        latitude: Number(row.latitude),
-        longitude: Number(row.longitude),
-      },
-      distanceMeters: Number(row.distance_meters),
-    }));
+    const items: PublicShop[] = rowsResult.rows.map((row: any) => {
+      const rawRating =
+        row.rating !== null && row.rating !== undefined
+          ? parseFloat(String(row.rating))
+          : null;
+      const reviewCount = Number(row.review_count ?? 0);
+      const rating =
+        rawRating !== null && !Number.isNaN(rawRating) && reviewCount > 0
+          ? Number(rawRating.toFixed(2))
+          : null;
+
+      return {
+        id: row.id,
+        name: row.name,
+        slug: row.slug,
+        location: row.location,
+        avatarUrl: row.avatar_url ?? null,
+        coverUrl: row.cover_url ?? null,
+        rating,
+        reviewCount,
+        googleMapsUrl: row.google_maps_url ?? null,
+        coordinates: {
+          latitude: Number(row.latitude),
+          longitude: Number(row.longitude),
+        },
+        distanceMeters: Number(row.distance_meters),
+      };
+    });
 
     return {
       items,

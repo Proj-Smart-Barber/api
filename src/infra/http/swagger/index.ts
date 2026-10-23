@@ -3870,6 +3870,276 @@ export const swaggerDocument = {
         },
       },
     },
+    "/api/media/upload-intent": {
+      post: {
+        tags: ["Media"],
+        summary: "Iniciar intenção de upload de mídia",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["purpose", "fileName", "contentType", "fileSize"],
+                properties: {
+                  purpose: {
+                    type: "string",
+                    enum: ["USER_AVATAR", "BARBERSHOP_LOGO", "BARBERSHOP_COVER", "BARBERSHOP_GALLERY"],
+                  },
+                  fileName: { type: "string" },
+                  contentType: { type: "string", example: "image/jpeg" },
+                  fileSize: { type: "number", example: 1048576 },
+                  barbershopId: { type: "string", format: "uuid" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": { description: "URL pré-assinada para upload direto gerada com sucesso" },
+          "400": { description: "Erro de validação (tamanho, formato inválido ou HEIC)" },
+        },
+      },
+    },
+    "/api/media/{mediaId}/confirm": {
+      post: {
+        tags: ["Media"],
+        summary: "Confirmar upload de mídia e validar integridade/dimensões",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "mediaId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        responses: {
+          "200": { description: "Mídia validada, metadados EXIF/GPS removidos e status READY" },
+          "400": { description: "Arquivo inválido, corrompido ou dimensões excessivas" },
+        },
+      },
+    },
+    "/api/users/me/avatar": {
+      patch: {
+        tags: ["Users"],
+        summary: "Atualizar avatar do usuário autenticado",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["mediaId"],
+                properties: { mediaId: { type: "string", format: "uuid" } },
+              },
+            },
+          },
+        },
+        responses: { "200": { description: "Avatar atualizado com sucesso" } },
+      },
+      delete: {
+        tags: ["Users"],
+        summary: "Remover avatar do usuário autenticado",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Avatar removido com sucesso" } },
+      },
+    },
+    "/api/barbershops/{shopId}/logo": {
+      patch: {
+        tags: ["Barbershops"],
+        summary: "Atualizar logo da barbearia (apenas OWNER ativo)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "shopId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["mediaId"],
+                properties: { mediaId: { type: "string", format: "uuid" } },
+              },
+            },
+          },
+        },
+        responses: { "200": { description: "Logo atualizado com sucesso" } },
+      },
+    },
+    "/api/barbershops/{shopId}/google-url": {
+      patch: {
+        tags: ["Barbershops"],
+        summary: "Configurar ou remover link público oficial do perfil Google/Maps",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "shopId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  googleMapsUrl: { type: "string", nullable: true, example: "https://maps.app.goo.gl/xyz" },
+                },
+              },
+            },
+          },
+        },
+        responses: { "200": { description: "Link do Google atualizado" } },
+      },
+    },
+    "/api/barbershops/{shopId}/gallery": {
+      get: {
+        tags: ["Barbershops"],
+        summary: "Listar fotos da galeria da barbearia",
+        parameters: [
+          { name: "shopId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        responses: { "200": { description: "Lista de fotos da unidade ordenada" } },
+      },
+      post: {
+        tags: ["Barbershops"],
+        summary: "Adicionar foto à galeria da unidade (máx. 10 fotos, apenas OWNER ativo)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "shopId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["mediaId"],
+                properties: {
+                  mediaId: { type: "string", format: "uuid" },
+                  caption: { type: "string" },
+                  isCover: { type: "boolean" },
+                },
+              },
+            },
+          },
+        },
+        responses: { "201": { description: "Foto adicionada à galeria" } },
+      },
+    },
+    "/api/barbershops/{shopId}/reviews": {
+      get: {
+        tags: ["Reviews"],
+        summary: "Listar avaliações públicas da barbearia",
+        parameters: [
+          { name: "shopId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+          { name: "page", in: "query", schema: { type: "integer", default: 1 } },
+          { name: "limit", in: "query", schema: { type: "integer", default: 10 } },
+        ],
+        responses: { "200": { description: "Lista de avaliações com média e contagem calculadas" } },
+      },
+    },
+    "/api/bookings/{bookingId}/review": {
+      post: {
+        tags: ["Reviews"],
+        summary: "Criar avaliação para agendamento concluído (apenas cliente do atendimento)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "bookingId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["rating"],
+                properties: {
+                  rating: { type: "integer", minimum: 1, maximum: 5 },
+                  comment: { type: "string", maxLength: 1000 },
+                },
+              },
+            },
+          },
+        },
+        responses: { "201": { description: "Avaliação registrada com sucesso" } },
+      },
+      patch: {
+        tags: ["Reviews"],
+        summary: "Editar avaliação própria",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "bookingId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        responses: { "200": { description: "Avaliação atualizada" } },
+      },
+      delete: {
+        tags: ["Reviews"],
+        summary: "Remover avaliação própria (remoção lógica preservando integridade)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "bookingId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        responses: { "200": { description: "Avaliação removida" } },
+      },
+      get: {
+        tags: ["Reviews"],
+        summary: "Consultar avaliação de um agendamento",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "bookingId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        responses: { "200": { description: "Avaliação do agendamento ou null" } },
+      },
+    },
+    "/api/reviews/{reviewId}/report": {
+      post: {
+        tags: ["Reviews"],
+        summary: "Denunciar avaliação abusiva/ofensiva",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "reviewId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["reason"],
+                properties: {
+                  reason: { type: "string", minLength: 1, maxLength: 500 },
+                },
+              },
+            },
+          },
+        },
+        responses: { "201": { description: "Denúncia registrada com sucesso" } },
+      },
+    },
+    "/api/reviews/{reviewId}/moderation": {
+      patch: {
+        tags: ["Reviews"],
+        summary: "Ação de moderação sobre avaliação (apenas PLATFORM_ADMIN)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "reviewId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["action"],
+                properties: {
+                  action: { type: "string", enum: ["HIDE", "RESTORE"] },
+                  note: { type: "string", maxLength: 500 },
+                },
+              },
+            },
+          },
+        },
+        responses: { "200": { description: "Status de moderação atualizado" } },
+      },
+    },
   },
   components: {
     securitySchemes: {
