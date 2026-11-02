@@ -1,0 +1,1168 @@
+{
+  "version": 1,
+  "scope": "demo-smart-barber-v1",
+  "status": "LOCAL_REFERENCE_NOT_UPLOAD_OR_DB_IMPORT",
+  "mediaRoot": "../midia-explorar/organizado-2026-11-01",
+  "barbershops": [
+    {
+      "mediaKey": "horizonte",
+      "barbershopLogicalKey": "horizonte:barbershop",
+      "logos": [
+        {
+          "file": "barbearias/horizonte/logos/horizonte-symbol-original.png",
+          "variant": "original",
+          "suggestedTheme": "dark_surface",
+          "sha256": "d89c61280123dafd1da1b7632863869d1d39b150986270aced32657d7a48b67c"
+        },
+        {
+          "file": "barbearias/horizonte/logos/horizonte-symbol-original.webp",
+          "variant": "original",
+          "suggestedTheme": "dark_surface",
+          "sha256": "3c10b85c311c59ebb7f051564b42081a0772bb6ad23e7014456399a71e70b3af"
+        }
+      ],
+      "photos": [
+        {
+          "assetId": "PXS-7518728",
+          "kind": "ambiente",
+          "file": "barbearias/horizonte/fotos-propostas/ambiente/PXS-7518728.jpg",
+          "sha256": "c64a73d89b32612d95cc154f91acf6b306444f7e732559724db9f6e24f1ba011",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-30547693",
+          "kind": "ambiente",
+          "file": "barbearias/horizonte/fotos-propostas/ambiente/PXS-30547693.jpg",
+          "sha256": "ed29c050485815a9baa60aa57342811c50fc35284f1859c21ea5e9fcda31c5c5",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-3992849",
+          "kind": "ambiente",
+          "file": "barbearias/horizonte/fotos-propostas/ambiente/PXS-3992849.jpg",
+          "sha256": "d5b6d03065329d4d7db801e90a7f876f4fe7cf01e30a87a3d9ae8c10b79cfa12",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-18483769",
+          "kind": "equipe-ilustrativa",
+          "file": "barbearias/horizonte/fotos-propostas/equipe-ilustrativa/PXS-18483769.jpg",
+          "sha256": "0e3ccfb0f7c1e56a09f3fd4b90c60cc3a724ccfecbed6f3a63e6f4475e72a9f4",
+          "category": "profissional_retrato",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-7697676",
+          "kind": "equipe-ilustrativa",
+          "file": "barbearias/horizonte/fotos-propostas/equipe-ilustrativa/PXS-7697676.jpg",
+          "sha256": "5bff5a9901863b5ecc46ad6da4c18bc59671a9eeb3fa0a1090ed6aa4a79ef60b",
+          "category": "profissional_retrato",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-19050581",
+          "kind": "servicos",
+          "file": "barbearias/horizonte/fotos-propostas/servicos/PXS-19050581.jpg",
+          "sha256": "5d2ea3ab484e820e562e31ad2261a1c9d450fe5a2541c0b45029340cb081d385",
+          "category": "corte_maquina",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-5568409",
+          "kind": "servicos",
+          "file": "barbearias/horizonte/fotos-propostas/servicos/PXS-5568409.jpg",
+          "sha256": "5fee8da3ec23075c51e8684662f386fd3c5ffb640f32b86a8420d1fee695356e",
+          "category": "corte_tesoura",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-12464843",
+          "kind": "servicos",
+          "file": "barbearias/horizonte/fotos-propostas/servicos/PXS-12464843.jpg",
+          "sha256": "3a10b65f0b251a0715d49be0d50740a7d3f952993707c3b1c3483426f610583c",
+          "category": "corte_tesoura",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-9992818",
+          "kind": "servicos",
+          "file": "barbearias/horizonte/fotos-propostas/servicos/PXS-9992818.jpg",
+          "sha256": "1de493c1de2b069a9c67948a26fb52ff49b9aa85d03af30cfc1268b3a0b074b7",
+          "category": "corte_geral",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-5584461",
+          "kind": "servicos",
+          "file": "barbearias/horizonte/fotos-propostas/servicos/PXS-5584461.jpg",
+          "sha256": "599419a910a9dd54dbca0001915f928de8350a08fd4c7a0d148ec5932f259883",
+          "category": "acabamento_navalha",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        }
+      ]
+    },
+    {
+      "mediaKey": "estacao",
+      "barbershopLogicalKey": "estacao:barbershop",
+      "logos": [
+        {
+          "file": "barbearias/estacao/logos/estacao-symbol-original.png",
+          "variant": "original",
+          "suggestedTheme": "dark_surface",
+          "sha256": "9a9d1e953b03d36e043b4070af6c1616809c3c06648715683c0240d884f6e3b3"
+        },
+        {
+          "file": "barbearias/estacao/logos/estacao-symbol-original.webp",
+          "variant": "original",
+          "suggestedTheme": "dark_surface",
+          "sha256": "faaa8962a8898ed4e598691022f7d13754aa1f6cb8bf1b13f66867a34160a197"
+        }
+      ],
+      "photos": [
+        {
+          "assetId": "PXS-4969835",
+          "kind": "ambiente",
+          "file": "barbearias/estacao/fotos-propostas/ambiente/PXS-4969835.jpg",
+          "sha256": "3b9bc58c5e636420c129a0dfb0c6b971dc901c265edda095ae8f4a35e679c623",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-12685938",
+          "kind": "ambiente",
+          "file": "barbearias/estacao/fotos-propostas/ambiente/PXS-12685938.jpg",
+          "sha256": "fe140e8f45e93973545643589e3d3ccb90959842880901bb655b286759ca7ad3",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-34865582",
+          "kind": "ambiente",
+          "file": "barbearias/estacao/fotos-propostas/ambiente/PXS-34865582.jpg",
+          "sha256": "694f086e5af2c4eb97ed206a8d1df62f8689e4f7c0e5169536cfd225dca5537d",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-19225142",
+          "kind": "equipe-ilustrativa",
+          "file": "barbearias/estacao/fotos-propostas/equipe-ilustrativa/PXS-19225142.jpg",
+          "sha256": "63766f58e1ae93bd0626d0d0169606d03f720233eb48776c9d278f30dc2d48b4",
+          "category": "profissional_retrato",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-18483774",
+          "kind": "equipe-ilustrativa",
+          "file": "barbearias/estacao/fotos-propostas/equipe-ilustrativa/PXS-18483774.jpg",
+          "sha256": "f2a0f10357201a79d696dfc9445a7c647b4a5ac7dbd71e1bc3beb423eb684a79",
+          "category": "profissional_retrato",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-11139533",
+          "kind": "servicos",
+          "file": "barbearias/estacao/fotos-propostas/servicos/PXS-11139533.jpg",
+          "sha256": "b9628d44c6661aa2a3a561089123708bd48a5a726435401a5b053efd533903b2",
+          "category": "corte_geral",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-7447138",
+          "kind": "servicos",
+          "file": "barbearias/estacao/fotos-propostas/servicos/PXS-7447138.jpg",
+          "sha256": "3037712ee4e2cf9646eab0affad579448fbf56ff9090b8c838238db6562cea3e",
+          "category": "corte_geral",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-5853392",
+          "kind": "servicos",
+          "file": "barbearias/estacao/fotos-propostas/servicos/PXS-5853392.jpg",
+          "sha256": "855a175304df499a01476017cdde4c53ddc9856ed78c60f8a0cb9b31630120ff",
+          "category": "corte_geral",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-7518731",
+          "kind": "servicos",
+          "file": "barbearias/estacao/fotos-propostas/servicos/PXS-7518731.jpg",
+          "sha256": "6f926a3a89820c553ed0637354d157445879a0c85346621f66b402ea4b8b7593",
+          "category": "corte_geral",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-33461079",
+          "kind": "servicos",
+          "file": "barbearias/estacao/fotos-propostas/servicos/PXS-33461079.jpg",
+          "sha256": "8cefd7b74eb73f4d339d703e187c1c663ad591b4e7230ca56ceb60b0fd8828f0",
+          "category": "corte_maquina",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        }
+      ]
+    },
+    {
+      "mediaKey": "santana",
+      "barbershopLogicalKey": "norte:barbershop",
+      "logos": [
+        {
+          "file": "barbearias/santana/logos/santana-symbol-original.png",
+          "variant": "original",
+          "suggestedTheme": "dark_surface",
+          "sha256": "d5032ded59c35b7468b78ea158d20299d9eb2ea761da2ee5487c3f47f81a164b"
+        },
+        {
+          "file": "barbearias/santana/logos/santana-symbol-original.webp",
+          "variant": "original",
+          "suggestedTheme": "dark_surface",
+          "sha256": "62cc0cfd6b5dda00adc2dacbb09989fd479e3d9f561f33bfc1516ff6f49af6da"
+        }
+      ],
+      "photos": [
+        {
+          "assetId": "PXS-17665771",
+          "kind": "ambiente",
+          "file": "barbearias/santana/fotos-propostas/ambiente/PXS-17665771.jpg",
+          "sha256": "e9015f2e22fe55c4c020dea4c13a91fb0acd469b239579a6517042745dac0134",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-27405444",
+          "kind": "ambiente",
+          "file": "barbearias/santana/fotos-propostas/ambiente/PXS-27405444.jpg",
+          "sha256": "ace24420e8d834594c044e5899cf06065f97ba8b17a81311c397ec9990a97acf",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-15642778",
+          "kind": "ambiente",
+          "file": "barbearias/santana/fotos-propostas/ambiente/PXS-15642778.jpg",
+          "sha256": "8095bb1c8d89efd34c0bdd6a1484acaf1a821277f064c90b253187c6de5cfb4c",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-7697485",
+          "kind": "equipe-ilustrativa",
+          "file": "barbearias/santana/fotos-propostas/equipe-ilustrativa/PXS-7697485.jpg",
+          "sha256": "18cc82af47e0bd69ed1270deb603158cac77b17b06ea3ca4123f20d038552dee",
+          "category": "profissional_retrato",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-14011980",
+          "kind": "equipe-ilustrativa",
+          "file": "barbearias/santana/fotos-propostas/equipe-ilustrativa/PXS-14011980.jpg",
+          "sha256": "5da0fa51978917d417ae38eca4cf6b73aac514f8d9919e83e7ab1c1eb28e60c7",
+          "category": "profissional_retrato",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-7697383",
+          "kind": "servicos",
+          "file": "barbearias/santana/fotos-propostas/servicos/PXS-7697383.jpg",
+          "sha256": "3fe9fe1ef47ebe2113bdb28a61695a18a5162898ef15880c70ccbb75f73df78d",
+          "category": "corte_geral",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-7447146",
+          "kind": "servicos",
+          "file": "barbearias/santana/fotos-propostas/servicos/PXS-7447146.jpg",
+          "sha256": "330de4f7e96ff8e464e9f957213b70cef5727c2e4d667575dd1951e90502058a",
+          "category": "corte_maquina",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-33448215",
+          "kind": "servicos",
+          "file": "barbearias/santana/fotos-propostas/servicos/PXS-33448215.jpg",
+          "sha256": "d9f4bbe71bc71320747cf912bc183c1f78104fda47bfecf6147ecb8a7273677d",
+          "category": "corte_maquina",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-35157699",
+          "kind": "servicos",
+          "file": "barbearias/santana/fotos-propostas/servicos/PXS-35157699.jpg",
+          "sha256": "bd0689de8c02df4f6d4fa0958541bb53874b27c777c8e72910b00c749155714e",
+          "category": "corte_geral",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-9992817",
+          "kind": "servicos",
+          "file": "barbearias/santana/fotos-propostas/servicos/PXS-9992817.jpg",
+          "sha256": "91bf5b3af9cb6f57392ea94751228d99d316a131aa986434be00a32f1085cdde",
+          "category": "corte_maquina",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        }
+      ]
+    },
+    {
+      "mediaKey": "santo-amaro",
+      "barbershopLogicalKey": "sul:barbershop",
+      "logos": [
+        {
+          "file": "barbearias/santo-amaro/logos/santo-amaro-symbol-original.png",
+          "variant": "original",
+          "suggestedTheme": "dark_surface",
+          "sha256": "816c56c96e688beabb02315a0628c2c34624d6ad9b3063f81dce2ad1ac025811"
+        },
+        {
+          "file": "barbearias/santo-amaro/logos/santo-amaro-symbol-original.webp",
+          "variant": "original",
+          "suggestedTheme": "dark_surface",
+          "sha256": "388488b3c77e0a0b46cf3f139df73479a22fa89d6aab4fdd93b3cea6249a0ac9"
+        }
+      ],
+      "photos": [
+        {
+          "assetId": "PXS-12505400",
+          "kind": "ambiente",
+          "file": "barbearias/santo-amaro/fotos-propostas/ambiente/PXS-12505400.jpg",
+          "sha256": "560c0ffb1f95d2907fe43a9e21e374dbcab280bca8e080172a77def8ebbce087",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-8218487",
+          "kind": "ambiente",
+          "file": "barbearias/santo-amaro/fotos-propostas/ambiente/PXS-8218487.jpg",
+          "sha256": "c87a3f06c258ad1db8c798d15f1889118e5609e760b4376504445012e14e3414",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-4969838",
+          "kind": "ambiente",
+          "file": "barbearias/santo-amaro/fotos-propostas/ambiente/PXS-4969838.jpg",
+          "sha256": "fc9b4bbdf765f3b6491f6204528eacaf11b726dd4c691cba46e0c7e738e823ab",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-8867313",
+          "kind": "equipe-ilustrativa",
+          "file": "barbearias/santo-amaro/fotos-propostas/equipe-ilustrativa/PXS-8867313.jpg",
+          "sha256": "276ee1ecff5b42e403aff1cea81aea34376789f24d60eeda643b2ced3b984d6a",
+          "category": "profissional_retrato",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-19331701",
+          "kind": "equipe-ilustrativa",
+          "file": "barbearias/santo-amaro/fotos-propostas/equipe-ilustrativa/PXS-19331701.jpg",
+          "sha256": "eab9fbdbd8ff12bcdd4f357598c305e77dfd896f75eb8966b08ed391396787f0",
+          "category": "profissional_retrato",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-35157692",
+          "kind": "servicos",
+          "file": "barbearias/santo-amaro/fotos-propostas/servicos/PXS-35157692.jpg",
+          "sha256": "efa2229111adf4c47d281e6c6a255d47197fab5843047f5a92b295ea75116013",
+          "category": "corte_geral",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-13138522",
+          "kind": "servicos",
+          "file": "barbearias/santo-amaro/fotos-propostas/servicos/PXS-13138522.jpg",
+          "sha256": "941aac6caad43a9ad55ae14ea7dda7221130a0e1496807050f891a21d8a1d4a3",
+          "category": "corte_maquina",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-7447126",
+          "kind": "servicos",
+          "file": "barbearias/santo-amaro/fotos-propostas/servicos/PXS-7447126.jpg",
+          "sha256": "4bfc17de23bf2da2d88f57d661acac08ce059ac8daeeaabf638143082e30f26a",
+          "category": "corte_maquina",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-35157694",
+          "kind": "servicos",
+          "file": "barbearias/santo-amaro/fotos-propostas/servicos/PXS-35157694.jpg",
+          "sha256": "3bf011ccf5ad27c38d237cf4b3a5382d420681ace24887ba9bc93353183704ab",
+          "category": "corte_maquina",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-7697224",
+          "kind": "servicos",
+          "file": "barbearias/santo-amaro/fotos-propostas/servicos/PXS-7697224.jpg",
+          "sha256": "54cf19c16665548b0a1a08bdaa30e9800ead4bbf6e4b45cb6ce1ae6201707841",
+          "category": "corte_maquina",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        }
+      ]
+    },
+    {
+      "mediaKey": "pompeia",
+      "barbershopLogicalKey": "oeste:barbershop",
+      "logos": [
+        {
+          "file": "barbearias/pompeia/logos/pompeia-symbol-original.png",
+          "variant": "original",
+          "suggestedTheme": "dark_surface",
+          "sha256": "4ec9fe653e041cc4a6490219b2e103ac09054b81496b9646af7c8f38ec59b8df"
+        },
+        {
+          "file": "barbearias/pompeia/logos/pompeia-symbol-original.webp",
+          "variant": "original",
+          "suggestedTheme": "dark_surface",
+          "sha256": "8b68f030b594b9ff089c6c98f867c37ffd077de2170d7d4a81b3bcab68c87069"
+        }
+      ],
+      "photos": [
+        {
+          "assetId": "PXS-19664872",
+          "kind": "ambiente",
+          "file": "barbearias/pompeia/fotos-propostas/ambiente/PXS-19664872.jpg",
+          "sha256": "d3be6092a15bef3044799224c3c8b6cff00d416f0828f46a5278bdcfc34f77d7",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-18090356",
+          "kind": "ambiente",
+          "file": "barbearias/pompeia/fotos-propostas/ambiente/PXS-18090356.jpg",
+          "sha256": "9ebe75cd60a394882e56fbc9fdacf642669f4561156ef7b97bab99c2a2a47ad4",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-9146943",
+          "kind": "ambiente",
+          "file": "barbearias/pompeia/fotos-propostas/ambiente/PXS-9146943.jpg",
+          "sha256": "de3d5f84a5c749327fb879e9846eab31dbbba2e3d8514dc5efb5614ddb12b39b",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-7697671",
+          "kind": "equipe-ilustrativa",
+          "file": "barbearias/pompeia/fotos-propostas/equipe-ilustrativa/PXS-7697671.jpg",
+          "sha256": "e8e3aaf777b78c4bcdd8f41fca32fb658d84094dc7f419e6b54901f6243b2ac2",
+          "category": "profissional_retrato",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-12946033",
+          "kind": "equipe-ilustrativa",
+          "file": "barbearias/pompeia/fotos-propostas/equipe-ilustrativa/PXS-12946033.jpg",
+          "sha256": "c78033c117bbc7dcbe10e58e752fe2b9165e4e48d6d5ae828a08aefe9ae7da47",
+          "category": "profissional_retrato",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-27467943",
+          "kind": "servicos",
+          "file": "barbearias/pompeia/fotos-propostas/servicos/PXS-27467943.jpg",
+          "sha256": "63288b62fb158d3ce47c35fba7e2e2cbabbfa734c6de88f5d4f9e6fc28dc8569",
+          "category": "corte_geral",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-33418521",
+          "kind": "servicos",
+          "file": "barbearias/pompeia/fotos-propostas/servicos/PXS-33418521.jpg",
+          "sha256": "b1aa0b84a6a2755bb965956556e615b5687366f66cc148981f7fac884831a2ab",
+          "category": "corte_maquina",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-7697445",
+          "kind": "servicos",
+          "file": "barbearias/pompeia/fotos-propostas/servicos/PXS-7697445.jpg",
+          "sha256": "26df60c86a790ac4e9e5ec764d4880e302c0442f003dc60684df68171c0a319c",
+          "category": "barba_bigode",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-5469882",
+          "kind": "servicos",
+          "file": "barbearias/pompeia/fotos-propostas/servicos/PXS-5469882.jpg",
+          "sha256": "1848aa8c2521d76cceb97735e451ceda4a7d7d9eb2ea793c2a4aaa9258686b9a",
+          "category": "barba_navalha",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-19287846",
+          "kind": "servicos",
+          "file": "barbearias/pompeia/fotos-propostas/servicos/PXS-19287846.jpg",
+          "sha256": "b52b450e309a592ed783a09e6649d4b09dd620f7e6e8d9ab384e6446500a3f29",
+          "category": "barba_navalha",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        }
+      ]
+    },
+    {
+      "mediaKey": "aurora",
+      "barbershopLogicalKey": "aurora:barbershop",
+      "logos": [
+        {
+          "file": "barbearias/aurora/logos/aurora-symbol-dark.png",
+          "variant": "dark",
+          "suggestedTheme": "light_theme",
+          "sha256": "1f84a969a63eae69de9840641d14b4e62d4930c3da4e8e340f17c51bc9b17d9a"
+        },
+        {
+          "file": "barbearias/aurora/logos/aurora-symbol-dark.webp",
+          "variant": "dark",
+          "suggestedTheme": "light_theme",
+          "sha256": "3cdc1af53dfba6e3fc836b88489f84af46e4722c2344a5256b5838eaa73c3890"
+        },
+        {
+          "file": "barbearias/aurora/logos/aurora-symbol-light.png",
+          "variant": "light",
+          "suggestedTheme": "dark_theme",
+          "sha256": "9fe529cb4be99b8ea9b5821b24061b83c156dc902c6bfd9f27ac5b8ca8b4566e"
+        },
+        {
+          "file": "barbearias/aurora/logos/aurora-symbol-light.webp",
+          "variant": "light",
+          "suggestedTheme": "dark_theme",
+          "sha256": "e4a84b9db79d73d47b607c6675607e9fedaeb8bfc93b76602c0805e2d3b8001c"
+        }
+      ],
+      "photos": [
+        {
+          "assetId": "PXS-29189822",
+          "kind": "ambiente",
+          "file": "barbearias/aurora/fotos-propostas/ambiente/PXS-29189822.jpg",
+          "sha256": "b2133ac872c5a51d3f89289ab2cee688e7a7ee71219b792f479ee7458ccc37e4",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-14698370",
+          "kind": "ambiente",
+          "file": "barbearias/aurora/fotos-propostas/ambiente/PXS-14698370.jpg",
+          "sha256": "65ae230b2185d8d43d237785e362905933fc84d10545b81ea7cc623e98cd2660",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-5152514",
+          "kind": "ambiente",
+          "file": "barbearias/aurora/fotos-propostas/ambiente/PXS-5152514.jpg",
+          "sha256": "d07f14ceba56e83d368173eab99bc9e1f75204831baad7b1fd211c4b11638386",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-36314971",
+          "kind": "equipe-ilustrativa",
+          "file": "barbearias/aurora/fotos-propostas/equipe-ilustrativa/PXS-36314971.jpg",
+          "sha256": "35197f47c4bc144746a54b7c0010308d5a3a00e73786569a3257edacc7ad5a3b",
+          "category": "profissional_retrato",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-5188621",
+          "kind": "equipe-ilustrativa",
+          "file": "barbearias/aurora/fotos-propostas/equipe-ilustrativa/PXS-5188621.jpg",
+          "sha256": "b6752f821e5b1d9afa0da7d6754ad3d33821eca1f25858afc4a92e5c772ea9ef",
+          "category": "profissional_retrato",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-8867538",
+          "kind": "servicos",
+          "file": "barbearias/aurora/fotos-propostas/servicos/PXS-8867538.jpg",
+          "sha256": "a47bbe740dd306f6f3f47e5704b2e952443372ba225aa4ff5119d1cf42090fc2",
+          "category": "barba_tesoura",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-8867551",
+          "kind": "servicos",
+          "file": "barbearias/aurora/fotos-propostas/servicos/PXS-8867551.jpg",
+          "sha256": "d034ddc5d4c1a733513e8d5b6dca69dfe9d431ab5f868afa127aace13cdefd1d",
+          "category": "barba_navalha",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-5853391",
+          "kind": "servicos",
+          "file": "barbearias/aurora/fotos-propostas/servicos/PXS-5853391.jpg",
+          "sha256": "a25f0e0f5ba07172781d7db5a242aafca3d2ca9e647db9ecd462f8dd37b4a0b8",
+          "category": "barba_geral",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-3998412",
+          "kind": "servicos",
+          "file": "barbearias/aurora/fotos-propostas/servicos/PXS-3998412.jpg",
+          "sha256": "72901c469d26cd321184f479e76475a704774eb611d81221f086f190861aee43",
+          "category": "barba_tesoura",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-6007403",
+          "kind": "servicos",
+          "file": "barbearias/aurora/fotos-propostas/servicos/PXS-6007403.jpg",
+          "sha256": "83cab549b85da140a10859f51f08c4ef23bc77a95a5855610d6c6300c8e92f3a",
+          "category": "barba_geral",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        }
+      ]
+    },
+    {
+      "mediaKey": "vertice",
+      "barbershopLogicalKey": "vertice:barbershop",
+      "logos": [
+        {
+          "file": "barbearias/vertice/logos/vertice-symbol-dark.png",
+          "variant": "dark",
+          "suggestedTheme": "light_theme",
+          "sha256": "ac45f7379cf4d676062bb22e612ff82c3b948a0154d553d4eac85a6b1d82967a"
+        },
+        {
+          "file": "barbearias/vertice/logos/vertice-symbol-dark.webp",
+          "variant": "dark",
+          "suggestedTheme": "light_theme",
+          "sha256": "5bb1db01ee765471f1c867322674384818c04263cb997c26aaa2c94cc888b030"
+        },
+        {
+          "file": "barbearias/vertice/logos/vertice-symbol-light.png",
+          "variant": "light",
+          "suggestedTheme": "dark_theme",
+          "sha256": "72448576bbb86b299b1582c2cfb17715e10c36baf39481c3cb88db7faf5b5865"
+        },
+        {
+          "file": "barbearias/vertice/logos/vertice-symbol-light.webp",
+          "variant": "light",
+          "suggestedTheme": "dark_theme",
+          "sha256": "a1f7f77b6bfff931a849ba140cd78c92833dc2fde0deb00f045e0a8afd3385db"
+        }
+      ],
+      "photos": [
+        {
+          "assetId": "PXS-37764947",
+          "kind": "ambiente",
+          "file": "barbearias/vertice/fotos-propostas/ambiente/PXS-37764947.jpg",
+          "sha256": "9c9a8db036c226945488661ed80c614005faec1a00a4f5d52ec8a7f1fada0ded",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-12164646",
+          "kind": "ambiente",
+          "file": "barbearias/vertice/fotos-propostas/ambiente/PXS-12164646.jpg",
+          "sha256": "a5b591446c7ebd64ba420eee4b8ed4d6f2b191e148044fd056c533cd9f3fde26",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-3993296",
+          "kind": "ambiente",
+          "file": "barbearias/vertice/fotos-propostas/ambiente/PXS-3993296.jpg",
+          "sha256": "ae6c489b2a12c5d5038b11742a44c01cea5933e50717504efff6ac6e757c8930",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-18483778",
+          "kind": "equipe-ilustrativa",
+          "file": "barbearias/vertice/fotos-propostas/equipe-ilustrativa/PXS-18483778.jpg",
+          "sha256": "f738fb20cfab1de4abc3fea091dd8626f2cc018f14d84f1a071e54300bc8b081",
+          "category": "profissional_retrato",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-5337979",
+          "kind": "equipe-ilustrativa",
+          "file": "barbearias/vertice/fotos-propostas/equipe-ilustrativa/PXS-5337979.jpg",
+          "sha256": "1030db65b507c1a12a69f98cb0b422c21c4cbb40a5660a830d95bf6ce7d7cb99",
+          "category": "profissional_retrato",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-2014809",
+          "kind": "servicos",
+          "file": "barbearias/vertice/fotos-propostas/servicos/PXS-2014809.jpg",
+          "sha256": "da82b8a72f55a2f1ad5ae0a9986a8b29046fa29d91a1cb174cf917e15a8f97fe",
+          "category": "barba_navalha",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-8867546",
+          "kind": "servicos",
+          "file": "barbearias/vertice/fotos-propostas/servicos/PXS-8867546.jpg",
+          "sha256": "4170ae83df57f4c70db8fefc3cb2d3bc53a7399bd043f02c57fea28edf41996e",
+          "category": "barba_navalha",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-5568412",
+          "kind": "servicos",
+          "file": "barbearias/vertice/fotos-propostas/servicos/PXS-5568412.jpg",
+          "sha256": "314ad38dc9cb6f15fd62134a345810743b1c881c03fa3bd6c72490fe85d367fc",
+          "category": "barba_geral",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-6188363",
+          "kind": "servicos",
+          "file": "barbearias/vertice/fotos-propostas/servicos/PXS-6188363.jpg",
+          "sha256": "bed0876749e387b32a8f92c1f2de01989faac669240163d5c25c02863c538fa5",
+          "category": "barba_tesoura",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-19287848",
+          "kind": "servicos",
+          "file": "barbearias/vertice/fotos-propostas/servicos/PXS-19287848.jpg",
+          "sha256": "e7e03df82acb8e2fc7fa3eab0e20a4dfa947949e64c3a50622c4c1f3cff1bce0",
+          "category": "barba_navalha",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        }
+      ]
+    },
+    {
+      "mediaKey": "raiz",
+      "barbershopLogicalKey": "raiz:barbershop",
+      "logos": [
+        {
+          "file": "barbearias/raiz/logos/raiz-symbol-dark.png",
+          "variant": "dark",
+          "suggestedTheme": "light_theme",
+          "sha256": "13de7e309379e0a61fafb40a96af6f5a24ea1a3be1a9610315647155c10b7774"
+        },
+        {
+          "file": "barbearias/raiz/logos/raiz-symbol-dark.webp",
+          "variant": "dark",
+          "suggestedTheme": "light_theme",
+          "sha256": "0aad2cc4fdcc9ead59ccf651765e6a4e915d8fd0dd37bcf6216e640a99213a36"
+        },
+        {
+          "file": "barbearias/raiz/logos/raiz-symbol-light.png",
+          "variant": "light",
+          "suggestedTheme": "dark_theme",
+          "sha256": "d151923c17f45a11b49ce112593b2bc0b6e29a176e1f3ad990e10bd3edfe3409"
+        },
+        {
+          "file": "barbearias/raiz/logos/raiz-symbol-light.webp",
+          "variant": "light",
+          "suggestedTheme": "dark_theme",
+          "sha256": "fd6b8f9801d9e5433153baa970b0ee34d591a17a00a5b6ee7b57e663305e9e8e"
+        }
+      ],
+      "photos": [
+        {
+          "assetId": "PXS-13138476",
+          "kind": "ambiente",
+          "file": "barbearias/raiz/fotos-propostas/ambiente/PXS-13138476.jpg",
+          "sha256": "24c7f04572909c090d2c9705515c6edbfc674dbe23978b6c0fd2846fe88657bc",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-1895701",
+          "kind": "ambiente",
+          "file": "barbearias/raiz/fotos-propostas/ambiente/PXS-1895701.jpg",
+          "sha256": "28663b2991097d9e5d136fbbbce16cfa6dcd800a33627479c42199d19afd7d83",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-35430743",
+          "kind": "ambiente",
+          "file": "barbearias/raiz/fotos-propostas/ambiente/PXS-35430743.jpg",
+          "sha256": "36dc47e2bd9b4c2774c5c92ee139aea5a9fd9f7d393008df70083123a0e5ea60",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-20302333",
+          "kind": "equipe-ilustrativa",
+          "file": "barbearias/raiz/fotos-propostas/equipe-ilustrativa/PXS-20302333.jpg",
+          "sha256": "4fdc271c0903fbf6c3a123dc61fbde270d03591ae5aba253696096aa3c4b2e0f",
+          "category": "profissional_retrato",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-8867537",
+          "kind": "equipe-ilustrativa",
+          "file": "barbearias/raiz/fotos-propostas/equipe-ilustrativa/PXS-8867537.jpg",
+          "sha256": "144fd0eb71cad865aa148760b200d2ea106f4336ef1aa70a9460abe02aab8eaa",
+          "category": "profissional_retrato",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-18298039",
+          "kind": "servicos",
+          "file": "barbearias/raiz/fotos-propostas/servicos/PXS-18298039.jpg",
+          "sha256": "71a85581a22cdaf4d1608bcd269f5aa9591ea5325cd0110fed5c9541fcf91e5c",
+          "category": "barba_maquina",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-32351047",
+          "kind": "servicos",
+          "file": "barbearias/raiz/fotos-propostas/servicos/PXS-32351047.jpg",
+          "sha256": "c5976f0af37275b3f1e0a251b7a55b1d881effdd75fa9d7ffed4905e155c2dec",
+          "category": "barba_geral",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-5853394",
+          "kind": "servicos",
+          "file": "barbearias/raiz/fotos-propostas/servicos/PXS-5853394.jpg",
+          "sha256": "d1c801b6c9ed3852ffb8eb8752c88dc80dc8289c24327daa7fa49ece5adec094",
+          "category": "barba_tesoura",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-7697436",
+          "kind": "servicos",
+          "file": "barbearias/raiz/fotos-propostas/servicos/PXS-7697436.jpg",
+          "sha256": "320b967121afeb90f762b6ae6180ac958fd006dc4b7e33854d343bacb8f7af2c",
+          "category": "barba_geral",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-7447145",
+          "kind": "servicos",
+          "file": "barbearias/raiz/fotos-propostas/servicos/PXS-7447145.jpg",
+          "sha256": "67bb802ba84bc951194bb5a079e74b3c0f37b7a3ba8fdb431f7bb3e373b8d5b2",
+          "category": "barba_geral",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        }
+      ]
+    },
+    {
+      "mediaKey": "orbita",
+      "barbershopLogicalKey": "orbita:barbershop",
+      "logos": [
+        {
+          "file": "barbearias/orbita/logos/orbita-symbol-dark.png",
+          "variant": "dark",
+          "suggestedTheme": "light_theme",
+          "sha256": "618f677cd335805a610891d3dc4038af416d7c2fa083b296639311961251e394"
+        },
+        {
+          "file": "barbearias/orbita/logos/orbita-symbol-dark.webp",
+          "variant": "dark",
+          "suggestedTheme": "light_theme",
+          "sha256": "19fd9b8bb13fd1d4872fb6db4d4467a83e175c2c2ae046576d1cf44b7e4840ca"
+        },
+        {
+          "file": "barbearias/orbita/logos/orbita-symbol-light.png",
+          "variant": "light",
+          "suggestedTheme": "dark_theme",
+          "sha256": "a5b7381f7599b8fc6c57fb1cdae683e3ca88aa9b185d5ec8b518187f1f45b949"
+        },
+        {
+          "file": "barbearias/orbita/logos/orbita-symbol-light.webp",
+          "variant": "light",
+          "suggestedTheme": "dark_theme",
+          "sha256": "ca0fdd0f508f24a0e25694ea616317f2f906af1caba06666ead2306968f29da1"
+        }
+      ],
+      "photos": [
+        {
+          "assetId": "PXS-20785318",
+          "kind": "ambiente",
+          "file": "barbearias/orbita/fotos-propostas/ambiente/PXS-20785318.jpg",
+          "sha256": "c3d458b5056d2288461a251a0ed7ce1552a441e9cd6034a98f5c7bec90455d34",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-13986130",
+          "kind": "ambiente",
+          "file": "barbearias/orbita/fotos-propostas/ambiente/PXS-13986130.jpg",
+          "sha256": "029cb4339cbcbe2ac4feb946323ad5cbf55458c17b6b4b3797fedfd8321bf904",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-3993293",
+          "kind": "ambiente",
+          "file": "barbearias/orbita/fotos-propostas/ambiente/PXS-3993293.jpg",
+          "sha256": "ef5f49cb2c85cac7b690d64b669e010c10e4b7f93957f0a057729c8c6a340a79",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-19225258",
+          "kind": "equipe-ilustrativa",
+          "file": "barbearias/orbita/fotos-propostas/equipe-ilustrativa/PXS-19225258.jpg",
+          "sha256": "7839143ac64b0faf5b9a6541ad7fe3a4b425a168acf27f9df5b5848927466949",
+          "category": "profissional_retrato",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-3130920",
+          "kind": "equipe-ilustrativa",
+          "file": "barbearias/orbita/fotos-propostas/equipe-ilustrativa/PXS-3130920.jpg",
+          "sha256": "bb32009624a04faf38165aeeadd3258d7029c56e951e25aa89b9f29ab6a19768",
+          "category": "profissional_retrato",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-9153970",
+          "kind": "servicos",
+          "file": "barbearias/orbita/fotos-propostas/servicos/PXS-9153970.jpg",
+          "sha256": "b3dfe9ebbd6c683df8c409bc45d633c090e2a1399a0753ff1d497b03b1dba52f",
+          "category": "barba_bigode",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-7447140",
+          "kind": "servicos",
+          "file": "barbearias/orbita/fotos-propostas/servicos/PXS-7447140.jpg",
+          "sha256": "ad24847b05539e7344b45fb20ef9bb142bdd4d44cbf0f69b707486e4544b7d48",
+          "category": "barba_navalha",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-2076931",
+          "kind": "servicos",
+          "file": "barbearias/orbita/fotos-propostas/servicos/PXS-2076931.jpg",
+          "sha256": "76cef2f0e080b4eed699dc3e4b9c2938de3d31b5c5496def3ac3dd8fb32c12a9",
+          "category": "barba_navalha",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-7697441",
+          "kind": "servicos",
+          "file": "barbearias/orbita/fotos-propostas/servicos/PXS-7697441.jpg",
+          "sha256": "8407ed2f13a0115778c694ebdc63751cfd53c2c9847d2e6346feb62a6e0422ec",
+          "category": "barba_navalha",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-32351045",
+          "kind": "servicos",
+          "file": "barbearias/orbita/fotos-propostas/servicos/PXS-32351045.jpg",
+          "sha256": "45a32d8c9fcb88c25cc5cdabbe43eb8bd1e8591356a5f0de41ec300c96f99a45",
+          "category": "barba_navalha",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        }
+      ]
+    },
+    {
+      "mediaKey": "nexo",
+      "barbershopLogicalKey": "nexo:barbershop",
+      "logos": [
+        {
+          "file": "barbearias/nexo/logos/nexo-symbol-dark.png",
+          "variant": "dark",
+          "suggestedTheme": "light_theme",
+          "sha256": "3d953faa3d8b63bd0f85ba9b1b16713ff0ebdbb31e20fac41a57ad40eea372bd"
+        },
+        {
+          "file": "barbearias/nexo/logos/nexo-symbol-dark.webp",
+          "variant": "dark",
+          "suggestedTheme": "light_theme",
+          "sha256": "23357af1c3ea06c55d00762dfc7179bfab89daec5fdebb403cb2497714a34744"
+        },
+        {
+          "file": "barbearias/nexo/logos/nexo-symbol-light.png",
+          "variant": "light",
+          "suggestedTheme": "dark_theme",
+          "sha256": "bc69c968b696bf516de795cb3571d700666d2eb5c82dd0f6cd047b2b3aa4e4e8"
+        },
+        {
+          "file": "barbearias/nexo/logos/nexo-symbol-light.webp",
+          "variant": "light",
+          "suggestedTheme": "dark_theme",
+          "sha256": "bfaa304e86b35c7b4b511dbd86883b3b5c07a4c2d53f4ce437ab6b6b3af53cfa"
+        }
+      ],
+      "photos": [
+        {
+          "assetId": "PXS-8832912",
+          "kind": "ambiente",
+          "file": "barbearias/nexo/fotos-propostas/ambiente/PXS-8832912.jpg",
+          "sha256": "05aa74b36d2043f433f36d0a62866e8470c8916d13f7d26058330ffd2ce6b3ac",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-4969864",
+          "kind": "ambiente",
+          "file": "barbearias/nexo/fotos-propostas/ambiente/PXS-4969864.jpg",
+          "sha256": "bef4ea22d3f41e119d723be411cfb0230f463f0fabe286b681f70ec671efa67d",
+          "category": "interior",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "USER-NEXO-003",
+          "kind": "ambiente",
+          "file": "barbearias/nexo/fotos-propostas/ambiente/USER-NEXO-003.jpg",
+          "sha256": "f4046e2abb7b045450098e6e5a67b32c1d20ebdf8e3b96a7ae2e9aaedae531a3",
+          "category": "",
+          "serviceLogicalKey": null,
+          "rightsStatus": "UNKNOWN_SOURCE_NOT_APPROVED"
+        },
+        {
+          "assetId": "PXS-3993303",
+          "kind": "equipe-ilustrativa",
+          "file": "barbearias/nexo/fotos-propostas/equipe-ilustrativa/PXS-3993303.jpg",
+          "sha256": "fb5c780cbc85ae49041d1be5eebbec9fd59d1a2536fe78e3b8737f17f1b71f88",
+          "category": "profissional_retrato",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-2076932",
+          "kind": "equipe-ilustrativa",
+          "file": "barbearias/nexo/fotos-propostas/equipe-ilustrativa/PXS-2076932.jpg",
+          "sha256": "56955c93173c4a30469931a0f97b05ac700ef4b0a8bc19ec341929040f798f80",
+          "category": "profissional_retrato",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-7518730",
+          "kind": "servicos",
+          "file": "barbearias/nexo/fotos-propostas/servicos/PXS-7518730.jpg",
+          "sha256": "7de5e2e172c3f5ca384820c3e8742ea9440729bdad7b4978c6716043b188a578",
+          "category": "lavagem_cabelo",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-4625618",
+          "kind": "servicos",
+          "file": "barbearias/nexo/fotos-propostas/servicos/PXS-4625618.jpg",
+          "sha256": "0b01ff0c339ecc285a1174f9c53fa9e1c61c92ebec12be23f3425adfeeb3eb92",
+          "category": "lavagem_cabelo",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-7447131",
+          "kind": "servicos",
+          "file": "barbearias/nexo/fotos-propostas/servicos/PXS-7447131.jpg",
+          "sha256": "5b474d62b29b5ea961d6fe6c749b2159095cc2ec797c826b1fa763f22da8d1c4",
+          "category": "lavagem_cabelo",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-19762215",
+          "kind": "servicos",
+          "file": "barbearias/nexo/fotos-propostas/servicos/PXS-19762215.jpg",
+          "sha256": "c4ae123a022579100cac4bd7f7c84cbf5e3bf6675feec2f6a39af0ff2ed5a826",
+          "category": "lavagem_cabelo",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        },
+        {
+          "assetId": "PXS-7447143",
+          "kind": "servicos",
+          "file": "barbearias/nexo/fotos-propostas/servicos/PXS-7447143.jpg",
+          "sha256": "f505cd5cb8e691e7a58a37c13c3044651c0edc8ea336b0657bcce00fcd4d0871",
+          "category": "toalha_quente",
+          "serviceLogicalKey": null,
+          "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING"
+        }
+      ]
+    }
+  ]
+}

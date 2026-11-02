@@ -30,6 +30,19 @@ const envSchema = z.object({
   STORAGE_SECRET_ACCESS_KEY: z.string().optional(),
   STORAGE_PUBLIC_URL: z.string().optional(),
   STORAGE_REGION: z.string().optional().default("auto"),
+  MEDIA_VIDEO_ENABLED: z.enum(["true", "false"]).optional().default("false"),
+  R2_GLOBAL_BUDGET_BYTES: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(Number.MAX_SAFE_INTEGER)
+    .optional(),
+  R2_SHOP_BUDGET_BYTES: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(Number.MAX_SAFE_INTEGER)
+    .optional(),
   CRON_SECRET: z.string().optional(),
 });
 

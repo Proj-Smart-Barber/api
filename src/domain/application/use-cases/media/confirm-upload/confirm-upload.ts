@@ -1,7 +1,13 @@
+import type { MembershipsRepository } from "../../../repositories/memberships-repository";
+import type { VideoJobQueue } from "../../../services/video-job-queue";
+import type { MediaQuota } from "../../../services/media-quota";
 import { randomUUID } from "node:crypto";
 import { type Either, left, right } from "../../../../../core/logic/either";
 import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
-import type { Media, MediaVariantInfo } from "../../../../enterprise/entities/media";
+import type {
+  Media,
+  MediaVariantInfo,
+} from "../../../../enterprise/entities/media";
 import type { MediaRepository } from "../../../repositories/media-repository";
 import type { StorageService } from "../../../services/storage-service";
 import type { ImageProcessorService } from "../../../services/image-processor-service";
@@ -23,10 +29,15 @@ export class ConfirmMediaUploadUseCase {
   constructor(
     private mediaRepository: MediaRepository,
     private storageService: StorageService,
-    private imageProcessor: ImageProcessorService
+    private imageProcessor: ImageProcessorService,
+    private videos?: VideoJobQueue,
+    private quota?: MediaQuota,
+    private memberships?: MembershipsRepository,
   ) {}
 
-  async execute(dto: ConfirmMediaUploadDTO): Promise<Either<Error, ConfirmMediaUploadResponse>> {
+  async execute(
+    dto: ConfirmMediaUploadDTO,
+  ): Promise<Either<Error, ConfirmMediaUploadResponse>> {
     const current = await this.mediaRepository.findById(dto.mediaId);
     if (!current) {
       return left(new Error("Mídia não encontrada."));
@@ -36,24 +47,53 @@ export class ConfirmMediaUploadUseCase {
       return left(new Error("Não autorizado a confirmar esta mídia."));
     }
 
+    if (current.ownerType === "BARBERSHOP") {
+      if (!this.memberships || !current.ownerEntityId)
+        return left(new Error("Autorização da unidade indisponível."));
+      const members = await this.memberships.findManyByBarbershopId(
+        current.ownerEntityId.toString(),
+      );
+      if (
+        !members.some(
+          (member) =>
+            member.userId.toString() === dto.userId &&
+            member.role === "OWNER" &&
+            member.state === "ACTIVE",
+        )
+      )
+        return left(new Error("Owner não está ativo nesta unidade."));
+    }
+
     if (current.status === "READY") {
       return right({ media: current });
     }
 
     if (current.status === "PROCESSING" && !current.isLeaseExpired()) {
-      return left(new Error("Mídia já está sendo processada por outra operação."));
+      return left(
+        new Error("Mídia já está sendo processada por outra operação."),
+      );
     }
 
     if (current.status === "REJECTED") {
       return left(
-        new Error("Esta mídia foi rejeitada anteriormente por não atender aos requisitos de segurança.")
+        new Error(
+          "Esta mídia foi rejeitada anteriormente por não atender aos requisitos de segurança.",
+        ),
       );
     }
 
     if (current.status === "EXPIRED" || current.status === "CANCELLED") {
-      return left(new Error("Esta operação de upload expirou ou foi cancelada."));
+      return left(
+        new Error("Esta operação de upload expirou ou foi cancelada."),
+      );
     }
 
+    if (current.mimeType.startsWith("video/")) {
+      if (!this.videos)
+        return left(new Error("Processador de vídeo indisponível."));
+      await this.videos.enqueue(dto.mediaId);
+      return right({ media: current });
+    }
     const leaseToken = randomUUID();
 
     // 1. Reivindicação atômica de PROCESSING (CAS lease)
@@ -63,60 +103,98 @@ export class ConfirmMediaUploadUseCase {
     });
 
     if (!claim.claimed || !claim.media) {
-      return left(new Error("Mídia não está disponível para confirmação ou já está em processamento."));
+      return left(
+        new Error(
+          "Mídia não está disponível para confirmação ou já está em processamento.",
+        ),
+      );
     }
 
     const media = claim.media;
 
     if (!media.isOwnedBy(new UniqueEntityId(dto.userId))) {
-      await this.mediaRepository.releaseProcessing(media.id.toString(), leaseToken, {
-        resetToPending: true,
-      });
+      await this.mediaRepository.releaseProcessing(
+        media.id.toString(),
+        leaseToken,
+        {
+          resetToPending: true,
+        },
+      );
       return left(new Error("Não autorizado a confirmar esta mídia."));
     }
 
     // Calculate maximum allowed size based on purpose
-    const isSmallMedia = media.purpose === "USER_AVATAR" || media.purpose === "BARBERSHOP_LOGO";
-    const maxAllowedSize = isSmallMedia ? this.MAX_AVATAR_SIZE : this.MAX_SPACE_SIZE;
+    const isSmallMedia =
+      media.purpose === "USER_AVATAR" || media.purpose === "BARBERSHOP_LOGO";
+    const maxAllowedSize = isSmallMedia
+      ? this.MAX_AVATAR_SIZE
+      : this.MAX_SPACE_SIZE;
 
     const stagingKey = media.objectKey;
 
     // Inspect & read staging object with byte limit protection
-    const inspection = await this.storageService.inspectStagingObject(stagingKey, maxAllowedSize);
+    const inspection = await this.storageService.inspectStagingObject(
+      stagingKey,
+      maxAllowedSize,
+    );
     if (!inspection.exists) {
       // Objeto ainda ausente no staging: libera lease e reseta para PENDING para permitir retentativa
-      await this.mediaRepository.releaseProcessing(media.id.toString(), leaseToken, {
-        resetToPending: true,
-        errorMessage: "Arquivo não encontrado no armazenamento de upload.",
-      });
-      return left(new Error("Arquivo não encontrado no armazenamento de upload."));
+      await this.mediaRepository.releaseProcessing(
+        media.id.toString(),
+        leaseToken,
+        {
+          resetToPending: true,
+          errorMessage: "Arquivo não encontrado no armazenamento de upload.",
+        },
+      );
+      return left(
+        new Error("Arquivo não encontrado no armazenamento de upload."),
+      );
     }
 
     if (inspection.truncated || inspection.size > maxAllowedSize) {
       const maxMb = maxAllowedSize / (1024 * 1024);
       const reason = `Tamanho efetivo do arquivo excede o limite máximo permitido de ${maxMb} MB para ${media.purpose}.`;
-      await this.mediaRepository.rejectProcessing(media.id.toString(), leaseToken, reason);
+      await this.mediaRepository.rejectProcessing(
+        media.id.toString(),
+        leaseToken,
+        reason,
+      );
       await this.storageService.deleteStagingObject(stagingKey).catch(() => {});
       return left(new Error(reason));
     }
 
     if (!inspection.buffer || inspection.buffer.length === 0) {
       const reason = "Conteúdo do arquivo não pôde ser lido para verificação.";
-      await this.mediaRepository.rejectProcessing(media.id.toString(), leaseToken, reason);
+      await this.mediaRepository.rejectProcessing(
+        media.id.toString(),
+        leaseToken,
+        reason,
+      );
       return left(new Error(reason));
     }
 
     // Process image variants (decoding, orientation normalization, EXIF stripping, resizing)
-    const processResult = await this.imageProcessor.processImage(inspection.buffer, media.purpose);
+    const processResult = await this.imageProcessor.processImage(
+      inspection.buffer,
+      media.purpose,
+    );
     if (!processResult.valid || processResult.variants.length === 0) {
-      const reason = processResult.error ?? "Arquivo de imagem inválido ou corrompido.";
-      await this.mediaRepository.rejectProcessing(media.id.toString(), leaseToken, reason);
+      const reason =
+        processResult.error ?? "Arquivo de imagem inválido ou corrompido.";
+      await this.mediaRepository.rejectProcessing(
+        media.id.toString(),
+        leaseToken,
+        reason,
+      );
       await this.storageService.deleteStagingObject(stagingKey).catch(() => {});
       return left(new Error(reason));
     }
 
     const mainVariant = processResult.variants.find((v) => v.name === "main")!;
-    const thumbVariant = processResult.variants.find((v) => v.name === "thumbnail");
+    const thumbVariant = processResult.variants.find(
+      (v) => v.name === "thumbnail",
+    );
 
     const mainExt = mainVariant.format === "jpeg" ? "jpg" : mainVariant.format;
     const generation = media.generation;
@@ -133,7 +211,8 @@ export class ConfirmMediaUploadUseCase {
     let immutableThumbKey: string | undefined;
 
     if (thumbVariant) {
-      const thumbExt = thumbVariant.format === "jpeg" ? "jpg" : thumbVariant.format;
+      const thumbExt =
+        thumbVariant.format === "jpeg" ? "jpg" : thumbVariant.format;
       immutableThumbKey = `variants/${media.id.toString()}/${generation}/thumb.${thumbExt}`;
       savedThumb = await this.storageService.saveVariant({
         objectKey: immutableThumbKey,
@@ -177,17 +256,27 @@ export class ConfirmMediaUploadUseCase {
         height: mainVariant.height,
         variants,
         generation,
-      }
+      },
     );
 
     if (!finalized) {
+      await this.storageService.deleteObject(immutableMainKey);
+      if (immutableThumbKey)
+        await this.storageService.deleteObject(immutableThumbKey);
       return left(
-        new Error("Conflito de concorrência ou lease expirado ao finalizar o processamento da mídia.")
+        new Error(
+          "Conflito de concorrência ou lease expirado ao finalizar o processamento da mídia.",
+        ),
       );
     }
 
     // Clean up temporary private staging object estritamente APÓS commit bem-sucedido no banco
-    await this.storageService.deleteStagingObject(stagingKey).catch(() => {});
+    try {
+      await this.storageService.deleteStagingObject(stagingKey);
+      await this.quota?.release(dto.mediaId);
+    } catch {
+      /* Reservation remains charged until cleanup confirms deletion. */
+    }
 
     media.finalizeReady({
       objectKey: immutableMainKey,

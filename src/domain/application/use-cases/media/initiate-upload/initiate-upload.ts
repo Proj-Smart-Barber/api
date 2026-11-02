@@ -1,7 +1,14 @@
+import {
+  type MediaQuota,
+  uploadReservationBytes,
+} from "../../../services/media-quota";
 import { randomUUID } from "node:crypto";
 import { type Either, left, right } from "../../../../../core/logic/either";
 import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
-import { Media, type MediaPurpose } from "../../../../enterprise/entities/media";
+import {
+  Media,
+  type MediaPurpose,
+} from "../../../../enterprise/entities/media";
 import { Role } from "../../../../enterprise/entities/membership";
 import type { MediaRepository } from "../../../repositories/media-repository";
 import type { MembershipsRepository } from "../../../repositories/memberships-repository";
@@ -26,15 +33,30 @@ export interface InitiateMediaUploadResponse {
 export class InitiateMediaUploadUseCase {
   private readonly MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5 MB
   private readonly MAX_SPACE_SIZE = 10 * 1024 * 1024; // 10 MB
-  private readonly ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
+  private readonly ALLOWED_MIME_TYPES = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+  ];
 
   constructor(
     private mediaRepository: MediaRepository,
     private storageService: StorageService,
-    private membershipsRepository?: MembershipsRepository
+    private membershipsRepository?: MembershipsRepository,
+    private quota?: MediaQuota,
   ) {}
 
-  async execute(dto: InitiateMediaUploadDTO): Promise<Either<Error, InitiateMediaUploadResponse>> {
+  async execute(
+    dto: InitiateMediaUploadDTO,
+  ): Promise<Either<Error, InitiateMediaUploadResponse>> {
+    const isVideo =
+      dto.purpose === "SERVICE_VIDEO" || dto.purpose === "BARBERSHOP_VIDEO";
+    if (isVideo && process.env.MEDIA_VIDEO_ENABLED !== "true")
+      return left(
+        new Error(
+          "Upload de vídeo indisponível: processamento e orçamento ainda não habilitados.",
+        ),
+      );
     // 1. Check HEIC
     const lowerMime = dto.mimeType.toLowerCase();
     const lowerName = dto.fileName.toLowerCase();
@@ -46,21 +68,32 @@ export class InitiateMediaUploadUseCase {
     ) {
       return left(
         new Error(
-          "Formato HEIC não suportado diretamente. Por favor, converta para JPEG, PNG ou WebP antes do envio."
-        )
+          "Formato HEIC não suportado diretamente. Por favor, converta para JPEG, PNG ou WebP antes do envio.",
+        ),
       );
     }
 
     // 2. Validate MIME
-    if (!this.ALLOWED_MIME_TYPES.includes(lowerMime)) {
+    if (
+      !(isVideo
+        ? ["video/mp4", "video/quicktime"].includes(lowerMime)
+        : this.ALLOWED_MIME_TYPES.includes(lowerMime))
+    ) {
       return left(
-        new Error("Formato de imagem não suportado. Apenas JPEG, PNG e WebP são aceitos.")
+        new Error(
+          "Formato de imagem não suportado. Apenas JPEG, PNG e WebP são aceitos.",
+        ),
       );
     }
 
     // 3. Validate size limits
-    const isSmallMedia = dto.purpose === "USER_AVATAR" || dto.purpose === "BARBERSHOP_LOGO";
-    const maxAllowedSize = isSmallMedia ? this.MAX_AVATAR_SIZE : this.MAX_SPACE_SIZE;
+    const isSmallMedia =
+      dto.purpose === "USER_AVATAR" || dto.purpose === "BARBERSHOP_LOGO";
+    const maxAllowedSize = isVideo
+      ? 100 * 1024 * 1024
+      : isSmallMedia
+        ? this.MAX_AVATAR_SIZE
+        : this.MAX_SPACE_SIZE;
 
     if (dto.fileSize <= 0) {
       return left(new Error("O arquivo não pode ser vazio."));
@@ -70,8 +103,8 @@ export class InitiateMediaUploadUseCase {
       const maxMb = maxAllowedSize / (1024 * 1024);
       return left(
         new Error(
-          `Tamanho do arquivo excede o limite de ${maxMb} MB permitido para ${dto.purpose}.`
-        )
+          `Tamanho do arquivo excede o limite de ${maxMb} MB permitido para ${dto.purpose}.`,
+        ),
       );
     }
 
@@ -79,31 +112,48 @@ export class InitiateMediaUploadUseCase {
     const isBarbershopMedia =
       dto.purpose === "BARBERSHOP_LOGO" ||
       dto.purpose === "BARBERSHOP_COVER" ||
-      dto.purpose === "BARBERSHOP_GALLERY";
+      dto.purpose === "BARBERSHOP_GALLERY" ||
+      dto.purpose === "SERVICE_PHOTO" ||
+      isVideo;
 
     if (isBarbershopMedia) {
       if (!dto.barbershopId) {
-        return left(new Error("barbershopId é obrigatório para uploads da barbearia."));
+        return left(
+          new Error("barbershopId é obrigatório para uploads da barbearia."),
+        );
       }
 
+      if (!this.membershipsRepository)
+        return left(new Error("Autorização de mídia indisponível."));
       if (this.membershipsRepository) {
-        const members = await this.membershipsRepository.findManyByBarbershopId(dto.barbershopId);
+        const members = await this.membershipsRepository.findManyByBarbershopId(
+          dto.barbershopId,
+        );
         const activeOwner = members.find(
-          (m) => m.userId.toString() === dto.userId && m.role === Role.OWNER && m.state === "ACTIVE"
+          (m) =>
+            m.userId.toString() === dto.userId &&
+            m.role === Role.OWNER &&
+            m.state === "ACTIVE",
         );
         if (!activeOwner) {
           return left(
-            new Error("Apenas o proprietário ativo da unidade pode iniciar upload para a barbearia.")
+            new Error(
+              "Apenas o proprietário ativo da unidade pode iniciar upload para a barbearia.",
+            ),
           );
         }
       }
     }
 
     // 5. Abuse prevention / active intent guard (T05)
-    const pendingCount = await this.mediaRepository.countPendingByOwnerId(dto.userId);
+    const pendingCount = await this.mediaRepository.countPendingByOwnerId(
+      dto.userId,
+    );
     if (pendingCount >= 2) {
       return left(
-        new Error("Limite de uploads simultâneos atingido (máximo 2). Conclua ou aguarde o upload anterior.")
+        new Error(
+          "Limite de uploads simultâneos atingido (máximo 2). Conclua ou aguarde o upload anterior.",
+        ),
       );
     }
 
@@ -113,36 +163,51 @@ export class InitiateMediaUploadUseCase {
     const stagingKey = `staging/${mediaId}/${sanitizedFileName}`;
 
     // 7. Generate presigned upload URL via StorageService (valid for 5 minutes)
-    const uploadResult = await this.storageService.generateUploadUrl({
-      objectKey: stagingKey,
-      mimeType: lowerMime,
-      fileSize: dto.fileSize,
-      expiresInSeconds: 300,
-    });
-
-    // 8. Create pending media entity
-    const media = Media.create(
-      {
-        ownerId: new UniqueEntityId(dto.userId),
-        ownerType: isBarbershopMedia ? "BARBERSHOP" : "USER",
-        ownerEntityId: isBarbershopMedia && dto.barbershopId ? new UniqueEntityId(dto.barbershopId) : new UniqueEntityId(dto.userId),
-        purpose: dto.purpose,
+    if (this.quota)
+      await this.quota.reserve({
+        mediaId,
+        scope: dto.barbershopId ?? dto.userId,
+        bytes: uploadReservationBytes(dto.fileSize, isVideo),
+        stagingKey,
+      });
+    try {
+      const uploadResult = await this.storageService.generateUploadUrl({
         objectKey: stagingKey,
-        publicUrl: uploadResult.publicUrl,
         mimeType: lowerMime,
         fileSize: dto.fileSize,
-        status: "PENDING",
-      },
-      new UniqueEntityId(mediaId)
-    );
+        expiresInSeconds: 300,
+      });
 
-    await this.mediaRepository.create(media);
+      // 8. Create pending media entity
+      const media = Media.create(
+        {
+          ownerId: new UniqueEntityId(dto.userId),
+          ownerType: isBarbershopMedia ? "BARBERSHOP" : "USER",
+          ownerEntityId:
+            isBarbershopMedia && dto.barbershopId
+              ? new UniqueEntityId(dto.barbershopId)
+              : new UniqueEntityId(dto.userId),
+          purpose: dto.purpose,
+          objectKey: stagingKey,
+          publicUrl: uploadResult.publicUrl,
+          mimeType: lowerMime,
+          fileSize: dto.fileSize,
+          status: "PENDING",
+        },
+        new UniqueEntityId(mediaId),
+      );
 
-    return right({
-      mediaId: media.id.toString(),
-      uploadUrl: uploadResult.uploadUrl,
-      publicUrl: uploadResult.publicUrl,
-      objectKey: stagingKey,
-    });
+      await this.mediaRepository.create(media);
+
+      return right({
+        mediaId: media.id.toString(),
+        uploadUrl: uploadResult.uploadUrl,
+        publicUrl: uploadResult.publicUrl,
+        objectKey: stagingKey,
+      });
+    } catch (error) {
+      if (this.quota) await this.quota.release(mediaId);
+      throw error;
+    }
   }
 }

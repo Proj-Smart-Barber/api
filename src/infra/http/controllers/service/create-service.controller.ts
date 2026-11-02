@@ -26,6 +26,9 @@ const createServiceBodySchema = z.object({
     .int()
     .positive("Duração deve ser maior que zero."),
   description: z.string().trim().max(500).optional().nullable(),
+  imageUrl: z.string().trim().optional().nullable(),
+  isFeatured: z.boolean().optional(),
+  featuredOrder: z.coerce.number().int().optional(),
 });
 
 type CreateServiceControllerRequest = z.infer<typeof createServiceBodySchema>;
@@ -42,6 +45,9 @@ export class CreateServiceController implements Controller {
         priceInCents,
         durationInMinutes,
         description,
+        imageUrl,
+        isFeatured,
+        featuredOrder,
       } = createServiceBodySchema.parse(request);
 
       const result = await this.createServiceUseCase.execute({

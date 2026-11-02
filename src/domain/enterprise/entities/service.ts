@@ -6,6 +6,9 @@ export interface ServiceProps {
   barbershopId: UniqueEntityId;
   title: string;
   description?: string;
+  imageUrl?: string | null;
+  isFeatured?: boolean;
+  featuredOrder?: number;
   priceInCents: number;
   durationInMinutes: number;
   isActive: boolean;
@@ -24,6 +27,18 @@ export class Service extends Entity<ServiceProps> {
 
   get description(): string | undefined {
     return this.props.description;
+  }
+
+  get imageUrl(): string | null | undefined {
+    return this.props.imageUrl;
+  }
+
+  get isFeatured(): boolean {
+    return this.props.isFeatured ?? false;
+  }
+
+  get featuredOrder(): number {
+    return this.props.featuredOrder ?? 0;
   }
 
   get priceInCents(): number {
@@ -60,7 +75,7 @@ export class Service extends Entity<ServiceProps> {
     props: Partial<
       Pick<
         ServiceProps,
-        "title" | "description" | "priceInCents" | "durationInMinutes"
+        "title" | "description" | "priceInCents" | "durationInMinutes" | "imageUrl" | "isFeatured" | "featuredOrder"
       >
     >,
   ): void {
@@ -75,6 +90,15 @@ export class Service extends Entity<ServiceProps> {
     }
     if (props.durationInMinutes !== undefined) {
       this.props.durationInMinutes = props.durationInMinutes;
+    }
+    if (props.imageUrl !== undefined) {
+      this.props.imageUrl = props.imageUrl;
+    }
+    if (props.isFeatured !== undefined) {
+      this.props.isFeatured = props.isFeatured;
+    }
+    if (props.featuredOrder !== undefined) {
+      this.props.featuredOrder = props.featuredOrder;
     }
     this.props.updatedAt = new Date();
   }

@@ -21,17 +21,24 @@ export class ManageBarbershopGalleryUseCase {
     private galleryRepository: BarbershopGalleryRepository,
     private barbershopsRepository: BarbershopsRepository,
     private membershipsRepository: MembershipsRepository,
-    private mediaRepository: MediaRepository
+    private mediaRepository: MediaRepository,
   ) {}
 
-  private async verifyOwner(userId: string, barbershopId: string): Promise<boolean> {
+  private async verifyOwner(
+    userId: string,
+    barbershopId: string,
+  ): Promise<boolean> {
     const shop = await this.barbershopsRepository.findById(barbershopId);
     if (!shop) return false;
 
     // Strict active OWNER check (no bypass on shop.ownerId)
-    const members = await this.membershipsRepository.findManyByBarbershopId(barbershopId);
+    const members =
+      await this.membershipsRepository.findManyByBarbershopId(barbershopId);
     const activeOwner = members.find(
-      (m) => m.userId.toString() === userId && m.role === Role.OWNER && m.state === "ACTIVE"
+      (m) =>
+        m.userId.toString() === userId &&
+        m.role === Role.OWNER &&
+        m.state === "ACTIVE",
     );
     return !!activeOwner;
   }
@@ -45,7 +52,11 @@ export class ManageBarbershopGalleryUseCase {
   }): Promise<Either<Error, { item: BarbershopGalleryItem }>> {
     const isOwner = await this.verifyOwner(dto.userId, dto.barbershopId);
     if (!isOwner) {
-      return left(new Error("Apenas o proprietário ativo da unidade pode gerenciar a galeria."));
+      return left(
+        new Error(
+          "Apenas o proprietário ativo da unidade pode gerenciar a galeria.",
+        ),
+      );
     }
 
     // 1. Find media
@@ -55,42 +66,73 @@ export class ManageBarbershopGalleryUseCase {
     }
 
     if (!media.isReady()) {
-      return left(new Error("A mídia ainda não está pronta para inclusão na galeria."));
+      return left(
+        new Error("A mídia ainda não está pronta para inclusão na galeria."),
+      );
     }
 
-    if (media.purpose !== "BARBERSHOP_GALLERY" && media.purpose !== "BARBERSHOP_COVER") {
-      return left(new Error("Finalidade da mídia incompatível com a galeria da barbearia."));
+    if (
+      media.purpose !== "BARBERSHOP_GALLERY" &&
+      media.purpose !== "BARBERSHOP_COVER" &&
+      media.purpose !== "BARBERSHOP_VIDEO"
+    ) {
+      return left(
+        new Error(
+          "Finalidade da mídia incompatível com a galeria da barbearia.",
+        ),
+      );
     }
 
     // Previne associação cruzada entre unidades diferentes (R06 / A01)
-    if (media.ownerEntityId && media.ownerEntityId.toString() !== dto.barbershopId) {
-      return left(new Error("Mídia pertence a outra unidade e não pode ser adicionada a esta galeria."));
+    if (
+      media.ownerEntityId &&
+      media.ownerEntityId.toString() !== dto.barbershopId
+    ) {
+      return left(
+        new Error(
+          "Mídia pertence a outra unidade e não pode ser adicionada a esta galeria.",
+        ),
+      );
     }
 
     // 2. Verify media ownership / authorized tenant
-    const members = await this.membershipsRepository.findManyByBarbershopId(dto.barbershopId);
+    const members = await this.membershipsRepository.findManyByBarbershopId(
+      dto.barbershopId,
+    );
     const isMediaOwnerAuthorized =
       media.ownerId.toString() === dto.userId ||
       members.some(
-        (m) => m.userId.toString() === media.ownerId.toString() && m.role === Role.OWNER && m.state === "ACTIVE"
+        (m) =>
+          m.userId.toString() === media.ownerId.toString() &&
+          m.role === Role.OWNER &&
+          m.state === "ACTIVE",
       );
     if (!isMediaOwnerAuthorized) {
-      return left(new Error("Mídia pertence a outro usuário sem vínculo ativo nesta unidade."));
+      return left(
+        new Error(
+          "Mídia pertence a outro usuário sem vínculo ativo nesta unidade.",
+        ),
+      );
     }
 
     // 3. Adição atômica coordenada no banco de dados (A01)
     const result = await this.galleryRepository.addPhotoAtomic({
+      actorId: dto.userId,
       barbershopId: dto.barbershopId,
       mediaId: dto.mediaId,
       caption: dto.caption,
       isCover: dto.isCover,
-      publicUrl: media.publicUrl,
+      publicUrl: media.mimeType.startsWith("video/")
+        ? (media.variants?.thumbnail?.publicUrl ?? media.publicUrl)
+        : media.publicUrl,
       maxPhotos: this.MAX_GALLERY_PHOTOS,
     });
 
     if (!result.success) {
       return left(
-        new Error(`Limite máximo de ${this.MAX_GALLERY_PHOTOS} fotos na galeria atingido.`)
+        new Error(
+          `Limite máximo de ${this.MAX_GALLERY_PHOTOS} fotos na galeria atingido.`,
+        ),
       );
     }
 
@@ -105,7 +147,11 @@ export class ManageBarbershopGalleryUseCase {
   }): Promise<Either<Error, { success: boolean }>> {
     const isOwner = await this.verifyOwner(dto.userId, dto.barbershopId);
     if (!isOwner) {
-      return left(new Error("Apenas o proprietário ativo da unidade pode gerenciar a galeria."));
+      return left(
+        new Error(
+          "Apenas o proprietário ativo da unidade pode gerenciar a galeria.",
+        ),
+      );
     }
 
     const targetId = dto.galleryItemId || dto.mediaId;
@@ -125,20 +171,32 @@ export class ManageBarbershopGalleryUseCase {
     return right({ success: true });
   }
 
-  async reorder(dto: ReorderGalleryDTO): Promise<Either<Error, { success: boolean }>> {
+  async reorder(
+    dto: ReorderGalleryDTO,
+  ): Promise<Either<Error, { success: boolean }>> {
     const isOwner = await this.verifyOwner(dto.userId, dto.barbershopId);
     if (!isOwner) {
-      return left(new Error("Apenas o proprietário ativo da unidade pode gerenciar a galeria."));
+      return left(
+        new Error(
+          "Apenas o proprietário ativo da unidade pode gerenciar a galeria.",
+        ),
+      );
     }
 
-    const items = await this.galleryRepository.findByBarbershopId(dto.barbershopId);
+    const items = await this.galleryRepository.findByBarbershopId(
+      dto.barbershopId,
+    );
     const itemMapById = new Map(items.map((i) => [i.id.toString(), i]));
-    const itemMapByMediaId = new Map(items.map((i) => [i.mediaId.toString(), i]));
+    const itemMapByMediaId = new Map(
+      items.map((i) => [i.mediaId.toString(), i]),
+    );
 
     const ids = dto.itemIds || dto.mediaIds || [];
     if (ids.length !== items.length) {
       return left(
-        new Error("A lista de reordenação deve conter exatamente todos os itens da galeria.")
+        new Error(
+          "A lista de reordenação deve conter exatamente todos os itens da galeria.",
+        ),
       );
     }
 
@@ -174,19 +232,27 @@ export class ManageBarbershopGalleryUseCase {
   }): Promise<Either<Error, { success: boolean }>> {
     const isOwner = await this.verifyOwner(dto.userId, dto.barbershopId);
     if (!isOwner) {
-      return left(new Error("Apenas o proprietário ativo da unidade pode gerenciar a galeria."));
+      return left(
+        new Error(
+          "Apenas o proprietário ativo da unidade pode gerenciar a galeria.",
+        ),
+      );
     }
 
-    const items = await this.galleryRepository.findByBarbershopId(dto.barbershopId);
+    const items = await this.galleryRepository.findByBarbershopId(
+      dto.barbershopId,
+    );
     const targetId = dto.galleryItemId || dto.mediaId;
     const targetItem = items.find(
-      (i) => i.id.toString() === targetId || i.mediaId.toString() === targetId
+      (i) => i.id.toString() === targetId || i.mediaId.toString() === targetId,
     );
     if (!targetItem) {
       return left(new Error("Item da galeria não encontrado."));
     }
 
-    const media = await this.mediaRepository.findById(targetItem.mediaId.toString());
+    const media = await this.mediaRepository.findById(
+      targetItem.mediaId.toString(),
+    );
 
     const success = await this.galleryRepository.setCoverPhotoAtomic({
       barbershopId: dto.barbershopId,
@@ -204,7 +270,9 @@ export class ManageBarbershopGalleryUseCase {
   async listPhotos(dto: {
     barbershopId: string;
   }): Promise<Either<Error, { items: BarbershopGalleryItem[] }>> {
-    const items = await this.galleryRepository.findByBarbershopId(dto.barbershopId);
+    const items = await this.galleryRepository.findByBarbershopId(
+      dto.barbershopId,
+    );
     return right({ items });
   }
 }

@@ -9,6 +9,8 @@ export interface BarbershopGalleryItemProps {
   caption?: string;
   isCover: boolean;
   publicUrl?: string;
+  mimeType?: string;
+  posterUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -34,6 +36,12 @@ export class BarbershopGalleryItem extends Entity<BarbershopGalleryItemProps> {
     return this.props.isCover;
   }
 
+  get mimeType() {
+    return this.props.mimeType;
+  }
+  get posterUrl() {
+    return this.props.posterUrl;
+  }
   get publicUrl(): string | undefined {
     return this.props.publicUrl;
   }
@@ -52,7 +60,8 @@ export class BarbershopGalleryItem extends Entity<BarbershopGalleryItemProps> {
   }
 
   changeOrder(newOrder: number): void {
-    if (newOrder < 0) throw new Error("A ordem de exibição não pode ser negativa.");
+    if (newOrder < 0)
+      throw new Error("A ordem de exibição não pode ser negativa.");
     this.props.displayOrder = newOrder;
     this.touch();
   }
@@ -72,8 +81,11 @@ export class BarbershopGalleryItem extends Entity<BarbershopGalleryItemProps> {
   }
 
   static create(
-    props: Optional<BarbershopGalleryItemProps, "isCover" | "createdAt" | "updatedAt">,
-    id?: UniqueEntityId
+    props: Optional<
+      BarbershopGalleryItemProps,
+      "isCover" | "createdAt" | "updatedAt"
+    >,
+    id?: UniqueEntityId,
   ): BarbershopGalleryItem {
     return new BarbershopGalleryItem(
       {
@@ -82,7 +94,7 @@ export class BarbershopGalleryItem extends Entity<BarbershopGalleryItemProps> {
         createdAt: props.createdAt ?? new Date(),
         updatedAt: props.updatedAt ?? new Date(),
       },
-      id
+      id,
     );
   }
 }

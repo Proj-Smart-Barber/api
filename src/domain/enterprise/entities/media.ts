@@ -6,7 +6,10 @@ export type MediaPurpose =
   | "USER_AVATAR"
   | "BARBERSHOP_LOGO"
   | "BARBERSHOP_COVER"
-  | "BARBERSHOP_GALLERY";
+  | "BARBERSHOP_GALLERY"
+  | "SERVICE_PHOTO"
+  | "SERVICE_VIDEO"
+  | "BARBERSHOP_VIDEO";
 
 export type MediaStatus =
   | "PENDING"
@@ -19,6 +22,7 @@ export type MediaStatus =
 export type MediaOwnerType = "USER" | "BARBERSHOP";
 
 export interface MediaVariantInfo {
+  durationSeconds?: number;
   objectKey: string;
   publicUrl: string;
   width: number;
@@ -174,7 +178,10 @@ export class Media extends Entity<MediaProps> {
     return true;
   }
 
-  releaseProcessing(options?: { resetToPending?: boolean; errorMessage?: string }): void {
+  releaseProcessing(options?: {
+    resetToPending?: boolean;
+    errorMessage?: string;
+  }): void {
     this.props.leaseToken = undefined;
     this.props.leaseExpiresAt = undefined;
     if (options?.resetToPending) {
@@ -259,7 +266,7 @@ export class Media extends Entity<MediaProps> {
 
   static create(
     props: Optional<MediaProps, "status" | "createdAt" | "updatedAt">,
-    id?: UniqueEntityId
+    id?: UniqueEntityId,
   ): Media {
     return new Media(
       {
@@ -270,7 +277,7 @@ export class Media extends Entity<MediaProps> {
         createdAt: props.createdAt ?? new Date(),
         updatedAt: props.updatedAt ?? new Date(),
       },
-      id
+      id,
     );
   }
 }

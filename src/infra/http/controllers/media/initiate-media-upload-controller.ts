@@ -18,6 +18,9 @@ const initiateMediaUploadSchema = z.object({
       "BARBERSHOP_LOGO",
       "BARBERSHOP_COVER",
       "BARBERSHOP_GALLERY",
+      "SERVICE_PHOTO",
+      "SERVICE_VIDEO",
+      "BARBERSHOP_VIDEO",
     ])
     .transform((val) => (val === "AVATAR" ? "USER_AVATAR" : val)),
   fileName: z.string().min(1),
@@ -60,7 +63,10 @@ export class InitiateMediaUploadController implements Controller {
       if (err instanceof ZodError) {
         return clientError({ message: z.prettifyError(err) });
       }
-      if (err instanceof StorageUnavailableError || err?.name === "StorageUnavailableError") {
+      if (
+        err instanceof StorageUnavailableError ||
+        err?.name === "StorageUnavailableError"
+      ) {
         return {
           statusCode: 503,
           body: { message: err.message },

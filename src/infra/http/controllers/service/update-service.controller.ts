@@ -34,6 +34,9 @@ const updateServiceSchema = z.object({
     .positive("Duração deve ser maior que zero.")
     .optional(),
   description: z.string().trim().max(500).optional().nullable(),
+  imageUrl: z.string().trim().optional().nullable(),
+  isFeatured: z.boolean().optional(),
+  featuredOrder: z.coerce.number().int().optional(),
 });
 
 type UpdateServiceControllerRequest = z.infer<typeof updateServiceSchema>;
@@ -51,6 +54,9 @@ export class UpdateServiceController implements Controller {
         priceInCents,
         durationInMinutes,
         description,
+        imageUrl,
+        isFeatured,
+        featuredOrder,
       } = updateServiceSchema.parse(request);
 
       const result = await this.updateServiceUseCase.execute({

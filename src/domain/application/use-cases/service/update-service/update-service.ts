@@ -13,6 +13,9 @@ export interface UpdateServiceDTO {
   userId: string;
   title?: string;
   description?: string;
+  imageUrl?: string | null;
+  isFeatured?: boolean;
+  featuredOrder?: number;
   priceInCents?: number;
   durationInMinutes?: number;
 }
@@ -35,6 +38,9 @@ export class UpdateServiceUseCase {
     userId,
     title,
     description,
+    imageUrl,
+    isFeatured,
+    featuredOrder,
     priceInCents,
     durationInMinutes,
   }: UpdateServiceDTO): Promise<UpdateServiceResponse> {
@@ -58,6 +64,8 @@ export class UpdateServiceUseCase {
       if (!service) {
         return left(new ResourceNotFoundError("Serviço não encontrado."));
       }
+
+      if(imageUrl!==undefined && imageUrl!==null && imageUrl!==service.imageUrl){return left(new Error('Altere fotos e vídeos pela galeria do serviço.'));}
 
       let updatedTitle: string | undefined;
       if (title !== undefined) {
@@ -102,6 +110,9 @@ export class UpdateServiceUseCase {
       service.update({
         title: updatedTitle,
         description: description !== undefined ? updatedDescription : undefined,
+        imageUrl,
+        isFeatured,
+        featuredOrder,
         priceInCents,
         durationInMinutes,
       });

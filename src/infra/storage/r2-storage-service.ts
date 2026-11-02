@@ -1,5 +1,10 @@
 import {
   S3Client,
+  CreateMultipartUploadCommand,
+  UploadPartCommand,
+  ListPartsCommand,
+  CompleteMultipartUploadCommand,
+  AbortMultipartUploadCommand,
   PutObjectCommand,
   HeadObjectCommand,
   GetObjectCommand,
@@ -45,6 +50,25 @@ export class R2StorageService implements StorageService {
       },
       forcePathStyle: config.forcePathStyle ?? true,
     });
+  }
+
+  async beginMultipart(key:string,mimeType:string):Promise<string> {
+    const result=await this.client.send(new CreateMultipartUploadCommand({Bucket:this.stagingBucket,Key:key,ContentType:mimeType}));
+    if(!result.UploadId)throw new Error('Não foi possível iniciar multipart.');return result.UploadId;
+  }
+  async signMultipartPart(key:string,uploadId:string,part:number,size:number):Promise<string> {
+    return getSignedUrl(this.client,new UploadPartCommand({Bucket:this.stagingBucket,Key:key,UploadId:uploadId,PartNumber:part,ContentLength:size}),{expiresIn:300});
+  }
+  async listMultipartParts(key:string,uploadId:string) {
+    const result=await this.client.send(new ListPartsCommand({Bucket:this.stagingBucket,Key:key,UploadId:uploadId,MaxParts:100}));
+    if(result.IsTruncated)throw new Error('Quantidade de partes fora do limite permitido.');
+    return (result.Parts??[]).map(part=>({part:part.PartNumber!,etag:part.ETag!,size:part.Size??0}));
+  }
+  async finishMultipart(key:string,uploadId:string,parts:Array<{part:number;etag:string}>):Promise<void> {
+    await this.client.send(new CompleteMultipartUploadCommand({Bucket:this.stagingBucket,Key:key,UploadId:uploadId,MultipartUpload:{Parts:parts.map(part=>({PartNumber:part.part,ETag:part.etag}))}}));
+  }
+  async abortMultipart(key:string,uploadId:string):Promise<void> {
+    try{await this.client.send(new AbortMultipartUploadCommand({Bucket:this.stagingBucket,Key:key,UploadId:uploadId}));}catch(error){if((error as {name?:string}).name!=='NoSuchUpload')throw error;}
   }
 
   isConfigured(): boolean {

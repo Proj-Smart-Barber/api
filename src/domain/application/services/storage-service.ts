@@ -35,6 +35,11 @@ export interface SaveVariantParams {
 }
 
 export interface StorageService {
+  beginMultipart?(key:string,mimeType:string):Promise<string>;
+  signMultipartPart?(key:string,uploadId:string,part:number,size:number):Promise<string>;
+  listMultipartParts?(key:string,uploadId:string):Promise<Array<{part:number;etag:string;size:number}>>;
+  finishMultipart?(key:string,uploadId:string,parts:Array<{part:number;etag:string}>):Promise<void>;
+  abortMultipart?(key:string,uploadId:string):Promise<void>;
   isConfigured(): boolean;
   generateUploadUrl(params: GenerateUploadUrlParams): Promise<GenerateUploadUrlResult>;
   inspectObject(objectKey: string): Promise<InspectObjectResult>;
