@@ -778,6 +778,7 @@ describe("T11: Regressões Canônicas Consolidadas F01-F12", () => {
     it("não desmarca a capa anterior se o item alvo da nova capa não existir", async () => {
       const shop = Barbershop.create({
         name: "Barbearia Central",
+        location: "Rua Central, 100",
         ownerId: new UniqueEntityId("owner-shop"),
       });
       await shopRepo.create(shop);
@@ -827,10 +828,12 @@ describe("T11: Regressões Canônicas Consolidadas F01-F12", () => {
     it("A04: Impede adição de foto pertencente a outra barbearia", async () => {
       const shop1 = Barbershop.create({
         name: "Unidade 1",
+        location: "Rua Um, 100",
         ownerId: new UniqueEntityId("owner-1"),
       });
       const shop2 = Barbershop.create({
         name: "Unidade 2",
+        location: "Rua Dois, 200",
         ownerId: new UniqueEntityId("owner-2"),
       });
       await shopRepo.create(shop1);
@@ -848,7 +851,7 @@ describe("T11: Regressões Canônicas Consolidadas F01-F12", () => {
       // Mídia associada à Unidade 2
       const mediaShop2 = Media.create({
         ownerId: new UniqueEntityId("owner-2"),
-        ownerType: "SHOP",
+        ownerType: "BARBERSHOP",
         ownerEntityId: shop2.id,
         purpose: "BARBERSHOP_GALLERY",
         objectKey: "variants/shop2/1/main.png",
@@ -888,6 +891,7 @@ describe("T11: Regressões Canônicas Consolidadas F01-F12", () => {
     it("A03: Reordenação exige lista completa sem duplicatas", async () => {
       const shop = Barbershop.create({
         name: "Barbearia Reorder",
+        location: "Rua Reorder, 300",
         ownerId: new UniqueEntityId("owner-reorder"),
       });
       await shopRepo.create(shop);

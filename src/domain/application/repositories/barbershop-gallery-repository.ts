@@ -2,9 +2,10 @@ import type { BarbershopGalleryItem } from "../../enterprise/entities/barbershop
 
 export type AddGalleryPhotoResult =
   | { success: true; item: BarbershopGalleryItem; isDuplicate: boolean }
-  | { success: false; reason: "LIMIT_EXCEEDED" };
+  | { success: false; reason: "LIMIT_EXCEEDED" | "INVALID_MEDIA" };
 
 export interface AddGalleryPhotoParams {
+  actorId?: string;
   barbershopId: string;
   mediaId: string;
   caption?: string;
@@ -39,7 +40,7 @@ export interface BarbershopGalleryRepository {
   findByBarbershopId(barbershopId: string): Promise<BarbershopGalleryItem[]>;
   findByBarbershopIdAndMediaId(
     barbershopId: string,
-    mediaId: string
+    mediaId: string,
   ): Promise<BarbershopGalleryItem | null>;
   save(item: BarbershopGalleryItem): Promise<void>;
   saveMany(items: BarbershopGalleryItem[]): Promise<void>;
@@ -49,7 +50,9 @@ export interface BarbershopGalleryRepository {
 
   // Atomic database-coordinated operations (A01)
   addPhotoAtomic(params: AddGalleryPhotoParams): Promise<AddGalleryPhotoResult>;
-  removePhotoAtomic(params: RemoveGalleryPhotoParams): Promise<RemoveGalleryPhotoResult>;
+  removePhotoAtomic(
+    params: RemoveGalleryPhotoParams,
+  ): Promise<RemoveGalleryPhotoResult>;
   reorderPhotosAtomic(params: ReorderGalleryPhotosParams): Promise<boolean>;
   setCoverPhotoAtomic(params: SetCoverPhotoParams): Promise<boolean>;
 }

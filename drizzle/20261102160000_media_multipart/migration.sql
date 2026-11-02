@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS media_multipart_sessions(media_id uuid PRIMARY KEY REFERENCES media(id),upload_id text NOT NULL,state text NOT NULL DEFAULT 'ACTIVE',expires_at timestamptz NOT NULL DEFAULT(NOW()+INTERVAL '24 hours'));

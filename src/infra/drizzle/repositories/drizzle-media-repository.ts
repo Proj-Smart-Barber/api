@@ -12,6 +12,11 @@ import type { Media } from "../../../domain/enterprise/entities/media";
 export class DrizzleMediaRepository implements MediaRepository {
   constructor(private db = defaultDb) {}
 
+  async markStorageDeleted(id: string): Promise<void> {
+    await this.db.execute(
+      sql`UPDATE media SET file_size=0,variants=NULL,updated_at=NOW() WHERE id=${id}::uuid AND status='EXPIRED'`,
+    );
+  }
   async create(entity: Media): Promise<void> {
     const data = MediaMapper.toPersistence(entity);
     await this.db.insert(media).values(data);
@@ -24,14 +29,20 @@ export class DrizzleMediaRepository implements MediaRepository {
   }
 
   async findByObjectKey(objectKey: string): Promise<Media | null> {
-    const [row] = await this.db.select().from(media).where(eq(media.objectKey, objectKey));
+    const [row] = await this.db
+      .select()
+      .from(media)
+      .where(eq(media.objectKey, objectKey));
     if (!row) return null;
     return MediaMapper.toDomain(row);
   }
 
   async save(entity: Media): Promise<void> {
     const data = MediaMapper.toPersistence(entity);
-    await this.db.update(media).set(data).where(eq(media.id, entity.id.toString()));
+    await this.db
+      .update(media)
+      .set(data)
+      .where(eq(media.id, entity.id.toString()));
   }
 
   async delete(id: string): Promise<void> {
@@ -40,7 +51,7 @@ export class DrizzleMediaRepository implements MediaRepository {
 
   async claimForProcessing(
     id: string,
-    params: { leaseToken: string; leaseDurationMs: number }
+    params: { leaseToken: string; leaseDurationMs: number },
   ): Promise<ClaimProcessingResult> {
     const expiresAt = new Date(Date.now() + params.leaseDurationMs);
     const rows = await this.db
@@ -62,11 +73,11 @@ export class DrizzleMediaRepository implements MediaRepository {
               eq(media.status, "PROCESSING"),
               or(
                 isNull(media.leaseExpiresAt),
-                lt(media.leaseExpiresAt, new Date())
-              )
-            )
-          )
-        )
+                lt(media.leaseExpiresAt, new Date()),
+              ),
+            ),
+          ),
+        ),
       )
       .returning();
 
@@ -83,7 +94,7 @@ export class DrizzleMediaRepository implements MediaRepository {
   async releaseProcessing(
     id: string,
     leaseToken: string,
-    options?: { resetToPending?: boolean; errorMessage?: string }
+    options?: { resetToPending?: boolean; errorMessage?: string },
   ): Promise<boolean> {
     const updateData: any = {
       leaseToken: null,
@@ -110,7 +121,7 @@ export class DrizzleMediaRepository implements MediaRepository {
   async finalizeProcessing(
     id: string,
     leaseToken: string,
-    data: FinalizeProcessingData
+    data: FinalizeProcessingData,
   ): Promise<boolean> {
     const rows = await this.db
       .update(media)
@@ -129,7 +140,13 @@ export class DrizzleMediaRepository implements MediaRepository {
         errorMessage: null,
         updatedAt: new Date(),
       })
-      .where(and(eq(media.id, id), eq(media.leaseToken, leaseToken)))
+      .where(
+        and(
+          eq(media.id, id),
+          eq(media.leaseToken, leaseToken),
+          sql`(${media.ownerType}='USER' OR EXISTS(SELECT 1 FROM membership ms WHERE ms.user_id=${media.ownerId} AND ms.barbershop_id=${media.ownerEntityId} AND ms.role='OWNER' AND ms.state='ACTIVE'))`,
+        ),
+      )
       .returning({ id: media.id });
 
     return rows.length > 0;
@@ -138,7 +155,7 @@ export class DrizzleMediaRepository implements MediaRepository {
   async rejectProcessing(
     id: string,
     leaseToken: string,
-    reason: string
+    reason: string,
   ): Promise<boolean> {
     const rows = await this.db
       .update(media)
@@ -157,26 +174,42 @@ export class DrizzleMediaRepository implements MediaRepository {
 
   async markExpiredConditional(
     id: string,
-    params: { allowedStatuses: string[]; currentGeneration: number }
+    params: { allowedStatuses: string[]; currentGeneration: number },
   ): Promise<boolean> {
-    const rows = await this.db
-      .update(media)
-      .set({
-        status: "EXPIRED",
-        leaseToken: null,
-        leaseExpiresAt: null,
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(media.id, id),
-          eq(media.generation, params.currentGeneration),
-          inArray(media.status, params.allowedStatuses as any)
-        )
+    return this.db.transaction(async (tx) => {
+      const rows = await tx
+        .select()
+        .from(media)
+        .where(eq(media.id, id))
+        .for("update");
+      const current = rows[0];
+      if (
+        !current ||
+        current.generation !== params.currentGeneration ||
+        !params.allowedStatuses.includes(current.status)
       )
-      .returning({ id: media.id });
-
-    return rows.length > 0;
+        return false;
+      if (
+        current.status === "PROCESSING" &&
+        current.leaseExpiresAt &&
+        current.leaseExpiresAt.getTime() > Date.now()
+      )
+        return false;
+      const references = await tx.execute(
+        sql`SELECT EXISTS(SELECT 1 FROM service_media WHERE media_id=${id}::uuid) OR EXISTS(SELECT 1 FROM barbershop_gallery WHERE media_id=${id}::uuid) OR EXISTS(SELECT 1 FROM users WHERE avatar_url=${current.publicUrl}) OR EXISTS(SELECT 1 FROM barbershops WHERE avatar_url=${current.publicUrl} OR cover_url=${current.publicUrl} OR cover_url=${(current.variants as Record<string, { publicUrl?: string }> | null)?.thumbnail?.publicUrl ?? null}) AS referenced`,
+      );
+      if (references.rows[0]?.referenced) return false;
+      await tx
+        .update(media)
+        .set({
+          status: "EXPIRED",
+          leaseToken: null,
+          leaseExpiresAt: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(media.id, id));
+      return true;
+    });
   }
 
   async findOrphans(olderThanDate: Date, limit: number): Promise<Media[]> {
@@ -185,16 +218,29 @@ export class DrizzleMediaRepository implements MediaRepository {
       .from(media)
       .where(
         or(
-          and(eq(media.status, "PENDING"), lt(media.createdAt, olderThanDate)),
+          and(eq(media.status,"PENDING"),lt(media.createdAt,olderThanDate),sql`NOT EXISTS(SELECT 1 FROM media_multipart_sessions sessions WHERE sessions.media_id=${media.id} AND sessions.state='ACTIVE' AND sessions.expires_at>NOW())`),
           and(
             eq(media.status, "PROCESSING"),
             or(
-              and(isNotNull(media.leaseExpiresAt), lt(media.leaseExpiresAt, new Date())),
-              lt(media.updatedAt, olderThanDate)
-            )
+              and(
+                isNotNull(media.leaseExpiresAt),
+                lt(media.leaseExpiresAt, new Date()),
+              ),
+              lt(media.updatedAt, olderThanDate),
+            ),
           ),
-          and(eq(media.status, "REJECTED"), lt(media.updatedAt, olderThanDate))
-        )
+          and(
+            eq(media.status, "READY"),
+            inArray(media.purpose, ["SERVICE_PHOTO", "SERVICE_VIDEO"]),
+            lt(media.updatedAt, olderThanDate),
+            sql`NOT EXISTS(SELECT 1 FROM service_media sm WHERE sm.media_id=${media.id}) AND NOT EXISTS(SELECT 1 FROM barbershop_gallery bg WHERE bg.media_id=${media.id}) AND NOT EXISTS(SELECT 1 FROM users u WHERE u.avatar_url=${media.publicUrl}) AND NOT EXISTS(SELECT 1 FROM barbershops b WHERE b.avatar_url=${media.publicUrl} OR b.cover_url=${media.publicUrl} OR b.cover_url=(${media.variants}->'thumbnail'->>'publicUrl'))`,
+          ),
+          and(
+            inArray(media.status, ["REJECTED", "CANCELLED", "EXPIRED"]),
+            sql`${media.fileSize} > 0`,
+            lt(media.updatedAt, olderThanDate),
+          ),
+        ),
       )
       .limit(limit);
 

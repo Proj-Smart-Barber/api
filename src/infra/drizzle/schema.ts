@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm/_relations";
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  bigint,
   check,
   doublePrecision,
   index,
@@ -205,7 +206,9 @@ export const barbershops = pgTable("barbershops", {
   timezone: text("timezone").notNull().default("America/Sao_Paulo"),
   googleMapsUrl: text("google_maps_url"),
   coverUrl: text("cover_url"),
-  rating: numeric("rating", { precision: 3, scale: 2 }).notNull().default("0.00"),
+  rating: numeric("rating", { precision: 3, scale: 2 })
+    .notNull()
+    .default("0.00"),
   reviewCount: integer("review_count").notNull().default(0),
   status: barbershopStatusEnum("status").notNull().default("ACTIVE"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -269,6 +272,9 @@ export const services = pgTable(
       .references(() => barbershops.id, { onDelete: "cascade" }),
     title: text().notNull(),
     description: text(),
+    imageUrl: text("image_url"),
+    isFeatured: boolean("is_featured").notNull().default(false),
+    featuredOrder: integer("featured_order").notNull().default(0),
     priceInCents: integer("price_in_cents").notNull(),
     durationInMinutes: integer("duration_in_minutes").notNull().default(30),
     isActive: boolean("is_active").notNull().default(true),
@@ -935,15 +941,19 @@ export const media = pgTable(
     retryCount: integer("retry_count").notNull().default(0),
     errorMessage: text("error_message"),
     status: text("status").notNull().default("PENDING"),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
   },
   (table) => [
     index("media_owner_id_idx").on(table.ownerId),
     index("media_owner_scope_idx").on(table.ownerType, table.ownerEntityId),
     index("media_status_created_idx").on(table.status, table.createdAt),
     index("media_lease_idx").on(table.status, table.leaseExpiresAt),
-  ]
+  ],
 );
 
 export const barbershopGallery = pgTable(
@@ -959,19 +969,26 @@ export const barbershopGallery = pgTable(
     displayOrder: integer("display_order").notNull().default(0),
     caption: text("caption"),
     isCover: boolean("is_cover").notNull().default(false),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
   },
   (table) => [
-    index("barbershop_gallery_shop_order_idx").on(table.barbershopId, table.displayOrder),
+    index("barbershop_gallery_shop_order_idx").on(
+      table.barbershopId,
+      table.displayOrder,
+    ),
     uniqueIndex("barbershop_gallery_unique_cover_idx")
       .on(table.barbershopId)
       .where(sql`${table.isCover} = true`),
     uniqueIndex("barbershop_gallery_shop_media_idx").on(
       table.barbershopId,
-      table.mediaId
+      table.mediaId,
     ),
-  ]
+  ],
 );
 
 export const reviews = pgTable(
@@ -992,14 +1009,21 @@ export const reviews = pgTable(
     comment: text("comment"),
     status: text("status").notNull().default("PUBLISHED"),
     version: integer("version").notNull().default(1),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
   },
   (table) => [
-    check("reviews_rating_check", sql`${table.rating} >= 1 AND ${table.rating} <= 5`),
+    check(
+      "reviews_rating_check",
+      sql`${table.rating} >= 1 AND ${table.rating} <= 5`,
+    ),
     index("reviews_barbershop_status_idx").on(table.barbershopId, table.status),
     index("reviews_customer_idx").on(table.customerId),
-  ]
+  ],
 );
 
 export const reviewReports = pgTable(
@@ -1013,11 +1037,11 @@ export const reviewReports = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     reason: text("reason").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
   },
-  (table) => [
-    index("review_reports_review_idx").on(table.reviewId),
-  ]
+  (table) => [index("review_reports_review_idx").on(table.reviewId)],
 );
 
 export const reviewModerationLogs = pgTable(
@@ -1032,11 +1056,11 @@ export const reviewModerationLogs = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     action: text("action").notNull(),
     reason: text("reason").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
   },
-  (table) => [
-    index("review_moderation_logs_review_idx").on(table.reviewId),
-  ]
+  (table) => [index("review_moderation_logs_review_idx").on(table.reviewId)],
 );
 
 export const mediaRelations = relations(media, ({ one }) => ({
@@ -1046,16 +1070,19 @@ export const mediaRelations = relations(media, ({ one }) => ({
   }),
 }));
 
-export const barbershopGalleryRelations = relations(barbershopGallery, ({ one }) => ({
-  barbershop: one(barbershops, {
-    fields: [barbershopGallery.barbershopId],
-    references: [barbershops.id],
+export const barbershopGalleryRelations = relations(
+  barbershopGallery,
+  ({ one }) => ({
+    barbershop: one(barbershops, {
+      fields: [barbershopGallery.barbershopId],
+      references: [barbershops.id],
+    }),
+    media: one(media, {
+      fields: [barbershopGallery.mediaId],
+      references: [media.id],
+    }),
   }),
-  media: one(media, {
-    fields: [barbershopGallery.mediaId],
-    references: [media.id],
-  }),
-}));
+);
 
 export const reviewsRelations = relations(reviews, ({ one, many }) => ({
   booking: one(bookings, {
@@ -1074,3 +1101,62 @@ export const reviewsRelations = relations(reviews, ({ one, many }) => ({
   moderationLogs: many(reviewModerationLogs),
 }));
 
+export const serviceMedia = pgTable(
+  "service_media",
+  {
+    serviceId: uuid("service_id")
+      .notNull()
+      .references(() => services.id, { onDelete: "cascade" }),
+    mediaId: uuid("media_id")
+      .notNull()
+      .references(() => media.id),
+    displayOrder: integer("display_order").notNull().default(0),
+  },
+  (table) => [
+    uniqueIndex("service_media_link_unique").on(table.serviceId, table.mediaId),
+    check("service_media_order_check", sql`${table.displayOrder} >= 0`),
+  ],
+);
+export const exploreFeedSnapshots = pgTable(
+  "explore_feed_snapshots",
+  {
+    id: uuid("id").primaryKey(),
+    filtersHash: text("filters_hash").notNull(),
+    orderedIds: jsonb("ordered_ids").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [index("explore_feed_snapshots_expiry_idx").on(table.expiresAt)],
+);
+export const mediaUploadReservations = pgTable(
+  "media_upload_reservations",
+  {
+    mediaId: uuid("media_id").primaryKey(),
+    scope: uuid("scope").notNull(),
+    stagingKey: text("staging_key"),
+    bytes: bigint("bytes", { mode: "number" }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    check("media_upload_reservation_positive", sql`${table.bytes} > 0`),
+  ],
+);
+export const mediaVideoJobs = pgTable("media_video_jobs", {
+  mediaId: uuid("media_id")
+    .primaryKey()
+    .references(() => media.id),
+  state: text("state").notNull().default("PENDING"),
+  attempts: integer("attempts").notNull().default(0),
+  leaseUntil: timestamp("lease_until", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const mediaMultipartSessions=pgTable('media_multipart_sessions',{
+ mediaId:uuid('media_id').primaryKey().references(()=>media.id),uploadId:text('upload_id').notNull(),state:text('state').notNull().default('ACTIVE'),expiresAt:timestamp('expires_at',{withTimezone:true}).notNull().default(sql`NOW()+INTERVAL '24 hours'`),
+});

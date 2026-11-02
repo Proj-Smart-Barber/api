@@ -17,6 +17,7 @@ export interface FinalizeProcessingData {
 }
 
 export interface MediaRepository {
+  markStorageDeleted?(id: string): Promise<void>;
   create(media: Media): Promise<void>;
   findById(id: string): Promise<Media | null>;
   findByObjectKey(objectKey: string): Promise<Media | null>;
@@ -26,25 +27,25 @@ export interface MediaRepository {
   countPendingByOwnerId(ownerId: string): Promise<number>;
   claimForProcessing(
     id: string,
-    params: { leaseToken: string; leaseDurationMs: number }
+    params: { leaseToken: string; leaseDurationMs: number },
   ): Promise<ClaimProcessingResult>;
   releaseProcessing(
     id: string,
     leaseToken: string,
-    options?: { resetToPending?: boolean; errorMessage?: string }
+    options?: { resetToPending?: boolean; errorMessage?: string },
   ): Promise<boolean>;
   finalizeProcessing(
     id: string,
     leaseToken: string,
-    data: FinalizeProcessingData
+    data: FinalizeProcessingData,
   ): Promise<boolean>;
   rejectProcessing(
     id: string,
     leaseToken: string,
-    reason: string
+    reason: string,
   ): Promise<boolean>;
   markExpiredConditional(
     id: string,
-    params: { allowedStatuses: string[]; currentGeneration: number }
+    params: { allowedStatuses: string[]; currentGeneration: number },
   ): Promise<boolean>;
 }

@@ -1,3 +1,4 @@
+import { DrizzleMediaQuota } from "../../drizzle/repositories/drizzle-media-quota";
 import type { Controller } from "../../../core/infra/controller";
 import { InitiateMediaUploadUseCase } from "../../../domain/application/use-cases/media/initiate-upload/initiate-upload";
 import { DrizzleMediaRepository } from "../../drizzle/repositories/drizzle-media-repository";
@@ -14,6 +15,7 @@ export function makeInitiateMediaUploadController(): Controller {
     mediaRepository,
     storageService,
     membershipsRepository,
+    new DrizzleMediaQuota(),
   );
 
   return new InitiateMediaUploadController(useCase);

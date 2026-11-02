@@ -1,4 +1,5 @@
-﻿import { Router } from "express";
+import { AttachServiceMediaController } from "../controllers/service/attach-service-media.controller";
+import { Router } from "express";
 import { adaptRoute } from "../../../core/infra/adapters/express-route-adapter";
 import { ensureUserIsAuthenticated } from "../middlewares/ensure-user-is-authenticated";
 import { optionalUserAuthentication } from "../middlewares/optional-user-authentication";
@@ -38,6 +39,23 @@ serviceRoutes.patch(
   "/:serviceId/activation",
   ensureUserIsAuthenticated,
   adaptRoute(makeToggleServiceActivationController()),
+);
+
+serviceRoutes.post(
+  "/:serviceId/media",
+  ensureUserIsAuthenticated,
+  adaptRoute(new AttachServiceMediaController()),
+);
+
+serviceRoutes.get(
+  "/:serviceId/media",
+  optionalUserAuthentication,
+  adaptRoute(new AttachServiceMediaController("list")),
+);
+serviceRoutes.delete(
+  "/:serviceId/media/:mediaId",
+  ensureUserIsAuthenticated,
+  adaptRoute(new AttachServiceMediaController("detach")),
 );
 
 export { serviceRoutes };

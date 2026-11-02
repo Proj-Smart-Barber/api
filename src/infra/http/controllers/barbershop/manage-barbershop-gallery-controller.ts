@@ -23,19 +23,23 @@ type ListGalleryRequest = z.infer<typeof listGallerySchema>;
 export class ListBarbershopGalleryController implements Controller {
   constructor(
     private galleryRepository: BarbershopGalleryRepository,
-    private mediaRepository?: MediaRepository
+    private mediaRepository?: MediaRepository,
   ) {}
 
   async handle(request: ListGalleryRequest): Promise<HttpResponse> {
     try {
       const parsed = listGallerySchema.parse(request);
-      const items = await this.galleryRepository.findByBarbershopId(parsed.shopId);
+      const items = await this.galleryRepository.findByBarbershopId(
+        parsed.shopId,
+      );
 
       const mappedItems = await Promise.all(
         items.map(async (item: BarbershopGalleryItem) => {
           let publicUrl = item.publicUrl;
           if (!publicUrl && this.mediaRepository) {
-            const media = await this.mediaRepository.findById(item.mediaId.toString());
+            const media = await this.mediaRepository.findById(
+              item.mediaId.toString(),
+            );
             publicUrl = media?.publicUrl;
           }
           return {
@@ -43,11 +47,14 @@ export class ListBarbershopGalleryController implements Controller {
             barbershopId: item.barbershopId.toString(),
             mediaId: item.mediaId.toString(),
             displayOrder: item.displayOrder,
+            caption:item.caption,
             isCover: item.isCover,
             publicUrl: publicUrl ?? "",
+            mimeType: item.mimeType,
+            posterUrl: item.posterUrl,
             createdAt: item.createdAt,
           };
-        })
+        }),
       );
 
       return ok({

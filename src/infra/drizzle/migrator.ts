@@ -16,6 +16,13 @@ export async function runSchemaMigrations(targetDb: any = db) {
   console.log("[Migration] Running idempotent schema migrations...");
 
   try {
+    await targetDb.execute(sql`CREATE TABLE IF NOT EXISTS explore_feed_snapshots (
+ id uuid PRIMARY KEY, filters_hash text NOT NULL, ordered_ids jsonb NOT NULL,
+ expires_at timestamptz NOT NULL
+);
+CREATE INDEX IF NOT EXISTS explore_feed_snapshots_expiry_idx ON explore_feed_snapshots(expires_at);
+`);
+
     // 1. service_items snapshots
     await targetDb.execute(sql`
       ALTER TABLE "service_items" ADD COLUMN IF NOT EXISTS "title_snapshot" text;
@@ -28,6 +35,9 @@ export async function runSchemaMigrations(targetDb: any = db) {
       ALTER TABLE "services" ADD COLUMN IF NOT EXISTS "barbershop_id" uuid;
       ALTER TABLE "services" ADD COLUMN IF NOT EXISTS "is_active" boolean DEFAULT true NOT NULL;
       ALTER TABLE "services" ADD COLUMN IF NOT EXISTS "updated_at" timestamp DEFAULT now();
+      ALTER TABLE "services" ADD COLUMN IF NOT EXISTS "image_url" text;
+      ALTER TABLE "services" ADD COLUMN IF NOT EXISTS "is_featured" boolean DEFAULT false NOT NULL;
+      ALTER TABLE "services" ADD COLUMN IF NOT EXISTS "featured_order" integer DEFAULT 0 NOT NULL;
     `);
 
     // 3. Backfill snapshots from current service state if missing
@@ -790,6 +800,21 @@ export async function runSchemaMigrations(targetDb: any = db) {
       CREATE INDEX IF NOT EXISTS "review_moderation_logs_review_idx" ON "review_moderation_logs"("review_id");
     `);
 
+    await targetDb.execute(sql`CREATE TABLE IF NOT EXISTS service_media (
+ service_id uuid NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+ media_id uuid NOT NULL REFERENCES media(id),
+ display_order integer NOT NULL DEFAULT 0 CHECK(display_order >= 0),
+ PRIMARY KEY(service_id,media_id)
+);
+`);
+    await targetDb.execute(sql`CREATE TABLE IF NOT EXISTS media_upload_reservations(media_id uuid PRIMARY KEY,scope uuid NOT NULL,bytes bigint NOT NULL CHECK(bytes>0),created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS media_video_jobs(media_id uuid PRIMARY KEY REFERENCES media(id),state text NOT NULL DEFAULT 'PENDING',attempts integer NOT NULL DEFAULT 0,lease_until timestamptz,created_at timestamptz NOT NULL DEFAULT now(),updated_at timestamptz NOT NULL DEFAULT now());
+`);
+    await targetDb.execute(
+      sql`ALTER TABLE media_upload_reservations ADD COLUMN IF NOT EXISTS staging_key text`,
+    );
+    await targetDb.execute(sql`CREATE TABLE IF NOT EXISTS media_multipart_sessions(media_id uuid PRIMARY KEY REFERENCES media(id),upload_id text NOT NULL,state text NOT NULL DEFAULT 'ACTIVE',expires_at timestamptz NOT NULL DEFAULT(NOW()+INTERVAL '24 hours'));
+`);
     if (isDefaultDb) {
       hasMigrated = true;
     }

@@ -10,6 +10,9 @@ export interface CreateServiceDTO {
   userId: string;
   title: string;
   description?: string;
+  imageUrl?: string | null;
+  isFeatured?: boolean;
+  featuredOrder?: number;
   priceInCents: number;
   durationInMinutes: number;
 }
@@ -30,6 +33,9 @@ export class CreateServiceUseCase {
     userId,
     title,
     description,
+    imageUrl,
+    isFeatured,
+    featuredOrder,
     priceInCents,
     durationInMinutes,
   }: CreateServiceDTO): Promise<CreateServiceResponse> {
@@ -46,6 +52,8 @@ export class CreateServiceUseCase {
     if (barbershop.ownerId.toString() !== userId) {
       return left(new NotAllowedError());
     }
+
+    if(imageUrl){return left(new Error('Salve o serviço e envie a foto pela galeria. URLs externas não são aceitas como upload.'));}
 
     const trimmedTitle = title?.trim();
     if (!trimmedTitle || trimmedTitle.length < 2) {
@@ -75,6 +83,9 @@ export class CreateServiceUseCase {
       barbershopId: barbershop.id,
       title: trimmedTitle,
       description: trimmedDescription || undefined,
+      imageUrl,
+      isFeatured,
+      featuredOrder,
       priceInCents,
       durationInMinutes,
       isActive: true,

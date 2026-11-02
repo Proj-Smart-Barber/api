@@ -4,11 +4,13 @@ export type GeoPoint = {
 };
 
 export type DiscoveryInput =
-  | { mode: "ALL"; q?: string; page: number; limit: number }
+  | { mode: "ALL"; ids?:string[]; regionKey?: string; q?: string; page: number; limit: number }
   | {
       mode: "NEARBY";
       point: GeoPoint;
       radiusKm: 5 | 10 | 25 | 50;
+      ids?:string[];
+      regionKey?: string;
       q?: string;
       page: number;
       limit: number;
@@ -21,11 +23,35 @@ export type PublicShop = {
   location: string;
   avatarUrl: string | null;
   coverUrl?: string | null;
+  photos?: string[];
   rating?: number | null;
   reviewCount?: number;
   googleMapsUrl?: string | null;
   coordinates: GeoPoint | null;
   distanceMeters: number | null;
+  environmentMedia?: Array<{
+    id: string;
+    url: string;
+    width: number;
+    height: number;
+    mimeType: string;
+    posterUrl?: string;
+    durationSeconds?: number;
+  }>;
+  featuredServices?: Array<{
+    id: string;
+    title: string;
+    priceInCents: number;
+    durationInMinutes: number;
+    imageUrl: string;
+    mediaId?: string;
+    mimeType?: string;
+    posterUrl?: string;
+    durationSeconds?: number;
+    width?: number;
+    height?: number;
+    featuredOrder: number;
+  }>;
 };
 
 export type DiscoveryPage = {

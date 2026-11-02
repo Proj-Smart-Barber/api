@@ -12,7 +12,11 @@ import type { MediaPurpose } from "../../domain/enterprise/entities/media";
 export class SharpImageProcessor implements ImageProcessorService {
   private readonly MAX_DIMENSION = 4096;
   private readonly MAX_PIXELS = 16_000_000;
-  private readonly ALLOWED_FORMATS: AllowedImageFormat[] = ["jpeg", "png", "webp"];
+  private readonly ALLOWED_FORMATS: AllowedImageFormat[] = [
+    "jpeg",
+    "png",
+    "webp",
+  ];
 
   async validateAndInspect(buffer: Buffer): Promise<ImageInspectionResult> {
     if (!buffer || buffer.length < 24) {
@@ -49,13 +53,16 @@ export class SharpImageProcessor implements ImageProcessorService {
         };
       }
 
-      const format = (formatLower === "jpg" ? "jpeg" : formatLower) as AllowedImageFormat;
+      const format = (
+        formatLower === "jpg" ? "jpeg" : formatLower
+      ) as AllowedImageFormat;
 
       // Single frame check
       if (metadata.pages && metadata.pages > 1) {
         return {
           valid: false,
-          error: "Imagens com múltiplas páginas ou animações não são permitidas.",
+          error:
+            "Imagens com múltiplas páginas ou animações não são permitidas.",
         };
       }
 
@@ -86,7 +93,12 @@ export class SharpImageProcessor implements ImageProcessorService {
       // Prove that image can actually be decoded completely (detects truncated PNG/JPEG)
       await instance.rotate().toBuffer();
 
-      const mimeType = format === "jpeg" ? "image/jpeg" : format === "png" ? "image/png" : "image/webp";
+      const mimeType =
+        format === "jpeg"
+          ? "image/jpeg"
+          : format === "png"
+            ? "image/png"
+            : "image/webp";
 
       return {
         valid: true,
@@ -106,7 +118,7 @@ export class SharpImageProcessor implements ImageProcessorService {
   private async optimizeBufferUnderBudget(
     pipeline: sharp.Sharp,
     maxBytes: number,
-    preferredFormat: AllowedImageFormat
+    preferredFormat: AllowedImageFormat,
   ): Promise<{ buffer: Buffer; format: AllowedImageFormat; mimeType: string }> {
     let currentFormat = preferredFormat;
     const qualities = [82, 70, 58];
@@ -122,7 +134,10 @@ export class SharpImageProcessor implements ImageProcessorService {
     }
 
     for (const q of qualities) {
-      buf = await pipeline.clone().webp({ quality: q, alphaQuality: 90 }).toBuffer();
+      buf = await pipeline
+        .clone()
+        .webp({ quality: q, alphaQuality: 90 })
+        .toBuffer();
       if (buf.length <= maxBytes) {
         return {
           buffer: buf,
@@ -133,7 +148,10 @@ export class SharpImageProcessor implements ImageProcessorService {
     }
 
     // Try quality 45 before refusing
-    buf = await pipeline.clone().webp({ quality: 45, alphaQuality: 80 }).toBuffer();
+    buf = await pipeline
+      .clone()
+      .webp({ quality: 45, alphaQuality: 80 })
+      .toBuffer();
     if (buf.length <= maxBytes) {
       return {
         buffer: buf,
@@ -143,7 +161,7 @@ export class SharpImageProcessor implements ImageProcessorService {
     }
 
     throw new Error(
-      `Imagem excede o orçamento de saída permitido de ${Math.round(maxBytes / 1024)} KiB mesmo após compressão máxima.`
+      `Imagem excede o orçamento de saída permitido de ${Math.round(maxBytes / 1024)} KiB mesmo após compressão máxima.`,
     );
   }
 
@@ -158,9 +176,17 @@ export class SharpImageProcessor implements ImageProcessorService {
     return pipeline.webp({ quality: 85 }).toBuffer();
   }
 
-  async processImage(buffer: Buffer, purpose: MediaPurpose): Promise<ProcessImageResult> {
+  async processImage(
+    buffer: Buffer,
+    purpose: MediaPurpose,
+  ): Promise<ProcessImageResult> {
     const inspection = await this.validateAndInspect(buffer);
-    if (!inspection.valid || !inspection.format || !inspection.width || !inspection.height) {
+    if (
+      !inspection.valid ||
+      !inspection.format ||
+      !inspection.width ||
+      !inspection.height
+    ) {
       return {
         valid: false,
         format: inspection.format ?? "jpeg",
@@ -180,14 +206,30 @@ export class SharpImageProcessor implements ImageProcessorService {
         // Avatar: Square crop, main 512x512 (max 300 KiB), thumb 256x256 (max 100 KiB)
         const mainPipeline = sharp(buffer)
           .rotate()
-          .resize(512, 512, { fit: "cover", position: "centre", withoutEnlargement: true });
+          .resize(512, 512, {
+            fit: "cover",
+            position: "centre",
+            withoutEnlargement: true,
+          });
 
         const thumbPipeline = sharp(buffer)
           .rotate()
-          .resize(256, 256, { fit: "cover", position: "centre", withoutEnlargement: true });
+          .resize(256, 256, {
+            fit: "cover",
+            position: "centre",
+            withoutEnlargement: true,
+          });
 
-        const optimizedMain = await this.optimizeBufferUnderBudget(mainPipeline, 300 * 1024, "webp");
-        const optimizedThumb = await this.optimizeBufferUnderBudget(thumbPipeline, 100 * 1024, "webp");
+        const optimizedMain = await this.optimizeBufferUnderBudget(
+          mainPipeline,
+          300 * 1024,
+          "webp",
+        );
+        const optimizedThumb = await this.optimizeBufferUnderBudget(
+          thumbPipeline,
+          100 * 1024,
+          "webp",
+        );
 
         const mainMeta = await sharp(optimizedMain.buffer).metadata();
         const thumbMeta = await sharp(optimizedThumb.buffer).metadata();
@@ -200,7 +242,9 @@ export class SharpImageProcessor implements ImageProcessorService {
           fileSize: optimizedMain.buffer.length,
           mimeType: optimizedMain.mimeType,
           format: optimizedMain.format,
-          sha256: createHash("sha256").update(optimizedMain.buffer).digest("hex"),
+          sha256: createHash("sha256")
+            .update(optimizedMain.buffer)
+            .digest("hex"),
         });
 
         variants.push({
@@ -211,16 +255,30 @@ export class SharpImageProcessor implements ImageProcessorService {
           fileSize: optimizedThumb.buffer.length,
           mimeType: optimizedThumb.mimeType,
           format: optimizedThumb.format,
-          sha256: createHash("sha256").update(optimizedThumb.buffer).digest("hex"),
+          sha256: createHash("sha256")
+            .update(optimizedThumb.buffer)
+            .digest("hex"),
         });
       } else if (purpose === "BARBERSHOP_LOGO") {
         // Commercial Logo: fit: 'inside' (PRESERVE complete content and alpha channel), main 512x512 (max 512 KiB), thumb 256x256 (max 200 KiB)
-        const mainPipeline = sharp(buffer).rotate().resize(512, 512, { fit: "inside", withoutEnlargement: true });
-        const thumbPipeline = sharp(buffer).rotate().resize(256, 256, { fit: "inside", withoutEnlargement: true });
+        const mainPipeline = sharp(buffer)
+          .rotate()
+          .resize(512, 512, { fit: "inside", withoutEnlargement: true });
+        const thumbPipeline = sharp(buffer)
+          .rotate()
+          .resize(256, 256, { fit: "inside", withoutEnlargement: true });
 
         const preferredFormat = format === "png" ? "png" : "webp";
-        const optimizedMain = await this.optimizeBufferUnderBudget(mainPipeline, 512 * 1024, preferredFormat);
-        const optimizedThumb = await this.optimizeBufferUnderBudget(thumbPipeline, 200 * 1024, preferredFormat);
+        const optimizedMain = await this.optimizeBufferUnderBudget(
+          mainPipeline,
+          100 * 1024,
+          preferredFormat,
+        );
+        const optimizedThumb = await this.optimizeBufferUnderBudget(
+          thumbPipeline,
+          40 * 1024,
+          preferredFormat,
+        );
 
         const mainMeta = await sharp(optimizedMain.buffer).metadata();
         const thumbMeta = await sharp(optimizedThumb.buffer).metadata();
@@ -233,7 +291,9 @@ export class SharpImageProcessor implements ImageProcessorService {
           fileSize: optimizedMain.buffer.length,
           mimeType: optimizedMain.mimeType,
           format: optimizedMain.format,
-          sha256: createHash("sha256").update(optimizedMain.buffer).digest("hex"),
+          sha256: createHash("sha256")
+            .update(optimizedMain.buffer)
+            .digest("hex"),
         });
 
         variants.push({
@@ -244,28 +304,30 @@ export class SharpImageProcessor implements ImageProcessorService {
           fileSize: optimizedThumb.buffer.length,
           mimeType: optimizedThumb.mimeType,
           format: optimizedThumb.format,
-          sha256: createHash("sha256").update(optimizedThumb.buffer).digest("hex"),
+          sha256: createHash("sha256")
+            .update(optimizedThumb.buffer)
+            .digest("hex"),
         });
       } else {
         // Space Photo (BARBERSHOP_GALLERY / BARBERSHOP_COVER)
         // Main: max side 1920 px (budget 1.5 MiB), Thumbnail: max side 640 px (budget 250 KiB)
         const mainPipeline = sharp(buffer)
           .rotate()
-          .resize(1920, 1920, { fit: "inside", withoutEnlargement: true });
+          .resize(1080, 1080, { fit: "inside", withoutEnlargement: true });
 
         const thumbPipeline = sharp(buffer)
           .rotate()
-          .resize(640, 640, { fit: "inside", withoutEnlargement: true });
+          .resize(360, 360, { fit: "inside", withoutEnlargement: true });
 
         const optimizedMain = await this.optimizeBufferUnderBudget(
           mainPipeline,
-          1.5 * 1024 * 1024,
-          "webp"
+          250 * 1024,
+          "webp",
         );
         const optimizedThumb = await this.optimizeBufferUnderBudget(
           thumbPipeline,
-          250 * 1024,
-          "webp"
+          40 * 1024,
+          "webp",
         );
 
         const mainMeta = await sharp(optimizedMain.buffer).metadata();
@@ -279,7 +341,9 @@ export class SharpImageProcessor implements ImageProcessorService {
           fileSize: optimizedMain.buffer.length,
           mimeType: optimizedMain.mimeType,
           format: optimizedMain.format,
-          sha256: createHash("sha256").update(optimizedMain.buffer).digest("hex"),
+          sha256: createHash("sha256")
+            .update(optimizedMain.buffer)
+            .digest("hex"),
         });
 
         variants.push({
@@ -290,7 +354,9 @@ export class SharpImageProcessor implements ImageProcessorService {
           fileSize: optimizedThumb.buffer.length,
           mimeType: optimizedThumb.mimeType,
           format: optimizedThumb.format,
-          sha256: createHash("sha256").update(optimizedThumb.buffer).digest("hex"),
+          sha256: createHash("sha256")
+            .update(optimizedThumb.buffer)
+            .digest("hex"),
         });
       }
 

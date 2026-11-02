@@ -35,7 +35,9 @@ describe("Phase 2 Use Cases: Media, Gallery & Google Link", () => {
   let updateGoogleUrlUseCase: UpdateBarbershopGoogleUrlUseCase;
 
   const createMockPng = (width = 100, height = 100): Buffer => {
-    const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const signature = Buffer.from([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+    ]);
     const ihdr = Buffer.alloc(4 + 4 + 13 + 4);
     ihdr.writeUInt32BE(13, 0);
     ihdr.write("IHDR", 4, 4, "ascii");
@@ -67,19 +69,33 @@ describe("Phase 2 Use Cases: Media, Gallery & Google Link", () => {
     storageService = new FakeStorageService();
     imageProcessor = new PureImageProcessor();
 
-    initiateUploadUseCase = new InitiateMediaUploadUseCase(mediaRepository, storageService);
-    confirmUploadUseCase = new ConfirmMediaUploadUseCase(mediaRepository, storageService, imageProcessor);
-    updateAvatarUseCase = new UpdateUserAvatarUseCase(usersRepository, mediaRepository);
+    initiateUploadUseCase = new InitiateMediaUploadUseCase(
+      mediaRepository,
+      storageService,
+      membershipsRepository,
+    );
+    confirmUploadUseCase = new ConfirmMediaUploadUseCase(
+      mediaRepository,
+      storageService,
+      imageProcessor,
+      undefined,
+      undefined,
+      membershipsRepository,
+    );
+    updateAvatarUseCase = new UpdateUserAvatarUseCase(
+      usersRepository,
+      mediaRepository,
+    );
     removeAvatarUseCase = new RemoveUserAvatarUseCase(usersRepository);
     manageGalleryUseCase = new ManageBarbershopGalleryUseCase(
       galleryRepository,
       barbershopsRepository,
       membershipsRepository,
-      mediaRepository
+      mediaRepository,
     );
     updateGoogleUrlUseCase = new UpdateBarbershopGoogleUrlUseCase(
       barbershopsRepository,
-      membershipsRepository
+      membershipsRepository,
     );
   });
 
@@ -114,7 +130,9 @@ describe("Phase 2 Use Cases: Media, Gallery & Google Link", () => {
 
       expect(result.isLeft()).toBe(true);
       if (result.isLeft()) {
-        expect(result.value.message).toContain("Tamanho do arquivo excede o limite de 5 MB");
+        expect(result.value.message).toContain(
+          "Tamanho do arquivo excede o limite de 5 MB",
+        );
       }
     });
 
@@ -129,7 +147,9 @@ describe("Phase 2 Use Cases: Media, Gallery & Google Link", () => {
 
       expect(result.isLeft()).toBe(true);
       if (result.isLeft()) {
-        expect(result.value.message).toContain("Formato HEIC não suportado diretamente");
+        expect(result.value.message).toContain(
+          "Formato HEIC não suportado diretamente",
+        );
       }
     });
 
@@ -203,7 +223,11 @@ describe("Phase 2 Use Cases: Media, Gallery & Google Link", () => {
       if (initRes.isLeft()) throw initRes.value;
 
       const media = await mediaRepository.findById(initRes.value.mediaId);
-      storageService.putFakeObject(media!.objectKey, createMockPng(200, 200), "image/png");
+      storageService.putFakeObject(
+        media!.objectKey,
+        createMockPng(200, 200),
+        "image/png",
+      );
 
       await confirmUploadUseCase.execute({
         userId: user.id.toString(),
@@ -220,10 +244,14 @@ describe("Phase 2 Use Cases: Media, Gallery & Google Link", () => {
       expect(updatedUser?.avatarUrl).toBe(media?.publicUrl);
 
       // Remoção
-      const removeRes = await removeAvatarUseCase.execute({ userId: user.id.toString() });
+      const removeRes = await removeAvatarUseCase.execute({
+        userId: user.id.toString(),
+      });
       expect(removeRes.isRight()).toBe(true);
 
-      const userAfterRemove = await usersRepository.findById(user.id.toString());
+      const userAfterRemove = await usersRepository.findById(
+        user.id.toString(),
+      );
       expect(userAfterRemove?.avatarUrl).toBeUndefined();
     });
   });
@@ -258,7 +286,11 @@ describe("Phase 2 Use Cases: Media, Gallery & Google Link", () => {
         if (initRes.isLeft()) throw initRes.value;
 
         const media = await mediaRepository.findById(initRes.value.mediaId);
-        storageService.putFakeObject(media!.objectKey, createMockPng(500, 500), "image/png");
+        storageService.putFakeObject(
+          media!.objectKey,
+          createMockPng(500, 500),
+          "image/png",
+        );
         await confirmUploadUseCase.execute({
           userId: ownerId.toString(),
           mediaId: initRes.value.mediaId,
@@ -283,8 +315,14 @@ describe("Phase 2 Use Cases: Media, Gallery & Google Link", () => {
       });
       if (extraInit.isLeft()) throw extraInit.value;
 
-      const extraMedia = await mediaRepository.findById(extraInit.value.mediaId);
-      storageService.putFakeObject(extraMedia!.objectKey, createMockPng(500, 500), "image/png");
+      const extraMedia = await mediaRepository.findById(
+        extraInit.value.mediaId,
+      );
+      storageService.putFakeObject(
+        extraMedia!.objectKey,
+        createMockPng(500, 500),
+        "image/png",
+      );
       await confirmUploadUseCase.execute({
         userId: ownerId.toString(),
         mediaId: extraInit.value.mediaId,
@@ -298,7 +336,9 @@ describe("Phase 2 Use Cases: Media, Gallery & Google Link", () => {
 
       expect(eleventhRes.isLeft()).toBe(true);
       if (eleventhRes.isLeft()) {
-        expect(eleventhRes.value.message).toContain("Limite máximo de 10 fotos");
+        expect(eleventhRes.value.message).toContain(
+          "Limite máximo de 10 fotos",
+        );
       }
     });
 
@@ -342,8 +382,12 @@ describe("Phase 2 Use Cases: Media, Gallery & Google Link", () => {
       });
       expect(validRes.isRight()).toBe(true);
 
-      const updatedShop = await barbershopsRepository.findById(shop.id.toString());
-      expect(updatedShop?.googleMapsUrl).toBe("https://maps.app.goo.gl/abcdef12345");
+      const updatedShop = await barbershopsRepository.findById(
+        shop.id.toString(),
+      );
+      expect(updatedShop?.googleMapsUrl).toBe(
+        "https://maps.app.goo.gl/abcdef12345",
+      );
     });
   });
 });

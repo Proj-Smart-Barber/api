@@ -1,3 +1,6 @@
+import {MultipartUploadController} from "../controllers/media/multipart-upload.controller";
+import { ResumeMediaUploadController } from "../controllers/media/resume-media-upload.controller";
+import { CancelMediaUploadController } from "../controllers/media/cancel-media-upload.controller";
 import { Router } from "express";
 import { adaptRoute } from "../../../core/infra/adapters/express-route-adapter";
 import { ensureUserIsAuthenticated } from "../middlewares/ensure-user-is-authenticated";
@@ -24,5 +27,20 @@ mediaRoutes.post(
   ensureUserIsAuthenticated,
   adaptRoute(makeConfirmMediaUploadController()),
 );
+
+mediaRoutes.post(
+  "/:mediaId/upload-url",
+  ensureUserIsAuthenticated,
+  adaptRoute(new ResumeMediaUploadController()),
+);
+mediaRoutes.delete(
+  "/:mediaId",
+  ensureUserIsAuthenticated,
+  adaptRoute(new CancelMediaUploadController()),
+);
+
+mediaRoutes.post("/:mediaId/multipart",ensureUserIsAuthenticated,adaptRoute(new MultipartUploadController("start")));
+mediaRoutes.post("/:mediaId/multipart/part",ensureUserIsAuthenticated,adaptRoute(new MultipartUploadController("part")));
+mediaRoutes.post("/:mediaId/multipart/complete",ensureUserIsAuthenticated,adaptRoute(new MultipartUploadController("complete")));
 
 export { mediaRoutes };

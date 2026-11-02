@@ -13,7 +13,9 @@ import type {
 } from "../../../domain/application/repositories/barbershop-gallery-repository";
 import type { BarbershopGalleryItem } from "../../../domain/enterprise/entities/barbershop-gallery-item";
 
-export class DrizzleBarbershopGalleryRepository implements BarbershopGalleryRepository {
+export class DrizzleBarbershopGalleryRepository
+  implements BarbershopGalleryRepository
+{
   constructor(private db = defaultDb) {}
 
   async create(entity: BarbershopGalleryItem): Promise<void> {
@@ -25,9 +27,12 @@ export class DrizzleBarbershopGalleryRepository implements BarbershopGalleryRepo
           .set({ isCover: false, updatedAt: new Date() })
           .where(
             and(
-              eq(barbershopGallery.barbershopId, entity.barbershopId.toString()),
-              eq(barbershopGallery.isCover, true)
-            )
+              eq(
+                barbershopGallery.barbershopId,
+                entity.barbershopId.toString(),
+              ),
+              eq(barbershopGallery.isCover, true),
+            ),
           );
       }
       await tx.insert(barbershopGallery).values(data);
@@ -43,7 +48,9 @@ export class DrizzleBarbershopGalleryRepository implements BarbershopGalleryRepo
     return BarbershopGalleryMapper.toDomain(row);
   }
 
-  async findByBarbershopId(barbershopId: string): Promise<BarbershopGalleryItem[]> {
+  async findByBarbershopId(
+    barbershopId: string,
+  ): Promise<BarbershopGalleryItem[]> {
     const rows = await this.db
       .select({
         id: barbershopGallery.id,
@@ -55,10 +62,18 @@ export class DrizzleBarbershopGalleryRepository implements BarbershopGalleryRepo
         createdAt: barbershopGallery.createdAt,
         updatedAt: barbershopGallery.updatedAt,
         publicUrl: media.publicUrl,
+        mimeType: media.mimeType,
+        posterUrl: sql<string>`${media.variants}->'thumbnail'->>'publicUrl'`,
       })
       .from(barbershopGallery)
       .leftJoin(media, eq(barbershopGallery.mediaId, media.id))
-      .where(eq(barbershopGallery.barbershopId, barbershopId))
+      .where(
+        and(
+          eq(barbershopGallery.barbershopId, barbershopId),
+          eq(media.status, "READY"),
+          eq(media.ownerEntityId, barbershopGallery.barbershopId),
+        ),
+      )
       .orderBy(asc(barbershopGallery.displayOrder));
 
     return rows.map(BarbershopGalleryMapper.toDomain);
@@ -66,7 +81,7 @@ export class DrizzleBarbershopGalleryRepository implements BarbershopGalleryRepo
 
   async findByBarbershopIdAndMediaId(
     barbershopId: string,
-    mediaId: string
+    mediaId: string,
   ): Promise<BarbershopGalleryItem | null> {
     const [row] = await this.db
       .select()
@@ -74,8 +89,8 @@ export class DrizzleBarbershopGalleryRepository implements BarbershopGalleryRepo
       .where(
         and(
           eq(barbershopGallery.barbershopId, barbershopId),
-          eq(barbershopGallery.mediaId, mediaId)
-        )
+          eq(barbershopGallery.mediaId, mediaId),
+        ),
       );
 
     if (!row) return null;
@@ -122,14 +137,36 @@ export class DrizzleBarbershopGalleryRepository implements BarbershopGalleryRepo
       .where(eq(barbershopGallery.barbershopId, barbershopId));
   }
 
-  async addPhotoAtomic(params: AddGalleryPhotoParams): Promise<AddGalleryPhotoResult> {
+  async addPhotoAtomic(
+    params: AddGalleryPhotoParams,
+  ): Promise<AddGalleryPhotoResult> {
     return await this.db.transaction(async (tx) => {
       // 1. Lock the barbershop row (serializes all gallery modifications for this barbershop)
       await tx.execute(
-        sql`SELECT id FROM barbershops WHERE id = ${params.barbershopId} FOR UPDATE`
+        sql`SELECT id FROM barbershops WHERE id = ${params.barbershopId} FOR UPDATE`,
       );
 
       // 2. Check idempotency: if (barbershopId, mediaId) already exists, return it safely
+      const [eligibleMedia] = await tx
+        .select()
+        .from(media)
+        .where(
+          and(
+            eq(media.id, params.mediaId),
+            eq(media.status, "READY"),
+            eq(media.ownerEntityId, params.barbershopId),
+          ),
+        )
+        .for("update");
+      if (!eligibleMedia)
+        return { success: false as const, reason: "INVALID_MEDIA" as const };
+      if (params.actorId) {
+        const active = await tx.execute(
+          sql`SELECT 1 FROM membership WHERE barbershop_id=${params.barbershopId}::uuid AND user_id=${params.actorId}::uuid AND role='OWNER' AND state='ACTIVE' FOR UPDATE`,
+        );
+        if (!active.rows.length)
+          return { success: false as const, reason: "INVALID_MEDIA" as const };
+      }
       const [existing] = await tx
         .select({
           id: barbershopGallery.id,
@@ -141,14 +178,16 @@ export class DrizzleBarbershopGalleryRepository implements BarbershopGalleryRepo
           createdAt: barbershopGallery.createdAt,
           updatedAt: barbershopGallery.updatedAt,
           publicUrl: media.publicUrl,
+          mimeType: media.mimeType,
+          posterUrl: sql<string>`${media.variants}->'thumbnail'->>'publicUrl'`,
         })
         .from(barbershopGallery)
         .leftJoin(media, eq(barbershopGallery.mediaId, media.id))
         .where(
           and(
             eq(barbershopGallery.barbershopId, params.barbershopId),
-            eq(barbershopGallery.mediaId, params.mediaId)
-          )
+            eq(barbershopGallery.mediaId, params.mediaId),
+          ),
         );
 
       if (existing) {
@@ -180,8 +219,8 @@ export class DrizzleBarbershopGalleryRepository implements BarbershopGalleryRepo
           .where(
             and(
               eq(barbershopGallery.barbershopId, params.barbershopId),
-              eq(barbershopGallery.isCover, true)
-            )
+              eq(barbershopGallery.isCover, true),
+            ),
           );
       }
 
@@ -220,10 +259,12 @@ export class DrizzleBarbershopGalleryRepository implements BarbershopGalleryRepo
     });
   }
 
-  async removePhotoAtomic(params: RemoveGalleryPhotoParams): Promise<RemoveGalleryPhotoResult> {
+  async removePhotoAtomic(
+    params: RemoveGalleryPhotoParams,
+  ): Promise<RemoveGalleryPhotoResult> {
     return await this.db.transaction(async (tx) => {
       await tx.execute(
-        sql`SELECT id FROM barbershops WHERE id = ${params.barbershopId} FOR UPDATE`
+        sql`SELECT id FROM barbershops WHERE id = ${params.barbershopId} FOR UPDATE`,
       );
 
       const [target] = await tx
@@ -232,15 +273,17 @@ export class DrizzleBarbershopGalleryRepository implements BarbershopGalleryRepo
         .where(
           and(
             eq(barbershopGallery.id, params.galleryItemId),
-            eq(barbershopGallery.barbershopId, params.barbershopId)
-          )
+            eq(barbershopGallery.barbershopId, params.barbershopId),
+          ),
         );
 
       if (!target) {
         return { success: false, reason: "NOT_FOUND" };
       }
 
-      await tx.delete(barbershopGallery).where(eq(barbershopGallery.id, target.id));
+      await tx
+        .delete(barbershopGallery)
+        .where(eq(barbershopGallery.id, target.id));
 
       let newCoverPublicUrl: string | null = null;
 
@@ -249,6 +292,8 @@ export class DrizzleBarbershopGalleryRepository implements BarbershopGalleryRepo
           .select({
             id: barbershopGallery.id,
             publicUrl: media.publicUrl,
+            mimeType: media.mimeType,
+            posterUrl: sql<string>`${media.variants}->'thumbnail'->>'publicUrl'`,
           })
           .from(barbershopGallery)
           .leftJoin(media, eq(barbershopGallery.mediaId, media.id))
@@ -262,7 +307,7 @@ export class DrizzleBarbershopGalleryRepository implements BarbershopGalleryRepo
             .set({ isCover: true, updatedAt: new Date() })
             .where(eq(barbershopGallery.id, nextCover.id));
 
-          newCoverPublicUrl = nextCover.publicUrl;
+          newCoverPublicUrl = nextCover.mimeType?.startsWith("video/") ? nextCover.posterUrl ?? null : nextCover.publicUrl;
           await tx
             .update(barbershops)
             .set({ coverUrl: newCoverPublicUrl })
@@ -279,10 +324,12 @@ export class DrizzleBarbershopGalleryRepository implements BarbershopGalleryRepo
     });
   }
 
-  async reorderPhotosAtomic(params: ReorderGalleryPhotosParams): Promise<boolean> {
+  async reorderPhotosAtomic(
+    params: ReorderGalleryPhotosParams,
+  ): Promise<boolean> {
     return await this.db.transaction(async (tx) => {
       await tx.execute(
-        sql`SELECT id FROM barbershops WHERE id = ${params.barbershopId} FOR UPDATE`
+        sql`SELECT id FROM barbershops WHERE id = ${params.barbershopId} FOR UPDATE`,
       );
 
       for (let order = 0; order < params.itemIds.length; order++) {
@@ -292,8 +339,8 @@ export class DrizzleBarbershopGalleryRepository implements BarbershopGalleryRepo
           .where(
             and(
               eq(barbershopGallery.id, params.itemIds[order]),
-              eq(barbershopGallery.barbershopId, params.barbershopId)
-            )
+              eq(barbershopGallery.barbershopId, params.barbershopId),
+            ),
           );
       }
 
@@ -304,7 +351,7 @@ export class DrizzleBarbershopGalleryRepository implements BarbershopGalleryRepo
   async setCoverPhotoAtomic(params: SetCoverPhotoParams): Promise<boolean> {
     return await this.db.transaction(async (tx) => {
       await tx.execute(
-        sql`SELECT id FROM barbershops WHERE id = ${params.barbershopId} FOR UPDATE`
+        sql`SELECT id FROM barbershops WHERE id = ${params.barbershopId} FOR UPDATE`,
       );
 
       const [target] = await tx
@@ -313,8 +360,8 @@ export class DrizzleBarbershopGalleryRepository implements BarbershopGalleryRepo
         .where(
           and(
             eq(barbershopGallery.id, params.galleryItemId),
-            eq(barbershopGallery.barbershopId, params.barbershopId)
-          )
+            eq(barbershopGallery.barbershopId, params.barbershopId),
+          ),
         );
 
       if (!target) {
@@ -327,8 +374,8 @@ export class DrizzleBarbershopGalleryRepository implements BarbershopGalleryRepo
         .where(
           and(
             eq(barbershopGallery.barbershopId, params.barbershopId),
-            eq(barbershopGallery.isCover, true)
-          )
+            eq(barbershopGallery.isCover, true),
+          ),
         );
 
       await tx

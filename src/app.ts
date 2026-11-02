@@ -1,18 +1,21 @@
 import "dotenv/config";
+import { timingSafeEqual } from "node:crypto";
 import cors from "cors";
 import express, { type Request, type Response } from "express";
 import swaggerUi from "swagger-ui-express";
 import { routes } from "./infra/http/routes";
 import { swaggerDocument } from "./infra/http/swagger";
 import { runSchemaMigrations } from "./infra/drizzle/migrator";
-import { DemoSeedEngine } from "./infra/drizzle/demo-seed/engine";
+import { DemoSeedEngine } from "./infra/drizzle/demo-seed/canonical/engine";
 
 const app = express();
 
 // Executa migrações idempotentes no boot do servidor
 // Integration tests prepare their isolated schema explicitly; concurrent boot DDL can deadlock fixtures.
-if (process.env.NODE_ENV !== "test") void runSchemaMigrations().catch((err) => {
-  console.error("[App] Failed to run schema migrations on startup:", err);
+const schemaReady=process.env.NODE_ENV==='test' ? Promise.resolve({success:true}) : runSchemaMigrations();
+app.use(async (_request,response,next)=>{
+ try{const result=await schemaReady;if(!result.success)return response.status(503).json({error:'Serviço temporariamente indisponível.'});next();}
+ catch{return response.status(503).json({error:'Serviço temporariamente indisponível.'});}
 });
 app.use(
   cors({
@@ -44,6 +47,20 @@ app.get("/docs-json", (_req: Request, res: Response) => {
   res.status(200).json(swaggerDocument);
 });
 
+// Maintenance cannot be invoked through a publicly known confirmation string.
+app.use("/api/system", (request, response, next) => {
+  const expected = process.env.SYSTEM_MAINTENANCE_SECRET;
+  const received = request.headers["x-maintenance-key"];
+  if (!expected || expected.length < 32)
+    return response.status(404).json({ error: "Not found" });
+  if (
+    typeof received !== "string" ||
+    Buffer.byteLength(received) !== Buffer.byteLength(expected) ||
+    !timingSafeEqual(Buffer.from(received), Buffer.from(expected))
+  )
+    return response.status(403).json({ error: "Forbidden" });
+  next();
+});
 app.use("/api", routes);
 
 app.get(

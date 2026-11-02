@@ -1,3 +1,6 @@
+import { DrizzleMembershipsRepository } from "../../drizzle/repositories/drizzle-memberships-repository";
+import { DrizzleVideoJobQueue } from "../../drizzle/repositories/drizzle-video-job-queue";
+import { DrizzleMediaQuota } from "../../drizzle/repositories/drizzle-media-quota";
 import type { Controller } from "../../../core/infra/controller";
 import { ConfirmMediaUploadUseCase } from "../../../domain/application/use-cases/media/confirm-upload/confirm-upload";
 import { DrizzleMediaRepository } from "../../drizzle/repositories/drizzle-media-repository";
@@ -14,6 +17,9 @@ export function makeConfirmMediaUploadController(): Controller {
     mediaRepository,
     storageService,
     imageProcessor,
+    new DrizzleVideoJobQueue(),
+    new DrizzleMediaQuota(),
+    new DrizzleMembershipsRepository(),
   );
 
   return new ConfirmMediaUploadController(useCase);

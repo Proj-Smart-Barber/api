@@ -9,6 +9,7 @@ import { makeListBarbershopProfessionalsController } from "../factories/make-lis
 import { makeListUnitTeamController } from "../factories/make-list-unit-team-controller";
 import { makeLookupBookingCustomerController } from "../factories/make-lookup-booking-customer-controller";
 import { makeFetchUnitBookingsController } from "../factories/make-fetch-unit-bookings-controller";
+import { makeExploreFeedController } from "../factories/make-explore-feed-controller";
 import {
   makeSearchBarbershopsController,
   makeSearchNearbyBarbershopsController,
@@ -32,6 +33,8 @@ import { serviceRoutes } from "./service.routes";
 const barbershopRoutes = Router();
 
 barbershopRoutes.get("/", adaptRoute(makeSearchBarbershopsController()));
+barbershopRoutes.get("/explore-feed", adaptRoute(makeExploreFeedController()));
+barbershopRoutes.post("/explore-feed", adaptRoute(makeExploreFeedController()));
 barbershopRoutes.post(
   "/nearby",
   adaptRoute(makeSearchNearbyBarbershopsController()),

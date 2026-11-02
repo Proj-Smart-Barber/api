@@ -19,6 +19,9 @@ export class DrizzleServicesRepository implements ServicesRepository {
       .set({
         title: service.title,
         description: service.description ?? null,
+        imageUrl: service.imageUrl ?? null,
+        isFeatured: service.isFeatured ?? false,
+        featuredOrder: service.featuredOrder ?? 0,
         priceInCents: service.priceInCents,
         durationInMinutes: service.durationInMinutes,
         isActive: service.isActive,
