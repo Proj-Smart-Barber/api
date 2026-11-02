@@ -1,3 +1,4 @@
+import {isStorageConfigured} from "../../storage/storage-service-factory";
 import {MultipartUploadController} from "../controllers/media/multipart-upload.controller";
 import { ResumeMediaUploadController } from "../controllers/media/resume-media-upload.controller";
 import { CancelMediaUploadController } from "../controllers/media/cancel-media-upload.controller";
@@ -9,6 +10,7 @@ import { makeConfirmMediaUploadController } from "../factories/make-confirm-medi
 import { makeGetMediaStatusController } from "../factories/make-get-media-status-controller";
 
 const mediaRoutes = Router();
+mediaRoutes.get('/capabilities',ensureUserIsAuthenticated,(_request,response)=>{const configured=isStorageConfigured();response.json({imagesEnabled:configured,videoEnabled:configured&&process.env.MEDIA_VIDEO_ENABLED==='true',maxVideoDurationSeconds:60,maxVideoSourceBytes:100*1024*1024});});
 
 mediaRoutes.get(
   "/:mediaId/status",
