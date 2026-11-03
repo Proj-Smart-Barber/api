@@ -3,7 +3,9 @@
 Copie o bloco abaixo para a IA com acesso local ao repositório da API e à sessão Vercel do projeto já publicado.
 
 ```text
-Execute por completo a importação administrativa de mídia do Smart Barber, usando o backend existente. O responsável autorizou acesso de manutenção ao banco e publicação do acervo demonstrativo fornecido. A reconstrução dos dois bancos e suas senhas será conduzida separadamente na máquina do Wellington. NÃO execute reset, seed, migrations ou limpeza de dados neste fluxo. Não crie outro backend, não mude URLs/domínios e não solicite senhas das dez contas.
+ATUALIZAÇÃO POSTERIOR EM 03/11/2026: a publicação integral no banco smartbarber-dev-2 já foi concluída localmente pelo responsável. Leia docs/PUBLICACAO_INTEGRAL_2026-11-03.md antes de agir. Há 110 mídias READY, dez logos, 87 fotos de galeria/portfólio e treze fotos de serviços. As reservas editoriais foram liberadas expressamente pelo responsável; a autorização por SHA está em assets/demo-media/approval-demo.json. Não repita o reset e não duplique a importação concluída. Qualquer execução começa por dry-run e conciliação do registry. smartbarber-dev ainda não tem réplica de mídia. O código abaixo é o roteiro histórico; onde mencionar 66 candidatas/43 reservas, prevalecem o manifesto atual e esta atualização. Não reabra a autorização editorial já dada nem atribua fotos de portfólio a serviços sem correspondência.
+
+Execute a validação/conciliação da importação administrativa de mídia do Smart Barber, usando o backend existente. O responsável autorizou acesso de manutenção ao banco e publicação do acervo demonstrativo fornecido. A reconstrução dos dois bancos e suas senhas será conduzida separadamente na máquina do Wellington. NÃO execute reset, seed, migrations ou limpeza de dados neste fluxo. Não crie outro backend, não mude URLs/domínios e não solicite senhas das dez contas.
 
 Repositório: https://github.com/Proj-Smart-Barber/api
 Branch do pacote: feat/importacao-midia-demonstracao

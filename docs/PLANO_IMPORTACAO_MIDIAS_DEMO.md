@@ -1,5 +1,13 @@
 # Importação administrativa do acervo Smart Barber
 
+## Atualização de escopo e execução em 03/11/2026
+
+O responsável autorizou publicar integralmente as mídias fornecidas para demonstração, dispensando a reserva editorial anterior. O manifesto atual contém 110 arquivos: dez logos, 87 fotos de portfólio/galeria e treze fotos vinculadas a serviços exatos. As 37 fotos antes sem correspondência de serviço foram incorporadas ao portfólio geral, sem inventar serviço, preço ou duração; dez fotos com marcas visíveis e a foto complementar do Nexo também foram autorizadas. Créditos e histórico foram preservados. A autorização por SHA está em assets/demo-media/approval-demo.json e não contém credenciais.
+
+A publicação integral no banco efetivamente servido pela API (smartbarber-dev-2) foi concluída. Foram reutilizadas as 62 mídias publicadas pelo executor anterior e enviadas somente 48 novas, por sessões legítimas dos proprietários demonstrativos e endpoints normais de upload/confirm/associação. Nenhuma mídia foi inserida READY por SQL. O segundo banco smartbarber-dev ainda não recebeu réplica das mídias. Relatório: PUBLICACAO_INTEGRAL_2026-11-03.md.
+
+As contagens e reservas descritas nas seções seguintes são o planejamento inicial, mantido como histórico. A autorização e o manifesto atuais prevalecem sobre as restrições editoriais anteriores. Não executar reset nem duplicar a publicação concluída. O R2 público continua acessível pelas URLs; demonstração não implica acesso privado.
+
 ## Entrega e objetivo
 
 Importar o acervo fornecido para as dez barbearias sem criar outro backend, alterar URLs ou solicitar senhas de dez proprietários. O operador autorizado executa um comando local com o ambiente do backend existente. Não há endpoint administrativo novo nem alteração da autenticação pública.

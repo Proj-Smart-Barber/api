@@ -12,11 +12,13 @@
       "bytes": 14650,
       "context": "logo",
       "decision": "import",
-      "rightsStatus": "LOGO_REVIEW_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/horizonte/logos/horizonte-symbol-original.webp",
       "selectionStatus": "LOGO_PROVIDED_FOR_FICTIONAL_BRAND",
       "provenance": {},
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-7518728",
@@ -28,7 +30,7 @@
       "bytes": 100868,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/horizonte/fotos-propostas/ambiente/PXS-7518728.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -40,7 +42,9 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-30547693",
@@ -52,7 +56,7 @@
       "bytes": 50664,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/horizonte/fotos-propostas/ambiente/PXS-30547693.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -64,7 +68,9 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-3992849",
@@ -76,7 +82,7 @@
       "bytes": 57446,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/horizonte/fotos-propostas/ambiente/PXS-3992849.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -88,7 +94,9 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-18483769",
@@ -99,8 +107,8 @@
       "sha256": "354472fac08b9f0528fb7059aa89632cff66b1447f28989e72c79b441811c891",
       "bytes": 74270,
       "context": "equipe-ilustrativa",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/horizonte/fotos-propostas/equipe-ilustrativa/PXS-18483769.jpg",
       "category": "profissional_retrato",
       "selectionStatus": "RESERVE_IDENTIFIABLE_THIRD_PARTY_BUSINESS",
@@ -112,8 +120,10 @@
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false,
-      "reviewEvidence": "Revisão visual 2026-11-03: uniforme/boné com marca legível de barbearia real (De Antoni Barbearia); publicar numa unidade fictícia sugeriria funcionário/instalação real."
+      "publicationApproved": true,
+      "reviewEvidence": "Revisão visual 2026-11-03: uniforme/boné com marca legível de barbearia real (De Antoni Barbearia); publicar numa unidade fictícia sugeriria funcionário/instalação real.",
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-7697676",
@@ -125,7 +135,7 @@
       "bytes": 30574,
       "context": "equipe-ilustrativa",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/horizonte/fotos-propostas/equipe-ilustrativa/PXS-7697676.jpg",
       "category": "profissional_retrato",
       "selectionStatus": "ILLUSTRATIVE_PEOPLE_NOT_EMPLOYEE_IDENTITY",
@@ -137,23 +147,25 @@
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-19050581",
       "shopKey": "horizonte:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "horizonte/PXS-19050581.webp",
       "sha256": "0c150828bcab55e9c311bedb632154a6385b935ad82b7a938fc27bed5dbabc47",
       "bytes": 34334,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/horizonte/fotos-propostas/servicos/PXS-19050581.jpg",
       "category": "corte_maquina",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/close-up-of-a-man-getting-a-haircut-at-a-barbershop-19050581/",
         "author": "Rahib Hamidov",
@@ -162,7 +174,11 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-5568409",
@@ -174,11 +190,11 @@
       "bytes": 44206,
       "context": "servicos",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/horizonte/fotos-propostas/servicos/PXS-5568409.jpg",
       "category": "corte_tesoura",
       "selectionStatus": "SERVICE_MATCH_REVIEWED",
-      "editorialReview": "Tesoura e pente na execução do corte.",
+      "editorialReview": "Associacao ao servico preservada; publicacao demonstrativa autorizada pelo responsavel.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/a-barber-cutting-the-hair-of-the-client-5568409/",
         "author": "alexandre saraiva carniato",
@@ -187,7 +203,9 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "previousEditorialReview": "Tesoura e pente na execução do corte.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-12464843",
@@ -199,11 +217,11 @@
       "bytes": 52334,
       "context": "servicos",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/horizonte/fotos-propostas/servicos/PXS-12464843.jpg",
       "category": "corte_tesoura",
       "selectionStatus": "SERVICE_MATCH_REVIEWED",
-      "editorialReview": "Tesoura e pente no corte; não é foto de acabamento de barba.",
+      "editorialReview": "Associacao ao servico preservada; publicacao demonstrativa autorizada pelo responsavel.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/shaving-and-equipment-at-the-barbershop-12464843/",
         "author": "izzet çakallı",
@@ -212,23 +230,25 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "previousEditorialReview": "Tesoura e pente no corte; não é foto de acabamento de barba.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-9992818",
       "shopKey": "horizonte:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "horizonte/PXS-9992818.webp",
       "sha256": "fc52be81e4274ef92747e5f5ba0f0c47a43f40e51b9fad0ff4f008b4b92f5671",
       "bytes": 85136,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/horizonte/fotos-propostas/servicos/PXS-9992818.jpg",
       "category": "corte_geral",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/a-man-having-a-haircut-in-a-barber-shop-9992818/",
         "author": "Alex Urezkov",
@@ -237,23 +257,27 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-5584461",
       "shopKey": "horizonte:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "horizonte/PXS-5584461.webp",
       "sha256": "afc7308767f0a8ce0f18084c453a72f9d51c5cfcf7aa9d92bc0a56aa719b3a38",
       "bytes": 62294,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/horizonte/fotos-propostas/servicos/PXS-5584461.jpg",
       "category": "acabamento_navalha",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "Navalha nos contornos do cabelo; não representa barba.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/man-getting-a-haircut-5584461/",
         "author": "Renan Rezende",
@@ -262,8 +286,12 @@
         "editorialNotes": "Navalha no contorno do cabelo; classificação refinada de corte geral para acabamento.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false,
-      "reviewEvidence": "Revisão visual 2026-11-03: mostra risco/desenho lateral com navalhete acima da orelha, não contorno de pezinho/costeletas; sem correspondência exata com acabamento."
+      "publicationApproved": true,
+      "reviewEvidence": "Revisão visual 2026-11-03: mostra risco/desenho lateral com navalhete acima da orelha, não contorno de pezinho/costeletas; sem correspondência exata com acabamento.",
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "Navalha nos contornos do cabelo; não representa barba.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "a8b39b7ccc83",
@@ -275,11 +303,13 @@
       "bytes": 21942,
       "context": "logo",
       "decision": "import",
-      "rightsStatus": "LOGO_REVIEW_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/estacao/logos/estacao-symbol-original.webp",
       "selectionStatus": "LOGO_PROVIDED_FOR_FICTIONAL_BRAND",
       "provenance": {},
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-4969835",
@@ -290,8 +320,8 @@
       "sha256": "a1e4f923ee74328ee8d218be8f3066a26168c5755e929352834409d70a21d723",
       "bytes": 82740,
       "context": "ambiente",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/estacao/fotos-propostas/ambiente/PXS-4969835.jpg",
       "category": "interior",
       "selectionStatus": "RESERVE_IDENTIFIABLE_THIRD_PARTY_BUSINESS",
@@ -303,8 +333,10 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false,
-      "reviewEvidence": "Revisão visual 2026-11-03: identificação legível de estabelecimento real (letreiro de balcão '…BARBERIA'); publicar numa unidade fictícia sugeriria instalação real."
+      "publicationApproved": true,
+      "reviewEvidence": "Revisão visual 2026-11-03: identificação legível de estabelecimento real (letreiro de balcão '…BARBERIA'); publicar numa unidade fictícia sugeriria instalação real.",
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-12685938",
@@ -316,7 +348,7 @@
       "bytes": 68768,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/estacao/fotos-propostas/ambiente/PXS-12685938.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -328,7 +360,9 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-34865582",
@@ -340,7 +374,7 @@
       "bytes": 62890,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/estacao/fotos-propostas/ambiente/PXS-34865582.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -352,7 +386,9 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-19225142",
@@ -363,8 +399,8 @@
       "sha256": "7ba68ead89133b33fefa587023371071b8279530bc6daac21a199aedbc49eb33",
       "bytes": 95778,
       "context": "equipe-ilustrativa",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/estacao/fotos-propostas/equipe-ilustrativa/PXS-19225142.jpg",
       "category": "profissional_retrato",
       "selectionStatus": "RESERVE_IDENTIFIABLE_THIRD_PARTY_BUSINESS",
@@ -377,8 +413,10 @@
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos.",
         "flaggedRisks": "SERIE_MARCELO_REPETICAO_ROSTO"
       },
-      "publicationApproved": false,
-      "reviewEvidence": "Revisão visual 2026-11-03: uniforme/boné com marca legível de barbearia real (De Antoni Barbearia); publicar numa unidade fictícia sugeriria funcionário/instalação real."
+      "publicationApproved": true,
+      "reviewEvidence": "Revisão visual 2026-11-03: uniforme/boné com marca legível de barbearia real (De Antoni Barbearia); publicar numa unidade fictícia sugeriria funcionário/instalação real.",
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-18483774",
@@ -389,8 +427,8 @@
       "sha256": "1ee69e951682ea92510aeb6b83cc0b9755ab3da8eda6dfad8e1e41f3be7e3676",
       "bytes": 70444,
       "context": "equipe-ilustrativa",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/estacao/fotos-propostas/equipe-ilustrativa/PXS-18483774.jpg",
       "category": "profissional_retrato",
       "selectionStatus": "RESERVE_IDENTIFIABLE_THIRD_PARTY_BUSINESS",
@@ -403,24 +441,26 @@
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos.",
         "flaggedRisks": "SERIE_MARCELO_REPETICAO_ROSTO"
       },
-      "publicationApproved": false,
-      "reviewEvidence": "Revisão visual 2026-11-03: uniforme/boné com marca legível de barbearia real (De Antoni Barbearia); publicar numa unidade fictícia sugeriria funcionário/instalação real."
+      "publicationApproved": true,
+      "reviewEvidence": "Revisão visual 2026-11-03: uniforme/boné com marca legível de barbearia real (De Antoni Barbearia); publicar numa unidade fictícia sugeriria funcionário/instalação real.",
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-11139533",
       "shopKey": "estacao:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "estacao/PXS-11139533.webp",
       "sha256": "7993520d3b90d3009af0c7001c4d3b832cf521867eeec94a23a5e9a418aad5f0",
       "bytes": 48806,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/estacao/fotos-propostas/servicos/PXS-11139533.jpg",
       "category": "corte_geral",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/barber-cutting-the-hair-of-a-man-11139533/",
         "author": "Hasan Gulec",
@@ -429,23 +469,27 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-7447138",
       "shopKey": "estacao:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "estacao/PXS-7447138.webp",
       "sha256": "c4cb180841f9230af87c4aa3da8fad2bb93d26d69f322b8604f1ccb4b001babe",
       "bytes": 49854,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/estacao/fotos-propostas/servicos/PXS-7447138.jpg",
       "category": "corte_geral",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/men-at-hairdresser-7447138/",
         "author": "Gustavo Fring",
@@ -454,23 +498,27 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-5853392",
       "shopKey": "estacao:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "estacao/PXS-5853392.webp",
       "sha256": "fd012fe963f7113e4e9c22644bf5e58ff54f0257546110a33910063cdd591a1b",
       "bytes": 52382,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/estacao/fotos-propostas/servicos/PXS-5853392.jpg",
       "category": "corte_geral",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/a-barber-holding-a-man-s-hair-5853392/",
         "author": "alexandre saraiva carniato",
@@ -479,23 +527,27 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-7518731",
       "shopKey": "estacao:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "estacao/PXS-7518731.webp",
       "sha256": "a4d755460251f3f6154d0e7081586a6bd73325f6919936c31bdee8c5c756ae7b",
       "bytes": 127142,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/estacao/fotos-propostas/servicos/PXS-7518731.jpg",
       "category": "corte_geral",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/a-barber-cutting-a-client-s-hair-7518731/",
         "author": "Pavel Danilyuk",
@@ -504,23 +556,27 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-33461079",
       "shopKey": "estacao:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "estacao/PXS-33461079.webp",
       "sha256": "e2fa158415f4acc86647021445b28f1c11be50cc6722f29dd2f411f377bb2bb1",
       "bytes": 31918,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/estacao/fotos-propostas/servicos/PXS-33461079.jpg",
       "category": "corte_maquina",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/barber-trimming-hair-with-clipper-and-comb-33461079/",
         "author": "Alexander Mass",
@@ -529,7 +585,11 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "2648c1dcb06c",
@@ -541,11 +601,13 @@
       "bytes": 12004,
       "context": "logo",
       "decision": "import",
-      "rightsStatus": "LOGO_REVIEW_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/santana/logos/santana-symbol-original.webp",
       "selectionStatus": "LOGO_PROVIDED_FOR_FICTIONAL_BRAND",
       "provenance": {},
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-17665771",
@@ -557,7 +619,7 @@
       "bytes": 79586,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/santana/fotos-propostas/ambiente/PXS-17665771.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -569,7 +631,9 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-27405444",
@@ -581,7 +645,7 @@
       "bytes": 43298,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/santana/fotos-propostas/ambiente/PXS-27405444.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -593,7 +657,9 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-15642778",
@@ -605,7 +671,7 @@
       "bytes": 91696,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/santana/fotos-propostas/ambiente/PXS-15642778.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -617,7 +683,9 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-7697485",
@@ -629,7 +697,7 @@
       "bytes": 38538,
       "context": "equipe-ilustrativa",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/santana/fotos-propostas/equipe-ilustrativa/PXS-7697485.jpg",
       "category": "profissional_retrato",
       "selectionStatus": "ILLUSTRATIVE_PEOPLE_NOT_EMPLOYEE_IDENTITY",
@@ -642,7 +710,9 @@
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos.",
         "flaggedRisks": "SERIE_RDNE_REPETICAO_ROSTO"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-14011980",
@@ -654,7 +724,7 @@
       "bytes": 100004,
       "context": "equipe-ilustrativa",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/santana/fotos-propostas/equipe-ilustrativa/PXS-14011980.jpg",
       "category": "profissional_retrato",
       "selectionStatus": "ILLUSTRATIVE_PEOPLE_NOT_EMPLOYEE_IDENTITY",
@@ -666,23 +736,25 @@
         "shortDescription": "Barbeiro diante de cadeira vintage",
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos."
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-7697383",
       "shopKey": "norte:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "santana/PXS-7697383.webp",
       "sha256": "006056c687814e9055d8a5ad58afc49346b058619b5f89aab2b0fa3312f0dd8c",
       "bytes": 51926,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/santana/fotos-propostas/servicos/PXS-7697383.jpg",
       "category": "corte_geral",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/man-in-barber-shop-7697383/",
         "author": "RDNE Stock project",
@@ -691,23 +763,27 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-7447146",
       "shopKey": "norte:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "santana/PXS-7447146.webp",
       "sha256": "8970d85b7c5179d7cf235bc44c76fc9c645ed107d26f2dc75e8022c23b32c918",
       "bytes": 62266,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/santana/fotos-propostas/servicos/PXS-7447146.jpg",
       "category": "corte_maquina",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/man-getting-a-haircut-7447146/",
         "author": "Gustavo Fring",
@@ -716,23 +792,27 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-33448215",
       "shopKey": "norte:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "santana/PXS-33448215.webp",
       "sha256": "40d511a7a37067ff088428069b35e30aeec8904fac446ff3d73e4047ab1c955d",
       "bytes": 39262,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/santana/fotos-propostas/servicos/PXS-33448215.jpg",
       "category": "corte_maquina",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/close-up-of-a-haircut-with-trimmer-in-barbershop-33448215/",
         "author": "Kerim Isazade",
@@ -741,23 +821,27 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-35157699",
       "shopKey": "norte:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "santana/PXS-35157699.webp",
       "sha256": "fe8bab1af8735401880f043d7566eb92c45c464f2c86d5753d4d1ecbdc0f4e1e",
       "bytes": 31928,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/santana/fotos-propostas/servicos/PXS-35157699.jpg",
       "category": "corte_geral",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/african-american-man-getting-a-haircut-at-barbershop-35157699/",
         "author": "mk photos",
@@ -766,23 +850,27 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-9992817",
       "shopKey": "norte:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "santana/PXS-9992817.webp",
       "sha256": "a7fcf23f3433d2b9de3174e9c2418a9feba2224ed7b2ec305a4c05fb26fe20bc",
       "bytes": 57056,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/santana/fotos-propostas/servicos/PXS-9992817.jpg",
       "category": "corte_maquina",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "Trimmer no contorno lateral do cabelo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/a-man-having-a-haircut-9992817/",
         "author": "Alex Urezkov",
@@ -791,8 +879,12 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false,
-      "reviewEvidence": "Revisão visual 2026-11-03: máquina com pente abrindo risca lateral, não contorno de pezinho/costeletas; sem correspondência exata com acabamento."
+      "publicationApproved": true,
+      "reviewEvidence": "Revisão visual 2026-11-03: máquina com pente abrindo risca lateral, não contorno de pezinho/costeletas; sem correspondência exata com acabamento.",
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "Trimmer no contorno lateral do cabelo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "c8ea63d44caf",
@@ -804,11 +896,13 @@
       "bytes": 7946,
       "context": "logo",
       "decision": "import",
-      "rightsStatus": "LOGO_REVIEW_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/santo-amaro/logos/santo-amaro-symbol-original.webp",
       "selectionStatus": "LOGO_PROVIDED_FOR_FICTIONAL_BRAND",
       "provenance": {},
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-12505400",
@@ -820,7 +914,7 @@
       "bytes": 126110,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/santo-amaro/fotos-propostas/ambiente/PXS-12505400.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -832,7 +926,9 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-8218487",
@@ -844,7 +940,7 @@
       "bytes": 239004,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/santo-amaro/fotos-propostas/ambiente/PXS-8218487.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -856,7 +952,9 @@
         "shortDescription": "Interior clássico com cadeiras e espelhos",
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros."
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-4969838",
@@ -867,8 +965,8 @@
       "sha256": "01ab3dad781a73cdba65c2d195447f4c2304a545e2215fc2753d4a642d0d4685",
       "bytes": 79084,
       "context": "ambiente",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/santo-amaro/fotos-propostas/ambiente/PXS-4969838.jpg",
       "category": "interior",
       "selectionStatus": "RESERVE_IDENTIFIABLE_THIRD_PARTY_BUSINESS",
@@ -880,8 +978,10 @@
         "shortDescription": "Interior retrô com cadeiras de couro",
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros."
       },
-      "publicationApproved": false,
-      "reviewEvidence": "Revisão visual 2026-11-03: identificação legível de estabelecimento real (letreiro de balcão '…BARBERIA'); publicar numa unidade fictícia sugeriria instalação real."
+      "publicationApproved": true,
+      "reviewEvidence": "Revisão visual 2026-11-03: identificação legível de estabelecimento real (letreiro de balcão '…BARBERIA'); publicar numa unidade fictícia sugeriria instalação real.",
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-8867313",
@@ -892,8 +992,8 @@
       "sha256": "ba5b062a48795fa0f8487738bc8a0d807f1c8b4355911fc40258c22ab3522140",
       "bytes": 55378,
       "context": "equipe-ilustrativa",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/santo-amaro/fotos-propostas/equipe-ilustrativa/PXS-8867313.jpg",
       "category": "profissional_retrato",
       "selectionStatus": "RESERVE_IDENTIFIABLE_THIRD_PARTY_BUSINESS",
@@ -906,8 +1006,10 @@
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos.",
         "flaggedRisks": "SERIE_LOS_MUERTOS_REPETICAO_ROSTO"
       },
-      "publicationApproved": false,
-      "reviewEvidence": "Revisão visual 2026-11-03: identificação legível de estabelecimento real (vitrine '…QUERIA FENIX'); publicar numa unidade fictícia sugeriria instalação real."
+      "publicationApproved": true,
+      "reviewEvidence": "Revisão visual 2026-11-03: identificação legível de estabelecimento real (vitrine '…QUERIA FENIX'); publicar numa unidade fictícia sugeriria instalação real.",
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-19331701",
@@ -919,7 +1021,7 @@
       "bytes": 40770,
       "context": "equipe-ilustrativa",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/santo-amaro/fotos-propostas/equipe-ilustrativa/PXS-19331701.jpg",
       "category": "profissional_retrato",
       "selectionStatus": "ILLUSTRATIVE_PEOPLE_NOT_EMPLOYEE_IDENTITY",
@@ -932,23 +1034,25 @@
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos.",
         "flaggedRisks": "CLIENTE_PRESENTE_NAO_RETRATO_INDIVIDUAL"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-35157692",
       "shopKey": "sul:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "santo-amaro/PXS-35157692.webp",
       "sha256": "0f275b4e7cd5dff275022b9c202cf8f69bf7093183f757a698898ae5b3ffee1b",
       "bytes": 70746,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/santo-amaro/fotos-propostas/servicos/PXS-35157692.jpg",
       "category": "corte_geral",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/barbershop-haircut-for-black-male-client-35157692/",
         "author": "mk photos",
@@ -957,7 +1061,11 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-13138522",
@@ -969,11 +1077,11 @@
       "bytes": 68204,
       "context": "servicos",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/santo-amaro/fotos-propostas/servicos/PXS-13138522.jpg",
       "category": "corte_maquina",
       "selectionStatus": "SERVICE_MATCH_REVIEWED",
-      "editorialReview": "Máquina no contorno lateral do cabelo.",
+      "editorialReview": "Associacao ao servico preservada; publicacao demonstrativa autorizada pelo responsavel.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/a-male-customer-getting-a-haircut-13138522/",
         "author": "Marvin Sacdalan",
@@ -982,23 +1090,25 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "previousEditorialReview": "Máquina no contorno lateral do cabelo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-7447126",
       "shopKey": "sul:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "santo-amaro/PXS-7447126.webp",
       "sha256": "9e290f760f73ca9b9af006f40a5b20d4845752dcf714e1518b512bcd4cb9c0a2",
       "bytes": 58284,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/santo-amaro/fotos-propostas/servicos/PXS-7447126.jpg",
       "category": "corte_maquina",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/person-shaving-a-man-s-hair-with-razor-7447126/",
         "author": "Gustavo Fring",
@@ -1007,23 +1117,27 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-35157694",
       "shopKey": "sul:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "santo-amaro/PXS-35157694.webp",
       "sha256": "9317a0d19f237c869b7888746948c0206a4a3f27b1a4cdfcded17c88982c9de9",
       "bytes": 63644,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/santo-amaro/fotos-propostas/servicos/PXS-35157694.jpg",
       "category": "corte_maquina",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/barber-trimming-hair-in-a-modern-salon-35157694/",
         "author": "mk photos",
@@ -1032,23 +1146,27 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-7697224",
       "shopKey": "sul:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "santo-amaro/PXS-7697224.webp",
       "sha256": "d0f632fa08fcd0bc97d2c5359d7720971b47a657a2350509bc5551fd3c3b897c",
       "bytes": 46428,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/santo-amaro/fotos-propostas/servicos/PXS-7697224.jpg",
       "category": "corte_maquina",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/a-barber-holding-a-hair-clipper-7697224/",
         "author": "RDNE Stock project",
@@ -1057,7 +1175,11 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "4fb38d509bbc",
@@ -1069,11 +1191,13 @@
       "bytes": 18916,
       "context": "logo",
       "decision": "import",
-      "rightsStatus": "LOGO_REVIEW_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/pompeia/logos/pompeia-symbol-original.webp",
       "selectionStatus": "LOGO_PROVIDED_FOR_FICTIONAL_BRAND",
       "provenance": {},
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-19664872",
@@ -1085,7 +1209,7 @@
       "bytes": 73400,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/pompeia/fotos-propostas/ambiente/PXS-19664872.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -1097,7 +1221,9 @@
         "shortDescription": "Barbearia premium com cadeiras vazias",
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros."
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-18090356",
@@ -1109,7 +1235,7 @@
       "bytes": 77776,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/pompeia/fotos-propostas/ambiente/PXS-18090356.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -1122,7 +1248,9 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros.",
         "flaggedRisks": "FOTO_PRETO_BRANCO"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-9146943",
@@ -1134,7 +1262,7 @@
       "bytes": 152644,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/pompeia/fotos-propostas/ambiente/PXS-9146943.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -1147,7 +1275,9 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros.",
         "flaggedRisks": "SALAO_NAO_EXCLUSIVAMENTE_MASCULINO"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-7697671",
@@ -1159,7 +1289,7 @@
       "bytes": 56294,
       "context": "equipe-ilustrativa",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/pompeia/fotos-propostas/equipe-ilustrativa/PXS-7697671.jpg",
       "category": "profissional_retrato",
       "selectionStatus": "ILLUSTRATIVE_PEOPLE_NOT_EMPLOYEE_IDENTITY",
@@ -1172,7 +1302,9 @@
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos.",
         "flaggedRisks": "IDENTIDADE_PROFISSIONAL_NAO_TOTALMENTE_CLARA"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-12946033",
@@ -1184,7 +1316,7 @@
       "bytes": 61020,
       "context": "equipe-ilustrativa",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/pompeia/fotos-propostas/equipe-ilustrativa/PXS-12946033.jpg",
       "category": "profissional_retrato",
       "selectionStatus": "ILLUSTRATIVE_PEOPLE_NOT_EMPLOYEE_IDENTITY",
@@ -1196,7 +1328,9 @@
         "shortDescription": "Barbeiro tatuado de avental",
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos."
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-27467943",
@@ -1208,11 +1342,11 @@
       "bytes": 67572,
       "context": "servicos",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/pompeia/fotos-propostas/servicos/PXS-27467943.jpg",
       "category": "corte_geral",
       "selectionStatus": "SERVICE_MATCH_REVIEWED",
-      "editorialReview": "Resultado do degradê lateral visível na fotografia.",
+      "editorialReview": "Associacao ao servico preservada; publicacao demonstrativa autorizada pelo responsavel.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/barber-shop-27467943/",
         "author": "Clark Enzzo",
@@ -1221,23 +1355,25 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "previousEditorialReview": "Resultado do degradê lateral visível na fotografia.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-33418521",
       "shopKey": "oeste:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "pompeia/PXS-33418521.webp",
       "sha256": "f5712427e29f8336572f3122e0396d78396d23fdf1f588e9922527cec3b35a17",
       "bytes": 119378,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/pompeia/fotos-propostas/servicos/PXS-33418521.jpg",
       "category": "corte_maquina",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/barber-giving-haircut-in-traditional-shop-33418521/",
         "author": "Tosin Olowoleni",
@@ -1246,23 +1382,27 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-7697445",
       "shopKey": "oeste:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "pompeia/PXS-7697445.webp",
       "sha256": "6d8a17ab4c643e391149a80911da17ae79f07fdfa4db0c4429bc0794fa42489f",
       "bytes": 50966,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/pompeia/fotos-propostas/servicos/PXS-7697445.jpg",
       "category": "barba_bigode",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/a-barber-at-work-7697445/",
         "author": "RDNE Stock project",
@@ -1271,7 +1411,11 @@
         "editorialNotes": "Máquina aplicada ao bigode; não usar como fotografia de corte de cabelo.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-5469882",
@@ -1283,11 +1427,11 @@
       "bytes": 29344,
       "context": "servicos",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/pompeia/fotos-propostas/servicos/PXS-5469882.jpg",
       "category": "barba_navalha",
       "selectionStatus": "SERVICE_MATCH_REVIEWED",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Associacao ao servico preservada; publicacao demonstrativa autorizada pelo responsavel.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/a-barber-using-razor-5469882/",
         "author": "alexandre saraiva carniato",
@@ -1296,8 +1440,10 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false,
-      "reviewEvidence": "Revisão visual 2026-11-03: navalha (lâmina reta) em uso no alinhamento da barba; corresponde ao serviço de catálogo barba-toalha (alinhamento e desenho de barba com toalha aquecida e navalha)."
+      "publicationApproved": true,
+      "reviewEvidence": "Revisão visual 2026-11-03: navalha (lâmina reta) em uso no alinhamento da barba; corresponde ao serviço de catálogo barba-toalha (alinhamento e desenho de barba com toalha aquecida e navalha).",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-19287846",
@@ -1309,11 +1455,11 @@
       "bytes": 68498,
       "context": "servicos",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/pompeia/fotos-propostas/servicos/PXS-19287846.jpg",
       "category": "barba_navalha",
       "selectionStatus": "SERVICE_MATCH_REVIEWED",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Associacao ao servico preservada; publicacao demonstrativa autorizada pelo responsavel.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/close-up-of-a-man-getting-his-beard-trimmed-at-a-barbershop-19287846/",
         "author": "Cláudio Emanuel",
@@ -1322,8 +1468,10 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false,
-      "reviewEvidence": "Revisão visual 2026-11-03: navalha (lâmina reta) em uso no alinhamento da barba; corresponde ao serviço de catálogo barba-toalha (alinhamento e desenho de barba com toalha aquecida e navalha)."
+      "publicationApproved": true,
+      "reviewEvidence": "Revisão visual 2026-11-03: navalha (lâmina reta) em uso no alinhamento da barba; corresponde ao serviço de catálogo barba-toalha (alinhamento e desenho de barba com toalha aquecida e navalha).",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "588110a0b10f",
@@ -1335,11 +1483,13 @@
       "bytes": 3524,
       "context": "logo",
       "decision": "import",
-      "rightsStatus": "LOGO_REVIEW_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/aurora/logos/aurora-symbol-light.webp",
       "selectionStatus": "LOGO_PROVIDED_FOR_FICTIONAL_BRAND",
       "provenance": {},
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-29189822",
@@ -1351,7 +1501,7 @@
       "bytes": 61898,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/aurora/fotos-propostas/ambiente/PXS-29189822.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -1364,7 +1514,9 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros.",
         "flaggedRisks": "LOGO_OU_MARCA_VISIVEL"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-14698370",
@@ -1376,7 +1528,7 @@
       "bytes": 59700,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/aurora/fotos-propostas/ambiente/PXS-14698370.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -1389,7 +1541,9 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros.",
         "flaggedRisks": "PESSOAS_IDENTIFICAVEIS"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-5152514",
@@ -1401,7 +1555,7 @@
       "bytes": 131060,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/aurora/fotos-propostas/ambiente/PXS-5152514.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -1413,7 +1567,9 @@
         "shortDescription": "Barbearia vista de dentro com cadeira clássica",
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros."
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-36314971",
@@ -1424,8 +1580,8 @@
       "sha256": "8428254f0e2606a65d16e112165acde5738e0774689c10e268e4ea4c2bfc3092",
       "bytes": 65538,
       "context": "equipe-ilustrativa",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/aurora/fotos-propostas/equipe-ilustrativa/PXS-36314971.jpg",
       "category": "profissional_retrato",
       "selectionStatus": "RESERVE_IDENTIFIABLE_THIRD_PARTY_BUSINESS",
@@ -1438,8 +1594,10 @@
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos.",
         "flaggedRisks": "LETREIRO_OU_MARCA_VISIVEL"
       },
-      "publicationApproved": false,
-      "reviewEvidence": "Revisão visual 2026-11-03: identificação legível de estabelecimento real (placa 'Tiệm tóc Đôi Bàn Tay'); publicar numa unidade fictícia sugeriria instalação real."
+      "publicationApproved": true,
+      "reviewEvidence": "Revisão visual 2026-11-03: identificação legível de estabelecimento real (placa 'Tiệm tóc Đôi Bàn Tay'); publicar numa unidade fictícia sugeriria instalação real.",
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-5188621",
@@ -1451,7 +1609,7 @@
       "bytes": 20940,
       "context": "equipe-ilustrativa",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/aurora/fotos-propostas/equipe-ilustrativa/PXS-5188621.jpg",
       "category": "profissional_retrato",
       "selectionStatus": "ILLUSTRATIVE_PEOPLE_NOT_EMPLOYEE_IDENTITY",
@@ -1464,23 +1622,25 @@
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos.",
         "flaggedRisks": "FOTO_PRETO_BRANCO"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-8867538",
       "shopKey": "aurora:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "aurora/PXS-8867538.webp",
       "sha256": "0c8e9c7575315b30791a53d25b0e2a3d08bd715f7d6c3021979fa4a58abaa0bd",
       "bytes": 55392,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/aurora/fotos-propostas/servicos/PXS-8867538.jpg",
       "category": "barba_tesoura",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/a-barber-grooming-a-client-s-facial-hair-8867538/",
         "author": "Los Muertos Crew",
@@ -1489,23 +1649,27 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-8867551",
       "shopKey": "aurora:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "aurora/PXS-8867551.webp",
       "sha256": "04b318f0df1323f03783d397e31b46db02470d8a5b1bb9c3296e05166d86155f",
       "bytes": 38112,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/aurora/fotos-propostas/servicos/PXS-8867551.jpg",
       "category": "barba_navalha",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/a-barber-shaving-a-client-s-facial-hair-8867551/",
         "author": "Los Muertos Crew",
@@ -1514,23 +1678,27 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-5853391",
       "shopKey": "aurora:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "aurora/PXS-5853391.webp",
       "sha256": "aea0c8d63be45b89b56efc627311f7220556d20acf3a9b8772dd267471f348f3",
       "bytes": 34760,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/aurora/fotos-propostas/servicos/PXS-5853391.jpg",
       "category": "barba_geral",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/a-barber-trimming-a-man-s-beard-5853391/",
         "author": "alexandre saraiva carniato",
@@ -1539,23 +1707,27 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-3998412",
       "shopKey": "aurora:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "aurora/PXS-3998412.webp",
       "sha256": "9778d02006ee62b90346df355e127dc07dd700965d6edf0a48584e552a7390e6",
       "bytes": 45752,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/aurora/fotos-propostas/servicos/PXS-3998412.jpg",
       "category": "barba_tesoura",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/man-getting-a-beard-cut-3998412/",
         "author": "cottonbro studio",
@@ -1564,23 +1736,27 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-6007403",
       "shopKey": "aurora:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "aurora/PXS-6007403.webp",
       "sha256": "b5b0d764fe9500dfc0f65a452a25f5f2e9f9354620a940f699e955969c3fecbe",
       "bytes": 50650,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/aurora/fotos-propostas/servicos/PXS-6007403.jpg",
       "category": "barba_geral",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/a-barber-shaving-man-s-beard-6007403/",
         "author": "alexandre saraiva carniato",
@@ -1589,7 +1765,11 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "9a3ee776d63e",
@@ -1601,11 +1781,13 @@
       "bytes": 7658,
       "context": "logo",
       "decision": "import",
-      "rightsStatus": "LOGO_REVIEW_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/vertice/logos/vertice-symbol-light.webp",
       "selectionStatus": "LOGO_PROVIDED_FOR_FICTIONAL_BRAND",
       "provenance": {},
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-37764947",
@@ -1617,7 +1799,7 @@
       "bytes": 125002,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/vertice/fotos-propostas/ambiente/PXS-37764947.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -1629,7 +1811,9 @@
         "shortDescription": "Cadeiras verdes e piso quadriculado retrô",
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros."
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-12164646",
@@ -1641,7 +1825,7 @@
       "bytes": 57150,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/vertice/fotos-propostas/ambiente/PXS-12164646.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -1653,7 +1837,9 @@
         "shortDescription": "Estação com cadeira e espelho",
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros."
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-3993296",
@@ -1665,7 +1851,7 @@
       "bytes": 86964,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/vertice/fotos-propostas/ambiente/PXS-3993296.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -1677,7 +1863,9 @@
         "shortDescription": "Cadeira preta e espelhos industriais",
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros."
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-18483778",
@@ -1688,8 +1876,8 @@
       "sha256": "0bc12f545552a0ace257866715721825006e102a4051d2380fa4b8a608e7f2aa",
       "bytes": 43610,
       "context": "equipe-ilustrativa",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/vertice/fotos-propostas/equipe-ilustrativa/PXS-18483778.jpg",
       "category": "profissional_retrato",
       "selectionStatus": "RESERVE_IDENTIFIABLE_THIRD_PARTY_BUSINESS",
@@ -1702,8 +1890,10 @@
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos.",
         "flaggedRisks": "SERIE_MARCELO_REPETICAO_ROSTO"
       },
-      "publicationApproved": false,
-      "reviewEvidence": "Revisão visual 2026-11-03: uniforme/boné com marca legível de barbearia real (De Antoni Barbearia); publicar numa unidade fictícia sugeriria funcionário/instalação real."
+      "publicationApproved": true,
+      "reviewEvidence": "Revisão visual 2026-11-03: uniforme/boné com marca legível de barbearia real (De Antoni Barbearia); publicar numa unidade fictícia sugeriria funcionário/instalação real.",
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-5337979",
@@ -1715,7 +1905,7 @@
       "bytes": 19080,
       "context": "equipe-ilustrativa",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/vertice/fotos-propostas/equipe-ilustrativa/PXS-5337979.jpg",
       "category": "profissional_retrato",
       "selectionStatus": "ILLUSTRATIVE_PEOPLE_NOT_EMPLOYEE_IDENTITY",
@@ -1727,7 +1917,9 @@
         "shortDescription": "Profissional sorrindo com tesoura",
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos."
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-2014809",
@@ -1739,11 +1931,11 @@
       "bytes": 51026,
       "context": "servicos",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/vertice/fotos-propostas/servicos/PXS-2014809.jpg",
       "category": "barba_navalha",
       "selectionStatus": "SERVICE_MATCH_REVIEWED",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Associacao ao servico preservada; publicacao demonstrativa autorizada pelo responsavel.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/person-shaving-beard-2014809/",
         "author": "Th2city Santana",
@@ -1752,24 +1944,26 @@
         "editorialNotes": "Navalha aplicada ao contorno da barba; categoria geral refinada.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false,
-      "reviewEvidence": "Revisão visual 2026-11-03: navalha (lâmina reta) em uso no alinhamento da barba; corresponde ao serviço de catálogo barba-toalha (alinhamento e desenho de barba com toalha aquecida e navalha)."
+      "publicationApproved": true,
+      "reviewEvidence": "Revisão visual 2026-11-03: navalha (lâmina reta) em uso no alinhamento da barba; corresponde ao serviço de catálogo barba-toalha (alinhamento e desenho de barba com toalha aquecida e navalha).",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-8867546",
       "shopKey": "vertice:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "vertice/PXS-8867546.webp",
       "sha256": "dfde2190aba5ca23a31f04e5ed64459226f3a7794cfd444c6f408c0ab83accff",
       "bytes": 72856,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/vertice/fotos-propostas/servicos/PXS-8867546.jpg",
       "category": "barba_navalha",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/barber-shaving-a-bearded-man-8867546/",
         "author": "Los Muertos Crew",
@@ -1778,7 +1972,11 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-5568412",
@@ -1790,11 +1988,11 @@
       "bytes": 58220,
       "context": "servicos",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/vertice/fotos-propostas/servicos/PXS-5568412.jpg",
       "category": "barba_geral",
       "selectionStatus": "SERVICE_MATCH_REVIEWED",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Associacao ao servico preservada; publicacao demonstrativa autorizada pelo responsavel.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/a-barber-shaving-the-beard-of-a-client-5568412/",
         "author": "alexandre saraiva carniato",
@@ -1803,24 +2001,26 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false,
-      "reviewEvidence": "Revisão visual 2026-11-03: navalha (lâmina reta) em uso no alinhamento da barba; corresponde ao serviço de catálogo barba-toalha (alinhamento e desenho de barba com toalha aquecida e navalha)."
+      "publicationApproved": true,
+      "reviewEvidence": "Revisão visual 2026-11-03: navalha (lâmina reta) em uso no alinhamento da barba; corresponde ao serviço de catálogo barba-toalha (alinhamento e desenho de barba com toalha aquecida e navalha).",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-6188363",
       "shopKey": "vertice:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "vertice/PXS-6188363.webp",
       "sha256": "f0bb215e440179f8483f7d8c33ae302641eb42d69019aa6441ac6fae70675048",
       "bytes": 51208,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/vertice/fotos-propostas/servicos/PXS-6188363.jpg",
       "category": "barba_tesoura",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/a-barber-trimming-the-beard-of-a-client-6188363/",
         "author": "alexandre saraiva carniato",
@@ -1829,7 +2029,11 @@
         "editorialNotes": "Tesoura aplicada à barba; categoria geral refinada.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-19287848",
@@ -1841,11 +2045,11 @@
       "bytes": 74514,
       "context": "servicos",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/vertice/fotos-propostas/servicos/PXS-19287848.jpg",
       "category": "barba_navalha",
       "selectionStatus": "SERVICE_MATCH_REVIEWED",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Associacao ao servico preservada; publicacao demonstrativa autorizada pelo responsavel.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/close-up-of-a-man-getting-his-beard-trimmed-at-a-barbershop-19287848/",
         "author": "Cláudio Emanuel",
@@ -1854,8 +2058,10 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false,
-      "reviewEvidence": "Revisão visual 2026-11-03: navalha (lâmina reta) em uso no alinhamento da barba; corresponde ao serviço de catálogo barba-toalha (alinhamento e desenho de barba com toalha aquecida e navalha)."
+      "publicationApproved": true,
+      "reviewEvidence": "Revisão visual 2026-11-03: navalha (lâmina reta) em uso no alinhamento da barba; corresponde ao serviço de catálogo barba-toalha (alinhamento e desenho de barba com toalha aquecida e navalha).",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "cb9a50dea4f7",
@@ -1867,11 +2073,13 @@
       "bytes": 6252,
       "context": "logo",
       "decision": "import",
-      "rightsStatus": "LOGO_REVIEW_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/raiz/logos/raiz-symbol-light.webp",
       "selectionStatus": "LOGO_PROVIDED_FOR_FICTIONAL_BRAND",
       "provenance": {},
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-13138476",
@@ -1883,7 +2091,7 @@
       "bytes": 109882,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/raiz/fotos-propostas/ambiente/PXS-13138476.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -1895,7 +2103,9 @@
         "shortDescription": "Cadeiras de couro marrom com bancada",
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros."
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-1895701",
@@ -1907,7 +2117,7 @@
       "bytes": 204112,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/raiz/fotos-propostas/ambiente/PXS-1895701.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -1919,7 +2129,9 @@
         "shortDescription": "Cadeira iluminada, vegetação e tijolos",
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros."
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-35430743",
@@ -1931,7 +2143,7 @@
       "bytes": 59398,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/raiz/fotos-propostas/ambiente/PXS-35430743.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -1944,7 +2156,9 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros.",
         "flaggedRisks": "LETREIRO_OU_MARCA_VISIVEL"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-20302333",
@@ -1956,7 +2170,7 @@
       "bytes": 29722,
       "context": "equipe-ilustrativa",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/raiz/fotos-propostas/equipe-ilustrativa/PXS-20302333.jpg",
       "category": "profissional_retrato",
       "selectionStatus": "ILLUSTRATIVE_PEOPLE_NOT_EMPLOYEE_IDENTITY",
@@ -1968,7 +2182,9 @@
         "shortDescription": "Barbeiro de avental com tesouras",
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos."
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-8867537",
@@ -1980,7 +2196,7 @@
       "bytes": 49706,
       "context": "equipe-ilustrativa",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/raiz/fotos-propostas/equipe-ilustrativa/PXS-8867537.jpg",
       "category": "profissional_retrato",
       "selectionStatus": "ILLUSTRATIVE_PEOPLE_NOT_EMPLOYEE_IDENTITY",
@@ -1993,23 +2209,25 @@
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos.",
         "flaggedRisks": "SERIE_LOS_MUERTOS_REPETICAO_ROSTO"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-18298039",
       "shopKey": "raiz:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "raiz/PXS-18298039.webp",
       "sha256": "57794cbbb004b4d6d87ed8baeab898d3b087ed37662c2a90dfc67c622d565a6b",
       "bytes": 39910,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/raiz/fotos-propostas/servicos/PXS-18298039.jpg",
       "category": "barba_maquina",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/barber-trimming-customer-beard-18298039/",
         "author": "Cláudio Emanuel",
@@ -2018,23 +2236,27 @@
         "editorialNotes": "Máquina aplicada ao bigode/barba; categoria geral refinada.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-32351047",
       "shopKey": "raiz:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "raiz/PXS-32351047.webp",
       "sha256": "e149fbca38c96622b2e0325c1dc3483d7d1b5bdd122f2a0de747a50a336a5bb4",
       "bytes": 56618,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/raiz/fotos-propostas/servicos/PXS-32351047.jpg",
       "category": "barba_geral",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/close-up-of-barber-trimming-client-s-beard-32351047/",
         "author": "Sephina Cornwall",
@@ -2043,23 +2265,27 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-5853394",
       "shopKey": "raiz:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "raiz/PXS-5853394.webp",
       "sha256": "7a4d5c255c2a8af419080ff6b98d2eb33999b21e3c806f87529bce7342b9d2b8",
       "bytes": 50116,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/raiz/fotos-propostas/servicos/PXS-5853394.jpg",
       "category": "barba_tesoura",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/hands-of-a-person-trimming-a-man-s-beard-5853394/",
         "author": "alexandre saraiva carniato",
@@ -2068,23 +2294,27 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-7697436",
       "shopKey": "raiz:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "raiz/PXS-7697436.webp",
       "sha256": "819a8f141a0e418009c268392ec06ed088ab2b2bc6d872777cce0c5a03ad87b1",
       "bytes": 52984,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/raiz/fotos-propostas/servicos/PXS-7697436.jpg",
       "category": "barba_geral",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/barber-using-trimmer-7697436/",
         "author": "RDNE Stock project",
@@ -2093,23 +2323,27 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-7447145",
       "shopKey": "raiz:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "raiz/PXS-7447145.webp",
       "sha256": "4cc5bcfbda458fbabe0cab92c53c1297142dee9b5d278e7956c5ff24c4120d23",
       "bytes": 58352,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/raiz/fotos-propostas/servicos/PXS-7447145.jpg",
       "category": "barba_geral",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/barber-trimming-beard-7447145/",
         "author": "Gustavo Fring",
@@ -2118,7 +2352,11 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "547b376a3577",
@@ -2130,11 +2368,13 @@
       "bytes": 10360,
       "context": "logo",
       "decision": "import",
-      "rightsStatus": "LOGO_REVIEW_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/orbita/logos/orbita-symbol-light.webp",
       "selectionStatus": "LOGO_PROVIDED_FOR_FICTIONAL_BRAND",
       "provenance": {},
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-20785318",
@@ -2146,7 +2386,7 @@
       "bytes": 206022,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/orbita/fotos-propostas/ambiente/PXS-20785318.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -2158,7 +2398,9 @@
         "shortDescription": "Estúdio de tijolo com cadeiras pretas",
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros."
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-13986130",
@@ -2169,8 +2411,8 @@
       "sha256": "3417c4ce85e3ac93ce5eab0e7c661fa8f29d4a18b2b91f8e41b94c66584f4f27",
       "bytes": 71562,
       "context": "ambiente",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/orbita/fotos-propostas/ambiente/PXS-13986130.jpg",
       "category": "interior",
       "selectionStatus": "RESERVE_IDENTIFIABLE_THIRD_PARTY_BUSINESS",
@@ -2183,8 +2425,10 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros.",
         "flaggedRisks": "LETREIRO_OU_MARCA_VISIVEL"
       },
-      "publicationApproved": false,
-      "reviewEvidence": "Revisão visual 2026-11-03: identificação legível de estabelecimento real (placa com caracteres de nome de loja); publicar numa unidade fictícia sugeriria instalação real."
+      "publicationApproved": true,
+      "reviewEvidence": "Revisão visual 2026-11-03: identificação legível de estabelecimento real (placa com caracteres de nome de loja); publicar numa unidade fictícia sugeriria instalação real.",
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-3993293",
@@ -2196,7 +2440,7 @@
       "bytes": 80352,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/orbita/fotos-propostas/ambiente/PXS-3993293.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -2208,7 +2452,9 @@
         "shortDescription": "Cadeiras pretas e espelhos iluminados",
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros."
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-19225258",
@@ -2219,8 +2465,8 @@
       "sha256": "31b388a9a0c05a3df3630e6cfb6c519265c290778443ff9e7c2fade75876d667",
       "bytes": 52664,
       "context": "equipe-ilustrativa",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/orbita/fotos-propostas/equipe-ilustrativa/PXS-19225258.jpg",
       "category": "profissional_retrato",
       "selectionStatus": "RESERVE_IDENTIFIABLE_THIRD_PARTY_BUSINESS",
@@ -2233,8 +2479,10 @@
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos.",
         "flaggedRisks": "SERIE_MARCELO_REPETICAO_ROSTO"
       },
-      "publicationApproved": false,
-      "reviewEvidence": "Revisão visual 2026-11-03: uniforme/boné com marca legível de barbearia real (De Antoni Barbearia); publicar numa unidade fictícia sugeriria funcionário/instalação real."
+      "publicationApproved": true,
+      "reviewEvidence": "Revisão visual 2026-11-03: uniforme/boné com marca legível de barbearia real (De Antoni Barbearia); publicar numa unidade fictícia sugeriria funcionário/instalação real.",
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-3130920",
@@ -2246,7 +2494,7 @@
       "bytes": 49806,
       "context": "equipe-ilustrativa",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/orbita/fotos-propostas/equipe-ilustrativa/PXS-3130920.jpg",
       "category": "profissional_retrato",
       "selectionStatus": "ILLUSTRATIVE_PEOPLE_NOT_EMPLOYEE_IDENTITY",
@@ -2259,23 +2507,25 @@
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos.",
         "flaggedRisks": "POSE_ESTILIZADA"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-9153970",
       "shopKey": "orbita:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "orbita/PXS-9153970.webp",
       "sha256": "759c7f31aaa67ba4204b9f28266dfb35edd1fae29e36f54574dd8246e5581598",
       "bytes": 57580,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/orbita/fotos-propostas/servicos/PXS-9153970.jpg",
       "category": "barba_bigode",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/a-man-getting-a-moustache-grooming-9153970/",
         "author": "Лена Gromakova",
@@ -2284,7 +2534,11 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-7447140",
@@ -2296,11 +2550,11 @@
       "bytes": 65078,
       "context": "servicos",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/orbita/fotos-propostas/servicos/PXS-7447140.jpg",
       "category": "barba_navalha",
       "selectionStatus": "SERVICE_MATCH_REVIEWED",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Associacao ao servico preservada; publicacao demonstrativa autorizada pelo responsavel.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/close-up-of-shaving-beard-7447140/",
         "author": "Gustavo Fring",
@@ -2309,8 +2563,10 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false,
-      "reviewEvidence": "Revisão visual 2026-11-03: navalha (lâmina reta) em uso no alinhamento da barba; corresponde ao serviço de catálogo barba-toalha (alinhamento e desenho de barba com toalha aquecida e navalha)."
+      "publicationApproved": true,
+      "reviewEvidence": "Revisão visual 2026-11-03: navalha (lâmina reta) em uso no alinhamento da barba; corresponde ao serviço de catálogo barba-toalha (alinhamento e desenho de barba com toalha aquecida e navalha).",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-2076931",
@@ -2322,11 +2578,11 @@
       "bytes": 62572,
       "context": "servicos",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/orbita/fotos-propostas/servicos/PXS-2076931.jpg",
       "category": "barba_navalha",
       "selectionStatus": "SERVICE_MATCH_REVIEWED",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Associacao ao servico preservada; publicacao demonstrativa autorizada pelo responsavel.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/man-shaving-man-s-beard-using-straight-razor-2076931/",
         "author": "Th2city Santana",
@@ -2335,8 +2591,10 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false,
-      "reviewEvidence": "Revisão visual 2026-11-03: navalha (lâmina reta) em uso no alinhamento da barba; corresponde ao serviço de catálogo barba-toalha (alinhamento e desenho de barba com toalha aquecida e navalha)."
+      "publicationApproved": true,
+      "reviewEvidence": "Revisão visual 2026-11-03: navalha (lâmina reta) em uso no alinhamento da barba; corresponde ao serviço de catálogo barba-toalha (alinhamento e desenho de barba com toalha aquecida e navalha).",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-7697441",
@@ -2348,11 +2606,11 @@
       "bytes": 52428,
       "context": "servicos",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/orbita/fotos-propostas/servicos/PXS-7697441.jpg",
       "category": "barba_navalha",
       "selectionStatus": "SERVICE_MATCH_REVIEWED",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Associacao ao servico preservada; publicacao demonstrativa autorizada pelo responsavel.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/barber-shaving-customer-with-a-razor-7697441/",
         "author": "RDNE Stock project",
@@ -2361,24 +2619,26 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false,
-      "reviewEvidence": "Revisão visual 2026-11-03: navalha (lâmina reta) em uso no alinhamento da barba; corresponde ao serviço de catálogo barba-toalha (alinhamento e desenho de barba com toalha aquecida e navalha)."
+      "publicationApproved": true,
+      "reviewEvidence": "Revisão visual 2026-11-03: navalha (lâmina reta) em uso no alinhamento da barba; corresponde ao serviço de catálogo barba-toalha (alinhamento e desenho de barba com toalha aquecida e navalha).",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-32351045",
       "shopKey": "orbita:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "orbita/PXS-32351045.webp",
       "sha256": "4431b5d687f39d08a1c75199ff462e364114015b5b24723c14cbc813c6f319ab",
       "bytes": 64808,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/orbita/fotos-propostas/servicos/PXS-32351045.jpg",
       "category": "barba_navalha",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/professional-barber-shaving-client-in-barbershop-32351045/",
         "author": "Sephina Cornwall",
@@ -2387,7 +2647,11 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "74ebc1d367aa",
@@ -2399,11 +2663,13 @@
       "bytes": 2796,
       "context": "logo",
       "decision": "import",
-      "rightsStatus": "LOGO_REVIEW_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/nexo/logos/nexo-symbol-light.webp",
       "selectionStatus": "LOGO_PROVIDED_FOR_FICTIONAL_BRAND",
       "provenance": {},
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-8832912",
@@ -2415,7 +2681,7 @@
       "bytes": 50788,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/nexo/fotos-propostas/ambiente/PXS-8832912.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -2427,7 +2693,9 @@
         "shortDescription": "Cadeiras de barbeiro vermelhas",
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros."
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-4969864",
@@ -2439,7 +2707,7 @@
       "bytes": 67500,
       "context": "ambiente",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/nexo/fotos-propostas/ambiente/PXS-4969864.jpg",
       "category": "interior",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
@@ -2452,18 +2720,32 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros.",
         "flaggedRisks": "MARCAS_EM_PRODUTOS"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "USER-NEXO-003",
-      "decision": "excluded",
-      "reason": "Origem nao confirmada",
+      "decision": "import",
       "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
       "provenance": {
         "editorialNotes": "Ambiente compatível; letreiro visível, origem pendente e resolução quadrada de 768 px exigem revisão antes de publicar.",
         "flaggedRisks": "UNKNOWN_SOURCE;VISIBLE_SIGNAGE;SQUARE_768PX"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "shopKey": "nexo:barbershop",
+      "purpose": "BARBERSHOP_GALLERY",
+      "serviceKey": null,
+      "file": "nexo/USER-NEXO-003.webp",
+      "sha256": "bdcdd9a03bc26fbecb3e44f015b0f3c2beb92513ed516f2aea2a3f21000f71c5",
+      "bytes": 124562,
+      "context": "ambiente",
+      "original": "barbearias/nexo/fotos-propostas/ambiente/USER-NEXO-003.jpg",
+      "category": "interior",
+      "sourceNote": "Foto fornecida pelo responsavel e liberada para demonstracao em 03/11/2026; origem externa nao verificada",
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico.",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED"
     },
     {
       "assetId": "PXS-3993303",
@@ -2475,7 +2757,7 @@
       "bytes": 84524,
       "context": "equipe-ilustrativa",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/nexo/fotos-propostas/equipe-ilustrativa/PXS-3993303.jpg",
       "category": "profissional_retrato",
       "selectionStatus": "ILLUSTRATIVE_PEOPLE_NOT_EMPLOYEE_IDENTITY",
@@ -2488,7 +2770,9 @@
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos.",
         "flaggedRisks": "SALAO_BELEZA_NAO_BARBEARIA"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-2076932",
@@ -2500,7 +2784,7 @@
       "bytes": 81180,
       "context": "equipe-ilustrativa",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/nexo/fotos-propostas/equipe-ilustrativa/PXS-2076932.jpg",
       "category": "profissional_retrato",
       "selectionStatus": "ILLUSTRATIVE_PEOPLE_NOT_EMPLOYEE_IDENTITY",
@@ -2513,23 +2797,25 @@
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos.",
         "flaggedRisks": "CLIENTE_PRESENTE_NAO_RETRATO_INDIVIDUAL"
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "editorialReview": "Publicacao demonstrativa autorizada pelo responsavel; preservar creditos e nao atribuir identidade real a pessoas de banco de imagens.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-7518730",
       "shopKey": "nexo:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "nexo/PXS-7518730.webp",
       "sha256": "f6e25f2037a94b7a2d653f5870e7dfaa7f7ccac365ffa6bee34ad6a88c1fc85c",
       "bytes": 59682,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/nexo/fotos-propostas/servicos/PXS-7518730.jpg",
       "category": "lavagem_cabelo",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/a-barber-shampooing-a-client-7518730/",
         "author": "Pavel Danilyuk",
@@ -2538,23 +2824,27 @@
         "shortDescription": "Lavagem de cabelo",
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária."
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-4625618",
       "shopKey": "nexo:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "nexo/PXS-4625618.webp",
       "sha256": "b93d4ca6b037727ff511b522104020b185dbaa69372829bd5acd28a5d9f8fc3e",
       "bytes": 73110,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/nexo/fotos-propostas/servicos/PXS-4625618.jpg",
       "category": "lavagem_cabelo",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/a-barber-shampooing-his-customer-4625618/",
         "author": "Antoni Shkraba",
@@ -2563,23 +2853,27 @@
         "shortDescription": "Lavagem de cabelo em lavatório",
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária."
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-7447131",
       "shopKey": "nexo:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "nexo/PXS-7447131.webp",
       "sha256": "17a366d5bfbae81ef8eb62e6232fccc92bd70da5219c1abe7632b0c77f252fc2",
       "bytes": 42230,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/nexo/fotos-propostas/servicos/PXS-7447131.jpg",
       "category": "lavagem_cabelo",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/man-getting-his-hair-washed-in-a-barber-shop-7447131/",
         "author": "Gustavo Fring",
@@ -2588,23 +2882,27 @@
         "shortDescription": "Cliente recebendo lavagem",
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária."
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-19762215",
       "shopKey": "nexo:barbershop",
-      "purpose": "SERVICE_PHOTO",
+      "purpose": "BARBERSHOP_GALLERY",
       "serviceKey": null,
       "file": "nexo/PXS-19762215.webp",
       "sha256": "7eed70e035e64254320b5ec3dff063a17a0b31fea2524cf9d5b0b0800411d85f",
       "bytes": 49668,
-      "context": "servicos",
-      "decision": "reserve",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "context": "portfolio-ilustrativo",
+      "decision": "import",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/nexo/fotos-propostas/servicos/PXS-19762215.jpg",
       "category": "lavagem_cabelo",
       "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
-      "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "editorialReview": "Portfolio ilustrativo da barbearia; nao atribuir servico especifico, preco ou duracao.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/man-getting-his-hair-washed-at-a-barbershop-19762215/",
         "author": "Gianfranco Montoya Bravo",
@@ -2613,7 +2911,11 @@
         "shortDescription": "Lavagem relaxante",
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária."
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "originalPurpose": "SERVICE_PHOTO",
+      "associationMode": "shop_portfolio_without_specific_service",
+      "previousEditorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     },
     {
       "assetId": "PXS-7447143",
@@ -2625,11 +2927,11 @@
       "bytes": 48108,
       "context": "servicos",
       "decision": "import",
-      "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
+      "rightsStatus": "USER_AUTHORIZED_DEMO_THIRD_PARTY_RIGHTS_NOT_INDEPENDENTLY_VERIFIED",
       "original": "barbearias/nexo/fotos-propostas/servicos/PXS-7447143.jpg",
       "category": "toalha_quente",
       "selectionStatus": "SERVICE_MATCH_REVIEWED",
-      "editorialReview": "Aplicação de toalha no atendimento; não representa lavagem dos fios.",
+      "editorialReview": "Associacao ao servico preservada; publicacao demonstrativa autorizada pelo responsavel.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/close-up-of-barber-wiping-a-person-face-with-a-towel-7447143/",
         "author": "Gustavo Fring",
@@ -2638,7 +2940,16 @@
         "shortDescription": "Aplicação de toalha no rosto",
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária."
       },
-      "publicationApproved": false
+      "publicationApproved": true,
+      "previousEditorialReview": "Aplicação de toalha no atendimento; não representa lavagem dos fios.",
+      "publicationAuthorization": "Responsavel autorizou integralmente o acervo para demonstracao em 03/11/2026; decisoes editoriais anteriores permanecem como historico."
     }
-  ]
+  ],
+  "publicationScope": {
+    "date": "2026-11-03",
+    "purpose": "demonstracao",
+    "approvedBy": "responsavel-do-projeto",
+    "items": 110,
+    "note": "As imagens sao ilustrativas. Fotos sem vinculo exato pertencem ao portfolio geral e nao a um servico inventado."
+  }
 }

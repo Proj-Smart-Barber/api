@@ -517,9 +517,11 @@ async function main() {
             ...request,
             isCover: false,
             caption:
-              item.context === "equipe-ilustrativa"
-                ? "Pessoas ilustrativas de banco de imagens"
-                : "Ambiente ilustrativo",
+              item.context === "portfolio-ilustrativo"
+                ? "Portfólio ilustrativo de atendimentos; sem associação a serviço específico"
+                : item.context === "equipe-ilustrativa"
+                  ? "Pessoas ilustrativas de banco de imagens"
+                  : "Ambiente ilustrativo",
           });
       } else {
         const shop = (

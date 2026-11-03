@@ -52,7 +52,7 @@ async function verify() {
     files++;
     bytes += data.length;
   }
-  assert.equal(files, 109);
+  assert.equal(files, 110);
   assert.equal(
     new Set(
       manifest.items
