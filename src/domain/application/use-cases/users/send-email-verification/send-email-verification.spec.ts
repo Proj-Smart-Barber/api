@@ -1,9 +1,8 @@
-import { hashToken } from "../../../../../core/crypto/token";
-import { EmailVerification } from "../../../../enterprise/entities/email-verification";
+import { hashEmailVerificationCode } from "../../../services/email-verification-code-service";
 import { User } from "../../../../enterprise/entities/user";
 import { Password } from "../../../../enterprise/entities/value-objects/password";
 import { FakeEmailService } from "../../../../../../test/fakes/fake-email-service";
-import { InMemoryEmailVerificationsRepository } from "../../../../../../test/repositories/in-memory-email-verifications-repository";
+import { InMemoryEmailVerificationCodesRepository as InMemoryEmailVerificationsRepository } from "../../../../../../test/repositories/in-memory-email-verification-codes-repository";
 import { InMemoryUsersRepository } from "../../../../../../test/repositories/in-memory-users-repository";
 import { EmailSendError } from "../../_errors/email-send-error";
 import { SendEmailVerificationUseCase } from "./send-email-verification";
@@ -17,7 +16,7 @@ describe("Send email verification", () => {
   beforeEach(() => {
     inMemoryUsersRepository = new InMemoryUsersRepository();
     inMemoryEmailVerificationsRepository =
-      new InMemoryEmailVerificationsRepository();
+      new InMemoryEmailVerificationsRepository(inMemoryUsersRepository);
     fakeEmailService = new FakeEmailService();
 
     sut = new SendEmailVerificationUseCase(
@@ -27,7 +26,7 @@ describe("Send email verification", () => {
     );
   });
 
-  it("should send a verification email with a link for an unverified user", async () => {
+  it("should send a verification email with a six-digit code for an unverified user", async () => {
     const user = User.create({
       name: "Fulano",
       email: "fulano@email.com",
@@ -45,8 +44,9 @@ describe("Send email verification", () => {
     const sent = fakeEmailService.sentEmails[0];
     expect(sent.to).toBe("fulano@email.com");
     expect(sent.name).toBe("Fulano");
-    expect(sent.verificationUrl).toContain("/verify-email?token=");
-    expect(sent.expiresInHours).toBeGreaterThan(0);
+    expect(sent.verificationUrl).toBe("");
+    expect(sent.verificationCode).toMatch(/^\d{6}$/);
+    expect(sent.expiresInMinutes).toBe(10);
   });
 
   it("should store only the hashed token", async () => {
@@ -60,15 +60,14 @@ describe("Send email verification", () => {
 
     await sut.execute({ email: "fulano@email.com" });
 
-    const plainToken = new URL(
-      fakeEmailService.sentEmails[0].verificationUrl,
-    ).searchParams.get("token");
-
-    expect(plainToken).toBeTruthy();
+    const code = fakeEmailService.sentEmails[0].verificationCode!;
     expect(inMemoryEmailVerificationsRepository.items).toHaveLength(1);
-    expect(inMemoryEmailVerificationsRepository.items[0].tokenHash).toBe(
-      hashToken(plainToken as string),
+    expect(inMemoryEmailVerificationsRepository.items[0].codeHash).toBe(
+      hashEmailVerificationCode(user.id.toString(), code),
     );
+    expect(
+      inMemoryEmailVerificationsRepository.items[0].codeHash,
+    ).not.toContain(code);
   });
 
   it("should invalidate previous active tokens and rotate", async () => {
@@ -80,16 +79,11 @@ describe("Send email verification", () => {
     });
     await inMemoryUsersRepository.save(user);
 
-    const previous = EmailVerification.create({
-      userId: user.id,
-      tokenHash: "previous-token-hash",
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-    });
-    await inMemoryEmailVerificationsRepository.create(previous);
-
     await sut.execute({ email: "fulano@email.com" });
-
-    expect(previous.isUsed()).toBe(true);
+    const previous = inMemoryEmailVerificationsRepository.items[0];
+    previous.createdAt = new Date(Date.now() - 61000);
+    await sut.execute({ email: "fulano@email.com" });
+    expect(previous.usedAt).not.toBeNull();
     expect(inMemoryEmailVerificationsRepository.items).toHaveLength(2);
   });
 
@@ -133,7 +127,7 @@ describe("Send email verification", () => {
     const response = await sut.execute({ email: "  FULANO@EMAIL.COM  " });
 
     expect(response.isRight()).toBe(true);
-    expect(response.value).toEqual({ sentTo: "Fulano@Email.com" });
+    expect(response.value).toEqual({ sentTo: "fulano@email.com" });
     expect(fakeEmailService.sentEmails).toHaveLength(1);
     expect(fakeEmailService.sentEmails[0].to).toBe("Fulano@Email.com");
   });
@@ -152,5 +146,6 @@ describe("Send email verification", () => {
     const response = await sut.execute({ email: "fulano@email.com" });
 
     expect(response.value).toBeInstanceOf(EmailSendError);
+    expect(inMemoryEmailVerificationsRepository.items[0].usedAt).not.toBeNull();
   });
 });

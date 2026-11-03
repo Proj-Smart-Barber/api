@@ -18,3 +18,20 @@ describe("renderVerificationEmail", () => {
     expect(text).toContain(verificationUrl);
   });
 });
+import { describe, it, expect } from "vitest";
+
+it("renders the numeric code in HTML and text without a confirmation link", async () => {
+  const result = await renderVerificationEmail({
+    to: "test@example.com",
+    name: "Teste",
+    verificationUrl: "",
+    expiresInHours: 0,
+    verificationCode: "001234",
+    expiresInMinutes: 10,
+  });
+  expect(result.html).toContain("001234");
+  expect(result.text).toContain("001234");
+  expect(result.text).toContain("10 minutos");
+  expect(result.html).not.toContain('href=""');
+  expect(result.text).not.toContain("Confirmar e-mail");
+});

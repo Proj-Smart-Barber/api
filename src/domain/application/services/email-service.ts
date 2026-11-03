@@ -3,6 +3,8 @@ export interface SendVerificationEmailParams {
   name: string;
   verificationUrl: string;
   expiresInHours: number;
+  verificationCode?: string;
+  expiresInMinutes?: number;
 }
 
 export interface SendPasswordRecoveryEmailParams {

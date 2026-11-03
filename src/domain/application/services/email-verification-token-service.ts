@@ -56,6 +56,12 @@ export function buildEmailVerificationUrl(
     throw new Error(`Malformed email verification URL: "${configuredUrl}"`);
   }
 
+  // Compatibility for the marketing origin retained in older deployments.
+  if (parsed.hostname === "smartbarber.wellingtonsp.uk") {
+    parsed.hostname = "app.smartbarber.wellingtonsp.uk";
+    parsed.pathname = "/verify-email";
+  }
+
   // Se veio de FRONTEND_URL ou a URL não tem pathname definido (ou é apenas '/'), appenda /verify-email
   const isDedicatedVerificationUrl = Boolean(
     options?.baseUrl ?? env.EMAIL_VERIFICATION_URL,

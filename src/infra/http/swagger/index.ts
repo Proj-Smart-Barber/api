@@ -482,7 +482,7 @@ export const swaggerDocument = {
       get: {
         tags: ["Users"],
         summary:
-          "Confirm a user email using a verification token (target of the emailed link)",
+          "Compatibility: confirm an older high-entropy link token; numeric codes require POST",
         parameters: [
           {
             name: "token",
@@ -545,6 +545,16 @@ export const swaggerDocument = {
             description: "Internal server error",
           },
         },
+      },
+      post: {
+        tags: ["Users"],
+        summary: "Confirm email with email + six-digit code (or an older link token)",
+        description: "Codes expire in ten minutes and allow five failed attempts per issuance. Reissuing invalidates older codes. Confirmation does not sign the user in.",
+        requestBody: { required: true, content: { "application/json": { schema: { oneOf: [
+          { type: "object", required: ["email", "code"], properties: { email: { type: "string", format: "email" }, code: { type: "string", pattern: "^[0-9]{6}$", example: "001234" } } },
+          { type: "object", required: ["token"], properties: { token: { type: "string", maxLength: 512, description: "Older high-entropy link token" } } }
+        ] } } } },
+        responses: { "200": { description: "Email confirmed; no login tokens issued" }, "400": { description: "Invalid, expired, used or exhausted code/link" }, "429": { description: "Request limit reached; honor Retry-After" }, "503": { description: "Rate-limit storage unavailable; confirmation fails closed" }, "500": { description: "Confirmation unavailable; no storage details disclosed" } },
       },
     },
     "/api/users/password-recovery": {

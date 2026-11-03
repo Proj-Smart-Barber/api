@@ -6,6 +6,8 @@ interface VerificationEmailProps {
   name: string;
   verificationUrl: string;
   expiresInHours: number;
+  verificationCode?: string;
+  expiresInMinutes?: number;
 }
 
 const headingStyle: CSSProperties = {
@@ -37,20 +39,49 @@ export function VerificationEmail({
   name,
   verificationUrl,
   expiresInHours,
+  verificationCode,
+  expiresInMinutes,
 }: VerificationEmailProps) {
   return (
     <EmailLayout preview="Confirme seu e-mail para ativar sua conta no SmartBarber">
       <Heading style={headingStyle}>Olá, {name}!</Heading>
-      <Text style={textStyle}>
-        Obrigado por criar sua conta no SmartBarber. Para ativar sua conta, use
-        o botão abaixo para confirmar seu e-mail. O link é válido por{" "}
-        {expiresInHours} hora{expiresInHours > 1 ? "s" : ""}.
-      </Text>
-      <Text style={{ ...textStyle, textAlign: "center", margin: "24px 0" }}>
-        <Button style={buttonStyle} href={verificationUrl}>
-          Confirmar e-mail
-        </Button>
-      </Text>
+      {verificationCode ? (
+        <>
+          <Text style={textStyle}>
+            Digite este código na tela de confirmação do Smart Barber. Ele
+            expira em {expiresInMinutes} minutos.
+          </Text>
+          <Text
+            style={{
+              ...textStyle,
+              fontSize: "32px",
+              fontWeight: 700,
+              letterSpacing: "8px",
+              textAlign: "center",
+              color: "#111827",
+            }}
+          >
+            {verificationCode}
+          </Text>
+          <Text style={textStyle}>
+            Não compartilhe este código. Se solicitar outro, o anterior deixará
+            de funcionar.
+          </Text>
+        </>
+      ) : (
+        <>
+          <Text style={textStyle}>
+            Obrigado por criar sua conta no SmartBarber. Para ativar sua conta,
+            use o botão abaixo para confirmar seu e-mail. O link é válido por{" "}
+            {expiresInHours} hora{expiresInHours > 1 ? "s" : ""}.
+          </Text>
+          <Text style={{ ...textStyle, textAlign: "center", margin: "24px 0" }}>
+            <Button style={buttonStyle} href={verificationUrl}>
+              Confirmar e-mail
+            </Button>
+          </Text>
+        </>
+      )}
       <Text style={textStyle}>
         Se você não criou uma conta no SmartBarber, ignore este e-mail.
       </Text>

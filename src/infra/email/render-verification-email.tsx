@@ -15,6 +15,8 @@ export async function renderVerificationEmail(
       name={params.name}
       verificationUrl={params.verificationUrl}
       expiresInHours={params.expiresInHours}
+      verificationCode={params.verificationCode}
+      expiresInMinutes={params.expiresInMinutes}
     />,
   );
   const text = await toPlainText(html);
