@@ -99,11 +99,11 @@
       "sha256": "354472fac08b9f0528fb7059aa89632cff66b1447f28989e72c79b441811c891",
       "bytes": 74270,
       "context": "equipe-ilustrativa",
-      "decision": "import",
+      "decision": "reserve",
       "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
       "original": "barbearias/horizonte/fotos-propostas/equipe-ilustrativa/PXS-18483769.jpg",
       "category": "profissional_retrato",
-      "selectionStatus": "ILLUSTRATIVE_PEOPLE_NOT_EMPLOYEE_IDENTITY",
+      "selectionStatus": "RESERVE_IDENTIFIABLE_THIRD_PARTY_BUSINESS",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/photo-of-a-smiling-barber-18483769/",
         "author": "Marcelo Verfe",
@@ -112,7 +112,8 @@
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": false,
+      "reviewEvidence": "Revisão visual 2026-11-03: uniforme/boné com marca legível de barbearia real (De Antoni Barbearia); publicar numa unidade fictícia sugeriria funcionário/instalação real."
     },
     {
       "assetId": "PXS-7697676",
@@ -242,16 +243,16 @@
       "assetId": "PXS-5584461",
       "shopKey": "horizonte:barbershop",
       "purpose": "SERVICE_PHOTO",
-      "serviceKey": "horizonte:service:acabamento",
+      "serviceKey": null,
       "file": "horizonte/PXS-5584461.webp",
       "sha256": "afc7308767f0a8ce0f18084c453a72f9d51c5cfcf7aa9d92bc0a56aa719b3a38",
       "bytes": 62294,
       "context": "servicos",
-      "decision": "import",
+      "decision": "reserve",
       "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
       "original": "barbearias/horizonte/fotos-propostas/servicos/PXS-5584461.jpg",
       "category": "acabamento_navalha",
-      "selectionStatus": "SERVICE_MATCH_REVIEWED",
+      "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
       "editorialReview": "Navalha nos contornos do cabelo; não representa barba.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/man-getting-a-haircut-5584461/",
@@ -261,7 +262,8 @@
         "editorialNotes": "Navalha no contorno do cabelo; classificação refinada de corte geral para acabamento.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": false,
+      "reviewEvidence": "Revisão visual 2026-11-03: mostra risco/desenho lateral com navalhete acima da orelha, não contorno de pezinho/costeletas; sem correspondência exata com acabamento."
     },
     {
       "assetId": "a8b39b7ccc83",
@@ -288,11 +290,11 @@
       "sha256": "a1e4f923ee74328ee8d218be8f3066a26168c5755e929352834409d70a21d723",
       "bytes": 82740,
       "context": "ambiente",
-      "decision": "import",
+      "decision": "reserve",
       "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
       "original": "barbearias/estacao/fotos-propostas/ambiente/PXS-4969835.jpg",
       "category": "interior",
-      "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
+      "selectionStatus": "RESERVE_IDENTIFIABLE_THIRD_PARTY_BUSINESS",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/modern-hairdressing-salon-interior-with-comfy-chairs-and-big-mirrors-4969835/",
         "author": "Maria Orlova",
@@ -301,7 +303,8 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": false,
+      "reviewEvidence": "Revisão visual 2026-11-03: identificação legível de estabelecimento real (letreiro de balcão '…BARBERIA'); publicar numa unidade fictícia sugeriria instalação real."
     },
     {
       "assetId": "PXS-12685938",
@@ -360,11 +363,11 @@
       "sha256": "7ba68ead89133b33fefa587023371071b8279530bc6daac21a199aedbc49eb33",
       "bytes": 95778,
       "context": "equipe-ilustrativa",
-      "decision": "import",
+      "decision": "reserve",
       "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
       "original": "barbearias/estacao/fotos-propostas/equipe-ilustrativa/PXS-19225142.jpg",
       "category": "profissional_retrato",
-      "selectionStatus": "ILLUSTRATIVE_PEOPLE_NOT_EMPLOYEE_IDENTITY",
+      "selectionStatus": "RESERVE_IDENTIFIABLE_THIRD_PARTY_BUSINESS",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/barber-standing-in-his-shop-in-front-of-a-chair-19225142/",
         "author": "Marcelo Verfe",
@@ -374,7 +377,8 @@
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos.",
         "flaggedRisks": "SERIE_MARCELO_REPETICAO_ROSTO"
       },
-      "publicationApproved": false
+      "publicationApproved": false,
+      "reviewEvidence": "Revisão visual 2026-11-03: uniforme/boné com marca legível de barbearia real (De Antoni Barbearia); publicar numa unidade fictícia sugeriria funcionário/instalação real."
     },
     {
       "assetId": "PXS-18483774",
@@ -385,11 +389,11 @@
       "sha256": "1ee69e951682ea92510aeb6b83cc0b9755ab3da8eda6dfad8e1e41f3be7e3676",
       "bytes": 70444,
       "context": "equipe-ilustrativa",
-      "decision": "import",
+      "decision": "reserve",
       "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
       "original": "barbearias/estacao/fotos-propostas/equipe-ilustrativa/PXS-18483774.jpg",
       "category": "profissional_retrato",
-      "selectionStatus": "ILLUSTRATIVE_PEOPLE_NOT_EMPLOYEE_IDENTITY",
+      "selectionStatus": "RESERVE_IDENTIFIABLE_THIRD_PARTY_BUSINESS",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/barber-standing-by-a-chair-18483774/",
         "author": "Marcelo Verfe",
@@ -399,7 +403,8 @@
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos.",
         "flaggedRisks": "SERIE_MARCELO_REPETICAO_ROSTO"
       },
-      "publicationApproved": false
+      "publicationApproved": false,
+      "reviewEvidence": "Revisão visual 2026-11-03: uniforme/boné com marca legível de barbearia real (De Antoni Barbearia); publicar numa unidade fictícia sugeriria funcionário/instalação real."
     },
     {
       "assetId": "PXS-11139533",
@@ -767,16 +772,16 @@
       "assetId": "PXS-9992817",
       "shopKey": "norte:barbershop",
       "purpose": "SERVICE_PHOTO",
-      "serviceKey": "norte:service:acabamento",
+      "serviceKey": null,
       "file": "santana/PXS-9992817.webp",
       "sha256": "a7fcf23f3433d2b9de3174e9c2418a9feba2224ed7b2ec305a4c05fb26fe20bc",
       "bytes": 57056,
       "context": "servicos",
-      "decision": "import",
+      "decision": "reserve",
       "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
       "original": "barbearias/santana/fotos-propostas/servicos/PXS-9992817.jpg",
       "category": "corte_maquina",
-      "selectionStatus": "SERVICE_MATCH_REVIEWED",
+      "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
       "editorialReview": "Trimmer no contorno lateral do cabelo.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/a-man-having-a-haircut-9992817/",
@@ -786,7 +791,8 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": false,
+      "reviewEvidence": "Revisão visual 2026-11-03: máquina com pente abrindo risca lateral, não contorno de pezinho/costeletas; sem correspondência exata com acabamento."
     },
     {
       "assetId": "c8ea63d44caf",
@@ -861,11 +867,11 @@
       "sha256": "01ab3dad781a73cdba65c2d195447f4c2304a545e2215fc2753d4a642d0d4685",
       "bytes": 79084,
       "context": "ambiente",
-      "decision": "import",
+      "decision": "reserve",
       "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
       "original": "barbearias/santo-amaro/fotos-propostas/ambiente/PXS-4969838.jpg",
       "category": "interior",
-      "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
+      "selectionStatus": "RESERVE_IDENTIFIABLE_THIRD_PARTY_BUSINESS",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/modern-hairdressing-salon-interior-design-with-leather-chairs-4969838/",
         "author": "Maria Orlova",
@@ -874,7 +880,8 @@
         "shortDescription": "Interior retrô com cadeiras de couro",
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros."
       },
-      "publicationApproved": false
+      "publicationApproved": false,
+      "reviewEvidence": "Revisão visual 2026-11-03: identificação legível de estabelecimento real (letreiro de balcão '…BARBERIA'); publicar numa unidade fictícia sugeriria instalação real."
     },
     {
       "assetId": "PXS-8867313",
@@ -885,11 +892,11 @@
       "sha256": "ba5b062a48795fa0f8487738bc8a0d807f1c8b4355911fc40258c22ab3522140",
       "bytes": 55378,
       "context": "equipe-ilustrativa",
-      "decision": "import",
+      "decision": "reserve",
       "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
       "original": "barbearias/santo-amaro/fotos-propostas/equipe-ilustrativa/PXS-8867313.jpg",
       "category": "profissional_retrato",
-      "selectionStatus": "ILLUSTRATIVE_PEOPLE_NOT_EMPLOYEE_IDENTITY",
+      "selectionStatus": "RESERVE_IDENTIFIABLE_THIRD_PARTY_BUSINESS",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/man-in-white-button-up-shirt-standing-beside-a-barber-chair-8867313/",
         "author": "Los Muertos Crew",
@@ -899,7 +906,8 @@
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos.",
         "flaggedRisks": "SERIE_LOS_MUERTOS_REPETICAO_ROSTO"
       },
-      "publicationApproved": false
+      "publicationApproved": false,
+      "reviewEvidence": "Revisão visual 2026-11-03: identificação legível de estabelecimento real (vitrine '…QUERIA FENIX'); publicar numa unidade fictícia sugeriria instalação real."
     },
     {
       "assetId": "PXS-19331701",
@@ -1269,16 +1277,16 @@
       "assetId": "PXS-5469882",
       "shopKey": "oeste:barbershop",
       "purpose": "SERVICE_PHOTO",
-      "serviceKey": null,
+      "serviceKey": "oeste:service:barba-toalha",
       "file": "pompeia/PXS-5469882.webp",
       "sha256": "dbd99074dd7c9b0aa0af2ecc562b5db6df1d5b823e5def5479a31ec683fa5b90",
       "bytes": 29344,
       "context": "servicos",
-      "decision": "reserve",
+      "decision": "import",
       "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
       "original": "barbearias/pompeia/fotos-propostas/servicos/PXS-5469882.jpg",
       "category": "barba_navalha",
-      "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
+      "selectionStatus": "SERVICE_MATCH_REVIEWED",
       "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/a-barber-using-razor-5469882/",
@@ -1288,22 +1296,23 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": false,
+      "reviewEvidence": "Revisão visual 2026-11-03: navalha (lâmina reta) em uso no alinhamento da barba; corresponde ao serviço de catálogo barba-toalha (alinhamento e desenho de barba com toalha aquecida e navalha)."
     },
     {
       "assetId": "PXS-19287846",
       "shopKey": "oeste:barbershop",
       "purpose": "SERVICE_PHOTO",
-      "serviceKey": null,
+      "serviceKey": "oeste:service:barba-toalha",
       "file": "pompeia/PXS-19287846.webp",
       "sha256": "bd613bb79d9f2a150899a63330678a6917f40ae76f6e07f5c4634165d06dbcce",
       "bytes": 68498,
       "context": "servicos",
-      "decision": "reserve",
+      "decision": "import",
       "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
       "original": "barbearias/pompeia/fotos-propostas/servicos/PXS-19287846.jpg",
       "category": "barba_navalha",
-      "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
+      "selectionStatus": "SERVICE_MATCH_REVIEWED",
       "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/close-up-of-a-man-getting-his-beard-trimmed-at-a-barbershop-19287846/",
@@ -1313,7 +1322,8 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": false,
+      "reviewEvidence": "Revisão visual 2026-11-03: navalha (lâmina reta) em uso no alinhamento da barba; corresponde ao serviço de catálogo barba-toalha (alinhamento e desenho de barba com toalha aquecida e navalha)."
     },
     {
       "assetId": "588110a0b10f",
@@ -1414,11 +1424,11 @@
       "sha256": "8428254f0e2606a65d16e112165acde5738e0774689c10e268e4ea4c2bfc3092",
       "bytes": 65538,
       "context": "equipe-ilustrativa",
-      "decision": "import",
+      "decision": "reserve",
       "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
       "original": "barbearias/aurora/fotos-propostas/equipe-ilustrativa/PXS-36314971.jpg",
       "category": "profissional_retrato",
-      "selectionStatus": "ILLUSTRATIVE_PEOPLE_NOT_EMPLOYEE_IDENTITY",
+      "selectionStatus": "RESERVE_IDENTIFIABLE_THIRD_PARTY_BUSINESS",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/barber-standing-proudly-outside-hair-salon-36314971/",
         "author": "KÁ 🐟",
@@ -1428,7 +1438,8 @@
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos.",
         "flaggedRisks": "LETREIRO_OU_MARCA_VISIVEL"
       },
-      "publicationApproved": false
+      "publicationApproved": false,
+      "reviewEvidence": "Revisão visual 2026-11-03: identificação legível de estabelecimento real (placa 'Tiệm tóc Đôi Bàn Tay'); publicar numa unidade fictícia sugeriria instalação real."
     },
     {
       "assetId": "PXS-5188621",
@@ -1677,11 +1688,11 @@
       "sha256": "0bc12f545552a0ace257866715721825006e102a4051d2380fa4b8a608e7f2aa",
       "bytes": 43610,
       "context": "equipe-ilustrativa",
-      "decision": "import",
+      "decision": "reserve",
       "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
       "original": "barbearias/vertice/fotos-propostas/equipe-ilustrativa/PXS-18483778.jpg",
       "category": "profissional_retrato",
-      "selectionStatus": "ILLUSTRATIVE_PEOPLE_NOT_EMPLOYEE_IDENTITY",
+      "selectionStatus": "RESERVE_IDENTIFIABLE_THIRD_PARTY_BUSINESS",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/smiling-barber-with-scissors-18483778/",
         "author": "Marcelo Verfe",
@@ -1691,7 +1702,8 @@
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos.",
         "flaggedRisks": "SERIE_MARCELO_REPETICAO_ROSTO"
       },
-      "publicationApproved": false
+      "publicationApproved": false,
+      "reviewEvidence": "Revisão visual 2026-11-03: uniforme/boné com marca legível de barbearia real (De Antoni Barbearia); publicar numa unidade fictícia sugeriria funcionário/instalação real."
     },
     {
       "assetId": "PXS-5337979",
@@ -1721,16 +1733,16 @@
       "assetId": "PXS-2014809",
       "shopKey": "vertice:barbershop",
       "purpose": "SERVICE_PHOTO",
-      "serviceKey": null,
+      "serviceKey": "vertice:service:barba-toalha",
       "file": "vertice/PXS-2014809.webp",
       "sha256": "83cc6fee5a2cedf94edbe50e9385789a857cc07593101136c56973fd8838b176",
       "bytes": 51026,
       "context": "servicos",
-      "decision": "reserve",
+      "decision": "import",
       "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
       "original": "barbearias/vertice/fotos-propostas/servicos/PXS-2014809.jpg",
       "category": "barba_navalha",
-      "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
+      "selectionStatus": "SERVICE_MATCH_REVIEWED",
       "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/person-shaving-beard-2014809/",
@@ -1740,7 +1752,8 @@
         "editorialNotes": "Navalha aplicada ao contorno da barba; categoria geral refinada.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": false,
+      "reviewEvidence": "Revisão visual 2026-11-03: navalha (lâmina reta) em uso no alinhamento da barba; corresponde ao serviço de catálogo barba-toalha (alinhamento e desenho de barba com toalha aquecida e navalha)."
     },
     {
       "assetId": "PXS-8867546",
@@ -1771,16 +1784,16 @@
       "assetId": "PXS-5568412",
       "shopKey": "vertice:barbershop",
       "purpose": "SERVICE_PHOTO",
-      "serviceKey": null,
+      "serviceKey": "vertice:service:barba-toalha",
       "file": "vertice/PXS-5568412.webp",
       "sha256": "133e77059e8f141cb8f09b54a60766fb4b408bada6bbcc8508fe9f6bc5b65786",
       "bytes": 58220,
       "context": "servicos",
-      "decision": "reserve",
+      "decision": "import",
       "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
       "original": "barbearias/vertice/fotos-propostas/servicos/PXS-5568412.jpg",
       "category": "barba_geral",
-      "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
+      "selectionStatus": "SERVICE_MATCH_REVIEWED",
       "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/a-barber-shaving-the-beard-of-a-client-5568412/",
@@ -1790,7 +1803,8 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": false,
+      "reviewEvidence": "Revisão visual 2026-11-03: navalha (lâmina reta) em uso no alinhamento da barba; corresponde ao serviço de catálogo barba-toalha (alinhamento e desenho de barba com toalha aquecida e navalha)."
     },
     {
       "assetId": "PXS-6188363",
@@ -1821,16 +1835,16 @@
       "assetId": "PXS-19287848",
       "shopKey": "vertice:barbershop",
       "purpose": "SERVICE_PHOTO",
-      "serviceKey": null,
+      "serviceKey": "vertice:service:barba-toalha",
       "file": "vertice/PXS-19287848.webp",
       "sha256": "afb87e58c35c9e39f0bdba206288abbaa179962bb26c11b7e315f18b8ec98771",
       "bytes": 74514,
       "context": "servicos",
-      "decision": "reserve",
+      "decision": "import",
       "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
       "original": "barbearias/vertice/fotos-propostas/servicos/PXS-19287848.jpg",
       "category": "barba_navalha",
-      "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
+      "selectionStatus": "SERVICE_MATCH_REVIEWED",
       "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/close-up-of-a-man-getting-his-beard-trimmed-at-a-barbershop-19287848/",
@@ -1840,7 +1854,8 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": false,
+      "reviewEvidence": "Revisão visual 2026-11-03: navalha (lâmina reta) em uso no alinhamento da barba; corresponde ao serviço de catálogo barba-toalha (alinhamento e desenho de barba com toalha aquecida e navalha)."
     },
     {
       "assetId": "cb9a50dea4f7",
@@ -2154,11 +2169,11 @@
       "sha256": "3417c4ce85e3ac93ce5eab0e7c661fa8f29d4a18b2b91f8e41b94c66584f4f27",
       "bytes": 71562,
       "context": "ambiente",
-      "decision": "import",
+      "decision": "reserve",
       "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
       "original": "barbearias/orbita/fotos-propostas/ambiente/PXS-13986130.jpg",
       "category": "interior",
-      "selectionStatus": "ENVIRONMENT_ONLY_NO_SERVICE_PRICE",
+      "selectionStatus": "RESERVE_IDENTIFIABLE_THIRD_PARTY_BUSINESS",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/seats-inside-a-building-photographed-through-a-window-13986130/",
         "author": "Cz Jen",
@@ -2168,7 +2183,8 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária. Ambiente ilustrativo; não comprova instalações da unidade fictícia. Conferir marcas e letreiros.",
         "flaggedRisks": "LETREIRO_OU_MARCA_VISIVEL"
       },
-      "publicationApproved": false
+      "publicationApproved": false,
+      "reviewEvidence": "Revisão visual 2026-11-03: identificação legível de estabelecimento real (placa com caracteres de nome de loja); publicar numa unidade fictícia sugeriria instalação real."
     },
     {
       "assetId": "PXS-3993293",
@@ -2203,11 +2219,11 @@
       "sha256": "31b388a9a0c05a3df3630e6cfb6c519265c290778443ff9e7c2fade75876d667",
       "bytes": 52664,
       "context": "equipe-ilustrativa",
-      "decision": "import",
+      "decision": "reserve",
       "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
       "original": "barbearias/orbita/fotos-propostas/equipe-ilustrativa/PXS-19225258.jpg",
       "category": "profissional_retrato",
-      "selectionStatus": "ILLUSTRATIVE_PEOPLE_NOT_EMPLOYEE_IDENTITY",
+      "selectionStatus": "RESERVE_IDENTIFIABLE_THIRD_PARTY_BUSINESS",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/barber-with-hair-shaver-in-hand-19225258/",
         "author": "Marcelo Verfe",
@@ -2217,7 +2233,8 @@
         "editorialNotes": "Cena/retrato de banco. Não vincular à identidade de funcionário fictício nem inferir profissionais distintos pelas fotos.",
         "flaggedRisks": "SERIE_MARCELO_REPETICAO_ROSTO"
       },
-      "publicationApproved": false
+      "publicationApproved": false,
+      "reviewEvidence": "Revisão visual 2026-11-03: uniforme/boné com marca legível de barbearia real (De Antoni Barbearia); publicar numa unidade fictícia sugeriria funcionário/instalação real."
     },
     {
       "assetId": "PXS-3130920",
@@ -2273,16 +2290,16 @@
       "assetId": "PXS-7447140",
       "shopKey": "orbita:barbershop",
       "purpose": "SERVICE_PHOTO",
-      "serviceKey": null,
+      "serviceKey": "orbita:service:barba-toalha",
       "file": "orbita/PXS-7447140.webp",
       "sha256": "6c03b0356463eb6655c4fe7ae5e834a55fe5b0b5fa29069db2437b21a29ef3e8",
       "bytes": 65078,
       "context": "servicos",
-      "decision": "reserve",
+      "decision": "import",
       "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
       "original": "barbearias/orbita/fotos-propostas/servicos/PXS-7447140.jpg",
       "category": "barba_navalha",
-      "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
+      "selectionStatus": "SERVICE_MATCH_REVIEWED",
       "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/close-up-of-shaving-beard-7447140/",
@@ -2292,22 +2309,23 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": false,
+      "reviewEvidence": "Revisão visual 2026-11-03: navalha (lâmina reta) em uso no alinhamento da barba; corresponde ao serviço de catálogo barba-toalha (alinhamento e desenho de barba com toalha aquecida e navalha)."
     },
     {
       "assetId": "PXS-2076931",
       "shopKey": "orbita:barbershop",
       "purpose": "SERVICE_PHOTO",
-      "serviceKey": null,
+      "serviceKey": "orbita:service:barba-toalha",
       "file": "orbita/PXS-2076931.webp",
       "sha256": "60286fdf91f4e76ab55f1ee6d7f1c86fc7b79034b1282b9368d673de1cc7bc70",
       "bytes": 62572,
       "context": "servicos",
-      "decision": "reserve",
+      "decision": "import",
       "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
       "original": "barbearias/orbita/fotos-propostas/servicos/PXS-2076931.jpg",
       "category": "barba_navalha",
-      "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
+      "selectionStatus": "SERVICE_MATCH_REVIEWED",
       "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/man-shaving-man-s-beard-using-straight-razor-2076931/",
@@ -2317,22 +2335,23 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": false,
+      "reviewEvidence": "Revisão visual 2026-11-03: navalha (lâmina reta) em uso no alinhamento da barba; corresponde ao serviço de catálogo barba-toalha (alinhamento e desenho de barba com toalha aquecida e navalha)."
     },
     {
       "assetId": "PXS-7697441",
       "shopKey": "orbita:barbershop",
       "purpose": "SERVICE_PHOTO",
-      "serviceKey": null,
+      "serviceKey": "orbita:service:barba-toalha",
       "file": "orbita/PXS-7697441.webp",
       "sha256": "0588dac28c8789e1080b9c14e558df68c7cee390542aee8d2fb3311e6a52e131",
       "bytes": 52428,
       "context": "servicos",
-      "decision": "reserve",
+      "decision": "import",
       "rightsStatus": "SOURCE_CREDIT_PRESERVED_THIRD_PARTY_RIGHTS_PENDING",
       "original": "barbearias/orbita/fotos-propostas/servicos/PXS-7697441.jpg",
       "category": "barba_navalha",
-      "selectionStatus": "RESERVE_NOT_ASSIGNED_TO_INCOMPATIBLE_SERVICE",
+      "selectionStatus": "SERVICE_MATCH_REVIEWED",
       "editorialReview": "A coleção recebida não comprova um serviço específico do catálogo canônico. Preservar como reserva; não inventar serviço, preço ou vínculo.",
       "provenance": {
         "sourcePage": "https://www.pexels.com/photo/barber-shaving-customer-with-a-razor-7697441/",
@@ -2342,7 +2361,8 @@
         "editorialNotes": "Compatibilidade temática inicial conferida na grade; revisão do enquadramento final permanece necessária.",
         "flaggedRisks": "CONFERIR_MARCAS_PESSOAS_E_AUTENTICIDADE"
       },
-      "publicationApproved": false
+      "publicationApproved": false,
+      "reviewEvidence": "Revisão visual 2026-11-03: navalha (lâmina reta) em uso no alinhamento da barba; corresponde ao serviço de catálogo barba-toalha (alinhamento e desenho de barba com toalha aquecida e navalha)."
     },
     {
       "assetId": "PXS-32351045",
