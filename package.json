@@ -27,7 +27,10 @@
     "db:seed:canonical:apply": "tsx src/infra/drizzle/demo-seed/canonical/cli.ts --apply",
     "media:prepare": "tsx scripts/prepare-demo-media.ts",
     "media:import": "tsx scripts/import-demo-media.ts",
-    "test:explore:media": "vitest run --config vitest.media.config.mjs"
+    "test:explore:media": "vitest run --config vitest.media.config.mjs",
+    "media:demo:verify": "tsx scripts/verify-demo-media-package.ts",
+    "media:demo:guards": "node scripts/test-demo-media-guards.cjs",
+    "media:demo:import": "tsx scripts/admin-import-demo-media.ts"
   },
   "keywords": [],
   "author": "",

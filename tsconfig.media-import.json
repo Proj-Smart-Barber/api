@@ -1,0 +1,1 @@
+{"extends":"./tsconfig.json","include":["scripts/admin-import-demo-media.ts","scripts/verify-demo-media-package.ts"],"exclude":["node_modules"]}

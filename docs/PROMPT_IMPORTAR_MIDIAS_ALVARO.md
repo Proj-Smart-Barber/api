@@ -1,0 +1,25 @@
+# Prompt para a IA do Álvaro
+
+Copie o bloco abaixo para a IA com acesso local ao repositório da API e à sessão Vercel do projeto já publicado.
+
+```text
+Execute por completo a importação administrativa de mídia do Smart Barber, usando o backend existente. O responsável autorizou acesso de manutenção ao banco e publicação do acervo demonstrativo fornecido. Não crie outro backend, não mude URLs/domínios, não faça deploy, migrations nem seed. Não solicite senhas das dez contas.
+
+Repositório: https://github.com/Proj-Smart-Barber/api
+Branch do pacote: feat/importacao-midia-demonstracao
+
+Preserve alterações locais. Use um worktree separado para a branch, leia AGENTS.md e depois docs/PLANO_IMPORTACAO_MIDIAS_DEMO.md integralmente. O pacote é assets/demo-media/; a galeria local é index.html. O runner é scripts/admin-import-demo-media.ts. Não implemente um atalho que insira READY por SQL ou envie objetos sem associações. O runner reutiliza os controllers e o processamento da API, verificando o proprietário ativo da unidade.
+
+1. Verifique offline os 109 arquivos, hashes, decodificação, associação às dez marcas, TypeScript e guards pelos comandos do plano. Reutilize dependências saudáveis; npm ci apenas quando necessário. Não rode testes de banco sem isolamento comprovado.
+2. Confirme por Vercel CLI a equipe/projeto EXISTENTE da API (o projeto originalmente acessível por Álvaro). Obtenha suas variáveis Production em arquivo local ignorado. Não imprima valores, não os envie a ferramentas externas e não os inclua no Git. Não abra a tela de chaves em snapshots. O CLI rclone da outra máquina não é dependência deste pacote.
+3. Banco principal aprovado: smartbarber-dev. smartbarber-dev-2 também foi autorizado para população, mas requer execução independente, DSN seguro, backup e conferência próprios. Nunca copie as credenciais expostas anteriormente no chat; use segredos atuais configurados/autorizados. Se houver divergência com o DATABASE_URL do projeto, pare a escrita e explique o alvo divergente sem revelar DSN. Não reconfigure o ambiente publicado para contornar isso.
+4. Confirme os buckets distintos de staging smartbarber e público smartbarber-public, domínio público efetivo e permissões R2 para ambos. Verifique uso atual total da conta/buckets e ajuste os orçamentos do processo com margem, preservando limites da aplicação.
+5. Revise visualmente o acervo e as fontes/observações do manifesto. Existem 66 candidatas (10 logos, 49 fotos de espaço/equipe ilustrativa, 7 fotos de serviços associados), 43 fotos reservadas sem associação segura e 1 exclusão por origem desconhecida. A autorização de demonstração não é comprovação de direitos de terceiros. Não marque direitos/revisão como comprovados por suposição. Nunca atribua pessoas/instalações de banco de imagens a uma unidade como se fossem reais.
+6. Classifique as 43 reservas contra os serviços REAIS do catálogo e o que a foto efetivamente mostra. Só promova reservas se houver correspondência exata, com evidência no relatório; não invente serviços, preços nem vínculos. Mantenha as incompatíveis em reserva. Registre aprovações por SHA em arquivo privado conforme o plano; não aprove todas por script cego. Reexecute o verificador após qualquer ajuste do manifesto.
+7. Faça backup custom do alvo exato e comprove pg_restore --list. Rode dry-run, resolva guards de titularidade, escopo, logo existente, galeria, serviço, quotas e storage antes do apply. Use --replace-logos somente para logos legados demonstrativos revisados e cuja substituição foi autorizada; preserve alterações externas.
+8. Execute apply com confirmação, approval-file, backup e alvo esperado explícitos. O script é um comando administrativo local que usa DATABASE_URL e credenciais R2 do backend. Não publica rota nem precisa de tokens de login de proprietários. Execute serialmente; guarde journal privado e namespace demo-media-import-v1. Em falha, retome o mesmo lote e reconcilie órfãos/leases; não apague registros nem execute seed para reiniciar.
+9. Confira objetos R2 e URLs públicas main/thumbnail, READY, logo/galeria/serviço e catálogo/Explorar da API publicada. Rode novamente o lote: zero novas mídias/associações indevidas, todas as já concluídas reutilizadas. Compare antes/depois para provar preservação de usuários, credenciais e reservas. Isso é validação automatizada; testes manuais/dispositivo ficam com o responsável.
+10. Entregue relatório por banco e marca com quantidades, bytes, IDs de mídia apenas em evidência privada, reutilização, reservas e pendências. Nenhum segredo, URL assinada ou dado pessoal em mensagens, logs publicados ou commits. Não declare sucesso total se houver reservas, falta de permissão, falha pública ou banco não atendido. Não envie mensagens a terceiros.
+
+Continue autonomamente dentro desse escopo. Peça informação somente se faltar um segredo/acesso real ou houver conflito de destino que não possa ser resolvido pelo ambiente conectado. Não basta fornecer outro plano: execute a rotina e entregue evidências do resultado efetivo.
+```
