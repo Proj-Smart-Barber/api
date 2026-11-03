@@ -6,6 +6,7 @@ import { Barbershop } from "../../../../enterprise/entities/barbershop";
 import { Membership, Role } from "../../../../enterprise/entities/membership";
 import { Slug } from "../../../../enterprise/entities/value-objects/slug";
 import type { UsersRepository } from "../../../repositories/users-repository";
+import { resolveCommercialTimezone } from "../../../services/commercial-timezone-resolver";
 import type { CreateBarbershopDTO } from "./create-barbershop-dto";
 import type { CreateBarbershopResponse } from "./create-barbershop-response";
 
@@ -27,7 +28,7 @@ export class CreateBarbershopUseCase {
     ownerId,
     cnpj,
     location,
-    timezone = DEFAULT_TIMEZONE,
+    timezone,
     avatarUrl,
   }: CreateBarbershopDTO): Promise<CreateBarbershopUseCaseResponse> {
     const owner = await this.usersRepository.findById(ownerId);
@@ -48,13 +49,19 @@ export class CreateBarbershopUseCase {
       return left(new BarbershopAlreadyExistsError());
     }
 
+    // Se o fuso não for explicitamente fornecido ou for o default genérico,
+    // resolve territorialmente a partir do endereço canônico comercial.
+    const resolvedTimezone = resolveCommercialTimezone({ location });
+    const effectiveTimezone =
+      timezone && timezone !== DEFAULT_TIMEZONE ? timezone : resolvedTimezone;
+
     const barbershop = Barbershop.create({
       name,
       ownerId: owner.id,
       slug,
       cnpj: normalizedCnpj,
       location,
-      timezone,
+      timezone: effectiveTimezone,
       status: "ACTIVE",
       avatarUrl,
     });

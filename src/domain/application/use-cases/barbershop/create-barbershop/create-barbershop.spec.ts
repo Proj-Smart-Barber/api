@@ -131,4 +131,116 @@ describe("Create barbershop", () => {
     expect(barbershopsRepository.items).toHaveLength(0);
     expect(barbershopsRepository.memberships).toHaveLength(0);
   });
+
+  describe("Commercial Timezone resolution from canonical location", () => {
+    it("should resolve America/Rio_Branco for Acre address", async () => {
+      const result = await sut.execute({
+        name: "Barbearia Acreana",
+        ownerId: owner.id.toString(),
+        cnpj: "11111111000101",
+        location: "Av. Ceará, 100, Centro, Rio Branco - AC, CEP 69900-000",
+      });
+
+      expect(result.isRight()).toBe(true);
+      const barbershop = barbershopsRepository.items.find(
+        (b) => b.cnpj === "11111111000101",
+      );
+      expect(barbershop?.timezone).toBe("America/Rio_Branco");
+    });
+
+    it("should resolve America/Rio_Branco for western Amazonas (Tabatinga)", async () => {
+      const result = await sut.execute({
+        name: "Barbearia Tabatinga",
+        ownerId: owner.id.toString(),
+        cnpj: "22222222000102",
+        location:
+          "Rua Marechal Mallet, 50, Centro, Tabatinga - AM, CEP 69640-000",
+      });
+
+      expect(result.isRight()).toBe(true);
+      const barbershop = barbershopsRepository.items.find(
+        (b) => b.cnpj === "22222222000102",
+      );
+      expect(barbershop?.timezone).toBe("America/Rio_Branco");
+    });
+
+    it("should resolve America/Manaus for central Amazonas (Manaus)", async () => {
+      const result = await sut.execute({
+        name: "Barbearia Manauara",
+        ownerId: owner.id.toString(),
+        cnpj: "33333333000103",
+        location:
+          "Av. Eduardo Ribeiro, 500, Centro, Manaus - AM, CEP 69010-001",
+      });
+
+      expect(result.isRight()).toBe(true);
+      const barbershop = barbershopsRepository.items.find(
+        (b) => b.cnpj === "33333333000103",
+      );
+      expect(barbershop?.timezone).toBe("America/Manaus");
+    });
+
+    it("should resolve America/Noronha for Fernando de Noronha (PE)", async () => {
+      const result = await sut.execute({
+        name: "Barbearia Ilha",
+        ownerId: owner.id.toString(),
+        cnpj: "44444444000104",
+        location: "Vila dos Remédios, Fernando de Noronha - PE, CEP 53990-000",
+      });
+
+      expect(result.isRight()).toBe(true);
+      const barbershop = barbershopsRepository.items.find(
+        (b) => b.cnpj === "44444444000104",
+      );
+      expect(barbershop?.timezone).toBe("America/Noronha");
+    });
+
+    it("should resolve America/Cuiaba for Mato Grosso", async () => {
+      const result = await sut.execute({
+        name: "Barbearia Pantaneira",
+        ownerId: owner.id.toString(),
+        cnpj: "55555555000105",
+        location:
+          "Av. Historiador Rubens de Mendonça, 1200, Bosque da Saúde, Cuiabá - MT, CEP 78050-000",
+      });
+
+      expect(result.isRight()).toBe(true);
+      const barbershop = barbershopsRepository.items.find(
+        (b) => b.cnpj === "55555555000105",
+      );
+      expect(barbershop?.timezone).toBe("America/Cuiaba");
+    });
+
+    it("should resolve America/Campo_Grande for Mato Grosso do Sul", async () => {
+      const result = await sut.execute({
+        name: "Barbearia Morena",
+        ownerId: owner.id.toString(),
+        cnpj: "66666666000106",
+        location:
+          "Av. Afonso Pena, 1500, Centro, Campo Grande - MS, CEP 79002-072",
+      });
+
+      expect(result.isRight()).toBe(true);
+      const barbershop = barbershopsRepository.items.find(
+        (b) => b.cnpj === "66666666000106",
+      );
+      expect(barbershop?.timezone).toBe("America/Campo_Grande");
+    });
+
+    it("should preserve explicitly passed valid custom timezone", async () => {
+      const result = await sut.execute({
+        name: "Barbearia Especial",
+        ownerId: owner.id.toString(),
+        cnpj: "77777777000107",
+        location: "Rua X, 123, São Paulo - SP",
+        timezone: "America/Cuiaba",
+      });
+
+      expect(result.isRight()).toBe(true);
+      const barbershop = barbershopsRepository.items.find(
+        (b) => b.cnpj === "77777777000107",
+      );
+      expect(barbershop?.timezone).toBe("America/Cuiaba");
+    });
+  });
 });
