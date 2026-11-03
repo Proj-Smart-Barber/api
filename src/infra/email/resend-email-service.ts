@@ -25,7 +25,7 @@ export class ResendEmailService implements EmailService {
     const { error } = await this.resend.emails.send({
       from: env.EMAIL_FROM,
       to: params.to,
-      subject: "Confirme seu e-mail no SmartBarber",
+      subject: params.verificationCode ? "Seu código de confirmação no Smart Barber" : "Confirme seu e-mail no SmartBarber",
       html,
       text,
     });

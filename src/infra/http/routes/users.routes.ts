@@ -12,6 +12,7 @@ import { sendEmailVerificationLimit } from "../middlewares/send-verification-ema
 import { makeVerifyEmailController } from "../factories/make-verify-email-controller";
 import { makeSendPasswordRecoveryController } from "../factories/make-send-password-recovery-controller";
 import { makeResetPasswordController } from "../factories/make-reset-password-controller";
+import { confirmEmailVerificationLimit } from "../middlewares/confirm-email-verification-limit";
 
 import { makeLogoutAllController } from "../factories/make-logout-all-controller";
 import { makeChangePasswordController } from "../factories/make-change-password-controller";
@@ -40,10 +41,12 @@ userRoutes.post(
 );
 userRoutes.get(
   "/verification-email/confirm",
+  confirmEmailVerificationLimit,
   adaptRoute(makeVerifyEmailController()),
 );
 userRoutes.post(
   "/verification-email/confirm",
+  confirmEmailVerificationLimit,
   adaptRoute(makeVerifyEmailController()),
 );
 userRoutes.post(

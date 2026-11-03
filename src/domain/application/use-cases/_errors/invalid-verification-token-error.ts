@@ -5,7 +5,7 @@ export class InvalidVerificationTokenError
   implements UseCaseError
 {
   constructor() {
-    super("Token de verificação inválido ou expirado.");
+    super("Código ou link de confirmação inválido, expirado ou já utilizado.");
     this.name = "InvalidVerificationTokenError";
   }
 }

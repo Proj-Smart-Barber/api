@@ -1,0 +1,4 @@
+assets/demo-media/
+.media-import/
+.env*
+*.dump

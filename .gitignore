@@ -17,3 +17,7 @@ docs/media-validation/
 
 # Temporary review scripts
 scripts/review-*.cjs
+
+# Private maintenance receipts; never commit secrets or database backups
+.media-import/
+*.dump

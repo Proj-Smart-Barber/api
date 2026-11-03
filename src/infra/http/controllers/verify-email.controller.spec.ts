@@ -1,3 +1,4 @@
+import { InMemoryEmailVerificationCodesRepository } from "../../../../test/repositories/in-memory-email-verification-codes-repository";
 import { hashToken } from "../../../core/crypto/token";
 import { EmailVerification } from "../../../domain/enterprise/entities/email-verification";
 import { User } from "../../../domain/enterprise/entities/user";
@@ -18,8 +19,8 @@ describe("VerifyEmailController", () => {
       new InMemoryEmailVerificationsRepository();
 
     const useCase = new VerifyEmailUseCase(
-      inMemoryEmailVerificationsRepository,
       inMemoryUsersRepository,
+      new InMemoryEmailVerificationCodesRepository(inMemoryUsersRepository, inMemoryEmailVerificationsRepository),
     );
 
     controller = new VerifyEmailController(useCase);

@@ -67,6 +67,9 @@ export class UpdateServiceController implements Controller {
         priceInCents,
         durationInMinutes,
         description: description ?? undefined,
+        imageUrl,
+        isFeatured,
+        featuredOrder,
       });
 
       if (result.isLeft()) {

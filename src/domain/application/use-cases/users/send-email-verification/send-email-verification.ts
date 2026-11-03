@@ -1,11 +1,10 @@
 import { type Either, left, right } from "../../../../../core/logic/either";
-import { EmailVerification } from "../../../../enterprise/entities/email-verification";
-import type { EmailVerificationsRepository } from "../../../repositories/email-verifications-repository";
+import type { EmailVerificationCodesRepository } from "../../../repositories/email-verification-codes-repository";
 import type { UsersRepository } from "../../../repositories/users-repository";
 import {
-  buildEmailVerificationUrl,
-  createEmailVerificationToken,
-} from "../../../services/email-verification-token-service";
+  createEmailVerificationCode,
+  EMAIL_CODE_TTL_MINUTES,
+} from "../../../services/email-verification-code-service";
 import type { EmailService } from "../../../services/email-service";
 import { EmailSendError } from "../../_errors/email-send-error";
 import type { SendEmailVerificationDTO } from "./send-email-verification-dto";
@@ -19,7 +18,7 @@ type SendEmailVerificationUseCaseResponse = Either<
 export class SendEmailVerificationUseCase {
   constructor(
     private usersRepository: UsersRepository,
-    private emailVerificationsRepository: EmailVerificationsRepository,
+    private emailVerificationsRepository: EmailVerificationCodesRepository,
     private emailService: EmailService,
   ) {}
 
@@ -32,36 +31,44 @@ export class SendEmailVerificationUseCase {
 
     if (!user || user.isEmailVerified) {
       // Keep the response uniform (no account enumeration) and avoid
-      // sending verification links to unknown or already verified accounts.
+      // sending verification codes to unknown or already verified accounts.
       return right({ sentTo: normalizedEmail });
     }
 
-    await this.emailVerificationsRepository.invalidateActiveByUserId(
-      user.id.toString(),
-    );
-
-    const { plainToken, tokenHash, expiresAt, expiresInHours } =
-      createEmailVerificationToken();
-
-    const emailVerification = EmailVerification.create({
-      userId: user.id,
-      tokenHash,
-      expiresAt,
-    });
-
-    await this.emailVerificationsRepository.create(emailVerification);
+    let issued: ReturnType<typeof createEmailVerificationCode> | undefined;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const candidate = createEmailVerificationCode(user.id.toString());
+      const result = await this.emailVerificationsRepository.issue({
+        userId: user.id.toString(),
+        codeHash: candidate.codeHash,
+        expiresAt: candidate.expiresAt,
+      });
+      if (result === "throttled") return right({ sentTo: normalizedEmail });
+      if (result === "issued") {
+        issued = candidate;
+        break;
+      }
+    }
+    if (!issued) return left(new EmailSendError());
 
     try {
       await this.emailService.sendVerificationEmail({
         to: user.email,
         name: user.name,
-        verificationUrl: buildEmailVerificationUrl(plainToken),
-        expiresInHours,
+        // Legacy template parameters are retained for older mail renderers only.
+        verificationUrl: "",
+        expiresInHours: 0,
+        verificationCode: issued.code,
+        expiresInMinutes: EMAIL_CODE_TTL_MINUTES,
       });
     } catch {
+      await this.emailVerificationsRepository.revoke(
+        user.id.toString(),
+        issued.codeHash,
+      );
       return left(new EmailSendError());
     }
 
-    return right({ sentTo: user.email });
+    return right({ sentTo: normalizedEmail });
   }
 }

@@ -28,7 +28,10 @@
     "media:prepare": "tsx scripts/prepare-demo-media.ts",
     "media:import": "tsx scripts/import-demo-media.ts",
     "test:explore:media": "vitest run --config vitest.media.config.mjs",
-    "db:seed:demo:rebuild": "tsx scripts/rebuild-demo-database.ts"
+    "db:seed:demo:rebuild": "tsx scripts/rebuild-demo-database.ts",
+    "media:demo:verify": "tsx scripts/verify-demo-media-package.ts",
+    "media:demo:guards": "node scripts/test-demo-media-guards.cjs",
+    "media:demo:import": "tsx scripts/admin-import-demo-media.ts"
   },
   "keywords": [],
   "author": "",

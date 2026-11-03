@@ -121,6 +121,33 @@ export const emailVerifications = pgTable(
   (table) => [index("email_verifications_user_id_idx").on(table.userId)],
 );
 
+export const emailVerificationCodes = pgTable(
+  "email_verification_codes",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    codeHash: text("code_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    attempts: integer().notNull().default(0),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("email_verification_codes_user_created_idx").on(
+      table.userId,
+      table.createdAt,
+    ),
+    check(
+      "email_verification_codes_attempts_check",
+      sql`${table.attempts} BETWEEN 0 AND 5`,
+    ),
+  ],
+);
+
 export const passwordRecoveryTokens = pgTable(
   "password_recovery_tokens",
   {

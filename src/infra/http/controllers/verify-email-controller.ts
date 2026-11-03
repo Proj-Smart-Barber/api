@@ -8,9 +8,22 @@ import {
 } from "../../../core/infra/http-response";
 import type { VerifyEmailUseCase } from "../../../domain/application/use-cases/users/verify-email/verify-email";
 
-const verifyEmailControllerRequest = z.object({
-  token: z.string().min(1),
-});
+const verifyEmailControllerRequest = z
+  .object({
+    token: z.string().min(1).max(512).optional(),
+    email: z.email().max(254).optional(),
+    code: z
+      .string()
+      .regex(/^\d{6}$/)
+      .optional(),
+  })
+  .refine(
+    (value) =>
+      value.token !== undefined
+        ? value.email === undefined && value.code === undefined
+        : value.email !== undefined && value.code !== undefined,
+    "Informe e-mail e código de seis dígitos, ou um token de link antigo.",
+  );
 
 type VerifyEmailControllerRequest = z.infer<
   typeof verifyEmailControllerRequest
@@ -21,9 +34,17 @@ export class VerifyEmailController implements Controller {
 
   async handle(request: VerifyEmailControllerRequest): Promise<HttpResponse> {
     try {
-      const { token } = verifyEmailControllerRequest.parse(request);
+      const {
+        token,
+        email: requestedEmail,
+        code,
+      } = verifyEmailControllerRequest.parse(request);
 
-      const result = await this.verifyEmailUseCase.execute({ token });
+      const result = await this.verifyEmailUseCase.execute(
+        token !== undefined
+          ? { token }
+          : { email: requestedEmail!, code: code! },
+      );
 
       if (result.isLeft()) {
         return clientError(result.value.message);
@@ -43,7 +64,9 @@ export class VerifyEmailController implements Controller {
         return clientError(z.prettifyError(err));
       }
 
-      return fail(new Error(String(err)));
+      return fail(
+        new Error("Não foi possível confirmar o e-mail. Tente novamente."),
+      );
     }
   }
 }

@@ -3,6 +3,7 @@ import { z } from "zod";
 const envSchema = z.object({
   DATABASE_URL: z.url(),
   JWT_SECRET: z.string(),
+  EMAIL_VERIFICATION_CODE_SECRET: z.string().min(32).optional(),
   ACCESS_TOKEN_EXPIRES_IN: z.string().default("15m"),
   REFRESH_TOKEN_EXPIRES_IN: z.string().default("30d"),
   JWT_EXPIRES_IN: z.string().optional(),

@@ -5,6 +5,7 @@ export default defineConfig({test:{globals:true,setupFiles:[],fileParallelism:fa
  'src/domain/application/services/explore-cursor-token.spec.ts',
  'src/domain/application/use-cases/barbershop/get-explore-feed/get-explore-feed.spec.ts',
  'src/infra/http/controllers/barbershop/explore-feed.controller.spec.ts',
+ 'src/infra/http/controllers/service/update-service.controller.spec.ts',
  'src/domain/application/use-cases/media/media-use-cases.spec.ts',
  'src/domain/application/use-cases/service/**/*.spec.ts',
  'src/infra/drizzle/demo-seed/canonical/ten-barbershops.spec.ts',
