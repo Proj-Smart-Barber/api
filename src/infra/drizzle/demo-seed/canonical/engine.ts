@@ -1,3 +1,4 @@
+import { reconcileDemoGeography } from "../geography";
 import { LEGACY_REGIONAL_BARBERSHOPS } from "./legacy-regional-barbershops";
 import {
   planRetiredBarbershops,
@@ -286,6 +287,17 @@ export class DemoSeedEngine {
             `dry-run-shop-${shopFixture.logicalKey}`;
         }
       }
+    }
+
+    for (const shopFixture of DEMO_BARBERSHOPS) {
+      if (isDryRun || !shopFixture.point) continue;
+      const result = await reconcileDemoGeography(
+        this.database,
+        resolvedIds[shopFixture.logicalKey],
+        shopFixture as any,
+        resolvedIds[shopFixture.ownerLogicalKey],
+      );
+      resolvedIds[`${shopFixture.logicalKey}:location`] = result.locationId;
     }
 
     // ── 3. Memberships ──────────────────────────────────────────

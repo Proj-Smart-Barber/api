@@ -18,6 +18,7 @@ import {
 import { db } from "../index";
 import {
   bookings,
+  barbershops,
   shoppingCarts,
   users,
   serviceItems,
@@ -374,6 +375,36 @@ export class DrizzleBookingsRepository implements BookingsRepository {
       phoneNumber: null,
     };
 
+    // Load barbershop info
+    let barbershopName: string | null = null;
+    let barbershopPhone: string | null = null;
+    if (bookingRow.barbershopId) {
+      const [shopRow] = await client
+        .select({
+          name: barbershops.name,
+          ownerPhone: users.phoneNumber,
+        })
+        .from(barbershops)
+        .leftJoin(users, eq(barbershops.ownerId, users.id))
+        .where(eq(barbershops.id, bookingRow.barbershopId));
+      if (shopRow) {
+        barbershopName = shopRow.name;
+        barbershopPhone = shopRow.ownerPhone;
+      }
+    }
+
+    // Load barberman name
+    let barbermanName: string | null = null;
+    if (bookingRow.barbermanId) {
+      const [barberRow] = await client
+        .select({ name: users.name })
+        .from(users)
+        .where(eq(users.id, bookingRow.barbermanId));
+      if (barberRow) {
+        barbermanName = barberRow.name;
+      }
+    }
+
     // Load booking service items
     const itemRows = await client
       .select()
@@ -385,7 +416,10 @@ export class DrizzleBookingsRepository implements BookingsRepository {
         booking: {
           id: bookingRow.id,
           barbershopId: bookingRow.barbershopId,
+          barbershopName,
+          barbershopPhone,
           barbermanId: bookingRow.barbermanId,
+          barbermanName,
           customerId: bookingRow.customerId ?? fallbackCustomer.id,
           shoppingCartId: bookingRow.shoppingCartId,
           startsAt: bookingRow.startsAt,
@@ -449,7 +483,10 @@ export class DrizzleBookingsRepository implements BookingsRepository {
           booking: {
             id: bookingRow.id,
             barbershopId: bookingRow.barbershopId,
+            barbershopName,
+            barbershopPhone,
             barbermanId: bookingRow.barbermanId,
+            barbermanName,
             customerId: bookingRow.customerId ?? legacyRow.customer.id,
             shoppingCartId: bookingRow.shoppingCartId,
             startsAt: bookingRow.startsAt,
@@ -477,7 +514,10 @@ export class DrizzleBookingsRepository implements BookingsRepository {
     return BookingDetails.create({
       bookingId: new UniqueEntityId(bookingRow.id),
       barbershopId: new UniqueEntityId(bookingRow.barbershopId),
+      barbershopName,
+      barbershopPhone,
       barbermanId: new UniqueEntityId(bookingRow.barbermanId),
+      barbermanName,
       customerId: new UniqueEntityId(
         bookingRow.customerId ?? fallbackCustomer.id,
       ),

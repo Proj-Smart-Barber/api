@@ -8,7 +8,10 @@ export interface BookingDetailsServiceItem extends BookingServiceSnapshot {
 export interface BookingDetailsProps {
   bookingId: UniqueEntityId;
   barbershopId: UniqueEntityId;
+  barbershopName?: string | null;
+  barbershopPhone?: string | null;
   barbermanId: UniqueEntityId;
+  barbermanName?: string | null;
   customerId?: UniqueEntityId;
   shoppingCartId?: UniqueEntityId | null;
   customer: {
@@ -43,8 +46,20 @@ export class BookingDetails {
     return this.props.barbershopId;
   }
 
+  get barbershopName(): string | null {
+    return this.props.barbershopName ?? null;
+  }
+
+  get barbershopPhone(): string | null {
+    return this.props.barbershopPhone ?? null;
+  }
+
   get barbermanId(): UniqueEntityId {
     return this.props.barbermanId;
+  }
+
+  get barbermanName(): string | null {
+    return this.props.barbermanName ?? null;
   }
 
   get customerId(): UniqueEntityId {

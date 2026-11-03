@@ -9,7 +9,10 @@ export interface PersistenceBookingDetails {
   booking: {
     id: string;
     barbershopId: string;
+    barbershopName?: string | null;
+    barbershopPhone?: string | null;
     barbermanId: string;
+    barbermanName?: string | null;
     customerId?: string | null;
     shoppingCartId?: string | null;
     startsAt?: Date | null;
@@ -94,7 +97,10 @@ export class BookingDetailsMapper {
     return BookingDetails.create({
       bookingId: new UniqueEntityId(raw.booking.id),
       barbershopId: new UniqueEntityId(raw.booking.barbershopId),
+      barbershopName: raw.booking.barbershopName ?? null,
+      barbershopPhone: raw.booking.barbershopPhone ?? null,
       barbermanId: new UniqueEntityId(raw.booking.barbermanId),
+      barbermanName: raw.booking.barbermanName ?? null,
       customerId: new UniqueEntityId(customerIdStr),
       shoppingCartId: raw.booking.shoppingCartId
         ? new UniqueEntityId(raw.booking.shoppingCartId)
@@ -154,7 +160,10 @@ export class BookingDetailsMapper {
     return {
       id: bookingDetails.bookingId.toString(),
       barbershopId: bookingDetails.barbershopId.toString(),
+      barbershopName: bookingDetails.barbershopName,
+      barbershopPhone: bookingDetails.barbershopPhone,
       barbermanId: bookingDetails.barbermanId.toString(),
+      barbermanName: bookingDetails.barbermanName,
       customerId: bookingDetails.customerId.toString(),
       shoppingCartId: bookingDetails.shoppingCartId?.toString() ?? null,
       customer: {

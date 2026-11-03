@@ -24,6 +24,10 @@ export class User extends Entity<UserProps> {
     return this.props.name;
   }
 
+  set name(value: string) {
+    this.props.name = value;
+  }
+
   get avatarUrl(): string | undefined {
     return this.props.avatarUrl;
   }
@@ -46,6 +50,10 @@ export class User extends Entity<UserProps> {
 
   get phoneNumber(): string | undefined {
     return this.props.phoneNumber;
+  }
+
+  set phoneNumber(value: string | undefined) {
+    this.props.phoneNumber = value;
   }
 
   get emailVerifiedAt(): Date | null | undefined {

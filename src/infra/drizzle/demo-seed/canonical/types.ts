@@ -39,6 +39,7 @@ export interface DemoBarbershopFixture {
   location: string;
   timezone: string;
   status: "ACTIVE" | "INACTIVE";
+  point?: { latitude: number; longitude: number };
 }
 
 export interface DemoScheduleFixture {

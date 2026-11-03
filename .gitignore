@@ -11,7 +11,9 @@ coverage/*
 .demo-seed-credentials.json
 .demo-seed-manifest.json
 
-
 # Local media derivatives and isolated validation outputs
 docs/media-prepared-*/
 docs/media-validation/
+
+# Temporary review scripts
+scripts/review-*.cjs

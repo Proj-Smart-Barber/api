@@ -107,6 +107,9 @@ describe("FetchMyBookingsController Unit Tests (Grupo 1)", () => {
       nextBooking.id.toString(),
     );
     expect((response.body as any).bookings[0].status).toBe("CONFIRMED");
+    expect((response.body as any).bookings[0].barbershopName).toBe("Barbearia Modelo");
+    expect((response.body as any).bookings[0].barbershopPhone).toBe("(11) 98888-8888");
+    expect((response.body as any).bookings[0].barbermanName).toBe("Barbeiro Chefe");
     expect((response.body as any).serverTime).toBeDefined();
   });
 
