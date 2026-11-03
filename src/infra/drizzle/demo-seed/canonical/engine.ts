@@ -6,7 +6,7 @@ import {
 import type { SeedRegistryRecord } from "./types";
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, inArray, or, sql } from "drizzle-orm";
 import { db } from "../../index";
 import { env } from "../../../env";
 import {
@@ -134,6 +134,7 @@ export class DemoSeedEngine {
     const existingRegistry = isDryRun
       ? await this.safeGetRegistryMap(DEMO_SEED_NAMESPACE)
       : await this.registry.getExistingRecords(DEMO_SEED_NAMESPACE);
+    await this.assertSeedIdentities(existingRegistry);
     const retirementPlan =
       await this.inspectRetiredBarbershops(existingRegistry);
 
@@ -174,19 +175,7 @@ export class DemoSeedEngine {
         resolvedIds[staffFixture.logicalKey] = reg.recordId;
         counts.staffs.reused++;
 
-        if (!isDryRun) {
-          const cred = staffCredentials[staffFixture.logicalKey];
-          await db
-            .update(users)
-            .set({
-              name: staffFixture.name,
-              email: staffFixture.email,
-              password: cred.passwordHash,
-              emailVerifiedAt: sql`COALESCE(${users.emailVerifiedAt}, NOW())`,
-              accountType: staffFixture.role === "OWNER" ? "OWNER" : "BARBER",
-            })
-            .where(eq(users.id, reg.recordId));
-        }
+        // Registered users are reused without modifying credentials or profile fields.
       } else {
         counts.staffs.created++;
         if (!isDryRun) {
@@ -199,16 +188,9 @@ export class DemoSeedEngine {
           let staffId: string;
           if (existingByEmail.length > 0) {
             staffId = existingByEmail[0].id;
-            await db
-              .update(users)
-              .set({ emailVerifiedAt: sql`NOW()` })
-              .where(
-                and(
-                  eq(users.id, staffId),
-                  eq(users.email, staffFixture.email),
-                  isNull(users.emailVerifiedAt),
-                ),
-              );
+            throw new Error(
+              "Colisão de usuário não registrado no namespace do seed.",
+            );
           } else {
             const cred = staffCredentials[staffFixture.logicalKey];
             const [created] = await db
@@ -262,7 +244,9 @@ export class DemoSeedEngine {
 
           let shopId: string;
           if (existingBySlug.length > 0) {
-            shopId = existingBySlug[0].id;
+            throw new Error(
+              "Colisão de barbearia não registrada no namespace do seed.",
+            );
           } else {
             const [created] = await db
               .insert(barbershops)
@@ -440,18 +424,7 @@ export class DemoSeedEngine {
         resolvedIds[customerFixture.logicalKey] = reg.recordId;
         counts.customers.reused++;
 
-        if (!isDryRun) {
-          await db
-            .update(users)
-            .set({
-              name: customerFixture.name,
-              email: customerFixture.email,
-              password: customerPasswordHash,
-              emailVerifiedAt: sql`COALESCE(${users.emailVerifiedAt}, NOW())`,
-              accountType: "CLIENT",
-            })
-            .where(eq(users.id, reg.recordId));
-        }
+        // Preserve existing customer credentials and identity.
       } else {
         counts.customers.created++;
         if (!isDryRun) {
@@ -462,20 +435,9 @@ export class DemoSeedEngine {
 
           let customerId: string;
           if (existingByEmail.length > 0) {
-            customerId = existingByEmail[0].id;
-            await db
-              .update(users)
-              .set({
-                emailVerifiedAt: sql`NOW()`,
-                password: customerPasswordHash,
-                accountType: "CLIENT",
-              })
-              .where(
-                and(
-                  eq(users.id, customerId),
-                  eq(users.email, customerFixture.email),
-                ),
-              );
+            throw new Error(
+              "Colisão de cliente não registrado no namespace do seed.",
+            );
           } else {
             const [created] = await db
               .insert(users)
@@ -797,6 +759,92 @@ export class DemoSeedEngine {
     };
   }
 
+  private async assertSeedIdentities(
+    registry: Map<string, SeedRegistryRecord>,
+  ) {
+    const people = [...DEMO_STAFFS, ...DEMO_CUSTOMERS];
+    const existingUsers = await db
+      .select({ id: users.id, email: users.email, cpf: users.cpf })
+      .from(users)
+      .where(
+        or(
+          inArray(
+            users.email,
+            people.map((person) => person.email),
+          ),
+          inArray(
+            users.cpf,
+            people.map((person) => person.cpf),
+          ),
+        ),
+      );
+    for (const person of people) {
+      const registration = registry.get(person.logicalKey);
+      const matched = existingUsers.find(
+        (user) => user.email === person.email || user.cpf === person.cpf,
+      );
+      if (!registration && matched)
+        throw new Error(
+          "Colisão de usuário não registrado no namespace do seed.",
+        );
+      if (
+        registration &&
+        (registration.tableName !== "users" ||
+          !matched ||
+          matched.id !== registration.recordId ||
+          matched.cpf !== person.cpf)
+      )
+        throw new Error(
+          "Identidade de usuário registrado não confere com a fixture.",
+        );
+    }
+    const existingShops = await db
+      .select({
+        id: barbershops.id,
+        slug: barbershops.slug,
+        cnpj: barbershops.cnpj,
+        ownerId: barbershops.ownerId,
+      })
+      .from(barbershops)
+      .where(
+        or(
+          inArray(
+            barbershops.slug,
+            DEMO_BARBERSHOPS.map((shop) => shop.slug),
+          ),
+          inArray(
+            barbershops.cnpj,
+            DEMO_BARBERSHOPS.map((shop) => shop.cnpj),
+          ),
+        ),
+      );
+    for (const shop of DEMO_BARBERSHOPS) {
+      const registration = registry.get(shop.logicalKey);
+      const matched = existingShops.find(
+        (row) => row.slug === shop.slug || row.cnpj === shop.cnpj,
+      );
+      if (!registration && matched)
+        throw new Error(
+          "Colisão de barbearia não registrada no namespace do seed.",
+        );
+      if (registration) {
+        const owner = registry.get(shop.ownerLogicalKey);
+        if (
+          registration.tableName !== "barbershops" ||
+          !matched ||
+          matched.id !== registration.recordId ||
+          matched.slug !== shop.slug ||
+          matched.cnpj !== shop.cnpj ||
+          !owner ||
+          matched.ownerId !== owner.recordId
+        )
+          throw new Error(
+            "Identidade da barbearia registrada não confere com a fixture.",
+          );
+      }
+    }
+  }
+
   private async inspectRetiredBarbershops(
     registry: Map<string, SeedRegistryRecord>,
   ) {
@@ -840,7 +888,9 @@ export class DemoSeedEngine {
       const records = await this.registry.getExistingRecordsReadOnly(namespace);
       return records ?? new Map();
     } catch {
-      return new Map();
+      throw new Error(
+        "Não foi possível consultar o registro do seed com segurança.",
+      );
     }
   }
 }

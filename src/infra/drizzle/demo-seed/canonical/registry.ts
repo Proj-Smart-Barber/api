@@ -54,7 +54,9 @@ export class SeedRegistryManager {
 
       return map;
     } catch {
-      return null;
+      throw new Error(
+        "Não foi possível consultar o registro do seed com segurança.",
+      );
     }
   }
 
