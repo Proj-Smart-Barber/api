@@ -166,7 +166,11 @@ export class DemoSeedEngine {
 
     // ── 1. Staffs e Credenciais ─────────────────────────────────
     const staffCredentials = !isDryRun
-      ? await loadOrCreateStaffCredentials(DEMO_STAFFS)
+      ? await loadOrCreateStaffCredentials(
+          DEMO_STAFFS.filter(
+            (staff) => !existingRegistry.has(staff.logicalKey),
+          ),
+        )
       : ({} as Record<string, { passwordHash: string }>);
 
     for (const staffFixture of DEMO_STAFFS) {
