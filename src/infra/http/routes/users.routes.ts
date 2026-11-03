@@ -16,6 +16,7 @@ import { confirmEmailVerificationLimit } from "../middlewares/confirm-email-veri
 
 import { makeLogoutAllController } from "../factories/make-logout-all-controller";
 import { makeChangePasswordController } from "../factories/make-change-password-controller";
+import { makeUpdateUserProfileController } from "../factories/make-update-user-profile-controller";
 import { makeUpdateUserAvatarController } from "../factories/make-update-user-avatar-controller";
 import { makeRemoveUserAvatarController } from "../factories/make-remove-user-avatar-controller";
 
@@ -60,6 +61,11 @@ userRoutes.get(
   "/me",
   ensureUserIsAuthenticated,
   adaptRoute(makeGetUserProfileController()),
+);
+userRoutes.patch(
+  "/me",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeUpdateUserProfileController()),
 );
 userRoutes.patch(
   "/me/password",

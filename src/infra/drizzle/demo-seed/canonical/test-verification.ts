@@ -402,7 +402,6 @@ async function runVerification() {
         },
       );
 
-
       assert(
         resCancel1.status === 200,
         "1º Cancelamento da reserva descartável retornou 200 OK",

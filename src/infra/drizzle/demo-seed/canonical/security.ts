@@ -57,7 +57,11 @@ export async function loadOrCreateStaffCredentials(
   for (const staff of staffList) {
     const existing = existingCredentials[staff.logicalKey];
 
-    if (existing && existing.plainPassword !== DEFAULT_DEMO_PASSWORD && existing.passwordHash) {
+    if (
+      existing &&
+      existing.plainPassword !== DEFAULT_DEMO_PASSWORD &&
+      existing.passwordHash
+    ) {
       credentialsMap[staff.logicalKey] = {
         ...existing,
         email: staff.email,

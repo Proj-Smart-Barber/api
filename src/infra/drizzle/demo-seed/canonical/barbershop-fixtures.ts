@@ -1,3 +1,4 @@
+import { DEMO_REGIONAL_LOCATIONS } from "../regional-locations";
 import type { DemoBarbershopFixture } from "./types";
 import { LEGACY_REGIONAL_BARBERSHOPS } from "./legacy-regional-barbershops";
 const retainedKeys = new Set([
@@ -40,10 +41,22 @@ const additions = [
   },
 ] as const;
 /** Keep stable identities for the five existing brands; new brands receive new keys and tax fixtures. */
+const regionalPoints: Record<string, { latitude: number; longitude: number }> =
+  {
+    "horizonte:barbershop": DEMO_REGIONAL_LOCATIONS.horizonte.point,
+    "estacao:barbershop": DEMO_REGIONAL_LOCATIONS.estacao.point,
+    "norte:barbershop": DEMO_REGIONAL_LOCATIONS.norte.point,
+    "sul:barbershop": DEMO_REGIONAL_LOCATIONS.sul.point,
+    "oeste:barbershop": DEMO_REGIONAL_LOCATIONS.oeste.point,
+  };
+
 export const DEMO_BARBERSHOPS: DemoBarbershopFixture[] = [
   ...LEGACY_REGIONAL_BARBERSHOPS.filter((shop) =>
     retainedKeys.has(shop.logicalKey),
-  ),
+  ).map((shop) => ({
+    ...shop,
+    point: regionalPoints[shop.logicalKey],
+  })),
   ...additions.map((brand) => {
     const reference = LEGACY_REGIONAL_BARBERSHOPS.find(
       (shop) => shop.logicalKey === brand.reference,

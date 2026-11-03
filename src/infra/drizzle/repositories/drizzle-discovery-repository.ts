@@ -1,4 +1,4 @@
-import type {ExploreFeedInput} from "../../../domain/application/services/explore-feed.contract";
+import type { ExploreFeedInput } from "../../../domain/application/services/explore-feed.contract";
 import { type SQL, sql } from "drizzle-orm";
 import type { DiscoveryRepository } from "../../../domain/application/repositories/discovery-repository";
 import type {
@@ -25,6 +25,15 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
 
   async isLocationServiceHealthy(): Promise<boolean> {
     try {
+      await this.database.execute(sql`SELECT 1`);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async isGoogleMapsCacheHealthy(): Promise<boolean> {
+    try {
       const result = await this.database.execute(sql`
         SELECT is_healthy, last_heartbeat_at
         FROM location_maintenance_health
@@ -40,7 +49,7 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
       }
       return true;
     } catch {
-      // If table query fails, fail-closed for nearby maintenance
+      // If table query fails, fail-closed for Google Maps cache
       return false;
     }
   }
@@ -59,7 +68,19 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
     return sql`regexp_replace(translate(lower(${columnSql}), 'áàâãäéèêëíìîïóòôõöúùûüçñ', 'aaaaaeeeeiiiiooooouuuucn'), '[\u0300-\u036f]', '', 'g')`;
   }
 
-  private getLocationEligibilitySql(): SQL {
+  private getLocationEligibilitySql(isGoogleCacheHealthy = true): SQL {
+    const googleCondition = isGoogleCacheHealthy
+      ? sql`(
+          bl.source = 'GOOGLE'
+          AND bl.acquired_at IS NOT NULL
+          AND bl.valid_until IS NOT NULL
+          AND bl.acquired_at <= NOW()
+          AND bl.valid_until > NOW()
+          AND bl.valid_until <= (bl.acquired_at + INTERVAL '25 days')
+          AND (bl.acquired_at + INTERVAL '25 days') >= NOW()
+        )`
+      : sql`FALSE`;
+
     return sql`(
       bl.status = 'CONFIRMED'
       AND bl.latitude IS NOT NULL
@@ -68,15 +89,7 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
       AND bl.longitude >= -180.0 AND bl.longitude <= 180.0
       AND (
         CASE
-          WHEN (bl.source = 'GOOGLE' OR bl.google_place_id IS NOT NULL OR bl.google_reference IS NOT NULL) THEN (
-            bl.source = 'GOOGLE'
-            AND bl.acquired_at IS NOT NULL
-            AND bl.valid_until IS NOT NULL
-            AND bl.acquired_at <= NOW()
-            AND bl.valid_until > NOW()
-            AND bl.valid_until <= (bl.acquired_at + INTERVAL '25 days')
-            AND (bl.acquired_at + INTERVAL '25 days') >= NOW()
-          )
+          WHEN (bl.source = 'GOOGLE' OR bl.google_place_id IS NOT NULL OR bl.google_reference IS NOT NULL) THEN ${googleCondition}
           WHEN bl.source = 'MANUAL' AND bl.google_place_id IS NULL AND bl.google_reference IS NULL THEN (
             bl.valid_until IS NULL OR bl.valid_until > NOW()
           )
@@ -182,18 +195,38 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
     return servicesMap;
   }
 
-  async rankExploreIds(input:ExploreFeedInput):Promise<string[]> {
-    const conditions=[sql`b.status='ACTIVE'`];
-    const hasPoint=input.mode==='NEARBY' && Boolean(input.point);
-    const distance=hasPoint ? sql`2.0*6371000.0*asin(sqrt(least(1.0::double precision,greatest(0.0::double precision,power(sin(radians(bl.latitude-${input.point!.latitude}::double precision)/2.0),2)+cos(radians(${input.point!.latitude}::double precision))*cos(radians(bl.latitude))*power(sin(radians(bl.longitude-${input.point!.longitude}::double precision)/2.0),2)))))` : sql`NULL::double precision`;
-    if(hasPoint)conditions.push(this.getLocationEligibilitySql());
-    if(input.q?.trim()) {const term=`%${this.normalizeQuery(input.q)}%`;conditions.push(sql`(${this.normalizeColumnSql(sql`b.name`)} LIKE ${term} OR ${this.normalizeColumnSql(sql`b.location`)} LIKE ${term})`);}
-    if(input.regionKey?.trim()){const region=`%${this.normalizeQuery(input.regionKey)}%`;conditions.push(sql`${this.normalizeColumnSql(sql`b.location`)} LIKE ${region}`);}
-    const radius=hasPoint?sql`distance_meters<=${(input.radiusKm??10)*1000}`:sql`TRUE`;
-    const quality=sql`greatest(0.0,least(1.0,(((review_count*COALESCE(rating,3.5)+35.0)/(review_count+10.0))-1.0)/4.0))`;
-    const score=hasPoint?sql`0.70*exp(-distance_meters/3000.0)+0.30*${quality}`:quality;
-    const result=await this.database.execute(sql`WITH candidates AS(SELECT b.id,${distance} AS distance_meters,stats.rating,stats.review_count FROM barbershops b LEFT JOIN barbershop_locations bl ON bl.barbershop_id=b.id LEFT JOIN LATERAL(SELECT AVG(rating)::double precision AS rating,COUNT(*)::int AS review_count FROM reviews WHERE barbershop_id=b.id AND status='PUBLISHED')stats ON TRUE WHERE ${sql.join(conditions,sql` AND `)}) SELECT id FROM candidates WHERE ${radius} ORDER BY ${score} DESC,distance_meters ASC NULLS LAST,review_count DESC,id ASC`);
-    return result.rows.map((row:{id:string})=>String(row.id));
+  async rankExploreIds(input: ExploreFeedInput): Promise<string[]> {
+    const isGoogleCacheHealthy = await this.isGoogleMapsCacheHealthy();
+    const conditions = [sql`b.status='ACTIVE'`];
+    const hasPoint = input.mode === "NEARBY" && Boolean(input.point);
+    const distance = hasPoint
+      ? sql`2.0*6371000.0*asin(sqrt(least(1.0::double precision,greatest(0.0::double precision,power(sin(radians(bl.latitude-${input.point!.latitude}::double precision)/2.0),2)+cos(radians(${input.point!.latitude}::double precision))*cos(radians(bl.latitude))*power(sin(radians(bl.longitude-${input.point!.longitude}::double precision)/2.0),2)))))`
+      : sql`NULL::double precision`;
+    if (hasPoint)
+      conditions.push(this.getLocationEligibilitySql(isGoogleCacheHealthy));
+    if (input.q?.trim()) {
+      const term = `%${this.normalizeQuery(input.q)}%`;
+      conditions.push(
+        sql`(${this.normalizeColumnSql(sql`b.name`)} LIKE ${term} OR ${this.normalizeColumnSql(sql`b.location`)} LIKE ${term})`,
+      );
+    }
+    if (input.regionKey?.trim()) {
+      const region = `%${this.normalizeQuery(input.regionKey)}%`;
+      conditions.push(
+        sql`${this.normalizeColumnSql(sql`b.location`)} LIKE ${region}`,
+      );
+    }
+    const radius = hasPoint
+      ? sql`distance_meters<=${(input.radiusKm ?? 10) * 1000}`
+      : sql`TRUE`;
+    const quality = sql`greatest(0.0,least(1.0,(((review_count*COALESCE(rating,3.5)+35.0)/(review_count+10.0))-1.0)/4.0))`;
+    const score = hasPoint
+      ? sql`0.70*exp(-distance_meters/3000.0)+0.30*${quality}`
+      : quality;
+    const result = await this.database.execute(
+      sql`WITH candidates AS(SELECT b.id,${distance} AS distance_meters,stats.rating,stats.review_count FROM barbershops b LEFT JOIN barbershop_locations bl ON bl.barbershop_id=b.id LEFT JOIN LATERAL(SELECT AVG(rating)::double precision AS rating,COUNT(*)::int AS review_count FROM reviews WHERE barbershop_id=b.id AND status='PUBLISHED')stats ON TRUE WHERE ${sql.join(conditions, sql` AND `)}) SELECT id FROM candidates WHERE ${radius} ORDER BY ${score} DESC,distance_meters ASC NULLS LAST,review_count DESC,id ASC`,
+    );
+    return result.rows.map((row: { id: string }) => String(row.id));
   }
 
   async search(input: DiscoveryInput): Promise<DiscoveryPage> {
@@ -219,10 +252,14 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
     offset: number,
     serverTime: string,
   ): Promise<DiscoveryPage> {
-    const eligibilitySql = this.getLocationEligibilitySql();
+    const isGoogleCacheHealthy = await this.isGoogleMapsCacheHealthy();
+    const eligibilitySql = this.getLocationEligibilitySql(isGoogleCacheHealthy);
     const conditions = [sql`b.status = 'ACTIVE'`];
 
-    if(input.ids)conditions.push(sql`b.id=ANY(ARRAY(SELECT jsonb_array_elements_text(${JSON.stringify(input.ids)}::jsonb))::uuid[])`);
+    if (input.ids)
+      conditions.push(
+        sql`b.id=ANY(ARRAY(SELECT jsonb_array_elements_text(${JSON.stringify(input.ids)}::jsonb))::uuid[])`,
+      );
     if (input.regionKey?.trim()) {
       const regionTerm = `%${this.normalizeQuery(input.regionKey)}%`;
       conditions.push(
@@ -335,6 +372,7 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
     offset: number,
     serverTime: string,
   ): Promise<DiscoveryPage> {
+    const isGoogleCacheHealthy = await this.isGoogleMapsCacheHealthy();
     const { point, radiusKm } = input;
     const radiusMeters = radiusKm * 1000.0;
     const lat = point.latitude;
@@ -375,7 +413,7 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
       ))
     `;
 
-    const eligibilitySql = this.getLocationEligibilitySql();
+    const eligibilitySql = this.getLocationEligibilitySql(isGoogleCacheHealthy);
 
     const conditions = [
       sql`b.status = 'ACTIVE'`,
@@ -408,7 +446,10 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
       }
     }
 
-    if(input.ids)conditions.push(sql`b.id=ANY(ARRAY(SELECT jsonb_array_elements_text(${JSON.stringify(input.ids)}::jsonb))::uuid[])`);
+    if (input.ids)
+      conditions.push(
+        sql`b.id=ANY(ARRAY(SELECT jsonb_array_elements_text(${JSON.stringify(input.ids)}::jsonb))::uuid[])`,
+      );
     if (input.regionKey?.trim()) {
       const regionTerm = `%${this.normalizeQuery(input.regionKey)}%`;
       conditions.push(

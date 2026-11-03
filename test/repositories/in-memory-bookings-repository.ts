@@ -221,7 +221,10 @@ export class InMemoryBookingsRepository implements BookingsRepository {
       return BookingDetails.create({
         bookingId: booking.id,
         barbershopId: booking.barbershopId,
+        barbershopName: "Barbearia Modelo",
+        barbershopPhone: "(11) 98888-8888",
         barbermanId: booking.barbermanId,
+        barbermanName: "Barbeiro Chefe",
         customerId: booking.customerId ?? new UniqueEntityId("customer-1"),
         shoppingCartId: booking.shoppingCartId,
         customer: {
@@ -264,7 +267,10 @@ export class InMemoryBookingsRepository implements BookingsRepository {
     return BookingDetails.create({
       bookingId: booking.id,
       barbershopId: booking.barbershopId,
+      barbershopName: "Barbearia Modelo",
+      barbershopPhone: "(11) 98888-8888",
       barbermanId: booking.barbermanId,
+      barbermanName: "Barbeiro Chefe",
       customerId:
         bundle?.cart.userId ??
         booking.customerId ??

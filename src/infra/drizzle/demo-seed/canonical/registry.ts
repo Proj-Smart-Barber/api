@@ -1,10 +1,12 @@
 import { sql } from "drizzle-orm";
 import { db } from "../../index";
+import type { SeedDatabase } from "./database";
 import type { SeedRegistryRecord } from "./types";
 
 export class SeedRegistryManager {
+  constructor(private database: SeedDatabase = db) {}
   async ensureRegistryTable(): Promise<void> {
-    await db.execute(
+    await this.database.execute(
       sql.raw(`
       CREATE TABLE IF NOT EXISTS demo_seed_registry (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -24,7 +26,7 @@ export class SeedRegistryManager {
     namespace: string,
   ): Promise<Map<string, SeedRegistryRecord> | null> {
     try {
-      const checkTable = await db.execute(
+      const checkTable = await this.database.execute(
         sql.raw(`
         SELECT EXISTS (
           SELECT FROM information_schema.tables
@@ -37,7 +39,7 @@ export class SeedRegistryManager {
         return null;
       }
 
-      const result = await db.execute(
+      const result = await this.database.execute(
         sql.raw(`
         SELECT id, namespace, logical_key as "logicalKey", table_name as "tableName", record_id as "recordId", created_at as "createdAt"
         FROM demo_seed_registry
@@ -65,7 +67,7 @@ export class SeedRegistryManager {
   ): Promise<Map<string, SeedRegistryRecord>> {
     await this.ensureRegistryTable();
 
-    const result = await db.execute(
+    const result = await this.database.execute(
       sql.raw(`
       SELECT id, namespace, logical_key as "logicalKey", table_name as "tableName", record_id as "recordId", created_at as "createdAt"
       FROM demo_seed_registry
@@ -89,7 +91,7 @@ export class SeedRegistryManager {
     tableName: string,
     recordId: string,
   ): Promise<void> {
-    await db.execute(
+    await this.database.execute(
       sql.raw(`
       INSERT INTO demo_seed_registry (namespace, logical_key, table_name, record_id)
       VALUES (
@@ -118,6 +120,8 @@ export class SeedRegistryManager {
     const deletionOrder = [
       "notifications",
       "schedule_exceptions",
+      "booking_events",
+      "booking_service_items",
       "bookings",
       "shopping_carts",
       "service_items",
@@ -146,7 +150,7 @@ export class SeedRegistryManager {
           .join(", ");
         if (table === "barbershops") {
           try {
-            await db.execute(
+            await this.database.execute(
               sql.raw(`
               DELETE FROM barbershop_schedules
               WHERE barbershop_id IN (${quotedIds});
@@ -158,7 +162,7 @@ export class SeedRegistryManager {
         }
 
         try {
-          await db.execute(
+          await this.database.execute(
             sql.raw(`
             DELETE FROM ${table}
             WHERE id IN (${quotedIds});
@@ -172,7 +176,7 @@ export class SeedRegistryManager {
             errMsg.includes("does not exist")
           ) {
             try {
-              await db.execute(
+              await this.database.execute(
                 sql.raw(`
                 DELETE FROM users
                 WHERE id IN (${quotedIds});
@@ -190,7 +194,7 @@ export class SeedRegistryManager {
     }
 
     // Limpa a tabela de registry para este namespace
-    await db.execute(
+    await this.database.execute(
       sql.raw(`
       DELETE FROM demo_seed_registry
       WHERE namespace = '${namespace.replace(/'/g, "''")}';
