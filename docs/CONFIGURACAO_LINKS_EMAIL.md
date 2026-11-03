@@ -1,3 +1,19 @@
+# Confirmação por código e compatibilidade com links
+
+Atualização de 03/11/2026: novos envios usam código numérico de seis dígitos, válido por dez minutos, e confirmação POST com `{email,code}`. Não há link de confirmação nos e-mails novos. O hash é HMAC com domínio/usuário, usando EMAIL_VERIFICATION_CODE_SECRET (opcional, mínimo 32 caracteres) ou o JWT_SECRET privado já configurado. Nunca registrar código, segredo ou corpo de e-mail em logs.
+
+Cada código aceita no máximo cinco tentativas incorretas. O reenvio tem intervalo mínimo de 60s e até cinco emissões por hora/usuário; o endpoint mantém resposta uniforme para não enumerar contas, inclusive em supressão por cooldown. Os limites de requisição/IP existentes e o limitador de confirmação são persistidos no banco. Falha de armazenamento não libera o fluxo. Em erro de entrega, a emissão é revogada; a conta permanece não verificada.
+
+A tabela nova email_verification_codes é criada por migration aditiva e idempotente. A confirmação e a ativação, inclusive de links antigos, compartilham transação e lock da linha do usuário. Confirmar não gera sessão. O fluxo de links antigos continua aceitando `{token}` até a expiração; novo reenvio invalida os anteriores. Códigos não são aceitos por query/GET.
+
+Produção: EMAIL_VERIFICATION_URL deve apontar a `https://app.smartbarber.wellingtonsp.uk/verify-email`, e FRONTEND_URL deve ser a origem do aplicativo, nunca a landing. O builder também corrige a origem antiga conhecida. A LP recebe uma rota de compatibilidade `/verify-email` que redireciona ao app, com destino fixo, no-store, no-referrer e somente token/email permitidos.
+
+## Publicação coordenada
+
+Validar e aprovar as alterações de backend e frontend antes do corte. Publicar o backend com a migration aditiva e, em seguida, o frontend correspondente, no mesmo ciclo de liberação. Não publicar somente a nova tela contra uma API antiga que ainda exige token. Durante a transição, usuários com tela antiga aberta devem atualizar o app antes de reenviar/confirmar um código novo; links antigos válidos continuam atendidos. A homologação de entrega real do provedor requer inbox controlada pelo responsável; não usar usuários reais para testes destrutivos nem afirmar entrega com base no fake de e-mail.
+
+As orientações abaixo são histórico e compatibilidade dos links antigos, não a política de envio dos e-mails novos.
+
 # Contrato e Configuração de Links de Verificação de E-mail
 
 Este documento especifica o contrato de configuração e resolução de links para verificação de e-mail e ativação de contas no Smart Barber.

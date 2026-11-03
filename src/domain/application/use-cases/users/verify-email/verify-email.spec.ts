@@ -1,3 +1,4 @@
+import { InMemoryEmailVerificationCodesRepository } from "../../../../../../test/repositories/in-memory-email-verification-codes-repository";
 import { hashToken } from "../../../../../core/crypto/token";
 import { EmailVerification } from "../../../../enterprise/entities/email-verification";
 import { User } from "../../../../enterprise/entities/user";
@@ -18,8 +19,8 @@ describe("Verify email", () => {
       new InMemoryEmailVerificationsRepository();
 
     sut = new VerifyEmailUseCase(
-      inMemoryEmailVerificationsRepository,
       inMemoryUsersRepository,
+      new InMemoryEmailVerificationCodesRepository(inMemoryUsersRepository, inMemoryEmailVerificationsRepository),
     );
   });
 

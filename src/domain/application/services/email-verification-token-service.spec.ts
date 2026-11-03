@@ -129,7 +129,8 @@ describe("EmailVerificationTokenService", () => {
   it("deve remover parâmetros de query arbitrários da URL configurada, contendo exclusivamente o token", () => {
     const plainToken = "test-token-only";
     const urlString = buildEmailVerificationUrl(plainToken, {
-      baseUrl: "https://app.smartbarber.com.br/verify-email?utm_source=spam&foo=bar#section",
+      baseUrl:
+        "https://app.smartbarber.com.br/verify-email?utm_source=spam&foo=bar#section",
       nodeEnv: "production",
     });
 
@@ -140,4 +141,16 @@ describe("EmailVerificationTokenService", () => {
     expect(parsed.hash).toBe("");
     expect(Array.from(parsed.searchParams.keys())).toEqual(["token"]);
   });
+});
+
+it("maps the legacy marketing origin to the application verification route", () => {
+  const url = new URL(
+    buildEmailVerificationUrl("synthetic-token", {
+      baseUrl: "https://smartbarber.wellingtonsp.uk/verify-email",
+      nodeEnv: "production",
+    }),
+  );
+  expect(url.origin).toBe("https://app.smartbarber.wellingtonsp.uk");
+  expect(url.pathname).toBe("/verify-email");
+  expect(url.searchParams.get("token")).toBe("synthetic-token");
 });

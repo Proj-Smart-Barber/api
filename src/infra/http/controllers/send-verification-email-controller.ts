@@ -41,7 +41,7 @@ export class SendEmailVerificationController implements Controller {
         return clientError(z.prettifyError(err));
       }
 
-      return fail(new Error(String(err)));
+      return fail(new Error("Não foi possível enviar o código. Tente novamente."));
     }
   }
 }

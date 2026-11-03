@@ -1,3 +1,3 @@
-export interface VerifyEmailDTO {
-  token: string;
-}
+export type VerifyEmailDTO =
+  | { token: string }
+  | { email: string; code: string };

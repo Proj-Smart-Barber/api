@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { Pool } from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
+import { emailVerificationCodesMigration } from "../../src/infra/drizzle/email-verification-codes-migration";
 
 export function validateClientAuthTestUrl(value: string): URL {
   const target = new URL(value);
@@ -66,6 +67,7 @@ export async function createClientAuthTestDatabase(value: string) {
         key text NOT NULL UNIQUE, count integer NOT NULL DEFAULT 1, reset_at timestamptz NOT NULL,
         created_at timestamptz DEFAULT now());
     `);
+    await pool.query(emailVerificationCodesMigration);
     return { pool, db: drizzle({ client: pool }), schema, close };
   } catch (error) {
     await close();
