@@ -15,3 +15,7 @@ coverage/*
 # Local media derivatives and isolated validation outputs
 docs/media-prepared-*/
 docs/media-validation/
+
+# Private maintenance receipts; never commit secrets or database backups
+.media-import/
+*.dump
