@@ -8,11 +8,14 @@ import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { and, eq, inArray, or, sql } from "drizzle-orm";
 import { db } from "../../index";
+import type { SeedDatabase } from "./database";
 import { env } from "../../../env";
 import {
   barbershopSchedules,
   barbershops,
   bookings,
+  bookingEvents,
+  bookingServiceItems,
   users,
   membership,
   scheduleExceptions,
@@ -49,7 +52,11 @@ export interface SeedEngineOptions {
 }
 
 export class DemoSeedEngine {
-  private registry = new SeedRegistryManager();
+  private registry: SeedRegistryManager;
+
+  constructor(private database: SeedDatabase = db) {
+    this.registry = new SeedRegistryManager(database);
+  }
 
   private getTodayDateSP(): string {
     return new Intl.DateTimeFormat("en-CA", {
@@ -184,7 +191,7 @@ export class DemoSeedEngine {
         counts.staffs.created++;
         if (!isDryRun) {
           // Prevenção de colisão por e-mail preexistente fora do registry
-          const existingByEmail = await db
+          const existingByEmail = await this.database
             .select({ id: users.id })
             .from(users)
             .where(eq(users.email, staffFixture.email));
@@ -197,7 +204,7 @@ export class DemoSeedEngine {
             );
           } else {
             const cred = staffCredentials[staffFixture.logicalKey];
-            const [created] = await db
+            const [created] = await this.database
               .insert(users)
               .values({
                 name: staffFixture.name,
@@ -241,7 +248,7 @@ export class DemoSeedEngine {
             );
           }
 
-          const existingBySlug = await db
+          const existingBySlug = await this.database
             .select({ id: barbershops.id })
             .from(barbershops)
             .where(eq(barbershops.slug, shopFixture.slug));
@@ -252,7 +259,7 @@ export class DemoSeedEngine {
               "Colisão de barbearia não registrada no namespace do seed.",
             );
           } else {
-            const [created] = await db
+            const [created] = await this.database
               .insert(barbershops)
               .values({
                 name: shopFixture.name,
@@ -299,7 +306,7 @@ export class DemoSeedEngine {
             resolvedIds[membershipFixture.barbershopLogicalKey];
           const staffId = resolvedIds[membershipFixture.staffLogicalKey];
 
-          const existingMember = await db
+          const existingMember = await this.database
             .select({ id: membership.id })
             .from(membership)
             .where(
@@ -310,7 +317,7 @@ export class DemoSeedEngine {
           if (existingMember.length > 0) {
             memberId = existingMember[0].id;
           } else {
-            const [created] = await db
+            const [created] = await this.database
               .insert(membership)
               .values({
                 barbershopId,
@@ -354,7 +361,7 @@ export class DemoSeedEngine {
             ? resolvedIds[scheduleFixture.barbermanLogicalKey]
             : null;
 
-          const [created] = await db
+          const [created] = await this.database
             .insert(barbershopSchedules)
             .values({
               barbershopId,
@@ -392,7 +399,7 @@ export class DemoSeedEngine {
         if (!isDryRun) {
           const barbershopId = resolvedIds[serviceFixture.barbershopLogicalKey];
 
-          const [created] = await db
+          const [created] = await this.database
             .insert(services)
             .values({
               barbershopId,
@@ -432,7 +439,7 @@ export class DemoSeedEngine {
       } else {
         counts.customers.created++;
         if (!isDryRun) {
-          const existingByEmail = await db
+          const existingByEmail = await this.database
             .select({ id: users.id })
             .from(users)
             .where(eq(users.email, customerFixture.email));
@@ -443,7 +450,7 @@ export class DemoSeedEngine {
               "Colisão de cliente não registrado no namespace do seed.",
             );
           } else {
-            const [created] = await db
+            const [created] = await this.database
               .insert(users)
               .values({
                 name: customerFixture.name,
@@ -492,7 +499,7 @@ export class DemoSeedEngine {
             exceptionFixture.dateOffsetDays,
           );
 
-          const [created] = await db
+          const [created] = await this.database
             .insert(scheduleExceptions)
             .values({
               barbershopId,
@@ -526,7 +533,7 @@ export class DemoSeedEngine {
 
       if (regBooking) {
         if (!isDryRun) {
-          const [exists] = await db
+          const [exists] = await this.database
             .select({
               id: bookings.id,
               status: bookings.status,
@@ -574,7 +581,7 @@ export class DemoSeedEngine {
           const serviceId = resolvedIds[bookingFixture.serviceLogicalKey];
 
           // Busca snapshot do serviço correspondente
-          const [serviceRow] = await db
+          const [serviceRow] = await this.database
             .select()
             .from(services)
             .where(eq(services.id, serviceId));
@@ -586,7 +593,7 @@ export class DemoSeedEngine {
           }
 
           // 1. service_items
-          const [serviceItem] = await db
+          const [serviceItem] = await this.database
             .insert(serviceItems)
             .values({
               serviceId,
@@ -606,7 +613,7 @@ export class DemoSeedEngine {
           );
 
           // 2. shopping_carts
-          const [cart] = await db
+          const [cart] = await this.database
             .insert(shoppingCarts)
             .values({
               serviceItemId: serviceItem.id,
@@ -637,7 +644,7 @@ export class DemoSeedEngine {
             `${dateString}T${bookingFixture.endTime}:00-03:00`,
           );
 
-          const [booking] = await db
+          const [booking] = await this.database
             .insert(bookings)
             .values({
               barbershopId,
@@ -657,6 +664,41 @@ export class DemoSeedEngine {
             .returning({ id: bookings.id });
 
           resolvedIds[bookingFixture.logicalKey] = booking.id;
+          // Fresh seeds must populate the current booking model as well as legacy cart snapshots.
+          const [snapshot] = await this.database
+            .insert(bookingServiceItems)
+            .values({
+              bookingId: booking.id,
+              serviceId,
+              title: serviceRow.title,
+              priceInCents: serviceRow.priceInCents,
+              durationInMinutes: serviceRow.durationInMinutes,
+              legacyAggregate: false,
+            })
+            .returning({ id: bookingServiceItems.id });
+          await this.registry.recordEntry(
+            DEMO_SEED_NAMESPACE,
+            `${bookingFixture.logicalKey}:snapshot`,
+            "booking_service_items",
+            snapshot.id,
+          );
+          const [event] = await this.database
+            .insert(bookingEvents)
+            .values({
+              bookingId: booking.id,
+              actorId: customerId,
+              eventType: "CREATED",
+              newVersion: 1,
+              newStatus: "CONFIRMED",
+              metadata: JSON.stringify({ source: "demo-seed" }),
+            })
+            .returning({ id: bookingEvents.id });
+          await this.registry.recordEntry(
+            DEMO_SEED_NAMESPACE,
+            `${bookingFixture.logicalKey}:created-event`,
+            "booking_events",
+            event.id,
+          );
           await this.registry.recordEntry(
             DEMO_SEED_NAMESPACE,
             bookingFixture.logicalKey,
@@ -672,7 +714,7 @@ export class DemoSeedEngine {
 
     // Retire only unchanged, registered legacy demo units; retain users, bookings and registry history.
     if (!isDryRun && retirementPlan.length > 0) {
-      await db.transaction(async (transaction) => {
+      await this.database.transaction(async (transaction) => {
         for (const shop of retirementPlan) {
           const changed = await transaction
             .update(barbershops)
@@ -767,7 +809,7 @@ export class DemoSeedEngine {
     registry: Map<string, SeedRegistryRecord>,
   ) {
     const people = [...DEMO_STAFFS, ...DEMO_CUSTOMERS];
-    const existingUsers = await db
+    const existingUsers = await this.database
       .select({ id: users.id, email: users.email, cpf: users.cpf })
       .from(users)
       .where(
@@ -802,7 +844,7 @@ export class DemoSeedEngine {
           "Identidade de usuário registrado não confere com a fixture.",
         );
     }
-    const existingShops = await db
+    const existingShops = await this.database
       .select({
         id: barbershops.id,
         slug: barbershops.slug,
@@ -860,7 +902,7 @@ export class DemoSeedEngine {
       if (currentKeys.has(fixture.logicalKey)) continue;
       const registration = registry.get(fixture.logicalKey);
       if (!registration) continue;
-      const [row] = await db
+      const [row] = await this.database
         .select({
           id: barbershops.id,
           ownerId: barbershops.ownerId,

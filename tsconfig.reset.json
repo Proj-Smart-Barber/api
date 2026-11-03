@@ -1,0 +1,1 @@
+{"extends":"./tsconfig.json","include":["scripts/rebuild-demo-database.ts"],"exclude":["node_modules"]}
