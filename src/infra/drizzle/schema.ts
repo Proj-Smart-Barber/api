@@ -39,6 +39,15 @@ export const invitationStatusEnum = pgEnum("invitation_status", [
   "REVOKED",
 ]);
 
+export const invitationDeliveryStatusEnum = pgEnum("invitation_delivery_status", [
+  "PENDING",
+  "PROCESSING",
+  "ACCEPTED",
+  "FAILED",
+  "REVOKED",
+  "EXPIRED",
+]);
+
 export const membershipStateEnum = pgEnum("membership_state", [
   "ACTIVE",
   "INACTIVE",
@@ -217,6 +226,40 @@ export const invitations = pgTable(
       table.email,
     ),
     index("invitations_status_idx").on(table.status),
+  ],
+);
+
+export const invitationDeliveries = pgTable(
+  "invitation_deliveries",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    invitationId: uuid("invitation_id")
+      .notNull()
+      .references(() => invitations.id, { onDelete: "cascade" }),
+    barbershopId: uuid("barbershop_id")
+      .notNull()
+      .references(() => barbershops.id, { onDelete: "cascade" }),
+    recipientEmail: text("recipient_email").notNull(),
+    recipientName: text("recipient_name").notNull(),
+    barbershopName: text("barbershop_name").notNull(),
+    ownerName: text("owner_name").notNull(),
+    tokenHash: text("token_hash").notNull(),
+    invitationUrl: text("invitation_url"),
+    status: invitationDeliveryStatusEnum("status").notNull().default("PENDING"),
+    attempts: integer("attempts").notNull().default(0),
+    maxAttempts: integer("max_attempts").notNull().default(3),
+    nextAttemptAt: timestamp("next_attempt_at").notNull().defaultNow(),
+    providerMessageId: text("provider_message_id"),
+    lastError: text("last_error"),
+    lockedAt: timestamp("locked_at"),
+    lockedBy: text("locked_by"),
+    processedAt: timestamp("processed_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => [
+    index("invitation_deliveries_status_idx").on(table.status, table.nextAttemptAt),
+    index("invitation_deliveries_invitation_idx").on(table.invitationId),
   ],
 );
 

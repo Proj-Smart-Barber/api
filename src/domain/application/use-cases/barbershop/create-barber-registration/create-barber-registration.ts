@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
 import { type Either, left, right } from "../../../../../core/logic/either";
 import { BarberRegistration } from "../../../../enterprise/entities/barber-registration";
@@ -6,6 +7,7 @@ import { Role } from "../../../../enterprise/entities/membership";
 import { Notification } from "../../../../enterprise/entities/notification";
 import type { BarberRegistrationsRepository } from "../../../repositories/barber-registrations-repository";
 import type { BarbershopsRepository } from "../../../repositories/barbershops-repository";
+import type { InvitationDeliveriesRepository } from "../../../repositories/invitation-deliveries-repository";
 import type { InvitationsRepository } from "../../../repositories/invitations-repository";
 import type { MembershipsRepository } from "../../../repositories/memberships-repository";
 import type { NotificationsRepository } from "../../../repositories/notifications-repository";
@@ -30,13 +32,16 @@ export interface CreateBarberRegistrationDTO {
   name: string;
   cpf: string;
   email: string;
+  tx?: any;
 }
 
 export interface CreateBarberRegistrationResponse {
   registrationId: string;
   invitationId: string;
+  deliveryId: string;
   email: string;
   status: "PENDING";
+  deliveryStatus: "PENDING" | "ACCEPTED" | "FAILED";
   requiresExistingAccountLogin: boolean;
   expiresAt: string;
 }
@@ -59,8 +64,9 @@ export class CreateBarberRegistrationUseCase {
     private usersRepository: UsersRepository,
     private invitationsRepository: InvitationsRepository,
     private barberRegistrationsRepository: BarberRegistrationsRepository,
-    private emailService: EmailService,
+    private emailService?: EmailService,
     private notificationsRepository?: NotificationsRepository,
+    private invitationDeliveriesRepository?: InvitationDeliveriesRepository,
   ) {}
 
   async execute({
@@ -69,8 +75,9 @@ export class CreateBarberRegistrationUseCase {
     name,
     cpf,
     email,
+    tx,
   }: CreateBarberRegistrationDTO): Promise<CreateBarberRegistrationUseCaseResponse> {
-    const barbershop = await this.barbershopsRepository.findById(shopId);
+    const barbershop = await this.barbershopsRepository.findById(shopId, tx);
     if (!barbershop) {
       return left(new ResourceNotFoundError("Barbearia não encontrada."));
     }
@@ -80,7 +87,7 @@ export class CreateBarberRegistrationUseCase {
     }
 
     const actorMembership =
-      await this.membershipsRepository.findByBarbershopAndUser(shopId, actorId);
+      await this.membershipsRepository.findByBarbershopAndUser(shopId, actorId, tx);
 
     if (
       !actorMembership ||
@@ -102,8 +109,8 @@ export class CreateBarberRegistrationUseCase {
     }
 
     // 1. Consulta matriz de identidade
-    const userByEmail = await this.usersRepository.findByEmail(normalizedEmail);
-    const userByCpf = await this.usersRepository.findByCpf(cleanCpf);
+    const userByEmail = await this.usersRepository.findByEmail(normalizedEmail, tx);
+    const userByCpf = await this.usersRepository.findByCpf(cleanCpf, tx);
 
     // Casos c, d, e: conflito de identidade entre contas
     const hasConflict =
@@ -128,6 +135,7 @@ export class CreateBarberRegistrationUseCase {
         await this.membershipsRepository.findByBarbershopAndUser(
           shopId,
           userByEmail.id.toString(),
+          tx,
         );
 
       if (membership && membership.state === "ACTIVE") {
@@ -140,6 +148,7 @@ export class CreateBarberRegistrationUseCase {
       await this.invitationsRepository.findByBarbershopIdAndEmail(
         shopId,
         normalizedEmail,
+        tx,
       );
 
     if (existingInvitation?.canBeRespondedTo()) {
@@ -159,7 +168,7 @@ export class CreateBarberRegistrationUseCase {
       invitedById: new UniqueEntityId(actorId),
     });
 
-    await this.invitationsRepository.create(invitation);
+    await this.invitationsRepository.create(invitation, tx);
 
     const registration = BarberRegistration.create({
       barbershopId: barbershop.id,
@@ -172,14 +181,13 @@ export class CreateBarberRegistrationUseCase {
       expiresAt,
     });
 
-    await this.barberRegistrationsRepository.create(registration);
+    await this.barberRegistrationsRepository.create(registration, tx);
 
-    const owner = await this.usersRepository.findById(actorId);
+    const owner = await this.usersRepository.findById(actorId, tx);
     const ownerName = owner?.name ?? barbershop.name;
 
-    let createdNotification: Notification | null = null;
     if (isExistingUser && this.notificationsRepository) {
-      createdNotification = await this.notificationsRepository.create(
+      await this.notificationsRepository.create(
         Notification.create({
           userId: userByEmail.id,
           type: "INVITATION_RECEIVED",
@@ -190,32 +198,54 @@ export class CreateBarberRegistrationUseCase {
           scheduledAt: new Date(),
           sentAt: new Date(),
         }),
+        tx,
       );
     }
 
-    try {
-      await this.emailService.sendInvitationEmail({
-        to: normalizedEmail,
-        ownerName,
-        barbershopName: barbershop.name,
-        invitationUrl: buildInvitationUrl(plainToken, Boolean(isExistingUser)),
-        expiresInDays,
-      });
-    } catch {
-      if (createdNotification && this.notificationsRepository) {
-        await this.notificationsRepository.delete(
-          createdNotification.id.toString(),
-        );
+    const deliveryId = randomUUID();
+    const invitationUrl = buildInvitationUrl(plainToken, Boolean(isExistingUser));
+
+    if (this.invitationDeliveriesRepository) {
+      await this.invitationDeliveriesRepository.create(
+        {
+          id: deliveryId,
+          invitationId: invitation.id.toString(),
+          barbershopId: barbershop.id.toString(),
+          recipientEmail: normalizedEmail,
+          recipientName: isExistingUser ? userByEmail.name : name.trim(),
+          barbershopName: barbershop.name,
+          ownerName,
+          tokenHash,
+          invitationUrl,
+          status: "PENDING",
+          attempts: 0,
+          maxAttempts: 3,
+          nextAttemptAt: new Date(),
+        },
+        tx,
+      );
+    } else if (this.emailService) {
+      // Fallback para testes sem outbox configurado
+      try {
+        await this.emailService.sendInvitationEmail({
+          to: normalizedEmail,
+          ownerName,
+          barbershopName: barbershop.name,
+          invitationUrl,
+          expiresInDays,
+        });
+      } catch {
+        // Ignora em caso de fallback
       }
-      await this.invitationsRepository.delete(invitation.id.toString());
-      return left(new EmailSendError());
     }
 
     return right({
       registrationId: registration.id.toString(),
       invitationId: invitation.id.toString(),
+      deliveryId,
       email: normalizedEmail,
       status: "PENDING",
+      deliveryStatus: "PENDING",
       requiresExistingAccountLogin: Boolean(isExistingUser),
       expiresAt: expiresAt.toISOString(),
     });

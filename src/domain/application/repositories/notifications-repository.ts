@@ -13,17 +13,18 @@ export interface CreateNotificationTxParams {
 }
 
 export interface NotificationsRepository {
-  create(notification: Notification): Promise<Notification>;
+  create(notification: Notification, tx?: any): Promise<Notification>;
   createManyWithTx(
     items: CreateNotificationTxParams[],
     tx?: any,
   ): Promise<void>;
-  save(notification: Notification): Promise<Notification>;
-  delete(id: string): Promise<void>;
-  findById(id: string): Promise<Notification | null>;
+  save(notification: Notification, tx?: any): Promise<Notification>;
+  delete(id: string, tx?: any): Promise<void>;
+  findById(id: string, tx?: any): Promise<Notification | null>;
   findManyByUserId(
     userId: string,
     options?: { limit?: number; cursor?: string },
+    tx?: any,
   ): Promise<Notification[]>;
-  countUnreadByUserId(userId: string): Promise<number>;
+  countUnreadByUserId(userId: string, tx?: any): Promise<number>;
 }

@@ -7,8 +7,9 @@ import type { User } from "../../../domain/enterprise/entities/user";
 import { Cpf } from "../../../domain/enterprise/entities/value-objects/cpf";
 
 export class DrizzleUsersRepository implements UsersRepository {
-  async findById(id: string): Promise<User | null> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
+  async findById(id: string, tx?: any): Promise<User | null> {
+    const executor = tx ?? db;
+    const [user] = await executor.select().from(users).where(eq(users.id, id));
 
     if (!user) {
       return null;
@@ -17,9 +18,10 @@ export class DrizzleUsersRepository implements UsersRepository {
     return UserMapper.toDomain(user);
   }
 
-  async findByEmail(email: string): Promise<User | null> {
+  async findByEmail(email: string, tx?: any): Promise<User | null> {
+    const executor = tx ?? db;
     const normalizedEmail = email.trim().toLowerCase();
-    const [user] = await db
+    const [user] = await executor
       .select()
       .from(users)
       .where(eq(sql`lower(${users.email})`, normalizedEmail));
@@ -31,9 +33,10 @@ export class DrizzleUsersRepository implements UsersRepository {
     return UserMapper.toDomain(user);
   }
 
-  async findByCpf(cpf: string): Promise<User | null> {
+  async findByCpf(cpf: string, tx?: any): Promise<User | null> {
+    const executor = tx ?? db;
     const normalizedCpf = Cpf.normalize(cpf);
-    const [user] = await db
+    const [user] = await executor
       .select()
       .from(users)
       .where(eq(users.cpf, normalizedCpf));
@@ -45,10 +48,11 @@ export class DrizzleUsersRepository implements UsersRepository {
     return UserMapper.toDomain(user);
   }
 
-  async findByCpfOrEmail(cpf: string, email: string): Promise<User | null> {
+  async findByCpfOrEmail(cpf: string, email: string, tx?: any): Promise<User | null> {
+    const executor = tx ?? db;
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedCpf = Cpf.normalize(cpf);
-    const [user] = await db
+    const [user] = await executor
       .select()
       .from(users)
       .where(
@@ -65,8 +69,9 @@ export class DrizzleUsersRepository implements UsersRepository {
     return UserMapper.toDomain(user);
   }
 
-  async save(user: User): Promise<User> {
-    const [createdUser] = await db
+  async save(user: User, tx?: any): Promise<User> {
+    const executor = tx ?? db;
+    const [createdUser] = await executor
       .insert(users)
       .values({
         name: user.name,
@@ -84,8 +89,9 @@ export class DrizzleUsersRepository implements UsersRepository {
     return UserMapper.toDomain(createdUser);
   }
 
-  async update(user: User): Promise<User> {
-    const [updatedUser] = await db
+  async update(user: User, tx?: any): Promise<User> {
+    const executor = tx ?? db;
+    const [updatedUser] = await executor
       .update(users)
       .set({
         name: user.name,

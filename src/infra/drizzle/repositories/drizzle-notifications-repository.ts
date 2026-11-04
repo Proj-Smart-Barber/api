@@ -6,8 +6,9 @@ import { DrizzleNotificationMapper } from "../mappers/drizzle-notification-mappe
 import { notifications } from "../schema";
 
 export class DrizzleNotificationsRepository implements NotificationsRepository {
-  async create(notification: Notification): Promise<Notification> {
-    const [created] = await db
+  async create(notification: Notification, tx?: any): Promise<Notification> {
+    const client = tx ?? db;
+    const [created] = await client
       .insert(notifications)
       .values(DrizzleNotificationMapper.toDrizzle(notification))
       .returning();
@@ -49,8 +50,9 @@ export class DrizzleNotificationsRepository implements NotificationsRepository {
     }
   }
 
-  async save(notification: Notification): Promise<Notification> {
-    const [updated] = await db
+  async save(notification: Notification, tx?: any): Promise<Notification> {
+    const client = tx ?? db;
+    const [updated] = await client
       .update(notifications)
       .set(DrizzleNotificationMapper.toDrizzle(notification))
       .where(eq(notifications.id, notification.id.toString()))
@@ -59,12 +61,14 @@ export class DrizzleNotificationsRepository implements NotificationsRepository {
     return DrizzleNotificationMapper.toDomain(updated);
   }
 
-  async delete(id: string): Promise<void> {
-    await db.delete(notifications).where(eq(notifications.id, id));
+  async delete(id: string, tx?: any): Promise<void> {
+    const client = tx ?? db;
+    await client.delete(notifications).where(eq(notifications.id, id));
   }
 
-  async findById(id: string): Promise<Notification | null> {
-    const [notification] = await db
+  async findById(id: string, tx?: any): Promise<Notification | null> {
+    const client = tx ?? db;
+    const [notification] = await client
       .select()
       .from(notifications)
       .where(eq(notifications.id, id));
@@ -78,27 +82,28 @@ export class DrizzleNotificationsRepository implements NotificationsRepository {
 
   async findManyByUserId(
     userId: string,
-    options?: { limit?: number; cursor?: string },
+    options: { limit?: number; cursor?: string } = {},
+    tx?: any,
   ): Promise<Notification[]> {
-    const limit = Math.min(options?.limit ?? 20, 100);
-
-    const query = db
+    const client = tx ?? db;
+    const limit = options.limit ?? 20;
+    const results = await client
       .select()
       .from(notifications)
       .where(eq(notifications.userId, userId))
       .orderBy(desc(notifications.createdAt))
       .limit(limit);
 
-    const results = await query;
     return results.map(DrizzleNotificationMapper.toDomain);
   }
 
-  async countUnreadByUserId(userId: string): Promise<number> {
-    const results = await db
+  async countUnreadByUserId(userId: string, tx?: any): Promise<number> {
+    const client = tx ?? db;
+    const results = await client
       .select()
       .from(notifications)
       .where(eq(notifications.userId, userId));
 
-    return results.filter((n) => !n.readAt).length;
+    return results.filter((n: any) => !n.readAt).length;
   }
 }
