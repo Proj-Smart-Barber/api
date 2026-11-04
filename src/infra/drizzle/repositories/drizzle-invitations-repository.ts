@@ -6,8 +6,9 @@ import { DrizzleInvitationMapper } from "../mappers/drizzle-invitation-mapper";
 import { invitations } from "../schema";
 
 export class DrizzleInvitationsRepository implements InvitationsRepository {
-  async create(invitation: Invitation): Promise<Invitation> {
-    const [created] = await db
+  async create(invitation: Invitation, tx?: any): Promise<Invitation> {
+    const executor = tx ?? db;
+    const [created] = await executor
       .insert(invitations)
       .values(DrizzleInvitationMapper.toDrizzle(invitation))
       .returning();
@@ -15,8 +16,9 @@ export class DrizzleInvitationsRepository implements InvitationsRepository {
     return DrizzleInvitationMapper.toDomain(created);
   }
 
-  async save(invitation: Invitation): Promise<Invitation> {
-    const [updated] = await db
+  async save(invitation: Invitation, tx?: any): Promise<Invitation> {
+    const executor = tx ?? db;
+    const [updated] = await executor
       .update(invitations)
       .set(DrizzleInvitationMapper.toDrizzle(invitation))
       .where(eq(invitations.id, invitation.id.toString()))
@@ -25,8 +27,9 @@ export class DrizzleInvitationsRepository implements InvitationsRepository {
     return DrizzleInvitationMapper.toDomain(updated);
   }
 
-  async findById(id: string): Promise<Invitation | null> {
-    const [invitation] = await db
+  async findById(id: string, tx?: any): Promise<Invitation | null> {
+    const executor = tx ?? db;
+    const [invitation] = await executor
       .select()
       .from(invitations)
       .where(eq(invitations.id, id));
@@ -38,12 +41,14 @@ export class DrizzleInvitationsRepository implements InvitationsRepository {
     return DrizzleInvitationMapper.toDomain(invitation);
   }
 
-  async delete(id: string): Promise<void> {
-    await db.delete(invitations).where(eq(invitations.id, id));
+  async delete(id: string, tx?: any): Promise<void> {
+    const executor = tx ?? db;
+    await executor.delete(invitations).where(eq(invitations.id, id));
   }
 
-  async findByTokenHash(tokenHash: string): Promise<Invitation | null> {
-    const [invitation] = await db
+  async findByTokenHash(tokenHash: string, tx?: any): Promise<Invitation | null> {
+    const executor = tx ?? db;
+    const [invitation] = await executor
       .select()
       .from(invitations)
       .where(eq(invitations.tokenHash, tokenHash));
@@ -55,8 +60,12 @@ export class DrizzleInvitationsRepository implements InvitationsRepository {
     return DrizzleInvitationMapper.toDomain(invitation);
   }
 
-  async findManyByBarbershopId(barbershopId: string): Promise<Invitation[]> {
-    const results = await db
+  async findManyByBarbershopId(
+    barbershopId: string,
+    tx?: any,
+  ): Promise<Invitation[]> {
+    const executor = tx ?? db;
+    const results = await executor
       .select()
       .from(invitations)
       .where(eq(invitations.barbershopId, barbershopId));
@@ -67,17 +76,19 @@ export class DrizzleInvitationsRepository implements InvitationsRepository {
   async findManyByBarbershopIdPaginated(
     barbershopId: string,
     options: { page: number; limit: number },
+    tx?: any,
   ): Promise<{ items: Invitation[]; total: number }> {
+    const executor = tx ?? db;
     const whereClause = eq(invitations.barbershopId, barbershopId);
 
-    const [countResult] = await db
+    const [countResult] = await executor
       .select({ count: sql<number>`count(*)::int` })
       .from(invitations)
       .where(whereClause);
 
     const total = Number(countResult?.count ?? 0);
 
-    const rows = await db
+    const rows = await executor
       .select()
       .from(invitations)
       .where(whereClause)
@@ -94,8 +105,10 @@ export class DrizzleInvitationsRepository implements InvitationsRepository {
   async findByBarbershopIdAndEmail(
     barbershopId: string,
     email: string,
+    tx?: any,
   ): Promise<Invitation | null> {
-    const [invitation] = await db
+    const executor = tx ?? db;
+    const [invitation] = await executor
       .select()
       .from(invitations)
       .where(
@@ -112,8 +125,9 @@ export class DrizzleInvitationsRepository implements InvitationsRepository {
     return DrizzleInvitationMapper.toDomain(invitation);
   }
 
-  async findPendingByEmail(email: string): Promise<Invitation[]> {
-    const results = await db
+  async findPendingByEmail(email: string, tx?: any): Promise<Invitation[]> {
+    const executor = tx ?? db;
+    const results = await executor
       .select()
       .from(invitations)
       .where(

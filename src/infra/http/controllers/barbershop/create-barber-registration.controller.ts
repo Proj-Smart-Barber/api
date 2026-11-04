@@ -15,6 +15,7 @@ import {
   IdempotencyKeyError,
   type OperationAttemptService,
 } from "../../../../domain/application/services/operation-attempt-service";
+import type { InvitationDeliveryService } from "../../../../domain/application/services/invitation-delivery-service";
 import { AlreadyAMemberError } from "../../../../domain/application/use-cases/_errors/already-a-member-error";
 import { EmailSendError } from "../../../../domain/application/use-cases/_errors/email-send-error";
 import { IdentityConflictError } from "../../../../domain/application/use-cases/_errors/identity-conflict-error";
@@ -37,6 +38,7 @@ export class CreateBarberRegistrationController implements Controller {
   constructor(
     private createBarberRegistrationUseCase: CreateBarberRegistrationUseCase,
     private operationAttemptService?: OperationAttemptService,
+    private invitationDeliveryService?: InvitationDeliveryService,
   ) {}
 
   async handle(request: Record<string, unknown>): Promise<HttpResponse> {
@@ -95,7 +97,7 @@ export class CreateBarberRegistrationController implements Controller {
                 unitIds: [parsed.shopId],
               },
             },
-            async (_tx, _context) => {
+            async (tx, _context) => {
               const result =
                 await this.createBarberRegistrationUseCase.execute({
                   actorId: parsed.userId,
@@ -103,6 +105,7 @@ export class CreateBarberRegistrationController implements Controller {
                   name: parsed.name,
                   cpf: cleanCpf,
                   email: normalizedEmail,
+                  tx,
                 });
 
               if (result.isLeft()) {
@@ -118,7 +121,30 @@ export class CreateBarberRegistrationController implements Controller {
             },
           );
 
-          return ok(attemptResult.resource?.data ?? attemptResult);
+          const responseData = (attemptResult.resource?.data ??
+            attemptResult) as any;
+
+          // Despacho imediato fora dos locks da transação
+          if (
+            this.invitationDeliveryService &&
+            responseData?.deliveryId &&
+            responseData?.deliveryStatus !== "ACCEPTED"
+          ) {
+            try {
+              const deliveryRes =
+                await this.invitationDeliveryService.deliverSingle(
+                  responseData.deliveryId,
+                  { timeoutMs: 3000 },
+                );
+              if (deliveryRes.success) {
+                responseData.deliveryStatus = "ACCEPTED";
+              }
+            } catch {
+              // Mantém deliveryStatus como PENDING se falhar/der timeout no provedor
+            }
+          }
+
+          return ok(responseData);
         } catch (execError: unknown) {
           return this.handleError(execError);
         }
@@ -136,7 +162,23 @@ export class CreateBarberRegistrationController implements Controller {
         return this.handleError(result.value);
       }
 
-      return ok(result.value);
+      const responseData = result.value as any;
+      if (this.invitationDeliveryService && responseData?.deliveryId) {
+        try {
+          const deliveryRes =
+            await this.invitationDeliveryService.deliverSingle(
+              responseData.deliveryId,
+              { timeoutMs: 3000 },
+            );
+          if (deliveryRes.success) {
+            responseData.deliveryStatus = "ACCEPTED";
+          }
+        } catch {
+          // Mantém PENDING
+        }
+      }
+
+      return ok(responseData);
     } catch (err) {
       if (err instanceof ZodError) {
         return clientError({ errors: err.issues });

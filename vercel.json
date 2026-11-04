@@ -16,6 +16,10 @@
     {
       "schedule": "0 6 * * *",
       "path": "/api/internal/locations/refresh"
+    },
+    {
+      "schedule": "0 7 * * *",
+      "path": "/api/internal/invitations/process-deliveries"
     }
   ]
 }

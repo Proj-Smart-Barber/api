@@ -8,8 +8,12 @@ import { barberRegistrations } from "../schema";
 export class DrizzleBarberRegistrationsRepository
   implements BarberRegistrationsRepository
 {
-  async create(registration: BarberRegistration): Promise<BarberRegistration> {
-    const [created] = await db
+  async create(
+    registration: BarberRegistration,
+    tx?: any,
+  ): Promise<BarberRegistration> {
+    const executor = tx ?? db;
+    const [created] = await executor
       .insert(barberRegistrations)
       .values(DrizzleBarberRegistrationMapper.toDrizzle(registration))
       .returning();
@@ -17,8 +21,12 @@ export class DrizzleBarberRegistrationsRepository
     return DrizzleBarberRegistrationMapper.toDomain(created);
   }
 
-  async save(registration: BarberRegistration): Promise<BarberRegistration> {
-    const [updated] = await db
+  async save(
+    registration: BarberRegistration,
+    tx?: any,
+  ): Promise<BarberRegistration> {
+    const executor = tx ?? db;
+    const [updated] = await executor
       .update(barberRegistrations)
       .set(DrizzleBarberRegistrationMapper.toDrizzle(registration))
       .where(eq(barberRegistrations.id, registration.id.toString()))
@@ -27,8 +35,9 @@ export class DrizzleBarberRegistrationsRepository
     return DrizzleBarberRegistrationMapper.toDomain(updated);
   }
 
-  async findById(id: string): Promise<BarberRegistration | null> {
-    const [row] = await db
+  async findById(id: string, tx?: any): Promise<BarberRegistration | null> {
+    const executor = tx ?? db;
+    const [row] = await executor
       .select()
       .from(barberRegistrations)
       .where(eq(barberRegistrations.id, id));
@@ -37,8 +46,12 @@ export class DrizzleBarberRegistrationsRepository
     return DrizzleBarberRegistrationMapper.toDomain(row);
   }
 
-  async findByTokenHash(tokenHash: string): Promise<BarberRegistration | null> {
-    const [row] = await db
+  async findByTokenHash(
+    tokenHash: string,
+    tx?: any,
+  ): Promise<BarberRegistration | null> {
+    const executor = tx ?? db;
+    const [row] = await executor
       .select()
       .from(barberRegistrations)
       .where(eq(barberRegistrations.tokenHash, tokenHash));
@@ -47,8 +60,12 @@ export class DrizzleBarberRegistrationsRepository
     return DrizzleBarberRegistrationMapper.toDomain(row);
   }
 
-  async findByInvitationId(invitationId: string): Promise<BarberRegistration | null> {
-    const [row] = await db
+  async findByInvitationId(
+    invitationId: string,
+    tx?: any,
+  ): Promise<BarberRegistration | null> {
+    const executor = tx ?? db;
+    const [row] = await executor
       .select()
       .from(barberRegistrations)
       .where(eq(barberRegistrations.invitationId, invitationId));
@@ -60,8 +77,10 @@ export class DrizzleBarberRegistrationsRepository
   async findByBarbershopIdAndEmail(
     barbershopId: string,
     email: string,
+    tx?: any,
   ): Promise<BarberRegistration | null> {
-    const [row] = await db
+    const executor = tx ?? db;
+    const [row] = await executor
       .select()
       .from(barberRegistrations)
       .where(
@@ -75,9 +94,10 @@ export class DrizzleBarberRegistrationsRepository
     return DrizzleBarberRegistrationMapper.toDomain(row);
   }
 
-  async findByCpf(cpf: string): Promise<BarberRegistration | null> {
+  async findByCpf(cpf: string, tx?: any): Promise<BarberRegistration | null> {
+    const executor = tx ?? db;
     const cleanCpf = cpf.replace(/\D/g, "");
-    const [row] = await db
+    const [row] = await executor
       .select()
       .from(barberRegistrations)
       .where(eq(barberRegistrations.cpf, cleanCpf));
