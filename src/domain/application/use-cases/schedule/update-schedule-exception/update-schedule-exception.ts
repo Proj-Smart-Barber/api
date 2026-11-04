@@ -3,7 +3,15 @@ import type { ScheduleExceptionsRepository } from "../../../repositories/schedul
 import type { BarbershopsRepository } from "../../../repositories/barbershops-repository";
 import { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
 import { NotAllowedError } from "../../_errors/not-allowed-error";
+import {
+  ScheduleBookingConflictError,
+  type ConflictingBooking,
+} from "../../_errors/schedule-booking-conflict-error";
 import type { ScheduleException } from "../../../../enterprise/entities/schedule-exception";
+import type { MembershipsRepository } from "../../../repositories/memberships-repository";
+import type { BookingsRepository } from "../../../repositories/bookings-repository";
+import { Role } from "../../../../enterprise/entities/membership";
+import { getBookingLocalInterval } from "../update-barbershop-schedule/update-barbershop-schedule";
 
 import type { ProfessionalMembershipUnitOfWork } from "../../../services/professional-membership-unit-of-work";
 
@@ -18,7 +26,7 @@ interface UpdateScheduleExceptionDTO {
 }
 
 type UpdateScheduleExceptionResponse = Either<
-  ResourceNotFoundError | NotAllowedError,
+  ResourceNotFoundError | NotAllowedError | ScheduleBookingConflictError | Error,
   {
     scheduleException: ScheduleException;
   }
@@ -29,6 +37,8 @@ export class UpdateScheduleExceptionUseCase {
     private scheduleExceptionsRepository: ScheduleExceptionsRepository,
     private barbershopsRepository: BarbershopsRepository,
     private unitOfWork?: ProfessionalMembershipUnitOfWork,
+    private membershipsRepository?: MembershipsRepository,
+    private bookingsRepository?: BookingsRepository,
   ) {}
 
   async execute({
@@ -60,28 +70,72 @@ export class UpdateScheduleExceptionUseCase {
         barbershopId,
         tx,
       );
-      if (!barbershop || barbershop.ownerId.toString() !== staffId) {
-        return left(new NotAllowedError());
+      if (!barbershop) {
+        return left(new ResourceNotFoundError("Barbearia não encontrada."));
       }
 
-      if (date !== undefined) {
-        exception.date = new Date(date);
+      if (this.membershipsRepository) {
+        const actorMembership =
+          await this.membershipsRepository.findByBarbershopAndUser(
+            barbershopId,
+            staffId,
+            tx,
+          );
+
+        if (actorMembership && actorMembership.state === "INACTIVE") {
+          return left(
+            new NotAllowedError("Usuário com vínculo inativo nesta unidade."),
+          );
+        }
+
+        const isOwnerActive =
+          actorMembership &&
+          actorMembership.role === Role.OWNER &&
+          actorMembership.state === "ACTIVE";
+
+        const isLegacyOwner =
+          actorMembership === null &&
+          barbershop.ownerId.toString() === staffId;
+
+        const isOwner = Boolean(isOwnerActive || isLegacyOwner);
+
+        const isBarberActive =
+          actorMembership &&
+          actorMembership.role === Role.BARBERMAN &&
+          actorMembership.state === "ACTIVE";
+
+        if (isBarberActive) {
+          // Barbeiro só pode alterar exceções cujo escopo persistido seja o seu próprio ID
+          if (exception.barbermanId?.toString() !== staffId) {
+            return left(
+              new NotAllowedError(
+                "Profissional só pode gerenciar suas próprias exceções de agenda.",
+              ),
+            );
+          }
+        } else if (!isOwner) {
+          return left(
+            new NotAllowedError(
+              "Usuário não possui permissão para gerenciar exceções nesta unidade.",
+            ),
+          );
+        }
+      } else {
+        const isOwner = barbershop.ownerId.toString() === staffId;
+        const isSelfBarber = Boolean(
+          exception.barbermanId && exception.barbermanId.toString() === staffId,
+        );
+        if (!isOwner && !isSelfBarber) {
+          return left(new NotAllowedError());
+        }
       }
 
-      if (startTime !== undefined) {
-        exception.startTime = startTime;
-      }
+      const candidateDate = date !== undefined ? new Date(date) : exception.date;
+      const candidateStartTime = startTime !== undefined ? startTime : exception.startTime;
+      const candidateEndTime = endTime !== undefined ? endTime : exception.endTime;
 
-      if (endTime !== undefined) {
-        exception.endTime = endTime;
-      }
-
-      if (reason !== undefined) {
-        exception.reason = reason;
-      }
-
-      const start = exception.startTime ?? null;
-      const end = exception.endTime ?? null;
+      const start = candidateStartTime ?? null;
+      const end = candidateEndTime ?? null;
 
       if (
         (start === null && end !== null) ||
@@ -102,6 +156,59 @@ export class UpdateScheduleExceptionUseCase {
             ),
           );
         }
+      }
+
+      if (this.bookingsRepository) {
+        const effectiveDateStr = candidateDate.toISOString().split("T")[0];
+        const futureBookings =
+          await this.bookingsRepository.findActiveAndFutureBookings({
+            barbershopId,
+            barbermanId: exception.barbermanId?.toString() ?? undefined,
+            tx,
+          });
+
+        const timeZone = barbershop.timezone || "America/Sao_Paulo";
+        const conflictingBookings: ConflictingBooking[] = [];
+
+        for (const booking of futureBookings) {
+          if (booking.status === "CANCELLED") continue;
+          const local = getBookingLocalInterval(booking, timeZone);
+          if (local.dateStr !== effectiveDateStr) continue;
+
+          if (!start && !end) {
+            conflictingBookings.push({
+              bookingId: booking.id.toString(),
+              date: local.dateStr,
+              startTime: local.startTime,
+              endTime: local.endTime,
+              barbermanId: booking.barbermanId.toString(),
+            });
+            continue;
+          }
+
+          if (start && end) {
+            if (local.startTime < end && local.endTime > start) {
+              conflictingBookings.push({
+                bookingId: booking.id.toString(),
+                date: local.dateStr,
+                startTime: local.startTime,
+                endTime: local.endTime,
+                barbermanId: booking.barbermanId.toString(),
+              });
+            }
+          }
+        }
+
+        if (conflictingBookings.length > 0) {
+          return left(new ScheduleBookingConflictError(conflictingBookings));
+        }
+      }
+
+      exception.date = candidateDate;
+      exception.startTime = candidateStartTime;
+      exception.endTime = candidateEndTime;
+      if (reason !== undefined) {
+        exception.reason = reason;
       }
 
       await this.scheduleExceptionsRepository.save(exception, tx);

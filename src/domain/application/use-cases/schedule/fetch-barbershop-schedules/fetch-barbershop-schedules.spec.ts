@@ -155,7 +155,7 @@ describe("Fetch Barbershop Schedules", () => {
     }
   });
 
-  it("should bound CUSTOM barberman schedules to unit general opening hours in effectiveSchedules", async () => {
+  it("should return full CUSTOM barberman schedules in effectiveSchedules without bounding to unit general opening hours", async () => {
     // 1. Jornada geral da unidade: 09:00 as 18:00
     inMemorySchedulesRepository.items.push(
       BarbershopSchedule.create({
@@ -200,10 +200,10 @@ describe("Fetch Barbershop Schedules", () => {
       // Os horários salvos permanecem os cadastrados
       expect(result.value.schedules[0].openTime).toBe("07:00");
       expect(result.value.schedules[0].closeTime).toBe("20:00");
-      // Os horários efetivos são delimitados pelo funcionamento da unidade
+      // Autonomia: os horários efetivos refletem a jornada individual integral do profissional
       expect(result.value.effectiveSchedules).toHaveLength(1);
-      expect(result.value.effectiveSchedules[0].openTime).toBe("09:00");
-      expect(result.value.effectiveSchedules[0].closeTime).toBe("18:00");
+      expect(result.value.effectiveSchedules[0].openTime).toBe("07:00");
+      expect(result.value.effectiveSchedules[0].closeTime).toBe("20:00");
     }
   });
 });

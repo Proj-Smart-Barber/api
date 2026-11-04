@@ -3,6 +3,7 @@ import { CreateScheduleExceptionUseCase } from "../../../domain/application/use-
 import { DrizzleBarbershopsRepository } from "../../drizzle/repositories/drizzle-barbershops-repository";
 import { DrizzleProfessionalMembershipUnitOfWork } from "../../drizzle/services/drizzle-professional-membership-unit-of-work";
 import { DrizzleMembershipsRepository } from "../../drizzle/repositories/drizzle-memberships-repository";
+import { DrizzleBookingsRepository } from "../../drizzle/repositories/drizzle-bookings-repository";
 import { CreateScheduleExceptionController } from "../controllers/schedule/create-schedule-exception.controller";
 
 export function makeCreateScheduleExceptionController() {
@@ -10,12 +11,14 @@ export function makeCreateScheduleExceptionController() {
     new DrizzleScheduleExceptionsRepository();
   const barbershopsRepository = new DrizzleBarbershopsRepository();
   const membershipsRepository = new DrizzleMembershipsRepository();
+  const bookingsRepository = new DrizzleBookingsRepository();
   const unitOfWork = new DrizzleProfessionalMembershipUnitOfWork();
   const createScheduleExceptionUseCase = new CreateScheduleExceptionUseCase(
     scheduleExceptionsRepository,
     barbershopsRepository,
     unitOfWork,
     membershipsRepository,
+    bookingsRepository,
   );
   return new CreateScheduleExceptionController(createScheduleExceptionUseCase);
 }

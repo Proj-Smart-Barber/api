@@ -100,7 +100,7 @@ const DAYS_MAP = [
   "SATURDAY",
 ];
 
-function getBookingLocalInterval(
+export function getBookingLocalInterval(
   booking: Booking,
   timeZone: string,
 ): { dayOfWeek: string; dateStr: string; startTime: string; endTime: string } {
@@ -553,7 +553,7 @@ export class UpdateBarbershopScheduleUseCase {
       }
     }
 
-    // Buscar horários gerais da unidade para validação de contenção e herança
+    // Buscar horários gerais da unidade para herança e controle de versão
     const allBarbershopSchedules =
       await this.schedulesRepository.findManyByBarbershopId(
         dto.barbershopId,
@@ -567,121 +567,6 @@ export class UpdateBarbershopScheduleUseCase {
       null,
       tx,
     );
-
-    if (
-      dto.barbermanId &&
-      resolvedState === "CUSTOM" &&
-      dto.schedules.length > 0
-    ) {
-      if (generalScope?.state === "CLOSED" || generalSchedules.length === 0) {
-        return left(
-          new Error(
-            "O período informado está fora do horário de funcionamento geral da barbearia.",
-          ),
-        );
-      }
-
-      for (const item of dto.schedules) {
-        const mergedGeneralForDay =
-          EffectiveScheduleResolver.mergeContiguousIntervals(
-            generalSchedules
-              .filter((gen) => gen.dayOfWeek === item.dayOfWeek)
-              .map((gen) => ({
-                openTime: gen.openTime,
-                closeTime: gen.closeTime,
-              })),
-          );
-
-        const fitsGeneral = EffectiveScheduleResolver.isIntervalWithinShifts(
-          item.openTime,
-          item.closeTime,
-          mergedGeneralForDay,
-        );
-
-        if (!fitsGeneral) {
-          return left(
-            new Error(
-              "O período informado está fora do horário de funcionamento geral da barbearia.",
-            ),
-          );
-        }
-      }
-    }
-
-    // Se for alteração da jornada geral (barbermanId === null), verificar impacto sobre jornadas CUSTOM existentes
-    if (!dto.barbermanId) {
-      const individualSchedules = allBarbershopSchedules.filter(
-        (s) => s.barbermanId !== null,
-      );
-      const schedulesByProfessional = new Map<string, BarbershopSchedule[]>();
-      for (const s of individualSchedules) {
-        const profId = s.barbermanId!.toString();
-        const existing = schedulesByProfessional.get(profId) ?? [];
-        existing.push(s);
-        schedulesByProfessional.set(profId, existing);
-      }
-
-      const conflictingCustomSchedules: ConflictingCustomSchedule[] = [];
-
-      for (const [profId, profShifts] of schedulesByProfessional.entries()) {
-        if (this.membershipsRepository) {
-          const profMembership =
-            await this.membershipsRepository.findByBarbershopAndUser(
-              dto.barbershopId,
-              profId,
-              tx,
-            );
-          if (profMembership && profMembership.state === "INACTIVE") {
-            continue;
-          }
-        }
-
-        const profScope = await this.schedulesRepository.findScope(
-          dto.barbershopId,
-          profId,
-          tx,
-        );
-        if (profScope && profScope.state !== "CUSTOM") {
-          continue;
-        }
-
-        for (const profShift of profShifts) {
-          const mergedNewGeneralForDay =
-            resolvedState === "CLOSED"
-              ? []
-              : EffectiveScheduleResolver.mergeContiguousIntervals(
-                  dto.schedules
-                    .filter((g) => g.dayOfWeek === profShift.dayOfWeek)
-                    .map((g) => ({
-                      openTime: g.openTime,
-                      closeTime: g.closeTime,
-                    })),
-                );
-
-          const fitsNewGeneral =
-            EffectiveScheduleResolver.isIntervalWithinShifts(
-              profShift.openTime,
-              profShift.closeTime,
-              mergedNewGeneralForDay,
-            );
-
-          if (!fitsNewGeneral) {
-            conflictingCustomSchedules.push({
-              barbermanId: profId,
-              dayOfWeek: profShift.dayOfWeek,
-              openTime: profShift.openTime,
-              closeTime: profShift.closeTime,
-            });
-          }
-        }
-      }
-
-      if (conflictingCustomSchedules.length > 0) {
-        return left(
-          new ScheduleCustomConflictError(conflictingCustomSchedules),
-        );
-      }
-    }
 
     // 4. Controle de versão otimista
     const currentScope = dto.barbermanId
@@ -735,6 +620,25 @@ export class UpdateBarbershopScheduleUseCase {
       }
 
       for (const booking of futureBookings) {
+        // Se a alteração for no geral, reservas de profissionais com jornada CUSTOM própria não são afetadas
+        if (!dto.barbermanId && booking.barbermanId) {
+          const profId = booking.barbermanId.toString();
+          const profScope = await this.schedulesRepository.findScope(
+            dto.barbershopId,
+            profId,
+            tx,
+          );
+          if (profScope && profScope.state === "CUSTOM") {
+            continue;
+          }
+          const hasIndividualSchedules = allBarbershopSchedules.some(
+            (s) => s.barbermanId?.toString() === profId,
+          );
+          if (!profScope && hasIndividualSchedules) {
+            continue;
+          }
+        }
+
         const local = getBookingLocalInterval(booking, timeZone);
         const dayShifts = EffectiveScheduleResolver.mergeContiguousIntervals(
           candidateShifts
@@ -812,10 +716,9 @@ export class UpdateBarbershopScheduleUseCase {
     if (!dto.barbermanId) {
       effectiveSchedules =
         resolvedState === "CLOSED" ? [] : barbershopSchedules;
-    } else if (generalScope?.state === "CLOSED") {
-      effectiveSchedules = [];
     } else if (resolvedState === "INHERIT") {
-      effectiveSchedules = generalSchedules;
+      effectiveSchedules =
+        generalScope?.state === "CLOSED" ? [] : generalSchedules;
     } else if (resolvedState === "CLOSED") {
       effectiveSchedules = [];
     } else {

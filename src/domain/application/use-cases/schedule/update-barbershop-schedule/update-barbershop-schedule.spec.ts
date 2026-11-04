@@ -398,7 +398,7 @@ describe("Update Barbershop Schedule", () => {
       }
     });
 
-    it("Horário individual fora do funcionamento geral da unidade deve ser rejeitado", async () => {
+    it("Horário individual fora do funcionamento geral da unidade deve ser permitido com autonomia", async () => {
       // Geral é 08:00 às 18:00. Barbeiro tentando 07:00 às 16:00
       const result = await authorizedSut.execute({
         barbershopId: shopId,
@@ -412,10 +412,16 @@ describe("Update Barbershop Schedule", () => {
         ],
       });
 
-      expect(result.isLeft()).toBe(true);
-      if (result.isLeft()) {
-        expect(result.value.message).toContain(
-          "fora do horário de funcionamento geral",
+      expect(result.isRight()).toBe(true);
+      if (result.isRight()) {
+        expect(result.value.schedules).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              dayOfWeek: "MONDAY",
+              openTime: "07:00",
+              closeTime: "16:00",
+            }),
+          ]),
         );
       }
     });
@@ -575,7 +581,7 @@ describe("Update Barbershop Schedule", () => {
       }
     });
 
-    it("Regressão A1: redução ou fechamento da jornada geral incompatível com jornada CUSTOM ativa deve ser rejeitada com ScheduleCustomConflictError", async () => {
+    it("Regressão A1: redução ou fechamento da jornada geral não é bloqueada por barbeiros com jornada CUSTOM ativa", async () => {
       // Barbeiro define jornada CUSTOM 09:00 às 16:00 na segunda-feira
       const customSetup = await authorizedSut.execute({
         barbershopId: shopId,
@@ -590,7 +596,7 @@ describe("Update Barbershop Schedule", () => {
       });
       expect(customSetup.isRight()).toBe(true);
 
-      // OWNER tenta encurtar segunda-feira da unidade para 09:00 às 12:00
+      // OWNER tenta encurtar segunda-feira da unidade para 09:00 às 12:00 -> Sucesso (não bloqueado por ScheduleCustomConflictError)
       const shrinkResult = await authorizedSut.execute({
         barbershopId: shopId,
         createdBy: ownerUserId,
@@ -601,24 +607,9 @@ describe("Update Barbershop Schedule", () => {
         ],
       });
 
-      expect(shrinkResult.isLeft()).toBe(true);
-      if (shrinkResult.isLeft()) {
-        expect(shrinkResult.value.name).toBe("ScheduleCustomConflictError");
-        const conflictErr = shrinkResult.value as any;
-        expect(conflictErr.code).toBe("SCHEDULE_CUSTOM_CONFLICT");
-        expect(conflictErr.conflictingBarbers).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              barbermanId: barberUserId,
-              dayOfWeek: "MONDAY",
-              openTime: "09:00",
-              closeTime: "16:00",
-            }),
-          ]),
-        );
-      }
+      expect(shrinkResult.isRight()).toBe(true);
 
-      // OWNER tenta fechar a unidade (CLOSED) enquanto barbeiro tem CUSTOM ativo
+      // OWNER fecha a unidade (CLOSED) -> Sucesso (barbeiro mantém sua grade CUSTOM de forma independente)
       const closeResult = await authorizedSut.execute({
         barbershopId: shopId,
         createdBy: ownerUserId,
@@ -627,28 +618,25 @@ describe("Update Barbershop Schedule", () => {
         schedules: [],
       });
 
-      expect(closeResult.isLeft()).toBe(true);
-      if (closeResult.isLeft()) {
-        expect(closeResult.value.name).toBe("ScheduleCustomConflictError");
-      }
+      expect(closeResult.isRight()).toBe(true);
     });
 
-    it("Regressão A1: intervalos gerais contíguos (09:00-10:00 e 10:00-12:00) devem permitir CUSTOM 09:00-12:00, enquanto pausa real rejeita", async () => {
-      // Configurar jornada geral com dois blocos contíguos na segunda
-      const generalContiguous = await authorizedSut.execute({
+    it("Regressão A1: jornada individual CUSTOM independe de intervalos ou pausas da jornada geral", async () => {
+      // Configurar jornada geral com blocos separados (pausa) na segunda
+      const generalWithBreak = await authorizedSut.execute({
         barbershopId: shopId,
         createdBy: ownerUserId,
         barbermanId: null,
         state: "CUSTOM",
         schedules: [
           { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "10:00" },
-          { dayOfWeek: "MONDAY", openTime: "10:00", closeTime: "12:00" },
+          { dayOfWeek: "MONDAY", openTime: "11:00", closeTime: "13:00" },
         ],
       });
-      expect(generalContiguous.isRight()).toBe(true);
+      expect(generalWithBreak.isRight()).toBe(true);
 
-      // Barbeiro define 09:00-12:00 contínuo -> aceito!
-      const barberContiguous = await authorizedSut.execute({
+      // Barbeiro define 09:00-12:00 contínuo -> aceito de forma independente!
+      const barberAcrossBreak = await authorizedSut.execute({
         barbershopId: shopId,
         createdBy: barberUserId,
         barbermanId: barberUserId,
@@ -659,44 +647,12 @@ describe("Update Barbershop Schedule", () => {
           { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "12:00" },
         ],
       });
-      expect(barberContiguous.isRight()).toBe(true);
-
-      // Agora barbeiro volta para INHERIT para permitir que a unidade crie pausa real
-      await authorizedSut.execute({
-        barbershopId: shopId,
-        createdBy: barberUserId,
-        barbermanId: barberUserId,
-        state: "INHERIT",
-        expectedVersion: 2,
-        requestId: generateUuidV7(),
-        schedules: [],
-      });
-
-      // Unidade define pausa real 09:00-10:00 e 10:30-12:00
-      await authorizedSut.execute({
-        barbershopId: shopId,
-        createdBy: ownerUserId,
-        barbermanId: null,
-        state: "CUSTOM",
-        schedules: [
-          { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "10:00" },
-          { dayOfWeek: "MONDAY", openTime: "10:30", closeTime: "12:00" },
-        ],
-      });
-
-      // Barbeiro tenta 09:00-12:00 atravessando pausa -> rejeitado!
-      const barberAcrossBreak = await authorizedSut.execute({
-        barbershopId: shopId,
-        createdBy: barberUserId,
-        barbermanId: barberUserId,
-        state: "CUSTOM",
-        expectedVersion: 3,
-        requestId: generateUuidV7(),
-        schedules: [
-          { dayOfWeek: "MONDAY", openTime: "09:00", closeTime: "12:00" },
-        ],
-      });
-      expect(barberAcrossBreak.isLeft()).toBe(true);
+      expect(barberAcrossBreak.isRight()).toBe(true);
+      if (barberAcrossBreak.isRight()) {
+        expect(barberAcrossBreak.value.schedules).toHaveLength(1);
+        expect(barberAcrossBreak.value.schedules[0].openTime).toBe("09:00");
+        expect(barberAcrossBreak.value.schedules[0].closeTime).toBe("12:00");
+      }
     });
   });
 });

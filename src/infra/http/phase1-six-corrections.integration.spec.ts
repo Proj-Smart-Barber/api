@@ -224,7 +224,7 @@ describe.skipIf(!testDbUrl)(
         });
       });
 
-      it("A1: rejeita redução ou fechamento da jornada geral quando profissional ativo possui CUSTOM fora da nova janela (409 SCHEDULE_CUSTOM_CONFLICT)", async () => {
+      it("A1: permite alteração ou fechamento da jornada geral sem bloquear por profissional ativo com CUSTOM (autonomia)", async () => {
         // 1. Owner define jornada geral 09:00-18:00 na segunda-feira (MONDAY)
         const genRes = await fetch(
           `${baseUrl}/api/barbershops/${shopId}/schedules`,
@@ -265,7 +265,7 @@ describe.skipIf(!testDbUrl)(
         );
         expect(barbRes.status).toBe(200);
 
-        // 3. Owner tenta encurtar jornada geral para 09:00-12:00 -> 409 SCHEDULE_CUSTOM_CONFLICT
+        // 3. Owner encurta jornada geral para 09:00-12:00 -> Sucesso (200 OK, não bloqueia por SCHEDULE_CUSTOM_CONFLICT)
         const shrinkRes = await fetch(
           `${baseUrl}/api/barbershops/${shopId}/schedules`,
           {
@@ -282,21 +282,9 @@ describe.skipIf(!testDbUrl)(
             }),
           },
         );
-        expect(shrinkRes.status).toBe(409);
-        const shrinkBody = (await shrinkRes.json()) as any;
-        expect(shrinkBody.code).toBe("SCHEDULE_CUSTOM_CONFLICT");
-        expect(shrinkBody.conflictingBarbers).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              barbermanId: barberId,
-              dayOfWeek: "MONDAY",
-              openTime: "09:00",
-              closeTime: "16:00",
-            }),
-          ]),
-        );
+        expect(shrinkRes.status).toBe(200);
 
-        // 4. Owner tenta fechar a unidade (state: CLOSED) com barbeiro CUSTOM ativo -> 409 SCHEDULE_CUSTOM_CONFLICT
+        // 4. Owner fecha a unidade (state: CLOSED) com barbeiro CUSTOM ativo -> Sucesso (200 OK, não bloqueia)
         const closeRes = await fetch(
           `${baseUrl}/api/barbershops/${shopId}/schedules`,
           {
@@ -311,11 +299,9 @@ describe.skipIf(!testDbUrl)(
             }),
           },
         );
-        expect(closeRes.status).toBe(409);
-        const closeBody = (await closeRes.json()) as any;
-        expect(closeBody.code).toBe("SCHEDULE_CUSTOM_CONFLICT");
+        expect(closeRes.status).toBe(200);
 
-        // 5. Verificar que a leitura da jornada do barbeiro preserva 09:00-16:00 intacto
+        // 5. Verificar que a leitura da jornada do barbeiro preserva 09:00-16:00 intacto e independente
         const getBarberRes = await fetch(
           `${baseUrl}/api/barbershops/${shopId}/schedules?barbermanId=${barberId}`,
           {

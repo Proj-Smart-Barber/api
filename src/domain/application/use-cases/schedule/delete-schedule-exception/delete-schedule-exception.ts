@@ -64,18 +64,51 @@ export class DeleteScheduleExceptionUseCase {
             tx,
           );
 
+        if (actorMembership && actorMembership.state === "INACTIVE") {
+          return left(
+            new NotAllowedError("Usuário com vínculo inativo nesta unidade."),
+          );
+        }
+
         const isOwnerActive =
           actorMembership &&
           actorMembership.role === Role.OWNER &&
           actorMembership.state === "ACTIVE";
 
-        const isLegacyOwner = barbershop.ownerId.toString() === staffId;
+        const isLegacyOwner =
+          actorMembership === null &&
+          barbershop.ownerId.toString() === staffId;
 
-        if (!isOwnerActive && !isLegacyOwner) {
+        const isOwner = Boolean(isOwnerActive || isLegacyOwner);
+
+        const isBarberActive =
+          actorMembership &&
+          actorMembership.role === Role.BARBERMAN &&
+          actorMembership.state === "ACTIVE";
+
+        if (isBarberActive) {
+          if (exception.barbermanId?.toString() !== staffId) {
+            return left(
+              new NotAllowedError(
+                "Profissional só pode excluir suas próprias exceções de agenda.",
+              ),
+            );
+          }
+        } else if (!isOwner) {
+          return left(
+            new NotAllowedError(
+              "Usuário não possui permissão para gerenciar exceções nesta unidade.",
+            ),
+          );
+        }
+      } else {
+        const isOwner = barbershop.ownerId.toString() === staffId;
+        const isSelfBarber = Boolean(
+          exception.barbermanId && exception.barbermanId.toString() === staffId,
+        );
+        if (!isOwner && !isSelfBarber) {
           return left(new NotAllowedError());
         }
-      } else if (barbershop.ownerId.toString() !== staffId) {
-        return left(new NotAllowedError());
       }
 
       await this.scheduleExceptionsRepository.delete(exception, tx);
