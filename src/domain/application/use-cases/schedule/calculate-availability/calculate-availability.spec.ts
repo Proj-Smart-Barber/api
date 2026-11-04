@@ -702,7 +702,7 @@ describe("Calculate Availability", () => {
     }
   });
 
-  it("should bound CUSTOM barberman availability by unit general schedule hours (R2)", async () => {
+  it("should respect CUSTOM barberman availability independently of unit general schedule hours", async () => {
     // Unidade abre 09:00 as 12:00
     inMemorySchedulesRepository.items.push(
       BarbershopSchedule.create({
@@ -757,12 +757,13 @@ describe("Calculate Availability", () => {
     expect(result.isRight()).toBe(true);
     if (result.isRight()) {
       const starts = result.value.availableSlots.map((s) => s.start);
-      // Não deve conter horários antes das 09:00 nem depois das 12:00
-      expect(starts).not.toContain("2026-09-15T08:00:00-03:00");
-      expect(starts).not.toContain("2026-09-15T08:30:00-03:00");
+      // Autonomia: horários do barbeiro CUSTOM devem ser ofertados integralmente (08:00 às 15:00)
+      expect(starts).toContain("2026-09-15T08:00:00-03:00");
+      expect(starts).toContain("2026-09-15T08:30:00-03:00");
       expect(starts).toContain("2026-09-15T09:00:00-03:00");
       expect(starts).toContain("2026-09-15T11:30:00-03:00");
-      expect(starts).not.toContain("2026-09-15T12:00:00-03:00");
+      expect(starts).toContain("2026-09-15T14:30:00-03:00");
+      expect(starts).not.toContain("2026-09-15T15:00:00-03:00");
     }
   });
 

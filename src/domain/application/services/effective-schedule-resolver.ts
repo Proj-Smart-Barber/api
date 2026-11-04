@@ -150,10 +150,6 @@ export class EffectiveScheduleResolver {
 
     const mergedBarberShifts = this.mergeContiguousIntervals(barberShifts);
 
-    const hasGeneralConfiguration =
-      (generalScopeState !== null && generalScopeState !== undefined) ||
-      allSchedules.some((s) => !s.barbermanId);
-
     // 1. Escopo explicitamente configurado
     if (scopeState) {
       if (scopeState === "CLOSED") {
@@ -168,44 +164,19 @@ export class EffectiveScheduleResolver {
         };
       }
 
-      // CUSTOM: se a unidade estiver explicitamente CLOSED, nenhum horário efetivo é liberado
-      if (isUnitExplicitlyClosed) {
-        return {
-          intervals: [],
-          state: "CUSTOM",
-          needsReview: false,
-        };
-      }
-
-      // CUSTOM: horários próprios delimitados pelo funcionamento da unidade (se configurada)
-      const effectiveIntervals = hasGeneralConfiguration
-        ? this.intersectIntervals(mergedBarberShifts, mergedUnitIntervals)
-        : mergedBarberShifts;
-
+      // CUSTOM: períodos próprios, independentes dos horários semanais do owner, colegas e escopo geral
       return {
-        intervals: effectiveIntervals,
+        intervals: mergedBarberShifts,
         state: "CUSTOM",
         needsReview: false,
       };
     }
 
     // 2. Legado ambíguo sem scope:
-    // Se possui horários individuais cadastrados, é CUSTOM delimitado pelo geral
+    // Se possui horários individuais cadastrados, resolve CUSTOM diretamente
     if (mergedBarberShifts.length > 0) {
-      if (isUnitExplicitlyClosed) {
-        return {
-          intervals: [],
-          state: "CUSTOM",
-          needsReview: false,
-        };
-      }
-
-      const effectiveIntervals = hasGeneralConfiguration
-        ? this.intersectIntervals(mergedBarberShifts, mergedUnitIntervals)
-        : mergedBarberShifts;
-
       return {
-        intervals: effectiveIntervals,
+        intervals: mergedBarberShifts,
         state: "CUSTOM",
         needsReview: false,
       };
