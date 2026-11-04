@@ -24,11 +24,11 @@ export async function runSchemaMigrations(targetDb: any = db) {
 );
 CREATE INDEX IF NOT EXISTS explore_feed_snapshots_expiry_idx ON explore_feed_snapshots(expires_at);
 `);
-    await targetDb.execute(sql`DO $ BEGIN
+    await targetDb.execute(sql`DO $$ BEGIN
   CREATE TYPE "invitation_delivery_status" AS ENUM('PENDING', 'PROCESSING', 'ACCEPTED', 'FAILED', 'REVOKED', 'EXPIRED');
 EXCEPTION
   WHEN duplicate_object THEN null;
-END $;
+END $$;
 
 CREATE TABLE IF NOT EXISTS "invitation_deliveries" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
