@@ -84,7 +84,7 @@ const searchNearbyBodySchema = z.object({
       (lon) => lon >= -180 && lon <= 180,
       "Longitude deve estar entre -180 e 180.",
     ),
-  radiusKm: z.literal(5).or(z.literal(10)).or(z.literal(25)).or(z.literal(50)),
+  radiusKm: z.literal(5).or(z.literal(10)).or(z.literal(25)).or(z.literal(50)).nullable(),
   q: z
     .string()
     .trim()
