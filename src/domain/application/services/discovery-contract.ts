@@ -8,7 +8,7 @@ export type DiscoveryInput =
   | {
       mode: "NEARBY";
       point: GeoPoint;
-      radiusKm: 5 | 10 | 25 | 50;
+      radiusKm: 5 | 10 | 25 | 50 | null;
       ids?:string[];
       regionKey?: string;
       q?: string;

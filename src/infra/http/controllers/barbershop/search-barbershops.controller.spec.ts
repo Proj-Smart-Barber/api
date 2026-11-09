@@ -27,6 +27,15 @@ const fakePage = {
 };
 
 describe("SearchBarbershopsController (Unit)", () => {
+  it("accepts an explicit null radius without changing the geographic origin", async () => {
+    let captured: unknown;
+    const controller = new SearchNearbyBarbershopsController({
+      execute: async (input: unknown) => { captured = input; return right(fakePage); },
+    } as unknown as SearchBarbershopsUseCase);
+    const result = await controller.handle({ latitude: -23.5, longitude: -46.6, radiusKm: null });
+    expect(result.statusCode).toBe(200);
+    expect(captured).toMatchObject({ mode: "NEARBY", point: { latitude: -23.5, longitude: -46.6 }, radiusKm: null });
+  });
   it("returns 200 ok with defaults for empty query in ALL mode", async () => {
     let capturedInput: any = null;
     const fakeUseCase = {

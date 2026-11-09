@@ -920,9 +920,10 @@ export const swaggerDocument = {
                   },
                   radiusKm: {
                     type: "integer",
-                    enum: [5, 10, 25, 50],
+                    nullable: true,
+                    enum: [5, 10, 25, 50, null],
                     example: 10,
-                    description: "Raio de busca em quilômetros",
+                    description: "Raio de busca em quilômetros; null mantém ordenação geográfica sem limite radial",
                   },
                   q: {
                     type: "string",

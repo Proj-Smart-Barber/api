@@ -374,13 +374,13 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
   ): Promise<DiscoveryPage> {
     const isGoogleCacheHealthy = await this.isGoogleMapsCacheHealthy();
     const { point, radiusKm } = input;
-    const radiusMeters = radiusKm * 1000.0;
+    const radiusMeters = radiusKm === null ? null : radiusKm * 1000.0;
     const lat = point.latitude;
     const lon = point.longitude;
 
     // Conservative bounding box derivation based on R = 6,371,000m sphere
     const R = 6371000.0;
-    const angularRadius = radiusMeters / R;
+    const angularRadius = (radiusMeters ?? 0) / R;
     // 1.5% safety margin on angular delta to guarantee conservative bounding box
     const deltaLatDegrees = ((angularRadius * 180.0) / Math.PI) * 1.015;
 
@@ -418,10 +418,10 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
     const conditions = [
       sql`b.status = 'ACTIVE'`,
       sql`${eligibilitySql}`,
-      sql`bl.latitude BETWEEN ${minLat}::double precision AND ${maxLat}::double precision`,
+      ...(radiusMeters === null ? [] : [sql`bl.latitude BETWEEN ${minLat}::double precision AND ${maxLat}::double precision`]),
     ];
 
-    if (deltaLonDegrees < 180.0) {
+    if (radiusMeters !== null && deltaLonDegrees < 180.0) {
       const rawMinLon = lon - deltaLonDegrees;
       const rawMaxLon = lon + deltaLonDegrees;
 
@@ -474,7 +474,7 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
       FROM barbershops b
       INNER JOIN barbershop_locations bl ON bl.barbershop_id = b.id
       WHERE ${baseWhere}
-        AND (${haversineSql}) <= ${radiusMeters}::double precision
+        AND ${radiusMeters === null ? sql`TRUE` : sql`(${haversineSql}) <= ${radiusMeters}::double precision`}
     `);
     const total = Number(countResult.rows[0]?.total ?? 0);
 
@@ -496,7 +496,7 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
       FROM barbershops b
       INNER JOIN barbershop_locations bl ON bl.barbershop_id = b.id
       WHERE ${baseWhere}
-        AND (${haversineSql}) <= ${radiusMeters}::double precision
+        AND ${radiusMeters === null ? sql`TRUE` : sql`(${haversineSql}) <= ${radiusMeters}::double precision`}
       ORDER BY ${input.ids ? sql`array_position(ARRAY(SELECT jsonb_array_elements_text(${JSON.stringify(input.ids)}::jsonb))::uuid[], b.id)` : sql`distance_meters`} ASC, b.id ASC
       LIMIT ${limit}
       OFFSET ${offset}
