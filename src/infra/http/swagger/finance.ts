@@ -45,6 +45,18 @@ export const financePaths = {
       parameters: [
         shop,
         {
+          name: "from",
+          in: "query",
+          schema: { type: "string", format: "date" },
+          description: "Início do intervalo, usado junto com to e sem month.",
+        },
+        {
+          name: "to",
+          in: "query",
+          schema: { type: "string", format: "date" },
+          description: "Fim inclusivo do intervalo.",
+        },
+        {
           name: "month",
           in: "query",
           schema: { type: "string", pattern: "^[0-9]{4}-(0[1-9]|1[0-2])$" },

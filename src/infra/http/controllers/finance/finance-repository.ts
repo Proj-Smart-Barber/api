@@ -5,8 +5,8 @@ import {
   FinanceError,
   createExpense,
   nextDueDate,
-  periodBounds,
-  projectFinance,
+  projectFinanceRange,
+  resolveFinancePeriod,
   receiptInput,
   updateEntry,
   type FinanceEntry,
@@ -69,10 +69,8 @@ export class FinanceRepository {
       }).format(now);
 
       if (operation === "period") {
-        if (input !== undefined && typeof input !== "string")
-          throw new FinanceError(400, "Competência inválida.");
-        const month = typeof input === "string" ? input : today.slice(0, 7);
-        const bounds = periodBounds(month);
+        const bounds = resolveFinancePeriod(input, today);
+        const month = bounds.month;
         const values =
           await tx.execute(sql`SELECT ${columns} FROM finance_entries WHERE barbershop_id=${shopId}::uuid
           AND (due_on BETWEEN ${bounds.from}::date AND ${bounds.to}::date
@@ -101,12 +99,19 @@ export class FinanceRepository {
         const entries = values.rows.map(entry);
         return {
           month,
+          from: bounds.from,
+          to: bounds.to,
           today,
           timezone,
           serverTime: now.toISOString(),
           entries,
           bookings,
-          summary: projectFinance(month, entries, bookings),
+          summary: projectFinanceRange(
+            bounds.from,
+            bounds.to,
+            entries,
+            bookings,
+          ),
         };
       }
 
