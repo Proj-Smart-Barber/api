@@ -92,6 +92,27 @@ export function periodBounds(month: string) {
     to: last.toISOString().slice(0, 10),
   };
 }
+export function resolveFinancePeriod(input: unknown, today: string) {
+  if (typeof input === "string" || input === undefined)
+    return periodBounds(typeof input === "string" ? input : today.slice(0, 7));
+  const values = z
+    .object({
+      month: competence.optional(),
+      from: civilDate.optional(),
+      to: civilDate.optional(),
+    })
+    .strict()
+    .parse(input);
+  if (values.from || values.to) {
+    if (!values.from || !values.to || values.month || values.from > values.to)
+      throw new FinanceError(
+        400,
+        "Informe um período válido, com início e fim.",
+      );
+    return { month: values.from.slice(0, 7), from: values.from, to: values.to };
+  }
+  return periodBounds(values.month ?? today.slice(0, 7));
+}
 export function nextDueDate(date: string) {
   civilDate.parse(date);
   const next = new Date(`${date}T12:00:00Z`);
@@ -117,6 +138,15 @@ export function projectFinance(
   bookings: FinanceBooking[],
 ) {
   const { from, to } = periodBounds(month);
+  return projectFinanceRange(from, to, entries, bookings);
+}
+export function projectFinanceRange(
+  from: string,
+  to: string,
+  entries: FinanceEntry[],
+  bookings: FinanceBooking[],
+) {
+  resolveFinancePeriod({ from, to }, from);
   const inside = (date: string | null) =>
     Boolean(date && date >= from && date <= to);
   let completed = 0,
@@ -125,12 +155,16 @@ export function projectFinance(
     paid = 0,
     payable = 0,
     unknownPrices = 0;
-  const daily = Array.from({ length: Number(to.slice(-2)) }, (_, index) => ({
-    date: `${month}-${String(index + 1).padStart(2, "0")}`,
+  const startMs = Date.parse(`${from}T12:00:00Z`);
+  const days =
+    Math.round((Date.parse(`${to}T12:00:00Z`) - startMs) / 86400000) + 1;
+  const daily = Array.from({ length: days <= 366 ? days : 0 }, (_, index) => ({
+    date: new Date(startMs + index * 86400000).toISOString().slice(0, 10),
     completedInCents: 0,
     forecastInCents: 0,
     paidInCents: 0,
   }));
+  const byDate = new Map(daily.map((day) => [day.date, day]));
   for (const booking of bookings) {
     if (!inside(booking.date)) continue;
     const isCompleted = booking.status === "COMPLETED";
@@ -146,13 +180,15 @@ export function projectFinance(
       unknownPrices++;
       continue;
     }
-    const day = daily[Number(booking.date.slice(-2)) - 1];
+    const day = byDate.get(booking.date);
     if (isCompleted) {
       completed = add(completed, booking.amountInCents);
-      day.completedInCents = add(day.completedInCents, booking.amountInCents);
+      if (day)
+        day.completedInCents = add(day.completedInCents, booking.amountInCents);
     } else {
       forecast = add(forecast, booking.amountInCents);
-      day.forecastInCents = add(day.forecastInCents, booking.amountInCents);
+      if (day)
+        day.forecastInCents = add(day.forecastInCents, booking.amountInCents);
     }
   }
   for (const entry of entries) {
@@ -162,8 +198,8 @@ export function projectFinance(
         received = add(received, entry.amountInCents);
       else {
         paid = add(paid, entry.amountInCents);
-        const day = daily[Number(entry.paidOn.slice(-2)) - 1];
-        day.paidInCents = add(day.paidInCents, entry.amountInCents);
+        const day = byDate.get(entry.paidOn);
+        if (day) day.paidInCents = add(day.paidInCents, entry.amountInCents);
       }
     } else if (
       entry.kind === "EXPENSE" &&

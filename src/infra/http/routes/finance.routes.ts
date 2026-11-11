@@ -14,7 +14,12 @@ export function createFinanceRouter(repository = new FinanceRepository()) {
         const shopId = uuid.parse(request.params.shopId);
         const userId = uuid.parse(request.user?.sub);
         let input: unknown = request.body;
-        if (operation === "period") input = request.query.month;
+        if (operation === "period")
+          input = {
+            month: request.query.month,
+            from: request.query.from,
+            to: request.query.to,
+          };
         if (operation === "update")
           input = {
             ...request.body,

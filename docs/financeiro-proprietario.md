@@ -18,7 +18,7 @@ Todas as rotas usam o prefixo /api/barbershops/:shopId/finance.
 
 | Método | Sufixo | Efeito |
 | --- | --- | --- |
-| GET | ?month=YYYY-MM | Resumo, série diária, despesas e atendimentos |
+| GET | ?month=YYYY-MM ou ?from=YYYY-MM-DD&to=YYYY-MM-DD | Resumo, despesas e atendimentos do intervalo |
 | POST | /entries | Criar despesa PLANNED |
 | PATCH | /entries/:entryId | Registrar PAY ou CANCEL com expectedVersion |
 | POST | /entries/:entryId/copy | Criar uma cópia no mês seguinte |
@@ -73,8 +73,19 @@ unidade e as operações financeiras utilizam o repositório real e PostgreSQL.
 
 ## Resultado desta implementação
 
-Os 12 testes de projeção e HTTP passaram com PostgreSQL 17 descartável.
+Os 13 testes de projeção e HTTP passaram com PostgreSQL 17 descartável.
 O TypeScript global permanece com cinco erros preexistentes em
 drizzle-discovery-unbounded.spec.ts e create-barbershop.controller.ts.
 As fontes novas do módulo passaram na verificação seletiva do Biome.
 Os comandos de teste não utilizaram a aplicação publicada nem o banco compartilhado.
+
+
+## Intervalos de consulta
+
+A consulta aceita month para compatibilidade mensal ou o par from e to, com limites
+inclusivos. A combinação dos dois modos, datas inexistentes ou início posterior ao
+fim retornam 400. Sem parâmetros, a API utiliza o mês atual no fuso da unidade.
+A resposta inclui from e to efetivamente usados. Os totais cobrem todo o intervalo.
+A série diária é disponibilizada para intervalos de até 366 dias; intervalos maiores
+mantêm totais completos e retornam daily vazio. O frontend usa os totais para os gráficos.
+Esta revisão não modifica a estrutura do banco nem exige nova migration.

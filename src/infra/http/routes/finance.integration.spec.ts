@@ -173,7 +173,19 @@ describe.skipIf(!process.env.FINANCE_TEST_DATABASE_URL)(
         unknownPrices: 1,
       });
     });
-    it("cria uma despesa uma única vez e rejeita reutilização com outro valor", async () => {
+    it("filtra datas específicas e intervalos entre meses sem alterar os valores apurados", async () => {
+    const outside = await request("GET", "?from=2026-11-01&to=2026-11-14");
+    expect(outside.status).toBe(200);
+    expect(outside.body.summary.completedInCents).toBe(0);
+    const included = await request("GET", "?from=2026-10-30&to=2026-11-15");
+    expect(included.status).toBe(200);
+    expect(included.body.summary.completedInCents).toBe(8000);
+    expect(included.body.summary.daily.find(day => day.date === "2026-11-15")?.completedInCents).toBe(8000);
+    expect((await request("GET", "?from=2026-11-15&to=2026-11-01")).status).toBe(400);
+    expect((await request("GET", "?month=2026-11&from=2026-11-01&to=2026-11-15")).status).toBe(400);
+  });
+
+  it("cria uma despesa uma única vez e rejeita reutilização com outro valor", async () => {
       const values = expense();
       const first = await request("POST", "/entries", values);
       const repeated = await request("POST", "/entries", values);
