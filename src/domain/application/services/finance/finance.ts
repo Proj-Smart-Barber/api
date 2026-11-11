@@ -1,0 +1,186 @@
+import { z } from "zod";
+
+export const civilDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .refine((value) => {
+    const parsed = new Date(`${value}T12:00:00Z`);
+    return (
+      Number.isFinite(parsed.getTime()) &&
+      parsed.getUTCFullYear() > 0 &&
+      parsed.toISOString().slice(0, 10) === value
+    );
+  }, "Data inválida.");
+export const competence = z
+  .string()
+  .regex(/^\d{4}-(0[1-9]|1[0-2])$/)
+  .refine((value) => !value.startsWith("0000-"));
+export const expenseCategory = z.enum([
+  "FIXED",
+  "VARIABLE",
+  "BARBER_PAYOUT",
+  "PAYROLL",
+  "OTHER",
+]);
+export const createExpense = z
+  .object({
+    requestId: z.string().uuid(),
+    description: z.string().trim().min(2).max(160),
+    category: expenseCategory,
+    amountInCents: z.number().int().positive().max(2_000_000_000),
+    dueOn: civilDate,
+    payee: z.string().trim().max(120).default(""),
+  })
+  .strict();
+export const updateEntry = z
+  .object({
+    action: z.enum(["PAY", "CANCEL"]),
+    expectedVersion: z.number().int().positive(),
+    paidOn: civilDate.optional(),
+  })
+  .strict()
+  .refine(
+    (value) => value.action !== "PAY" || Boolean(value.paidOn),
+    "Informe a data do pagamento.",
+  );
+export const receiptInput = z
+  .object({
+    requestId: z.string().uuid(),
+    bookingId: z.string().uuid(),
+    paidOn: civilDate,
+  })
+  .strict();
+
+export class FinanceError extends Error {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+export interface FinanceEntry {
+  id: string;
+  kind: "EXPENSE" | "RECEIPT";
+  category: string;
+  description: string;
+  amountInCents: number;
+  dueOn: string;
+  paidOn: string | null;
+  payee: string;
+  status: "PLANNED" | "PAID" | "CANCELLED";
+  version: number;
+  bookingId: string | null;
+}
+export interface FinanceBooking {
+  id: string;
+  date: string;
+  status: string;
+  professional: string;
+  services: string;
+  amountInCents: number | null;
+  receiptId: string | null;
+}
+
+export function periodBounds(month: string) {
+  const valid = competence.parse(month);
+  const last = new Date(`${valid}-01T12:00:00Z`);
+  last.setUTCMonth(last.getUTCMonth() + 1, 0);
+  return {
+    month: valid,
+    from: `${valid}-01`,
+    to: last.toISOString().slice(0, 10),
+  };
+}
+export function nextDueDate(date: string) {
+  civilDate.parse(date);
+  const next = new Date(`${date}T12:00:00Z`);
+  const day = next.getUTCDate();
+  next.setUTCDate(1);
+  next.setUTCMonth(next.getUTCMonth() + 1);
+  if (next.getUTCFullYear() > 9999)
+    throw new FinanceError(422, "O vencimento excede o calendário suportado.");
+  const last = new Date(next);
+  last.setUTCMonth(last.getUTCMonth() + 1, 0);
+  next.setUTCDate(Math.min(day, last.getUTCDate()));
+  return next.toISOString().slice(0, 10);
+}
+function add(a: number, b: number) {
+  const value = a + b;
+  if (!Number.isSafeInteger(value))
+    throw new FinanceError(422, "O total excedeu o limite de cálculo.");
+  return value;
+}
+export function projectFinance(
+  month: string,
+  entries: FinanceEntry[],
+  bookings: FinanceBooking[],
+) {
+  const { from, to } = periodBounds(month);
+  const inside = (date: string | null) =>
+    Boolean(date && date >= from && date <= to);
+  let completed = 0,
+    forecast = 0,
+    received = 0,
+    paid = 0,
+    payable = 0,
+    unknownPrices = 0;
+  const daily = Array.from({ length: Number(to.slice(-2)) }, (_, index) => ({
+    date: `${month}-${String(index + 1).padStart(2, "0")}`,
+    completedInCents: 0,
+    forecastInCents: 0,
+    paidInCents: 0,
+  }));
+  for (const booking of bookings) {
+    if (!inside(booking.date)) continue;
+    const isCompleted = booking.status === "COMPLETED";
+    const scheduled = ["WAITING", "CONFIRMED", "IN_SERVICE"].includes(
+      booking.status,
+    );
+    if (!isCompleted && !scheduled) continue;
+    if (
+      booking.amountInCents === null ||
+      !Number.isSafeInteger(booking.amountInCents) ||
+      booking.amountInCents < 0
+    ) {
+      unknownPrices++;
+      continue;
+    }
+    const day = daily[Number(booking.date.slice(-2)) - 1];
+    if (isCompleted) {
+      completed = add(completed, booking.amountInCents);
+      day.completedInCents = add(day.completedInCents, booking.amountInCents);
+    } else {
+      forecast = add(forecast, booking.amountInCents);
+      day.forecastInCents = add(day.forecastInCents, booking.amountInCents);
+    }
+  }
+  for (const entry of entries) {
+    if (entry.status === "CANCELLED") continue;
+    if (entry.status === "PAID" && entry.paidOn && inside(entry.paidOn)) {
+      if (entry.kind === "RECEIPT")
+        received = add(received, entry.amountInCents);
+      else {
+        paid = add(paid, entry.amountInCents);
+        const day = daily[Number(entry.paidOn.slice(-2)) - 1];
+        day.paidInCents = add(day.paidInCents, entry.amountInCents);
+      }
+    } else if (
+      entry.kind === "EXPENSE" &&
+      entry.status === "PLANNED" &&
+      inside(entry.dueOn)
+    ) {
+      payable = add(payable, entry.amountInCents);
+    }
+  }
+  return {
+    completedInCents: completed,
+    forecastInCents: forecast,
+    receivedInCents: received,
+    paidInCents: paid,
+    payableInCents: payable,
+    balanceInCents: received - paid,
+    unknownPrices,
+    daily,
+  };
+}

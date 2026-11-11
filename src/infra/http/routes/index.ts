@@ -1,3 +1,4 @@
+import { createFinanceRouter } from "./finance.routes";
 import { Router } from "express";
 import { userRoutes } from "./users.routes";
 import { bookingRoutes } from "./booking.routes";
@@ -15,6 +16,7 @@ import { reviewsRoutes } from "./reviews.routes";
 
 const routes = Router();
 
+routes.use("/barbershops/:shopId/finance", createFinanceRouter());
 routes.use("/users", userRoutes);
 routes.use("/staffs", userRoutes);
 routes.use("/invitations", invitationRoutes);
