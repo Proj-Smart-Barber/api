@@ -133,9 +133,10 @@ export class InMemoryMediaRepository implements MediaRepository {
       .slice(0, limit);
   }
 
-  async countPendingByOwnerId(ownerId: string): Promise<number> {
+  async countPendingByOwnerId(ownerId: string, createdSince?: Date): Promise<number> {
     return this.items.filter(
-      (item) => item.ownerId.toString() === ownerId && item.status === "PENDING"
+      (item) => item.ownerId.toString() === ownerId && item.status === "PENDING" &&
+        (!createdSince || item.createdAt >= createdSince)
     ).length;
   }
 }

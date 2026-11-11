@@ -16,6 +16,7 @@ import { UpdateBarbershopGoogleUrlUseCase } from "../barbershop/update-barbersho
 import { User } from "../../../enterprise/entities/user";
 import { Password } from "../../../enterprise/entities/value-objects/password";
 import { Barbershop } from "../../../enterprise/entities/barbershop";
+import { Media } from "../../../enterprise/entities/media";
 import { Membership, Role } from "../../../enterprise/entities/membership";
 
 describe("Phase 2 Use Cases: Media, Gallery & Google Link", () => {
@@ -100,6 +101,37 @@ describe("Phase 2 Use Cases: Media, Gallery & Google Link", () => {
   });
 
   describe("Initiate & Confirm Upload", () => {
+    it.each([
+      { minutes: 16, allowed: true },
+      { minutes: 1, allowed: false },
+    ])("considera apenas intenções ativas na cota simultânea ($minutes minutos)", async ({ minutes, allowed }) => {
+      for (let index = 0; index < 2; index++) {
+        await mediaRepository.create(Media.create({
+          ownerId: new UniqueEntityId("user-1"),
+          purpose: "USER_AVATAR",
+          objectKey: `staging/fixture-${index}`,
+          publicUrl: "",
+          mimeType: "image/png",
+          fileSize: 256,
+          status: "PENDING",
+          createdAt: new Date(Date.now() - minutes * 60 * 1000),
+        }));
+      }
+
+      const result = await initiateUploadUseCase.execute({
+        userId: "user-1",
+        purpose: "USER_AVATAR",
+        fileName: "fixture.png",
+        mimeType: "image/png",
+        fileSize: 256,
+      });
+
+      expect(result.isRight()).toBe(allowed);
+      if (result.isLeft()) {
+        expect(result.value.message).toContain("Limite de uploads simultâneos");
+      }
+    });
+
     it("inicia upload de avatar dentro do limite de 5MB com sucesso", async () => {
       const result = await initiateUploadUseCase.execute({
         userId: "user-1",

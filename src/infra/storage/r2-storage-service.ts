@@ -49,6 +49,8 @@ export class R2StorageService implements StorageService {
         secretAccessKey: config.secretAccessKey,
       },
       forcePathStyle: config.forcePathStyle ?? true,
+      // URLs de upload são assinadas antes de a API receber os bytes do arquivo.
+      requestChecksumCalculation: "WHEN_REQUIRED",
     });
   }
 

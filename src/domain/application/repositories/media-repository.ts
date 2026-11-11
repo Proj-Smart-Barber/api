@@ -24,7 +24,7 @@ export interface MediaRepository {
   save(media: Media): Promise<void>;
   delete(id: string): Promise<void>;
   findOrphans(olderThanDate: Date, limit: number): Promise<Media[]>;
-  countPendingByOwnerId(ownerId: string): Promise<number>;
+  countPendingByOwnerId(ownerId: string, createdSince?: Date): Promise<number>;
   claimForProcessing(
     id: string,
     params: { leaseToken: string; leaseDurationMs: number },
