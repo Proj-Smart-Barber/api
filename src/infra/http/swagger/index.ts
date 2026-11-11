@@ -1,3 +1,4 @@
+import { financePaths } from "./finance";
 import { env } from "../../env";
 
 export const swaggerDocument = {
@@ -14,6 +15,7 @@ export const swaggerDocument = {
     },
   ],
   paths: {
+    ...financePaths,
     "/api/barbershops/{shopId}/availability": {
       get: {
         tags: ["Schedules"],

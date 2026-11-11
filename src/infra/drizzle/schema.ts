@@ -5,6 +5,8 @@ import {
   bigint,
   check,
   doublePrecision,
+  foreignKey,
+  date,
   index,
   integer,
   jsonb,
@@ -1230,3 +1232,38 @@ export const mediaVideoJobs = pgTable("media_video_jobs", {
 export const mediaMultipartSessions=pgTable('media_multipart_sessions',{
  mediaId:uuid('media_id').primaryKey().references(()=>media.id),uploadId:text('upload_id').notNull(),state:text('state').notNull().default('ACTIVE'),expiresAt:timestamp('expires_at',{withTimezone:true}).notNull().default(sql`NOW()+INTERVAL '24 hours'`),
 });
+
+
+export const financeEntries = pgTable("finance_entries", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  barbershopId: uuid("barbershop_id").notNull().references(() => barbershops.id),
+  createdBy: uuid("created_by").notNull().references(() => users.id),
+  requestId: uuid("request_id").notNull(),
+  requestHash: text("request_hash").notNull(),
+  kind: text("kind").notNull(),
+  category: text("category").notNull(),
+  description: text("description").notNull(),
+  amountInCents: integer("amount_in_cents").notNull(),
+  dueOn: date("due_on").notNull(),
+  paidOn: date("paid_on"),
+  payee: text("payee").notNull().default(""),
+  status: text("status").notNull(),
+  version: integer("version").notNull().default(1),
+  bookingId: uuid("booking_id").references(() => bookings.id),
+  sourceId: uuid("source_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique("finance_entries_request_unique").on(table.barbershopId, table.requestId),
+  unique("finance_entries_copy_unique").on(table.barbershopId, table.sourceId, table.dueOn),
+  uniqueIndex("finance_entries_booking_unique").on(table.bookingId).where(sql`${table.kind}='RECEIPT'`),
+  index("finance_entries_due_idx").on(table.barbershopId, table.dueOn),
+  index("finance_entries_paid_idx").on(table.barbershopId, table.paidOn),
+  foreignKey({ columns: [table.sourceId], foreignColumns: [table.id], name: "finance_entries_source_id_fkey" }),
+  check("finance_entries_description_check", sql`char_length(${table.description}) BETWEEN 2 AND 160`),
+  check("finance_entries_status_check", sql`${table.status} IN ('PLANNED','PAID','CANCELLED')`),
+  check("finance_entries_version_check", sql`${table.version} > 0`),
+  check("finance_entries_kind_check", sql`(${table.kind}='EXPENSE' AND ${table.bookingId} IS NULL AND ${table.category} IN ('FIXED','VARIABLE','BARBER_PAYOUT','PAYROLL','OTHER')) OR (${table.kind}='RECEIPT' AND ${table.bookingId} IS NOT NULL AND ${table.category}='BOOKING' AND ${table.status}='PAID')`),
+  check("finance_entries_amount_check", sql`${table.amountInCents} > 0`),
+  check("finance_entries_payment_check", sql`(${table.status}='PAID') = (${table.paidOn} IS NOT NULL)`),
+]);

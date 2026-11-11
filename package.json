@@ -8,6 +8,7 @@
     "dev": "tsx --watch src/server.ts",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:finance": "vitest run src/domain/application/services/finance/finance.spec.ts src/infra/http/routes/finance.integration.spec.ts",
     "db:seed": "tsx src/infra/drizzle/demo-seed/canonical/cli.ts --dry-run",
     "db:seed:demo:dry-run": "tsx src/infra/drizzle/demo-seed/canonical/cli.ts --dry-run",
     "db:seed:demo:apply": "tsx src/infra/drizzle/demo-seed/canonical/cli.ts --apply",

@@ -2,6 +2,8 @@ import { sql } from "drizzle-orm";
 import { db } from "./index";
 import { emailVerificationCodesMigration } from "./email-verification-codes-migration";
 
+import { financeMigration } from "./finance-migration";
+
 let hasMigrated = false;
 
 // biome-ignore lint/suspicious/noExplicitAny: accepts either default db or isolated test db
@@ -17,6 +19,7 @@ export async function runSchemaMigrations(targetDb: any = db) {
   console.log("[Migration] Running idempotent schema migrations...");
 
   try {
+    await targetDb.execute(sql.raw(financeMigration));
     await targetDb.execute(sql.raw(emailVerificationCodesMigration));
     await targetDb.execute(sql`CREATE TABLE IF NOT EXISTS explore_feed_snapshots (
  id uuid PRIMARY KEY, filters_hash text NOT NULL, ordered_ids jsonb NOT NULL,
