@@ -1,4 +1,4 @@
-import { eq, and, or, lt, sql, isNull, isNotNull, inArray } from "drizzle-orm";
+import { eq, and, or, lt, gte, sql, isNull, isNotNull, inArray } from "drizzle-orm";
 import { db as defaultDb } from "../index";
 import { media } from "../schema";
 import { MediaMapper } from "../../../domain/enterprise/mappers/media-mapper";
@@ -247,11 +247,18 @@ export class DrizzleMediaRepository implements MediaRepository {
     return rows.map(MediaMapper.toDomain);
   }
 
-  async countPendingByOwnerId(ownerId: string): Promise<number> {
+  async countPendingByOwnerId(ownerId: string, createdSince?: Date): Promise<number> {
     const rows = await this.db
       .select()
       .from(media)
-      .where(and(eq(media.ownerId, ownerId), eq(media.status, "PENDING")));
+      .where(and(
+        eq(media.ownerId, ownerId),
+        eq(media.status, "PENDING"),
+        createdSince ? or(
+          gte(media.createdAt, createdSince),
+          sql`EXISTS(SELECT 1 FROM media_multipart_sessions sessions WHERE sessions.media_id=${media.id} AND sessions.state='ACTIVE' AND sessions.expires_at>NOW())`,
+        ) : undefined,
+      ));
 
     return rows.length;
   }

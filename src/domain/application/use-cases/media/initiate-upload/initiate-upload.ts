@@ -148,6 +148,7 @@ export class InitiateMediaUploadUseCase {
     // 5. Abuse prevention / active intent guard (T05)
     const pendingCount = await this.mediaRepository.countPendingByOwnerId(
       dto.userId,
+      new Date(Date.now() - 15 * 60 * 1000),
     );
     if (pendingCount >= 2) {
       return left(
