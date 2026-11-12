@@ -92,7 +92,20 @@ export function periodBounds(month: string) {
     to: last.toISOString().slice(0, 10),
   };
 }
-export function resolveFinancePeriod(input: unknown, today: string) {
+export interface FinancePeriodBounds {
+  month: string;
+  from: string;
+  to: string;
+  view?: "all" | "summary" | "entries" | "bookings";
+  entriesPage?: number;
+  entriesLimit?: number;
+  bookingsPage?: number;
+  bookingsLimit?: number;
+}
+export function resolveFinancePeriod(
+  input: unknown,
+  today: string,
+): FinancePeriodBounds {
   if (typeof input === "string" || input === undefined)
     return periodBounds(typeof input === "string" ? input : today.slice(0, 7));
   const values = z
@@ -100,6 +113,11 @@ export function resolveFinancePeriod(input: unknown, today: string) {
       month: competence.optional(),
       from: civilDate.optional(),
       to: civilDate.optional(),
+      view: z.enum(["all", "summary", "entries", "bookings"]).optional(),
+      entriesPage: z.coerce.number().int().min(1).optional(),
+      entriesLimit: z.coerce.number().int().min(1).max(200).optional(),
+      bookingsPage: z.coerce.number().int().min(1).optional(),
+      bookingsLimit: z.coerce.number().int().min(1).max(200).optional(),
     })
     .strict()
     .parse(input);
@@ -109,9 +127,37 @@ export function resolveFinancePeriod(input: unknown, today: string) {
         400,
         "Informe um período válido, com início e fim.",
       );
-    return { month: values.from.slice(0, 7), from: values.from, to: values.to };
+    const days =
+      Math.round(
+        (Date.parse(`${values.to}T12:00:00Z`) -
+          Date.parse(`${values.from}T12:00:00Z`)) /
+          86400000,
+      ) + 1;
+    if (days > 366) {
+      throw new FinanceError(
+        400,
+        "O período consultado não pode exceder 366 dias.",
+      );
+    }
+    return {
+      month: values.from.slice(0, 7),
+      from: values.from,
+      to: values.to,
+      view: values.view,
+      entriesPage: values.entriesPage,
+      entriesLimit: values.entriesLimit,
+      bookingsPage: values.bookingsPage,
+      bookingsLimit: values.bookingsLimit,
+    };
   }
-  return periodBounds(values.month ?? today.slice(0, 7));
+  return {
+    ...periodBounds(values.month ?? today.slice(0, 7)),
+    view: values.view,
+    entriesPage: values.entriesPage,
+    entriesLimit: values.entriesLimit,
+    bookingsPage: values.bookingsPage,
+    bookingsLimit: values.bookingsLimit,
+  };
 }
 export function nextDueDate(date: string) {
   civilDate.parse(date);

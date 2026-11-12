@@ -2,7 +2,7 @@ import type { ScheduleExceptionsRepository } from "../../../domain/application/r
 import type { ScheduleException } from "../../../domain/enterprise/entities/schedule-exception";
 import { db } from "../index";
 import { scheduleExceptions } from "../schema";
-import { eq } from "drizzle-orm";
+import { eq, and, gte, lte, isNull, or } from "drizzle-orm";
 import { DrizzleScheduleExceptionMapper } from "../mappers/drizzle-schedule-exception-mapper";
 
 export class DrizzleScheduleExceptionsRepository
@@ -54,6 +54,38 @@ export class DrizzleScheduleExceptionsRepository
       .select()
       .from(scheduleExceptions)
       .where(eq(scheduleExceptions.barbershopId, barbershopId));
+
+    return exceptions.map(DrizzleScheduleExceptionMapper.toDomain);
+  }
+
+  async findManyByBarbershopAndDate(
+    barbershopId: string,
+    dateStr: string,
+    barbermanId?: string | null,
+    tx?: any,
+  ): Promise<ScheduleException[]> {
+    const client = tx ?? db;
+    const cleanDate = dateStr.split("T")[0];
+    const startOfDay = new Date(`${cleanDate}T00:00:00.000Z`);
+    const endOfDay = new Date(`${cleanDate}T23:59:59.999Z`);
+    const barberFilter = barbermanId
+      ? or(
+          isNull(scheduleExceptions.barbermanId),
+          eq(scheduleExceptions.barbermanId, barbermanId),
+        )
+      : isNull(scheduleExceptions.barbermanId);
+
+    const exceptions = await client
+      .select()
+      .from(scheduleExceptions)
+      .where(
+        and(
+          eq(scheduleExceptions.barbershopId, barbershopId),
+          gte(scheduleExceptions.date, startOfDay),
+          lte(scheduleExceptions.date, endOfDay),
+          barberFilter,
+        ),
+      );
 
     return exceptions.map(DrizzleScheduleExceptionMapper.toDomain);
   }

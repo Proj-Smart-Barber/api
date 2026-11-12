@@ -8,5 +8,11 @@ export interface ScheduleExceptionsRepository {
     barbershopId: string,
     tx?: any,
   ): Promise<ScheduleException[]>;
+  findManyByBarbershopAndDate?(
+    barbershopId: string,
+    dateStr: string,
+    barbermanId?: string | null,
+    tx?: any,
+  ): Promise<ScheduleException[]>;
   delete(exception: ScheduleException, tx?: any): Promise<void>;
 }

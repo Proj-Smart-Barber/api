@@ -29,17 +29,25 @@ export class FetchUserNotificationsUseCase {
 
     const effectiveLimit = Math.min(Math.max(limit, 1), 100);
 
-    const notifications = await this.notificationsRepository.findManyByUserId(
-      userId,
-      { cursor, limit: effectiveLimit },
-    );
+    const [rawNotifications, unreadCount] = await Promise.all([
+      this.notificationsRepository.findManyByUserId(userId, {
+        cursor,
+        limit: effectiveLimit + 1,
+      }),
+      this.notificationsRepository.countUnreadByUserId(userId),
+    ]);
 
-    const unreadCount =
-      await this.notificationsRepository.countUnreadByUserId(userId);
+    const hasNext = rawNotifications.length > effectiveLimit;
+    const notifications = hasNext
+      ? rawNotifications.slice(0, effectiveLimit)
+      : rawNotifications;
 
+    const lastItem = notifications[notifications.length - 1];
     const nextCursor =
-      notifications.length === effectiveLimit
-        ? notifications[notifications.length - 1].id.toString()
+      hasNext && lastItem
+        ? lastItem.createdAt
+          ? `${lastItem.createdAt.toISOString()}|${lastItem.id.toString()}`
+          : lastItem.id.toString()
         : null;
 
     return right({

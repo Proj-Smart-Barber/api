@@ -289,7 +289,7 @@ describe("Booking Actions Contract & Idempotency E2E (Task I2)", () => {
 
   it("should enforce Idempotency-Key and ledger on DELETE /api/bookings/:bookingId/cancel", async () => {
     // Agendamento para 3 dias no futuro para permitir cancelamento pessoal
-    const booking = await createTestBooking("2026-10-25", "10:00");
+    const booking = await createTestBooking("2099-10-25", "10:00");
     const cancelReqId = generateUuidV7();
 
     // 1ª chamada de cancelamento com Idempotency-Key
@@ -365,11 +365,11 @@ describe("Booking Actions Contract & Idempotency E2E (Task I2)", () => {
     expect(notices.map((n) => n.userId).sort()).toEqual(
       [ownerUserId, barberUserId, customerUserId].sort(),
     );
-    expect(notices.every((n) => n.message.includes("25/10/2026"))).toBe(true);
+    expect(notices.every((n) => n.message.includes("25/10/2099"))).toBe(true);
   });
 
   it("should enforce Idempotency-Key and ledger on PATCH /api/bookings/:bookingId/reschedule", async () => {
-    const booking = await createTestBooking("2026-10-26", "14:00");
+    const booking = await createTestBooking("2099-10-26", "14:00");
     const rescheduleReqId = generateUuidV7();
 
     const rescheduleRes1 = await fetch(
@@ -383,7 +383,7 @@ describe("Booking Actions Contract & Idempotency E2E (Task I2)", () => {
         },
         body: JSON.stringify({
           expectedVersion: booking.version,
-          date: "2026-10-26",
+          date: "2099-10-26",
           startTime: "16:00",
           serviceIds: [service1Id],
           scope: "PERSONAL",
@@ -408,7 +408,7 @@ describe("Booking Actions Contract & Idempotency E2E (Task I2)", () => {
         },
         body: JSON.stringify({
           expectedVersion: booking.version,
-          date: "2026-10-26",
+          date: "2099-10-26",
           startTime: "16:00",
           serviceIds: [service1Id],
           scope: "PERSONAL",
@@ -432,12 +432,12 @@ describe("Booking Actions Contract & Idempotency E2E (Task I2)", () => {
     expect(notices.map((n) => n.userId).sort()).toEqual(
       [ownerUserId, barberUserId, customerUserId].sort(),
     );
-    expect(notices.every((n) => n.message.includes("26/10/2026"))).toBe(true);
+    expect(notices.every((n) => n.message.includes("26/10/2099"))).toBe(true);
     expect(new Date(resData1.booking.startsAt).toISOString()).toBe(
-      "2026-10-26T19:00:00.000Z",
+      "2099-10-26T19:00:00.000Z",
     );
     expect(new Date(resData1.booking.endsAt).toISOString()).toBe(
-      "2026-10-26T19:30:00.000Z",
+      "2099-10-26T19:30:00.000Z",
     );
 
     // Conferir se attempt existe no ledger
@@ -457,12 +457,15 @@ describe("Booking Actions Contract & Idempotency E2E (Task I2)", () => {
 
   it("should enforce Idempotency-Key and ledger on PATCH /api/bookings/:bookingId/status", async () => {
     // Criar reserva com horário passado para barbeiro poder marcar COMPLETED
-    const booking = await createTestBooking("2026-10-27", "11:00");
+    const booking = await createTestBooking("2099-10-27", "11:00");
 
     // Atualizar no banco startsAt para o passado para permitir canComplete
     await db
       .update(bookings)
-      .set({ startsAt: new Date(Date.now() - 3600 * 1000) })
+      .set({
+        startsAt: new Date(Date.now() - 3600 * 1000),
+        endsAt: new Date(Date.now() - 1800 * 1000),
+      })
       .where(inArray(bookings.id, [booking.id]));
 
     const statusReqId = generateUuidV7();
@@ -522,7 +525,7 @@ describe("Booking Actions Contract & Idempotency E2E (Task I2)", () => {
   });
 
   it("should reject invalid UUIDv7 Idempotency-Key with 400", async () => {
-    const booking = await createTestBooking("2026-10-28", "10:00");
+    const booking = await createTestBooking("2099-10-28", "10:00");
 
     const res = await fetch(`${baseUrl}/api/bookings/${booking.id}/cancel`, {
       method: "DELETE",
@@ -771,7 +774,10 @@ describe("Booking Actions Contract & Idempotency E2E (Task I2)", () => {
     }
     await db
       .update(bookings)
-      .set({ startsAt: new Date(Date.now() + 3600000) })
+      .set({
+        startsAt: new Date(Date.now() + 3600000),
+        endsAt: new Date(Date.now() + 5400000),
+      })
       .where(eq(bookings.id, booking.id));
     const response = await sendReschedule(booking, customerToken);
     expect(response.status).toBe(409);

@@ -13,8 +13,10 @@ import { BookingDetailsMapper } from "../../../../domain/enterprise/mappers/book
 const fetchMyBookingsSchema = z.object({
   userId: z.string().uuid({ message: "ID do usuário inválido." }),
   page: z.coerce.number().min(1).optional(),
-  view: z.enum(["all", "upcoming"]).optional(),
+  view: z.enum(["all", "upcoming", "past"]).optional(),
+  filter: z.enum(["all", "upcoming", "past"]).optional(),
   limit: z.coerce.number().min(1).max(50).optional(),
+  cursor: z.string().optional(),
 });
 
 export class FetchMyBookingsController implements Controller {
@@ -23,13 +25,19 @@ export class FetchMyBookingsController implements Controller {
   async handle(request: any): Promise<HttpResponse> {
     try {
       const parsed = fetchMyBookingsSchema.parse(request);
+      const page = parsed.page ?? 1;
+      const limit =
+        parsed.limit ??
+        (parsed.view === "upcoming" || parsed.filter === "upcoming" ? 1 : 20);
 
       const bookings = await this.bookingsRepository.findManyByCustomerId(
         parsed.userId,
         {
-          page: parsed.page ?? 1,
+          page,
           view: parsed.view,
+          filter: parsed.filter,
           limit: parsed.limit,
+          cursor: parsed.cursor,
         },
       );
 
@@ -40,6 +48,9 @@ export class FetchMyBookingsController implements Controller {
             scope: "PERSONAL",
           }),
         ),
+        page,
+        limit,
+        hasNext: bookings.length === limit,
         serverTime: new Date().toISOString(),
       });
     } catch (err) {

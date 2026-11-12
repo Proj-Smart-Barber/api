@@ -5,7 +5,6 @@ import {
   FinanceError,
   createExpense,
   nextDueDate,
-  projectFinanceRange,
   resolveFinancePeriod,
   receiptInput,
   updateEntry,
@@ -42,12 +41,164 @@ const bookingPrice = sql.raw(`COALESCE(b.total_price_in_cents,
 export class FinanceRepository {
   constructor(private database = db) {}
 
+  private async readPeriod(shopId: string, userId: string, input: unknown) {
+    return this.database.transaction(
+      async (tx) => {
+        // Lock authority first, then keep summary and pages in the same short snapshot.
+        const owner =
+          await tx.execute(sql`SELECT m.user_id,s.timezone FROM membership m
+        JOIN barbershops s ON s.id=m.barbershop_id
+        WHERE m.user_id=${userId}::uuid AND m.barbershop_id=${shopId}::uuid
+          AND m.role='OWNER' AND m.state='ACTIVE' FOR SHARE OF m`);
+        if (!owner.rows.length)
+          throw new FinanceError(
+            403,
+            "Acesso financeiro reservado ao proprietário ativo da unidade.",
+          );
+        const timezone = String(owner.rows[0].timezone);
+        const now = new Date();
+        const today = new Intl.DateTimeFormat("en-CA", {
+          timeZone: timezone,
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        }).format(now);
+        const bounds = resolveFinancePeriod(input, today);
+        const view = bounds.view ?? "all";
+        const bookingWindow = sql`b.barbershop_id=${shopId}::uuid AND (
+        (b.starts_at IS NOT NULL AND b.starts_at >= (${bounds.from}::date::timestamp AT TIME ZONE ${timezone})
+          AND b.starts_at < ((${bounds.to}::date + INTERVAL '1 day')::timestamp AT TIME ZONE ${timezone}))
+        OR (b.starts_at IS NULL AND b.date >= ${bounds.from}::date
+          AND b.date < ${bounds.to}::date + INTERVAL '1 day'))`;
+        const entriesWindow = sql`barbershop_id=${shopId}::uuid AND
+        (due_on BETWEEN ${bounds.from}::date AND ${bounds.to}::date
+          OR paid_on BETWEEN ${bounds.from}::date AND ${bounds.to}::date)`;
+        // Aggregates, not individual bookings/entries, cross the database boundary.
+        const aggregate = await tx.execute(sql`
+        WITH relevant_bookings AS (
+          SELECT COALESCE((b.starts_at AT TIME ZONE ${timezone})::date,b.date::date) AS day,
+            b.status, ${bookingPrice} AS amount FROM bookings b WHERE ${bookingWindow}
+        ), booking_days AS (
+          SELECT day,
+            COALESCE(SUM(amount) FILTER (WHERE status='COMPLETED' AND amount>=0),0) AS completed,
+            COALESCE(SUM(amount) FILTER (WHERE status IN ('WAITING','CONFIRMED','IN_SERVICE') AND amount>=0),0) AS forecast,
+            COUNT(*) FILTER (WHERE status IN ('WAITING','CONFIRMED','IN_SERVICE','COMPLETED') AND (amount IS NULL OR amount<0)) AS unknown
+          FROM relevant_bookings GROUP BY day
+        ), relevant_entries AS (SELECT * FROM finance_entries WHERE ${entriesWindow}),
+        entry_days AS (
+          SELECT paid_on AS day,
+            COALESCE(SUM(amount_in_cents) FILTER (WHERE kind='RECEIPT'),0) AS received,
+            COALESCE(SUM(amount_in_cents) FILTER (WHERE kind='EXPENSE'),0) AS paid
+          FROM relevant_entries WHERE status='PAID' AND paid_on BETWEEN ${bounds.from}::date AND ${bounds.to}::date GROUP BY paid_on
+        )
+        SELECT days.day::date::text AS date, COALESCE(b.completed,0)::text AS completed,
+          COALESCE(b.forecast,0)::text AS forecast, COALESCE(b.unknown,0)::text AS unknown,
+          COALESCE(e.received,0)::text AS received, COALESCE(e.paid,0)::text AS paid,
+          (SELECT COALESCE(SUM(amount_in_cents),0)::text FROM relevant_entries
+            WHERE kind='EXPENSE' AND status='PLANNED' AND due_on BETWEEN ${bounds.from}::date AND ${bounds.to}::date) AS payable,
+          (SELECT COUNT(*)::text FROM relevant_entries WHERE ${view === "entries" ? sql`kind='EXPENSE'` : sql`TRUE`}) AS entries_total,
+          (SELECT COUNT(*)::text FROM relevant_bookings) AS bookings_total
+        FROM generate_series(${bounds.from}::date::timestamp, ${bounds.to}::date::timestamp, INTERVAL '1 day') AS days(day)
+        LEFT JOIN booking_days b ON b.day=days.day::date
+        LEFT JOIN entry_days e ON e.day=days.day::date ORDER BY days.day`);
+        const numeric = (value: unknown): number => {
+          const n = Number(value ?? 0);
+          if (!Number.isSafeInteger(n))
+            throw new FinanceError(422, "O total excedeu o limite de cálculo.");
+          return n;
+        };
+        const sum = (field: string) =>
+          numeric(
+            aggregate.rows
+              .reduce((acc, row) => acc + BigInt(String(row[field] ?? 0)), 0n)
+              .toString(),
+          );
+        const completed = sum("completed"),
+          forecast = sum("forecast");
+        const received = sum("received"),
+          paid = sum("paid");
+        const summary = {
+          completedInCents: completed,
+          forecastInCents: forecast,
+          receivedInCents: received,
+          paidInCents: paid,
+          payableInCents: numeric(aggregate.rows[0]?.payable),
+          balanceInCents: numeric(received - paid),
+          unknownPrices: sum("unknown"),
+          daily: aggregate.rows.map((row) => ({
+            date: String(row.date),
+            completedInCents: numeric(row.completed),
+            forecastInCents: numeric(row.forecast),
+            paidInCents: numeric(row.paid),
+          })),
+        };
+        const entriesPage = bounds.entriesPage ?? 1,
+          bookingsPage = bounds.bookingsPage ?? 1;
+        // Legacy view remains compatible. New screens request only one bounded section.
+        const entriesLimit =
+          bounds.entriesLimit ?? (view === "entries" ? 30 : undefined);
+        const bookingsLimit =
+          bounds.bookingsLimit ?? (view === "bookings" ? 30 : undefined);
+        let entries: FinanceEntry[] = [],
+          bookings: FinanceBooking[] = [];
+        if (view === "all" || view === "entries") {
+          const values =
+            await tx.execute(sql`SELECT ${columns} FROM finance_entries WHERE ${entriesWindow}
+          AND ${view === "entries" ? sql`kind='EXPENSE'` : sql`TRUE`} ORDER BY due_on,id
+          ${entriesLimit ? sql`LIMIT ${entriesLimit} OFFSET ${(entriesPage - 1) * entriesLimit}` : sql``}`);
+          entries = values.rows.map(entry);
+        }
+        if (view === "all" || view === "bookings") {
+          const rows = await tx.execute(sql`WITH page AS (
+          SELECT b.* FROM bookings b WHERE ${bookingWindow} ORDER BY b.starts_at,b.id
+          ${bookingsLimit ? sql`LIMIT ${bookingsLimit} OFFSET ${(bookingsPage - 1) * bookingsLimit}` : sql``}
+        ) SELECT b.id,b.status,COALESCE((b.starts_at AT TIME ZONE ${timezone})::date,b.date::date)::text AS date,
+          ${bookingPrice} AS amount,COALESCE(u.name,'Profissional') AS professional,
+          COALESCE((SELECT string_agg(title,', ' ORDER BY id) FROM booking_service_items WHERE booking_id=b.id),'Atendimento') AS services,
+          f.id AS receipt_id FROM page b LEFT JOIN users u ON u.id=b.barberman_id
+          LEFT JOIN finance_entries f ON f.booking_id=b.id AND f.kind='RECEIPT' ORDER BY b.starts_at,b.id`);
+          bookings = rows.rows.map((row) => ({
+            id: String(row.id),
+            date: String(row.date),
+            status: String(row.status),
+            professional: String(row.professional),
+            services: String(row.services),
+            amountInCents: row.amount === null ? null : numeric(row.amount),
+            receiptId: row.receipt_id ? String(row.receipt_id) : null,
+          }));
+        }
+        return {
+          month: bounds.month,
+          from: bounds.from,
+          to: bounds.to,
+          today,
+          timezone,
+          serverTime: now.toISOString(),
+          entries,
+          bookings,
+          entriesTotal: numeric(aggregate.rows[0]?.entries_total),
+          bookingsTotal: numeric(aggregate.rows[0]?.bookings_total),
+          entriesPage,
+          bookingsPage,
+          entriesLimit: entriesLimit ?? entries.length,
+          bookingsLimit: bookingsLimit ?? bookings.length,
+          summary,
+        };
+      },
+      { isolationLevel: "repeatable read" },
+    );
+  }
+
   async execute(
     shopId: string,
     userId: string,
     operation: string,
     input: unknown,
   ) {
+    if (operation === "period") {
+      return this.readPeriod(shopId, userId, input);
+    }
+
     return this.database.transaction(async (tx) => {
       const owner =
         await tx.execute(sql`SELECT m.user_id,s.timezone FROM membership m
@@ -67,53 +218,6 @@ export class FinanceRepository {
         month: "2-digit",
         day: "2-digit",
       }).format(now);
-
-      if (operation === "period") {
-        const bounds = resolveFinancePeriod(input, today);
-        const month = bounds.month;
-        const values =
-          await tx.execute(sql`SELECT ${columns} FROM finance_entries WHERE barbershop_id=${shopId}::uuid
-          AND (due_on BETWEEN ${bounds.from}::date AND ${bounds.to}::date
-            OR paid_on BETWEEN ${bounds.from}::date AND ${bounds.to}::date)
-          ORDER BY due_on,id`);
-        const rows = await tx.execute(sql`SELECT b.id,b.status,
-          COALESCE((b.starts_at AT TIME ZONE ${timezone})::date,b.date::date)::text AS date,
-          ${bookingPrice} AS amount,
-          COALESCE(u.name,'Profissional') AS professional,
-          COALESCE((SELECT string_agg(title,', ' ORDER BY id) FROM booking_service_items WHERE booking_id=b.id),'Atendimento') AS services,
-          f.id AS receipt_id
-          FROM bookings b LEFT JOIN users u ON u.id=b.barberman_id
-          LEFT JOIN finance_entries f ON f.booking_id=b.id AND f.kind='RECEIPT'
-          WHERE b.barbershop_id=${shopId}::uuid
-          AND COALESCE((b.starts_at AT TIME ZONE ${timezone})::date,b.date::date) BETWEEN ${bounds.from}::date AND ${bounds.to}::date
-          ORDER BY b.starts_at,b.id`);
-        const bookings: FinanceBooking[] = rows.rows.map((row) => ({
-          id: String(row.id),
-          date: String(row.date),
-          status: String(row.status),
-          amountInCents: row.amount === null ? null : Number(row.amount),
-          professional: String(row.professional),
-          services: String(row.services),
-          receiptId: row.receipt_id ? String(row.receipt_id) : null,
-        }));
-        const entries = values.rows.map(entry);
-        return {
-          month,
-          from: bounds.from,
-          to: bounds.to,
-          today,
-          timezone,
-          serverTime: now.toISOString(),
-          entries,
-          bookings,
-          summary: projectFinanceRange(
-            bounds.from,
-            bounds.to,
-            entries,
-            bookings,
-          ),
-        };
-      }
 
       if (operation === "create" || operation === "copy") {
         let sourceId: string | null = null;

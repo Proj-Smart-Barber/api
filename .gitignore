@@ -21,3 +21,9 @@ scripts/review-*.cjs
 # Private maintenance receipts; never commit secrets or database backups
 .media-import/
 *.dump
+
+# Generated local optimization evidence (curated copies are under docs).
+.tmp-*.log
+/benchmark-*.json
+/index-assessment.json
+/index-candidate-definitions.json

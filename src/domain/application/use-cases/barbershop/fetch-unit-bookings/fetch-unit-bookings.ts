@@ -13,6 +13,8 @@ export interface FetchUnitBookingsDTO {
   status?: string;
   page?: number;
   limit?: number;
+  includeSummary?: boolean;
+  bootstrapOnly?: boolean;
 }
 
 export interface FetchUnitBookingsResponseData {
@@ -22,6 +24,7 @@ export interface FetchUnitBookingsResponseData {
   total: number;
   hasNext: boolean;
   serverTime: string;
+  actorRole?: string;
   summary: {
     totalBookings: number;
     totalAmountInCents: number;
@@ -49,6 +52,8 @@ export class FetchUnitBookingsUseCase {
     status,
     page = 1,
     limit = 20,
+    includeSummary,
+    bootstrapOnly,
   }: FetchUnitBookingsDTO): Promise<FetchUnitBookingsResponse> {
     const membership = await this.membershipsRepository.findByBarbershopAndUser(
       shopId,
@@ -76,6 +81,8 @@ export class FetchUnitBookingsUseCase {
       status,
       page,
       limit,
+      includeSummary,
+      bootstrapOnly,
     });
 
     return right({
@@ -85,6 +92,7 @@ export class FetchUnitBookingsUseCase {
       total: result.total,
       hasNext: result.hasNext,
       serverTime: new Date().toISOString(),
+      actorRole: membership.role,
       summary: result.summary,
     });
   }

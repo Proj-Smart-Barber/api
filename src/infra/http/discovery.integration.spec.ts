@@ -456,7 +456,7 @@ describe.skipIf(!testDbUrl)(
     // 3. Maintenance Mode / Health Flag (503)
     // ==========================================
     describe("Maintenance Mode & Resilience", () => {
-      it("returns 503 for nearby search when location maintenance is active, while GET / continues operating", async () => {
+      it("preserves manual nearby search during Google cache maintenance", async () => {
         // Activate maintenance mode
         await isolated.pool.query(`
           INSERT INTO location_maintenance_health (component, is_healthy, details, updated_at)
@@ -465,17 +465,15 @@ describe.skipIf(!testDbUrl)(
           SET is_healthy = false, details = 'Maintenance active', updated_at = now();
         `);
 
-        // POST /nearby must return 503
+        // MANUAL points remain usable while GOOGLE cache maintenance is unhealthy.
         const nearbyRes = await post("/barbershops/nearby", {
           latitude: refLat,
           longitude: refLon,
           radiusKm: 10,
         });
-        expect(nearbyRes.status).toBe(503);
+        expect(nearbyRes.status).toBe(200);
         const nearbyBody = (await nearbyRes.json()) as any;
-        expect(nearbyBody.error).toContain(
-          "Serviço de busca por proximidade temporariamente indisponível",
-        );
+        expect(nearbyBody.items.length).toBeGreaterThan(0);
 
         // GET /barbershops must CONTINUE to work normally (200 OK)
         const getRes = await get("/barbershops");

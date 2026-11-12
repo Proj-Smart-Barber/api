@@ -1234,20 +1234,28 @@ describe.skipIf(!testDbUrl)(
           unknownFutureId,
         ]);
         expect(loaded.bookings[1].totalPriceInCents).toBeNull();
-        const readDetails = DrizzleBookingsRepository.prototype.getDetails;
+        const batchPrototype =
+          DrizzleBookingsRepository.prototype as unknown as {
+            hydrateBookingsDetailsBatch: (
+              rows: Array<typeof bookings.$inferSelect>,
+              tx?: any,
+            ) => Promise<any[]>;
+          };
+        const readDetails = batchPrototype.hydrateBookingsDetailsBatch;
         const concurrentChange = vi
-          .spyOn(DrizzleBookingsRepository.prototype, "getDetails")
+          .spyOn(batchPrototype, "hydrateBookingsDetailsBatch")
           .mockImplementationOnce(async function (
             this: DrizzleBookingsRepository,
-            id,
+            rows,
             tx,
           ) {
+            const id = rows[0].id;
             expect(id).toBe(activeUpcomingId);
             await db
               .update(bookings)
               .set({ status: "CANCELLED" })
               .where(eq(bookings.id, id));
-            return readDetails.call(this, id, tx);
+            return readDetails.call(this, rows, tx);
           });
         try {
           const snapshot = await fetch(

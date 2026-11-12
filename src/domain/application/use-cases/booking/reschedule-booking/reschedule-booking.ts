@@ -375,29 +375,6 @@ export class RescheduleBookingUseCase {
 
       // Validar jornada de trabalho e exceções efetivas (R1/A1/A2) dentro da transação com lock
       if (this.schedulesRepository) {
-        const allSchedules =
-          await this.schedulesRepository.findManyByBarbershopId(
-            booking.barbershopId.toString(),
-            tx,
-          );
-
-        const generalScope = await this.schedulesRepository.findScope(
-          booking.barbershopId.toString(),
-          null,
-          tx,
-        );
-        const generalScopeState = generalScope?.state ?? null;
-
-        let scopeState = null;
-        if (targetBarbermanId) {
-          const scope = await this.schedulesRepository.findScope(
-            booking.barbershopId.toString(),
-            targetBarbermanId,
-            tx,
-          );
-          if (scope) scopeState = scope.state;
-        }
-
         const targetDate = new Date(`${dto.date}T12:00:00Z`);
         const dayOfWeekIndex = targetDate.getUTCDay();
         const daysMap = [
@@ -410,6 +387,45 @@ export class RescheduleBookingUseCase {
           "SATURDAY",
         ];
         const dayOfWeek = daysMap[dayOfWeekIndex];
+
+        const allSchedules = this.schedulesRepository.findManyByBarbershopAndDay
+          ? await this.schedulesRepository.findManyByBarbershopAndDay(
+              booking.barbershopId.toString(),
+              dayOfWeek,
+              targetBarbermanId,
+              tx,
+            )
+          : await this.schedulesRepository.findManyByBarbershopId(
+              booking.barbershopId.toString(),
+              tx,
+            );
+
+        let generalScopeState = null;
+        let scopeState = null;
+        if (this.schedulesRepository.findScopesForBarbershop) {
+          const scopes = await this.schedulesRepository.findScopesForBarbershop(
+            booking.barbershopId.toString(),
+            targetBarbermanId,
+            tx,
+          );
+          generalScopeState = scopes.generalScope?.state ?? null;
+          scopeState = scopes.barberScope?.state ?? null;
+        } else {
+          const generalScope = await this.schedulesRepository.findScope(
+            booking.barbershopId.toString(),
+            null,
+            tx,
+          );
+          generalScopeState = generalScope?.state ?? null;
+          if (targetBarbermanId) {
+            const scope = await this.schedulesRepository.findScope(
+              booking.barbershopId.toString(),
+              targetBarbermanId,
+              tx,
+            );
+            if (scope) scopeState = scope.state;
+          }
+        }
 
         const { intervals } =
           EffectiveScheduleResolver.resolveEffectiveDayIntervals({
@@ -436,20 +452,27 @@ export class RescheduleBookingUseCase {
       }
 
       if (this.scheduleExceptionsRepository) {
-        const allExceptions =
-          await this.scheduleExceptionsRepository.findManyByBarbershopId(
-            booking.barbershopId.toString(),
-            tx,
-          );
-
-        const dayExceptions = allExceptions.filter((e) => {
-          const eDate = new Date(e.date).toISOString().split("T")[0];
-          const matchBarberman =
-            !e.barbermanId ||
-            (targetBarbermanId &&
-              e.barbermanId.toString() === targetBarbermanId);
-          return eDate === dto.date && matchBarberman;
-        });
+        const dayExceptions = this.scheduleExceptionsRepository
+          .findManyByBarbershopAndDate
+          ? await this.scheduleExceptionsRepository.findManyByBarbershopAndDate(
+              booking.barbershopId.toString(),
+              dto.date,
+              targetBarbermanId,
+              tx,
+            )
+          : (
+              await this.scheduleExceptionsRepository.findManyByBarbershopId(
+                booking.barbershopId.toString(),
+                tx,
+              )
+            ).filter((e) => {
+              const eDate = new Date(e.date).toISOString().split("T")[0];
+              const matchBarberman =
+                !e.barbermanId ||
+                (targetBarbermanId &&
+                  e.barbermanId.toString() === targetBarbermanId);
+              return eDate === dto.date && matchBarberman;
+            });
 
         const overlapsException = EffectiveScheduleResolver.overlapsException(
           dto.startTime,

@@ -52,8 +52,10 @@ export interface SaveBookingOptions {
 
 export interface FindManyByCustomerIdOptions {
   page?: number;
-  view?: "all" | "upcoming";
+  view?: "all" | "upcoming" | "past";
+  filter?: "all" | "upcoming" | "past";
   limit?: number;
+  cursor?: string;
 }
 
 export interface BookingsRepository {
@@ -103,9 +105,12 @@ export interface FindUnitBookingsParams {
   barbershopId: string;
   barbermanId?: string;
   date?: string;
+  timezone?: string;
   status?: string;
   page?: number;
   limit?: number;
+  includeSummary?: boolean;
+  bootstrapOnly?: boolean;
 }
 
 export interface UnitBookingsSummary {

@@ -13,7 +13,7 @@ import type { CreateBarbershopUseCase } from "../../../../domain/application/use
 import { z, ZodError } from "zod";
 
 const cnpjSchema = z
-  .string({ required_error: "CNPJ é obrigatório." })
+  .string({ error: "CNPJ é obrigatório." })
   .transform((value) => value.replace(/[./\s-]/g, ""))
   .pipe(z.string().regex(/^\d{14}$/, "CNPJ deve conter 14 dígitos."));
 
@@ -29,12 +29,12 @@ const timezoneSchema = z.string().refine((timezone) => {
 export const createBarbershopBodySchema = z
   .object({
     name: z
-      .string({ required_error: "Nome é obrigatório." })
+      .string({ error: "Nome é obrigatório." })
       .trim()
       .min(1, "Nome é obrigatório."),
     cnpj: cnpjSchema,
     location: z
-      .string({ required_error: "Localização é obrigatória." })
+      .string({ error: "Localização é obrigatória." })
       .trim()
       .min(1, "Localização é obrigatória."),
     timezone: timezoneSchema.optional(),
@@ -43,7 +43,7 @@ export const createBarbershopBodySchema = z
   .strict();
 
 export const authenticatedActorSchema = z
-  .string({ required_error: "Usuário não autenticado." })
+  .string({ error: "Usuário não autenticado." })
   .uuid("Usuário não autenticado.");
 
 export interface CreateBarbershopControllerRequest {

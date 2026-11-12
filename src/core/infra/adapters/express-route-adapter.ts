@@ -23,21 +23,54 @@ export const adaptRoute = (controller: Controller) => {
       }
     }
 
-    if (
-      request.originalUrl?.includes("/sessions") ||
-      request.originalUrl?.includes("/me") ||
-      request.originalUrl?.includes("/operation-attempts") ||
-      request.originalUrl?.includes("/bookings") ||
-      request.originalUrl?.includes("/customers/lookup") ||
-      request.originalUrl?.includes("/barbershops/nearby") ||
-      request.originalUrl?.includes("/availability")
-    ) {
+    const urlPath = (request.originalUrl ?? request.url ?? "").split("?")[0];
+    const hasAuthHeader = Boolean(request.headers.authorization);
+    const isPrivateOrRealtimeRoute =
+      request.method !== "GET" ||
+      hasAuthHeader ||
+      urlPath.includes("/sessions") ||
+      urlPath.includes("/me") ||
+      urlPath.includes("/operation-attempts") ||
+      urlPath.includes("/bookings") ||
+      urlPath.includes("/customers/lookup") ||
+      urlPath.includes("/barbershops/nearby") ||
+      urlPath.includes("/barbershops/explore") ||
+      urlPath.includes("/availability") ||
+      urlPath.includes("/notifications") ||
+      urlPath.includes("/finance") ||
+      urlPath.includes("/memberships") ||
+      urlPath.includes("/invitations");
+
+    const isPublicBarbershopCatalogGet =
+      request.method === "GET" &&
+      !hasAuthHeader &&
+      !isPrivateOrRealtimeRoute &&
+      (/^\/api\/barbershops\/[0-9a-fA-F-]{36}(?:\/(?:professionals|reviews|gallery|services))?$/.test(
+        urlPath,
+      ) ||
+        /^\/api\/barbershops\/[0-9a-fA-F-]{36}\/services\/public$/.test(
+          urlPath,
+        ));
+
+    if (isPrivateOrRealtimeRoute) {
       response.setHeader("Cache-Control", "no-store");
       response.setHeader("Pragma", "no-cache");
+    } else if (
+      isPublicBarbershopCatalogGet &&
+      !request.headers.cookie &&
+      process.env.ENABLE_PUBLIC_HTTP_CACHE === "true"
+    ) {
+      response.setHeader(
+        "Cache-Control",
+        "public, max-age=30, stale-while-revalidate=60",
+      );
+      response.setHeader("Vary", "Accept-Encoding, Authorization");
     }
 
     const httpResponse = await controller.handle(requestData);
 
+    if (httpResponse.statusCode >= 400)
+      response.setHeader("Cache-Control", "no-store");
     if (httpResponse.headers) {
       for (const [headerName, headerValue] of Object.entries(
         httpResponse.headers,

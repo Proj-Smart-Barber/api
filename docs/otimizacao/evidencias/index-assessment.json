@@ -1,0 +1,138 @@
+{
+  "environment": "owned disposable PostgreSQL 16; synthetic growth dataset, not the baseline HTTP dataset",
+  "tables": [
+    {
+      "relname": "barbershop_schedules",
+      "n_live_tup": "35035"
+    },
+    {
+      "relname": "barbershops",
+      "n_live_tup": "5120"
+    },
+    {
+      "relname": "bookings",
+      "n_live_tup": "2806"
+    },
+    {
+      "relname": "notifications",
+      "n_live_tup": "20488"
+    },
+    {
+      "relname": "schedule_exceptions",
+      "n_live_tup": "50060"
+    }
+  ],
+  "before": {
+    "membership_user_state_shop_idx": {
+      "executionMs": 0.041,
+      "buffers": 2,
+      "indexes": [],
+      "rows": 1
+    },
+    "barbershop_schedules_shop_day_barber_idx": {
+      "executionMs": 3.547,
+      "buffers": 539,
+      "indexes": [],
+      "rows": 2
+    },
+    "schedule_exceptions_shop_date_barber_idx": {
+      "executionMs": 3.748,
+      "buffers": 619,
+      "indexes": [],
+      "rows": 0
+    },
+    "notifications_user_created_id_idx": {
+      "executionMs": 6.505,
+      "buffers": 368,
+      "indexes": [],
+      "rows": 21
+    },
+    "notifications_user_unread_idx": {
+      "executionMs": 3.792,
+      "buffers": 368,
+      "indexes": [],
+      "rows": 1
+    },
+    "bookings_customer_starts_at_id_idx": {
+      "executionMs": 0.763,
+      "buffers": 71,
+      "indexes": [],
+      "rows": 20
+    },
+    "shopping_carts_user_id_idx": {
+      "executionMs": 0.725,
+      "buffers": 71,
+      "indexes": [],
+      "rows": 20
+    },
+    "bookings_shop_barber_starts_at_id_idx": {
+      "executionMs": 0.111,
+      "buffers": 6,
+      "indexes": [
+        "bookings_barberman_starts_ends_idx"
+      ],
+      "rows": 20
+    }
+  },
+  "after": {
+    "membership_user_state_shop_idx": {
+      "executionMs": 0.067,
+      "buffers": 2,
+      "indexes": [],
+      "rows": 1
+    },
+    "barbershop_schedules_shop_day_barber_idx": {
+      "executionMs": 0.086,
+      "buffers": 7,
+      "indexes": [
+        "barbershop_schedules_shop_day_barber_idx",
+        "barbershop_schedules_shop_day_barber_idx"
+      ],
+      "rows": 2
+    },
+    "schedule_exceptions_shop_date_barber_idx": {
+      "executionMs": 0.052,
+      "buffers": 3,
+      "indexes": [
+        "schedule_exceptions_shop_date_barber_idx"
+      ],
+      "rows": 0
+    },
+    "notifications_user_created_id_idx": {
+      "executionMs": 0.177,
+      "buffers": 24,
+      "indexes": [
+        "notifications_user_created_id_idx"
+      ],
+      "rows": 21
+    },
+    "notifications_user_unread_idx": {
+      "executionMs": 2.077,
+      "buffers": 11,
+      "indexes": [
+        "notifications_user_unread_idx"
+      ],
+      "rows": 1
+    },
+    "bookings_customer_starts_at_id_idx": {
+      "executionMs": 0.837,
+      "buffers": 71,
+      "indexes": [],
+      "rows": 20
+    },
+    "shopping_carts_user_id_idx": {
+      "executionMs": 0.994,
+      "buffers": 71,
+      "indexes": [],
+      "rows": 20
+    },
+    "bookings_shop_barber_starts_at_id_idx": {
+      "executionMs": 0.182,
+      "buffers": 6,
+      "indexes": [
+        "bookings_shop_barber_starts_at_id_idx"
+      ],
+      "rows": 20
+    }
+  }
+}

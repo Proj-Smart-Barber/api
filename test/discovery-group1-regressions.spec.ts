@@ -1,4 +1,12 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { SearchBarbershopsUseCase } from "../src/domain/application/use-cases/barbershop/search-barbershops/search-barbershops";
 import { runSchemaMigrations } from "../src/infra/drizzle/migrator";
@@ -39,6 +47,11 @@ describe.skipIf(!testDbUrl)(
         "INSERT INTO users (id, name, email, password, cpf) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO NOTHING",
         [owner, "Audit", "audit@example.com", "fake", "00000000000"],
       );
+    });
+
+    beforeEach(async () => {
+      await isolated.pool.query(`INSERT INTO location_maintenance_health(component,is_healthy,last_heartbeat_at)
+        VALUES('google_maps_cache',true,NOW()) ON CONFLICT(component) DO UPDATE SET is_healthy=true,last_heartbeat_at=NOW()`);
     });
 
     afterAll(async () => {
@@ -108,18 +121,20 @@ describe.skipIf(!testDbUrl)(
     describe("Original 7 Review Findings", () => {
       it("health without a record must be unavailable", async () => {
         await isolated.pool.query("DELETE FROM location_maintenance_health");
-        expect(await repo.isLocationServiceHealthy()).toBe(false);
+        expect(await repo.isGoogleMapsCacheHealthy()).toBe(false);
       });
 
       it("health with a stale heartbeat must be unavailable", async () => {
         await isolated.pool.query(
           "INSERT INTO location_maintenance_health(component, is_healthy, last_heartbeat_at) VALUES ('google_maps_cache', true, now() - interval '40 hours') ON CONFLICT (component) DO UPDATE SET is_healthy = true, last_heartbeat_at = now() - interval '40 hours'",
         );
-        expect(await repo.isLocationServiceHealthy()).toBe(false);
+        expect(await repo.isGoogleMapsCacheHealthy()).toBe(false);
       });
 
       it("ALL must suppress coordinates when maintenance is unhealthy", async () => {
-        const id = await shop(101, "Maintenance audit", 0, 0);
+        const id = await shop(101, "Maintenance audit", 0, 0, {
+          source: "GOOGLE",
+        });
         await isolated.pool.query(
           "UPDATE location_maintenance_health SET is_healthy = false WHERE component = 'google_maps_cache'",
         );
@@ -433,7 +448,7 @@ describe.skipIf(!testDbUrl)(
             `,
               [microseconds],
             );
-            expect(await boundaryRepo.isLocationServiceHealthy()).toBe(healthy);
+            expect(await boundaryRepo.isGoogleMapsCacheHealthy()).toBe(healthy);
           }
         } finally {
           await client.query("ROLLBACK");
@@ -445,49 +460,49 @@ describe.skipIf(!testDbUrl)(
         const executeSpy = vi
           .spyOn(isolated.db, "execute")
           .mockRejectedValueOnce(new Error("Simulated connection timeout"));
-        expect(await repo.isLocationServiceHealthy()).toBe(false);
+        expect(await repo.isGoogleMapsCacheHealthy()).toBe(false);
         executeSpy.mockRestore();
       });
 
-      it("NEARBY returns 503 while ALL succeeds with coordinates=null during health failure", async () => {
-        await isolated.pool.query(`
-          UPDATE location_maintenance_health
-          SET is_healthy = false, last_heartbeat_at = now()
-          WHERE component = 'google_maps_cache'
-        `);
-
+      it("preserves MANUAL nearby results while hiding unhealthy GOOGLE coordinates", async () => {
+        const manual = await shop(390, "Per-source maintenance manual", 0, 0);
+        const google = await shop(391, "Per-source maintenance Google", 0, 0, {
+          source: "GOOGLE",
+        });
+        await isolated.pool.query(
+          "UPDATE location_maintenance_health SET is_healthy=false WHERE component='google_maps_cache'",
+        );
         const useCase = new SearchBarbershopsUseCase(repo);
-
-        // NEARBY must fail with LocationServiceUnavailableError (HTTP 503)
-        const nearbyRes = await useCase.execute({
+        const nearby = await useCase.execute({
           mode: "NEARBY",
           point: { latitude: 0, longitude: 0 },
           radiusKm: 10,
+          q: "Per-source maintenance",
           page: 1,
           limit: 10,
         });
-        expect(nearbyRes.isLeft()).toBe(true);
-
-        // ALL must succeed (HTTP 200) with shop data present, but coordinates stripped
-        const allRes = await useCase.execute({
-          mode: "ALL",
-          page: 1,
-          limit: 10,
-        });
-        expect(allRes.isRight()).toBe(true);
-        if (allRes.isRight()) {
-          expect(allRes.value.items.length).toBeGreaterThan(0);
-          for (const item of allRes.value.items) {
-            expect(item.coordinates).toBeNull();
-          }
+        expect(nearby.isRight()).toBe(true);
+        if (nearby.isRight()) {
+          expect(nearby.value.items.map((item) => item.id)).toContain(manual);
+          expect(nearby.value.items.map((item) => item.id)).not.toContain(
+            google,
+          );
         }
-
-        // Restore health
-        await isolated.pool.query(`
-          UPDATE location_maintenance_health
-          SET is_healthy = true, last_heartbeat_at = now()
-          WHERE component = 'google_maps_cache'
-        `);
+        const all = await useCase.execute({
+          mode: "ALL",
+          q: "Per-source maintenance",
+          page: 1,
+          limit: 10,
+        });
+        expect(all.isRight()).toBe(true);
+        if (all.isRight()) {
+          expect(
+            all.value.items.find((item) => item.id === manual)?.coordinates,
+          ).not.toBeNull();
+          expect(
+            all.value.items.find((item) => item.id === google)?.coordinates,
+          ).toBeNull();
+        }
       });
 
       it("enforces Google 25-day validity ceiling and suppresses coordinates on invalid metadata", async () => {

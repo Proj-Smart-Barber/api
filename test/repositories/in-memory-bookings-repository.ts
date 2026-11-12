@@ -378,14 +378,33 @@ export class InMemoryBookingsRepository implements BookingsRepository {
     status,
     page = 1,
     limit = 20,
+    bootstrapOnly = false,
   }: {
     barbershopId: string;
     barbermanId?: string;
     date?: string;
+    timezone?: string;
     status?: string;
     page?: number;
     limit?: number;
+    includeSummary?: boolean;
+    bootstrapOnly?: boolean;
   }) {
+    if (bootstrapOnly) {
+      return {
+        items: [],
+        page: Math.max(1, page),
+        limit: Math.min(Math.max(1, limit), 100),
+        total: 0,
+        hasNext: false,
+        summary: {
+          totalBookings: 0,
+          totalAmountInCents: 0,
+          statusCounts: {},
+          hasIncompleteData: false,
+        },
+      };
+    }
     let filtered = this.items.filter(
       (b) => b.barbershopId.toString() === barbershopId,
     );
