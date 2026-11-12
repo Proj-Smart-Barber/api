@@ -114,14 +114,22 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
         sql`, `,
       );
       const galleryResult = await this.database.execute(sql`
-        SELECT
-          bg.barbershop_id::text AS barbershop_id,
-          m.id,m.public_url,m.width,m.height,m.mime_type,m.variants
-        FROM barbershop_gallery bg
-        INNER JOIN media m ON m.id = bg.media_id
-        WHERE bg.barbershop_id IN (${idListSql})
-          AND m.public_url IS NOT NULL AND m.status='READY' AND m.owner_entity_id=bg.barbershop_id
-        ORDER BY bg.barbershop_id ASC, bg.is_cover DESC, bg.display_order ASC
+        SELECT barbershop_id, id, public_url, width, height, mime_type, variants
+        FROM (
+          SELECT
+            bg.barbershop_id::text AS barbershop_id,
+            m.id, m.public_url, m.width, m.height, m.mime_type, m.variants,
+            ROW_NUMBER() OVER (
+              PARTITION BY bg.barbershop_id
+              ORDER BY bg.is_cover DESC, bg.display_order ASC, m.id ASC
+            ) AS rn
+          FROM barbershop_gallery bg
+          INNER JOIN media m ON m.id = bg.media_id
+          WHERE bg.barbershop_id IN (${idListSql})
+            AND m.public_url IS NOT NULL AND m.status='READY' AND m.owner_entity_id=bg.barbershop_id
+        ) ranked_gallery
+        WHERE rn <= 6
+        ORDER BY barbershop_id ASC, rn ASC
       `);
 
       for (const row of galleryResult.rows) {
@@ -160,12 +168,21 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
         sql`, `,
       );
       const servicesResult = await this.database.execute(sql`
-        SELECT s.id,s.barbershop_id::text AS barbershop_id,s.title,s.price_in_cents,s.duration_in_minutes,
-          m.public_url AS image_url,m.id AS media_id,m.width,m.height,m.mime_type,m.variants,s.featured_order
-        FROM services s JOIN service_media sm ON sm.service_id=s.id JOIN media m ON m.id=sm.media_id
-        WHERE s.barbershop_id IN (${idListSql}) AND s.is_featured=true AND s.is_active=true
-          AND m.status='READY' AND m.purpose IN ('SERVICE_PHOTO','SERVICE_VIDEO') AND m.owner_entity_id=s.barbershop_id
-        ORDER BY s.barbershop_id,s.featured_order,s.id,sm.display_order,m.id
+        SELECT id, barbershop_id, title, price_in_cents, duration_in_minutes,
+          image_url, media_id, width, height, mime_type, variants, featured_order
+        FROM (
+          SELECT s.id,s.barbershop_id::text AS barbershop_id,s.title,s.price_in_cents,s.duration_in_minutes,
+            m.public_url AS image_url,m.id AS media_id,m.width,m.height,m.mime_type,m.variants,s.featured_order,
+            ROW_NUMBER() OVER (
+              PARTITION BY s.barbershop_id
+              ORDER BY s.featured_order ASC, s.id ASC, sm.display_order ASC, m.id ASC
+            ) AS rn
+          FROM services s JOIN service_media sm ON sm.service_id=s.id JOIN media m ON m.id=sm.media_id
+          WHERE s.barbershop_id IN (${idListSql}) AND s.is_featured=true AND s.is_active=true
+            AND m.status='READY' AND m.purpose IN ('SERVICE_PHOTO','SERVICE_VIDEO') AND m.owner_entity_id=s.barbershop_id
+        ) ranked_services
+        WHERE rn <= 6
+        ORDER BY barbershop_id ASC, rn ASC
       `);
 
       for (const row of servicesResult.rows) {
@@ -294,14 +311,19 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
         b.location,
         b.avatar_url,
         b.cover_url,
-        (SELECT AVG(r.rating) FROM reviews r WHERE r.barbershop_id=b.id AND r.status='PUBLISHED') AS rating,
-        (SELECT COUNT(*) FROM reviews r WHERE r.barbershop_id=b.id AND r.status='PUBLISHED') AS review_count,
+        rev.rating,
+        rev.review_count,
         b.google_maps_url,
         bl.latitude,
         bl.longitude,
         (${eligibilitySql}) AS is_eligible
       FROM barbershops b
       LEFT JOIN barbershop_locations bl ON bl.barbershop_id = b.id
+      LEFT JOIN LATERAL (
+        SELECT AVG(r.rating) AS rating, COUNT(*)::int AS review_count
+        FROM reviews r
+        WHERE r.barbershop_id=b.id AND r.status='PUBLISHED'
+      ) rev ON TRUE
       WHERE ${whereClause}
       ORDER BY ${input.ids ? sql`array_position(ARRAY(SELECT jsonb_array_elements_text(${JSON.stringify(input.ids)}::jsonb))::uuid[], b.id)` : normOrderName} ASC, b.id ASC
       LIMIT ${limit}
@@ -309,8 +331,10 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
     `);
 
     const shopIds = rowsResult.rows.map((r: any) => String(r.id));
-    const previewPhotosMap = await this.fetchPreviewPhotosBatch(shopIds);
-    const featuredServicesMap = await this.fetchFeaturedServicesBatch(shopIds);
+    const [previewPhotosMap, featuredServicesMap] = await Promise.all([
+      this.fetchPreviewPhotosBatch(shopIds),
+      this.fetchFeaturedServicesBatch(shopIds),
+    ]);
 
     const items: PublicShop[] = rowsResult.rows.map((row: any) => {
       const galleryPhotos = previewPhotosMap.get(String(row.id)) ?? [];
@@ -418,7 +442,11 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
     const conditions = [
       sql`b.status = 'ACTIVE'`,
       sql`${eligibilitySql}`,
-      ...(radiusMeters === null ? [] : [sql`bl.latitude BETWEEN ${minLat}::double precision AND ${maxLat}::double precision`]),
+      ...(radiusMeters === null
+        ? []
+        : [
+            sql`bl.latitude BETWEEN ${minLat}::double precision AND ${maxLat}::double precision`,
+          ]),
     ];
 
     if (radiusMeters !== null && deltaLonDegrees < 180.0) {
@@ -487,14 +515,19 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
         b.location,
         b.avatar_url,
         b.cover_url,
-        (SELECT AVG(r.rating) FROM reviews r WHERE r.barbershop_id=b.id AND r.status='PUBLISHED') AS rating,
-        (SELECT COUNT(*) FROM reviews r WHERE r.barbershop_id=b.id AND r.status='PUBLISHED') AS review_count,
+        rev.rating,
+        rev.review_count,
         b.google_maps_url,
         bl.latitude,
         bl.longitude,
         (${haversineSql}) AS distance_meters
       FROM barbershops b
       INNER JOIN barbershop_locations bl ON bl.barbershop_id = b.id
+      LEFT JOIN LATERAL (
+        SELECT AVG(r.rating) AS rating, COUNT(*)::int AS review_count
+        FROM reviews r
+        WHERE r.barbershop_id=b.id AND r.status='PUBLISHED'
+      ) rev ON TRUE
       WHERE ${baseWhere}
         AND ${radiusMeters === null ? sql`TRUE` : sql`(${haversineSql}) <= ${radiusMeters}::double precision`}
       ORDER BY ${input.ids ? sql`array_position(ARRAY(SELECT jsonb_array_elements_text(${JSON.stringify(input.ids)}::jsonb))::uuid[], b.id)` : sql`distance_meters`} ASC, b.id ASC
@@ -503,8 +536,10 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
     `);
 
     const shopIds = rowsResult.rows.map((r: any) => String(r.id));
-    const previewPhotosMap = await this.fetchPreviewPhotosBatch(shopIds);
-    const featuredServicesMap = await this.fetchFeaturedServicesBatch(shopIds);
+    const [previewPhotosMap, featuredServicesMap] = await Promise.all([
+      this.fetchPreviewPhotosBatch(shopIds),
+      this.fetchFeaturedServicesBatch(shopIds),
+    ]);
 
     const items: PublicShop[] = rowsResult.rows.map((row: any) => {
       const galleryPhotos = previewPhotosMap.get(String(row.id)) ?? [];

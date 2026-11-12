@@ -93,40 +93,81 @@ export class GetExploreFeedUseCase {
     // 1. Busca os candidatos elegíveis do repositório
     // Se NEARBY: busca com ponto geográfico e raio
     // Se ALL: busca por catálogo geral
+    const limit = Math.max(1, Math.min(20, input.limit ?? 10));
     const rawShops: import("../../../services/discovery-contract").PublicShop[] =
       [];
-    if(this.discoveryRepository.rankExploreIds){
-      if(!snapshot){snapshot={id:sessionId,filtersHash:currentFiltersHash,ids:await this.discoveryRepository.rankExploreIds(input),expiresAt:Date.now()+EXPLORE_CURSOR_TTL_MS};await this.snapshots.save(snapshot);}
-      const ids=snapshot.ids.slice(offset);
-      if(ids.length){const result=await this.discoveryRepository.search(input.mode==='NEARBY'&&input.point
-        ?{mode:'NEARBY',point:input.point,radiusKm:input.radiusKm??10,q:input.q,ids,page:1,limit:50}
-        :{mode:'ALL',q:input.q,regionKey:input.regionKey,ids,page:1,limit:50});rawShops.push(...result.items);}
-    }else{
-    let page = 1;
-    while (true) {
-      const result = await this.discoveryRepository.search(
-        input.mode === "NEARBY" && input.point
-          ? {
-              mode: "NEARBY",
-              point: input.point,
-              radiusKm: input.radiusKm ?? 10,
-              q: input.q,
-              page,
-              limit: 50,
-            }
-          : {
-              mode: "ALL",
-              q: input.q,
-              regionKey: input.regionKey,
-              page,
-              limit: 50,
-            },
-      );
-      rawShops.push(...result.items);
-      if (!result.hasNext || result.items.length === 0) break;
-      page++;
-    }
-
+    let hydrationEnd: number | null = null;
+    if (this.discoveryRepository.rankExploreIds) {
+      if (!snapshot) {
+        snapshot = {
+          id: sessionId,
+          filtersHash: currentFiltersHash,
+          ids: await this.discoveryRepository.rankExploreIds(input),
+          expiresAt: Date.now() + EXPLORE_CURSOR_TTL_MS,
+        };
+        await this.snapshots.save(snapshot);
+      }
+      const batchWindow = Math.min(Math.max(limit + 2, 12), 50);
+      let scanCursor = offset;
+      while (
+        scanCursor < snapshot.ids.length &&
+        rawShops.length <= limit &&
+        scanCursor - offset < 100
+      ) {
+        const ids = snapshot.ids.slice(
+          scanCursor,
+          Math.min(scanCursor + batchWindow, offset + 100),
+        );
+        scanCursor += ids.length;
+        if (ids.length === 0) break;
+        const result = await this.discoveryRepository.search(
+          input.mode === "NEARBY" && input.point
+            ? {
+                mode: "NEARBY",
+                point: input.point,
+                radiusKm: input.radiusKm ?? 10,
+                q: input.q,
+                ids,
+                page: 1,
+                limit: ids.length,
+              }
+            : {
+                mode: "ALL",
+                q: input.q,
+                regionKey: input.regionKey,
+                ids,
+                page: 1,
+                limit: ids.length,
+              },
+        );
+        rawShops.push(...result.items);
+      }
+      hydrationEnd = scanCursor;
+    } else {
+      let page = 1;
+      while (true) {
+        const result = await this.discoveryRepository.search(
+          input.mode === "NEARBY" && input.point
+            ? {
+                mode: "NEARBY",
+                point: input.point,
+                radiusKm: input.radiusKm ?? 10,
+                q: input.q,
+                page,
+                limit: 50,
+              }
+            : {
+                mode: "ALL",
+                q: input.q,
+                regionKey: input.regionKey,
+                page,
+                limit: 50,
+              },
+        );
+        rawShops.push(...result.items);
+        if (!result.hasNext || result.items.length === 0) break;
+        page++;
+      }
     }
 
     // 2. Aplica pontuação de ranking determinística a todos os candidatos elegíveis
@@ -171,7 +212,6 @@ export class GetExploreFeedUseCase {
     );
 
     // 4. Paginação por fatia do offset
-    const limit = Math.max(1, Math.min(20, input.limit ?? 10));
     if (!snapshot) {
       snapshot = {
         id: sessionId,
@@ -184,11 +224,14 @@ export class GetExploreFeedUseCase {
     const eligibleById = new Map(rankedShops.map((row) => [row.shop.id, row]));
     const pagedSlice: typeof rankedShops = [];
     let nextOffset = offset;
-    while (nextOffset < snapshot.ids.length && pagedSlice.length < limit) {
+    while (
+      nextOffset < (hydrationEnd ?? snapshot.ids.length) &&
+      pagedSlice.length < limit
+    ) {
       const entry = eligibleById.get(snapshot.ids[nextOffset++]);
       if (entry) pagedSlice.push(entry);
     }
-    const hasNext = this.discoveryRepository.rankExploreIds ? rawShops.length>pagedSlice.length : nextOffset < snapshot.ids.length;
+    const hasNext = nextOffset < snapshot.ids.length;
     const nextCursor = hasNext
       ? createExploreCursor({
           offset: nextOffset,
@@ -201,7 +244,6 @@ export class GetExploreFeedUseCase {
     // 5. Monta DTO enriquecido com mídias e serviços reais por barbearia
     const items: ExploreFeedItem[] = pagedSlice.map(
       ({ shop, distanceKm, rankingScore }) => {
-
         const mediaItems: ExploreFeedMediaItem[] = [];
 
         if (shop.featuredServices && shop.featuredServices.length > 0) {

@@ -12,10 +12,12 @@ import {
   inArray,
   or,
   asc,
+  desc,
   sql,
   getTableColumns,
 } from "drizzle-orm";
 import { db } from "../index";
+import { env } from "../../env";
 import {
   bookings,
   barbershops,
@@ -47,6 +49,41 @@ import { UniqueEntityId } from "../../../core/entities/unique-entity-id";
 // Legacy civil times belong to the booking timezone, never the UTC hour of a new request.
 const blockingStart = sql<Date>`coalesce(${bookings.startsAt}, ((${bookings.date}::date + ${bookings.startTime}::time) at time zone ${bookings.timezone}))`;
 const blockingEnd = sql<Date>`coalesce(${bookings.endsAt}, ((${bookings.date}::date + ${bookings.endTime}::time) at time zone ${bookings.timezone}))`;
+
+function getOffsetForTimezone(dateStr: string, timeZone: string): string {
+  try {
+    const d = new Date(`${dateStr}T12:00:00Z`);
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      timeZoneName: "longOffset",
+    });
+    const parts = formatter.formatToParts(d);
+    const tzPart = parts.find((p) => p.type === "timeZoneName")?.value;
+    if (tzPart) {
+      const offset = tzPart.replace("GMT", "");
+      if (offset === "") return "Z";
+      if (offset === "+00:00") return "+00:00";
+      return offset;
+    }
+  } catch (_e) {}
+  return "-03:00";
+}
+
+function resolveCivilDayUtcRange(
+  dateStr: string,
+  timeZone = "America/Sao_Paulo",
+): { startUtc: Date; endUtc: Date } {
+  const cleanDate = dateStr.split("T")[0];
+  const nextDate = new Date(Date.parse(`${cleanDate}T00:00:00Z`) + 86400000)
+    .toISOString()
+    .slice(0, 10);
+  const startOffset = getOffsetForTimezone(cleanDate, timeZone);
+  const endOffset = getOffsetForTimezone(nextDate, timeZone);
+  return {
+    startUtc: new Date(`${cleanDate}T00:00:00${startOffset}`),
+    endUtc: new Date(`${nextDate}T00:00:00${endOffset}`),
+  };
+}
 
 export class DrizzleBookingsRepository implements BookingsRepository {
   private customDb?: any;
@@ -326,11 +363,307 @@ export class DrizzleBookingsRepository implements BookingsRepository {
     return result.map((row) => BookingMapper.toDomain(row));
   }
 
+  private async hydrateBookingsDetailsBatch(
+    bookingRows: Array<typeof bookings.$inferSelect>,
+    tx?: any,
+  ): Promise<BookingDetails[]> {
+    if (bookingRows.length === 0) return [];
+    const client = tx ?? this.database;
+
+    const bookingIds = bookingRows.map((r) => r.id);
+    const barbershopIds = Array.from(
+      new Set(bookingRows.map((r) => r.barbershopId).filter(Boolean)),
+    );
+    const shoppingCartIds = Array.from(
+      new Set(
+        bookingRows
+          .map((r) => r.shoppingCartId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    );
+    const userIdsSet = new Set<string>();
+    for (const r of bookingRows) {
+      if (r.customerId) userIdsSet.add(r.customerId);
+      if (r.barbermanId) userIdsSet.add(r.barbermanId);
+    }
+    const userIds = Array.from(userIdsSet);
+
+    const fetchItems = () =>
+      client
+        .select()
+        .from(bookingServiceItems)
+        .where(inArray(bookingServiceItems.bookingId, bookingIds));
+
+    const fetchShops = () =>
+      barbershopIds.length > 0
+        ? client
+            .select({
+              id: barbershops.id,
+              name: barbershops.name,
+              ownerPhone: users.phoneNumber,
+            })
+            .from(barbershops)
+            .leftJoin(users, eq(barbershops.ownerId, users.id))
+            .where(inArray(barbershops.id, barbershopIds))
+        : Promise.resolve([]);
+
+    const fetchUsers = () =>
+      userIds.length > 0
+        ? client
+            .select({
+              id: users.id,
+              name: users.name,
+              phoneNumber: users.phoneNumber,
+            })
+            .from(users)
+            .where(inArray(users.id, userIds))
+        : Promise.resolve([]);
+
+    const fetchLegacyCarts = () =>
+      shoppingCartIds.length > 0
+        ? client
+            .select({
+              cartId: shoppingCarts.id,
+              customer: {
+                id: users.id,
+                name: users.name,
+                phoneNumber: users.phoneNumber,
+              },
+              service: {
+                id: services.id,
+                title: services.title,
+                priceInCents: services.priceInCents,
+                durationInMinutes: services.durationInMinutes,
+              },
+              serviceItem: {
+                titleSnapshot: serviceItems.titleSnapshot,
+                priceInCentsSnapshot: serviceItems.priceInCentsSnapshot,
+                durationInMinutesSnapshot:
+                  serviceItems.durationInMinutesSnapshot,
+              },
+            })
+            .from(shoppingCarts)
+            .innerJoin(users, eq(shoppingCarts.userId, users.id))
+            .leftJoin(
+              serviceItems,
+              eq(shoppingCarts.serviceItemId, serviceItems.id),
+            )
+            .leftJoin(services, eq(serviceItems.serviceId, services.id))
+            .where(inArray(shoppingCarts.id, shoppingCartIds))
+        : Promise.resolve([]);
+
+    let allItems: any[];
+    let shopRows: Array<{
+      id: string;
+      name: string;
+      ownerPhone: string | null;
+    }>;
+    let userRows: Array<{
+      id: string;
+      name: string;
+      phoneNumber: string | null;
+    }>;
+    let legacyCartRows: any[];
+
+    if (tx) {
+      allItems = await fetchItems();
+      shopRows = await fetchShops();
+      userRows = await fetchUsers();
+      legacyCartRows = await fetchLegacyCarts();
+    } else {
+      [allItems, shopRows, userRows, legacyCartRows] = await Promise.all([
+        fetchItems(),
+        fetchShops(),
+        fetchUsers(),
+        fetchLegacyCarts(),
+      ]);
+    }
+
+    const itemsByBookingId = new Map<string, any[]>();
+    for (const item of allItems) {
+      const list = itemsByBookingId.get(item.bookingId);
+      if (list) {
+        list.push(item);
+      } else {
+        itemsByBookingId.set(item.bookingId, [item]);
+      }
+    }
+
+    const shopById = new Map<
+      string,
+      { name: string; ownerPhone: string | null }
+    >();
+    for (const s of shopRows) {
+      shopById.set(s.id, { name: s.name, ownerPhone: s.ownerPhone });
+    }
+
+    const userById = new Map<
+      string,
+      { id: string; name: string; phoneNumber: string | null }
+    >();
+    for (const u of userRows) {
+      userById.set(u.id, u);
+    }
+
+    const legacyCartById = new Map<string, any>();
+    for (const c of legacyCartRows) {
+      legacyCartById.set(c.cartId, c);
+    }
+
+    const result: BookingDetails[] = [];
+
+    for (const bookingRow of bookingRows) {
+      const shopInfo = bookingRow.barbershopId
+        ? shopById.get(bookingRow.barbershopId)
+        : undefined;
+      const barbershopName = shopInfo?.name ?? null;
+      const barbershopPhone = shopInfo?.ownerPhone ?? null;
+
+      const barberRow = bookingRow.barbermanId
+        ? userById.get(bookingRow.barbermanId)
+        : undefined;
+      const barbermanName = barberRow?.name ?? null;
+
+      let customerRow = bookingRow.customerId
+        ? (userById.get(bookingRow.customerId) ?? null)
+        : null;
+      const legacyCart = bookingRow.shoppingCartId
+        ? legacyCartById.get(bookingRow.shoppingCartId)
+        : undefined;
+
+      if (!customerRow && legacyCart?.customer) {
+        customerRow = legacyCart.customer;
+      }
+
+      const fallbackCustomer = customerRow ?? {
+        id: bookingRow.customerId ?? bookingRow.barbermanId,
+        name: "Cliente",
+        phoneNumber: null,
+      };
+
+      const itemRows = itemsByBookingId.get(bookingRow.id) ?? [];
+
+      if (itemRows.length > 0) {
+        result.push(
+          BookingDetailsMapper.toDomain({
+            booking: {
+              id: bookingRow.id,
+              barbershopId: bookingRow.barbershopId,
+              barbershopName,
+              barbershopPhone,
+              barbermanId: bookingRow.barbermanId,
+              barbermanName,
+              customerId: bookingRow.customerId ?? fallbackCustomer.id,
+              shoppingCartId: bookingRow.shoppingCartId,
+              startsAt: bookingRow.startsAt,
+              endsAt: bookingRow.endsAt,
+              timezone: bookingRow.timezone,
+              status: bookingRow.status,
+              version: bookingRow.version,
+              createdByUserId: bookingRow.createdByUserId,
+              clientRequestId: bookingRow.clientRequestId,
+              totalPriceInCents: bookingRow.totalPriceInCents,
+              totalDurationInMinutes: bookingRow.totalDurationInMinutes,
+              date: bookingRow.date,
+              startTime: bookingRow.startTime,
+              endTime: bookingRow.endTime,
+              createdAt: bookingRow.createdAt,
+            },
+            customer: fallbackCustomer,
+            services: itemRows.map((item: any) => ({
+              id: item.serviceId ?? undefined,
+              serviceId: item.serviceId,
+              title: item.title,
+              priceInCents: item.priceInCents,
+              durationInMinutes: item.durationInMinutes,
+              legacyAggregate: item.legacyAggregate,
+            })),
+          }),
+        );
+        continue;
+      }
+
+      if (legacyCart?.service?.id) {
+        result.push(
+          BookingDetailsMapper.toDomain({
+            booking: {
+              id: bookingRow.id,
+              barbershopId: bookingRow.barbershopId,
+              barbershopName,
+              barbershopPhone,
+              barbermanId: bookingRow.barbermanId,
+              barbermanName,
+              customerId: bookingRow.customerId ?? legacyCart.customer.id,
+              shoppingCartId: bookingRow.shoppingCartId,
+              startsAt: bookingRow.startsAt,
+              endsAt: bookingRow.endsAt,
+              timezone: bookingRow.timezone,
+              status: bookingRow.status,
+              version: bookingRow.version,
+              createdByUserId: bookingRow.createdByUserId,
+              clientRequestId: bookingRow.clientRequestId,
+              totalPriceInCents: bookingRow.totalPriceInCents,
+              totalDurationInMinutes: bookingRow.totalDurationInMinutes,
+              date: bookingRow.date,
+              startTime: bookingRow.startTime,
+              endTime: bookingRow.endTime,
+              createdAt: bookingRow.createdAt,
+            },
+            customer: legacyCart.customer,
+            service: legacyCart.service,
+            serviceItem: legacyCart.serviceItem,
+          }),
+        );
+        continue;
+      }
+
+      result.push(
+        BookingDetails.create({
+          bookingId: new UniqueEntityId(bookingRow.id),
+          barbershopId: new UniqueEntityId(bookingRow.barbershopId),
+          barbershopName,
+          barbershopPhone,
+          barbermanId: new UniqueEntityId(bookingRow.barbermanId),
+          barbermanName,
+          customerId: new UniqueEntityId(
+            bookingRow.customerId ?? fallbackCustomer.id,
+          ),
+          shoppingCartId: bookingRow.shoppingCartId
+            ? new UniqueEntityId(bookingRow.shoppingCartId)
+            : null,
+          customer: {
+            id: new UniqueEntityId(fallbackCustomer.id),
+            name: fallbackCustomer.name,
+            phoneNumber: fallbackCustomer.phoneNumber ?? "",
+          },
+          services: [],
+          startsAt: bookingRow.startsAt,
+          endsAt: bookingRow.endsAt,
+          timezone: bookingRow.timezone,
+          status: bookingRow.status,
+          version: bookingRow.version,
+          createdByUserId: bookingRow.createdByUserId
+            ? new UniqueEntityId(bookingRow.createdByUserId)
+            : null,
+          clientRequestId: bookingRow.clientRequestId,
+          totalPriceInCents: bookingRow.totalPriceInCents,
+          totalDurationInMinutes: bookingRow.totalDurationInMinutes,
+          date: bookingRow.date,
+          startTime: bookingRow.startTime,
+          endTime: bookingRow.endTime,
+          createdAt: bookingRow.createdAt ?? undefined,
+        }),
+      );
+    }
+
+    return result;
+  }
+
   async getDetails(
     bookingId: string,
     tx?: any,
   ): Promise<BookingDetails | null> {
-    const client = tx ?? db;
+    const client = tx ?? this.database;
     const [bookingRow] = await client
       .select()
       .from(bookings)
@@ -338,214 +671,11 @@ export class DrizzleBookingsRepository implements BookingsRepository {
 
     if (!bookingRow) return null;
 
-    // Load customer
-    let customerRow: {
-      id: string;
-      name: string;
-      phoneNumber: string | null;
-    } | null = null;
-    if (bookingRow.customerId) {
-      const [user] = await client
-        .select({
-          id: users.id,
-          name: users.name,
-          phoneNumber: users.phoneNumber,
-        })
-        .from(users)
-        .where(eq(users.id, bookingRow.customerId));
-      customerRow = user ?? null;
-    }
-
-    if (!customerRow && bookingRow.shoppingCartId) {
-      const [cartUser] = await client
-        .select({
-          id: users.id,
-          name: users.name,
-          phoneNumber: users.phoneNumber,
-        })
-        .from(shoppingCarts)
-        .innerJoin(users, eq(shoppingCarts.userId, users.id))
-        .where(eq(shoppingCarts.id, bookingRow.shoppingCartId));
-      customerRow = cartUser ?? null;
-    }
-
-    const fallbackCustomer = customerRow ?? {
-      id: bookingRow.customerId ?? bookingRow.barbermanId,
-      name: "Cliente",
-      phoneNumber: null,
-    };
-
-    // Load barbershop info
-    let barbershopName: string | null = null;
-    let barbershopPhone: string | null = null;
-    if (bookingRow.barbershopId) {
-      const [shopRow] = await client
-        .select({
-          name: barbershops.name,
-          ownerPhone: users.phoneNumber,
-        })
-        .from(barbershops)
-        .leftJoin(users, eq(barbershops.ownerId, users.id))
-        .where(eq(barbershops.id, bookingRow.barbershopId));
-      if (shopRow) {
-        barbershopName = shopRow.name;
-        barbershopPhone = shopRow.ownerPhone;
-      }
-    }
-
-    // Load barberman name
-    let barbermanName: string | null = null;
-    if (bookingRow.barbermanId) {
-      const [barberRow] = await client
-        .select({ name: users.name })
-        .from(users)
-        .where(eq(users.id, bookingRow.barbermanId));
-      if (barberRow) {
-        barbermanName = barberRow.name;
-      }
-    }
-
-    // Load booking service items
-    const itemRows = await client
-      .select()
-      .from(bookingServiceItems)
-      .where(eq(bookingServiceItems.bookingId, bookingId));
-
-    if (itemRows.length > 0) {
-      return BookingDetailsMapper.toDomain({
-        booking: {
-          id: bookingRow.id,
-          barbershopId: bookingRow.barbershopId,
-          barbershopName,
-          barbershopPhone,
-          barbermanId: bookingRow.barbermanId,
-          barbermanName,
-          customerId: bookingRow.customerId ?? fallbackCustomer.id,
-          shoppingCartId: bookingRow.shoppingCartId,
-          startsAt: bookingRow.startsAt,
-          endsAt: bookingRow.endsAt,
-          timezone: bookingRow.timezone,
-          status: bookingRow.status,
-          version: bookingRow.version,
-          createdByUserId: bookingRow.createdByUserId,
-          clientRequestId: bookingRow.clientRequestId,
-          totalPriceInCents: bookingRow.totalPriceInCents,
-          totalDurationInMinutes: bookingRow.totalDurationInMinutes,
-          date: bookingRow.date,
-          startTime: bookingRow.startTime,
-          endTime: bookingRow.endTime,
-          createdAt: bookingRow.createdAt,
-        },
-        customer: fallbackCustomer,
-        services: itemRows.map((item: any) => ({
-          id: item.serviceId ?? undefined,
-          serviceId: item.serviceId,
-          title: item.title,
-          priceInCents: item.priceInCents,
-          durationInMinutes: item.durationInMinutes,
-          legacyAggregate: item.legacyAggregate,
-        })),
-      });
-    }
-
-    // Fallback: legacy shopping cart join if booking_service_items is empty
-    if (bookingRow.shoppingCartId) {
-      const [legacyRow] = await db
-        .select({
-          customer: {
-            id: users.id,
-            name: users.name,
-            phoneNumber: users.phoneNumber,
-          },
-          service: {
-            id: services.id,
-            title: services.title,
-            priceInCents: services.priceInCents,
-            durationInMinutes: services.durationInMinutes,
-          },
-          serviceItem: {
-            titleSnapshot: serviceItems.titleSnapshot,
-            priceInCentsSnapshot: serviceItems.priceInCentsSnapshot,
-            durationInMinutesSnapshot: serviceItems.durationInMinutesSnapshot,
-          },
-        })
-        .from(shoppingCarts)
-        .innerJoin(users, eq(shoppingCarts.userId, users.id))
-        .innerJoin(
-          serviceItems,
-          eq(shoppingCarts.serviceItemId, serviceItems.id),
-        )
-        .innerJoin(services, eq(serviceItems.serviceId, services.id))
-        .where(eq(shoppingCarts.id, bookingRow.shoppingCartId));
-
-      if (legacyRow) {
-        return BookingDetailsMapper.toDomain({
-          booking: {
-            id: bookingRow.id,
-            barbershopId: bookingRow.barbershopId,
-            barbershopName,
-            barbershopPhone,
-            barbermanId: bookingRow.barbermanId,
-            barbermanName,
-            customerId: bookingRow.customerId ?? legacyRow.customer.id,
-            shoppingCartId: bookingRow.shoppingCartId,
-            startsAt: bookingRow.startsAt,
-            endsAt: bookingRow.endsAt,
-            timezone: bookingRow.timezone,
-            status: bookingRow.status,
-            version: bookingRow.version,
-            createdByUserId: bookingRow.createdByUserId,
-            clientRequestId: bookingRow.clientRequestId,
-            totalPriceInCents: bookingRow.totalPriceInCents,
-            totalDurationInMinutes: bookingRow.totalDurationInMinutes,
-            date: bookingRow.date,
-            startTime: bookingRow.startTime,
-            endTime: bookingRow.endTime,
-            createdAt: bookingRow.createdAt,
-          },
-          customer: legacyRow.customer,
-          service: legacyRow.service,
-          serviceItem: legacyRow.serviceItem,
-        });
-      }
-    }
-
-    // Bare booking without items or cart
-    return BookingDetails.create({
-      bookingId: new UniqueEntityId(bookingRow.id),
-      barbershopId: new UniqueEntityId(bookingRow.barbershopId),
-      barbershopName,
-      barbershopPhone,
-      barbermanId: new UniqueEntityId(bookingRow.barbermanId),
-      barbermanName,
-      customerId: new UniqueEntityId(
-        bookingRow.customerId ?? fallbackCustomer.id,
-      ),
-      shoppingCartId: bookingRow.shoppingCartId
-        ? new UniqueEntityId(bookingRow.shoppingCartId)
-        : null,
-      customer: {
-        id: new UniqueEntityId(fallbackCustomer.id),
-        name: fallbackCustomer.name,
-        phoneNumber: fallbackCustomer.phoneNumber ?? "",
-      },
-      services: [],
-      startsAt: bookingRow.startsAt,
-      endsAt: bookingRow.endsAt,
-      timezone: bookingRow.timezone,
-      status: bookingRow.status,
-      version: bookingRow.version,
-      createdByUserId: bookingRow.createdByUserId
-        ? new UniqueEntityId(bookingRow.createdByUserId)
-        : null,
-      clientRequestId: bookingRow.clientRequestId,
-      totalPriceInCents: bookingRow.totalPriceInCents,
-      totalDurationInMinutes: bookingRow.totalDurationInMinutes,
-      date: bookingRow.date,
-      startTime: bookingRow.startTime,
-      endTime: bookingRow.endTime,
-      createdAt: bookingRow.createdAt ?? undefined,
-    });
+    const [details] = await this.hydrateBookingsDetailsBatch(
+      [bookingRow],
+      client,
+    );
+    return details ?? null;
   }
 
   async findByIdWithDetails(
@@ -559,34 +689,39 @@ export class DrizzleBookingsRepository implements BookingsRepository {
     barbermanId,
     date,
   }: FindManyByBarbermanAndDateParams): Promise<BookingDetails[]> {
-    const bookingsList = await this.findManyByBarbermanAndDate({
-      barbermanId,
-      date,
-    });
+    const dateStr = new Date(date).toISOString().split("T")[0];
+    const startOfDay = new Date(`${dateStr}T00:00:00.000Z`);
+    const endOfDay = new Date(`${dateStr}T23:59:59.999Z`);
 
-    const detailsList: BookingDetails[] = [];
-    for (const b of bookingsList) {
-      const details = await this.getDetails(b.id.toString());
-      if (details) {
-        detailsList.push(details);
-      }
-    }
+    const rows = await this.database
+      .select()
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.barbermanId, barbermanId),
+          gte(bookings.date, startOfDay),
+          lte(bookings.date, endOfDay),
+          or(ne(bookings.status, "CANCELLED"), isNull(bookings.status)),
+        ),
+      );
 
-    return detailsList;
+    return this.hydrateBookingsDetailsBatch(rows);
   }
 
   async findManyByCustomerId(
     customerId: string,
     options?: FindManyByCustomerIdOptions,
   ): Promise<BookingDetails[]> {
-    if (options?.view === "upcoming") {
+    const effectiveView = options?.filter ?? options?.view ?? "all";
+
+    if (effectiveView === "upcoming") {
       const now = new Date();
-      const limit = options.limit ?? 1;
+      const limit = options?.limit ?? 1;
 
       return this.database.transaction(
         async (tx: any) => {
           const rows = await tx
-            .select({ id: bookings.id })
+            .select(getTableColumns(bookings))
             .from(bookings)
             .leftJoin(
               shoppingCarts,
@@ -606,58 +741,63 @@ export class DrizzleBookingsRepository implements BookingsRepository {
             .orderBy(asc(bookings.startsAt), asc(bookings.id))
             .limit(limit);
 
-          const detailsList: BookingDetails[] = [];
-          for (const row of rows) {
-            const details = await this.getDetails(row.id, tx);
-            if (
-              details &&
+          const detailsList = await this.hydrateBookingsDetailsBatch(rows, tx);
+          return detailsList.filter(
+            (details) =>
               details.status &&
-              ["CONFIRMED", "IN_PROGRESS"].includes(details.status)
-            ) {
-              detailsList.push(details);
-            }
-          }
-
-          return detailsList;
+              ["CONFIRMED", "IN_PROGRESS"].includes(details.status),
+          );
         },
         { isolationLevel: "repeatable read", accessMode: "read only" },
       );
     }
 
-    const page = options?.page ?? 1;
-    const limit = options?.limit ?? 20;
+    const page = Math.max(1, options?.page ?? 1);
+    const limit = Math.min(Math.max(1, options?.limit ?? 20), 50);
+    const offset = (page - 1) * limit;
 
-    // Search by bookings.customerId OR shoppingCarts.userId
-    const rows = await db
-      .select({ id: bookings.id })
+    const customerPredicates = [
+      or(
+        eq(bookings.customerId, customerId),
+        eq(shoppingCarts.userId, customerId),
+      )!,
+    ];
+
+    if (effectiveView === "past") {
+      const now = new Date();
+      customerPredicates.push(
+        or(
+          inArray(bookings.status, ["COMPLETED", "CANCELLED", "NO_SHOW"]),
+          lt(
+            sql`coalesce(${bookings.endsAt}, ${bookings.startsAt}, ${bookings.date})`,
+            now,
+          ),
+        )!,
+      );
+    }
+
+    const rows = await this.database
+      .select(getTableColumns(bookings))
       .from(bookings)
       .leftJoin(shoppingCarts, eq(bookings.shoppingCartId, shoppingCarts.id))
-      .where(and(eq(bookings.customerId, customerId)))
+      .where(and(...customerPredicates))
+      .orderBy(
+        desc(sql`coalesce(${bookings.startsAt}, ${bookings.date})`),
+        desc(bookings.id),
+      )
       .limit(limit)
-      .offset((page - 1) * limit);
+      .offset(offset);
 
-    const bookingIds = rows.map((r) => r.id);
-    if (bookingIds.length === 0) {
-      // Fallback search by shoppingCart.userId for legacy
-      const legacyRows = await db
-        .select({ id: bookings.id })
-        .from(bookings)
-        .innerJoin(shoppingCarts, eq(bookings.shoppingCartId, shoppingCarts.id))
-        .where(eq(shoppingCarts.userId, customerId))
-        .limit(limit)
-        .offset((page - 1) * limit);
-      bookingIds.push(...legacyRows.map((r) => r.id));
-    }
-
-    const detailsList: BookingDetails[] = [];
-    for (const id of bookingIds) {
-      const details = await this.getDetails(id);
-      if (details) {
-        detailsList.push(details);
+    if (env.FF_SQL_BOOKING_BATCH_HYDRATION === "false") {
+      const detailsList: BookingDetails[] = [];
+      for (const r of rows) {
+        const d = await this.getDetails(r.id);
+        if (d) detailsList.push(d);
       }
+      return detailsList;
     }
 
-    return detailsList;
+    return this.hydrateBookingsDetailsBatch(rows);
   }
 
   async delete(booking: Booking): Promise<void> {
@@ -761,17 +901,42 @@ export class DrizzleBookingsRepository implements BookingsRepository {
     barbershopId,
     barbermanId,
     date,
+    timezone = "America/Sao_Paulo",
     status,
     page = 1,
     limit = 20,
+    includeSummary = true,
+    bootstrapOnly = false,
   }: {
     barbershopId: string;
     barbermanId?: string;
     date?: string;
+    timezone?: string;
     status?: string;
     page?: number;
     limit?: number;
+    includeSummary?: boolean;
+    bootstrapOnly?: boolean;
   }) {
+    const pageLimit = Math.min(Math.max(1, limit), 100);
+    const safePage = Math.max(1, page);
+
+    if (bootstrapOnly) {
+      return {
+        items: [],
+        page: safePage,
+        limit: pageLimit,
+        total: 0,
+        hasNext: false,
+        summary: {
+          totalBookings: 0,
+          totalAmountInCents: 0,
+          statusCounts: {},
+          hasIncompleteData: false,
+        },
+      };
+    }
+
     const filters = [eq(bookings.barbershopId, barbershopId)];
 
     if (barbermanId) {
@@ -783,71 +948,113 @@ export class DrizzleBookingsRepository implements BookingsRepository {
     }
 
     if (date) {
-      const dateStr = date.split("T")[0];
-      const startOfDay = new Date(`${dateStr}T00:00:00.000Z`);
-      const endOfDay = new Date(`${dateStr}T23:59:59.999Z`);
+      const [shop] = await this.database
+        .select({ timezone: barbershops.timezone })
+        .from(barbershops)
+        .where(eq(barbershops.id, barbershopId));
+      const zone = shop?.timezone ?? timezone;
+      const startUtc = sql<Date>`${date}::date::timestamp AT TIME ZONE ${zone}`;
+      const endUtc = sql<Date>`(${date}::date + INTERVAL '1 day')::timestamp AT TIME ZONE ${zone}`;
       filters.push(
         or(
+          and(gte(bookings.startsAt, startUtc), lt(bookings.startsAt, endUtc)),
           and(
-            gte(bookings.startsAt, startOfDay),
-            lte(bookings.startsAt, endOfDay),
+            isNull(bookings.startsAt),
+            gte(bookings.date, new Date(`${date}T00:00:00Z`)),
+            lt(
+              bookings.date,
+              new Date(Date.parse(`${date}T00:00:00Z`) + 86400000),
+            ),
           ),
-          and(gte(bookings.date, startOfDay), lte(bookings.date, endOfDay)),
         )!,
       );
     }
 
     const whereClause = and(...filters);
+    const offset = (safePage - 1) * pageLimit;
 
-    const summaryRows = await db
-      .select({
-        id: bookings.id,
-        totalPriceInCents: bookings.totalPriceInCents,
-        status: bookings.status,
-      })
-      .from(bookings)
-      .where(whereClause);
+    if (!includeSummary) {
+      const rawRows = await this.database
+        .select()
+        .from(bookings)
+        .where(whereClause)
+        .orderBy(asc(bookings.startsAt), asc(bookings.id))
+        .limit(pageLimit + 1)
+        .offset(offset);
 
-    const total = summaryRows.length;
+      const hasNext = rawRows.length > pageLimit;
+      const pageRows = rawRows.slice(0, pageLimit);
+      const items = await this.hydrateBookingsDetailsBatch(pageRows);
+
+      return {
+        items,
+        page: safePage,
+        limit: pageLimit,
+        total: offset + pageRows.length + (hasNext ? 1 : 0),
+        hasNext,
+        summary: {
+          totalBookings: offset + pageRows.length + (hasNext ? 1 : 0),
+          totalAmountInCents: 0,
+          statusCounts: {},
+          hasIncompleteData: false,
+        },
+      };
+    }
+
+    const [statusAggRows, pageRows] = await Promise.all([
+      this.database
+        .select({
+          status: sql<string>`coalesce(${bookings.status}, 'UNKNOWN')`,
+          count: sql<number>`count(*)::int`,
+          amountInCents: sql<string>`coalesce(sum(${bookings.totalPriceInCents}), 0)::text`,
+          hasIncomplete: sql<boolean>`coalesce(bool_or(${bookings.totalPriceInCents} is null), false)`,
+        })
+        .from(bookings)
+        .where(whereClause)
+        .groupBy(sql`coalesce(${bookings.status}, 'UNKNOWN')`),
+      this.database
+        .select()
+        .from(bookings)
+        .where(whereClause)
+        .orderBy(asc(bookings.startsAt), asc(bookings.id))
+        .limit(pageLimit)
+        .offset(offset),
+    ]);
+
+    let total = 0;
     let totalAmountInCents = 0;
     let hasIncompleteData = false;
     const statusCounts: Record<string, number> = {};
 
-    for (const r of summaryRows) {
-      if (r.totalPriceInCents === null || r.totalPriceInCents === undefined) {
+    for (const r of statusAggRows) {
+      const count = Number(r.count ?? 0);
+      total += count;
+      totalAmountInCents += Number(r.amountInCents ?? 0);
+      if (!Number.isSafeInteger(totalAmountInCents))
+        throw new Error("O total excedeu o limite de cálculo.");
+      if (r.hasIncomplete) {
         hasIncompleteData = true;
-      } else {
-        totalAmountInCents += r.totalPriceInCents;
       }
-
       const st = r.status ?? "UNKNOWN";
-      statusCounts[st] = (statusCounts[st] ?? 0) + 1;
+      statusCounts[st] = (statusCounts[st] ?? 0) + count;
     }
 
-    const pageLimit = Math.min(Math.max(1, limit), 100);
-    const offset = (Math.max(1, page) - 1) * pageLimit;
-
-    const pageRows = await db
-      .select({ id: bookings.id })
-      .from(bookings)
-      .where(whereClause)
-      .orderBy(asc(bookings.startsAt), asc(bookings.id))
-      .limit(pageLimit)
-      .offset(offset);
-
-    const items: BookingDetails[] = [];
-    for (const row of pageRows) {
-      const details = await this.getDetails(row.id);
-      if (details) {
-        items.push(details);
+    let items: BookingDetails[];
+    if (env.FF_SQL_BOOKING_BATCH_HYDRATION === "false") {
+      items = [];
+      for (const row of pageRows) {
+        const details = await this.getDetails(row.id);
+        if (details) items.push(details);
       }
+    } else {
+      items = await this.hydrateBookingsDetailsBatch(pageRows);
     }
 
     const hasNext = offset + pageRows.length < total;
 
     return {
       items,
-      page: Math.max(1, page),
+      page: safePage,
       limit: pageLimit,
       total,
       hasNext,

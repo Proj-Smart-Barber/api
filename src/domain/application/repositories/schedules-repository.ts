@@ -9,6 +9,20 @@ export interface SchedulesRepository {
     barbershopId: string,
     tx?: any,
   ): Promise<BarbershopSchedule[]>;
+  findManyByBarbershopAndDay?(
+    barbershopId: string,
+    dayOfWeek: string,
+    barbermanId?: string | null,
+    tx?: any,
+  ): Promise<BarbershopSchedule[]>;
+  findScopesForBarbershop?(
+    barbershopId: string,
+    barbermanId?: string | null,
+    tx?: any,
+  ): Promise<{
+    generalScope: BarbershopScheduleScope | null;
+    barberScope: BarbershopScheduleScope | null;
+  }>;
   delete(schedule: BarbershopSchedule, tx?: any): Promise<void>;
   bulkReplace(
     barbershopId: string,

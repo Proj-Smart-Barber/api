@@ -1,0 +1,31 @@
+{
+  "date": "2026-11-11",
+  "scope": "isolated local synthetic catalog; no production API",
+  "offline": {
+    "scenario": "Chrome desktop, isolated synthetic public catalog, CDP Offline plus explicit navigator offline state",
+    "fixtureVisible": true,
+    "savedNoticeVisible": true,
+    "workerControlled": true,
+    "publicQueryCount": 2,
+    "privateFieldsInDisk": false,
+    "apiResponsesInServiceWorkerCache": 0,
+    "assetCacheCount": 17,
+    "cacheVersions": [
+      "smartbarber-public-474029a5655193d4-shell",
+      "smartbarber-public-474029a5655193d4-assets"
+    ]
+  },
+  "warmSlow4G": {
+    "scenario": "warm public catalog, Slow 4G preset, one sample only",
+    "fixtureVisible": true,
+    "firstUsefulMs": 488.09999999403954,
+    "externalOrigins": []
+  },
+  "manualVisualFinal": "Assigned to the user; no additional manual or visual tests after that instruction.",
+  "limits": [
+    "Chrome desktop emulation only.",
+    "Browser sample was captured during implementation; final adjustments have automated regression coverage.",
+    "No Safari/PWA install or physical device approval.",
+    "A single warm sample is not p95 and includes full reload bootstrap."
+  ]
+}

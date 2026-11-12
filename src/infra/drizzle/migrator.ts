@@ -4,18 +4,53 @@ import { emailVerificationCodesMigration } from "./email-verification-codes-migr
 
 import { financeMigration } from "./finance-migration";
 
-let hasMigrated = false;
+export const SCHEMA_MIGRATION_VERSION = "2026-11-11-data-opt-v3";
+const MIGRATION_ADVISORY_LOCK_KEY = 88421901;
 
-// biome-ignore lint/suspicious/noExplicitAny: accepts either default db or isolated test db
-export async function runSchemaMigrations(targetDb: any = db) {
-  const isDefaultDb = targetDb === db;
-  if (isDefaultDb && hasMigrated) {
+export async function isSchemaReady(targetDb: any = db): Promise<boolean> {
+  try {
+    const table = await targetDb.execute(
+      sql`SELECT to_regclass('schema_migrations_meta') AS relation`,
+    );
+    if (!table.rows?.[0]?.relation) return false;
+    const result = await targetDb.execute(
+      sql`SELECT version FROM schema_migrations_meta WHERE id='canonical'`,
+    );
+    return result.rows?.[0]?.version === SCHEMA_MIGRATION_VERSION;
+  } catch {
+    return false;
+  }
+}
+
+// One transaction pins the advisory lock, DDL and ledger to the same connection.
+export async function runSchemaMigrations(
+  targetDb: any = db,
+  options?: { force?: boolean },
+) {
+  try {
+    return await targetDb.transaction(async (tx: any) => {
+      await tx.execute(
+        sql`SELECT pg_advisory_xact_lock(${MIGRATION_ADVISORY_LOCK_KEY})`,
+      );
+      if (!options?.force && (await isSchemaReady(tx)))
+        return {
+          success: true,
+          message: `Schema already at ${SCHEMA_MIGRATION_VERSION}.`,
+        };
+      const result = await applySchemaMigrations(tx);
+      if (!result.success)
+        throw new Error("Schema migration failed. Transaction rolled back.");
+      return result;
+    });
+  } catch {
     return {
-      success: true,
-      message: "Migration already completed in this process.",
+      success: false,
+      error: "Schema migration failed. No release was marked ready.",
     };
   }
+}
 
+async function applySchemaMigrations(targetDb: any) {
   console.log("[Migration] Running idempotent schema migrations...");
 
   try {
@@ -27,39 +62,6 @@ export async function runSchemaMigrations(targetDb: any = db) {
 );
 CREATE INDEX IF NOT EXISTS explore_feed_snapshots_expiry_idx ON explore_feed_snapshots(expires_at);
 `);
-    await targetDb.execute(sql`DO $$ BEGIN
-  CREATE TYPE "invitation_delivery_status" AS ENUM('PENDING', 'PROCESSING', 'ACCEPTED', 'FAILED', 'REVOKED', 'EXPIRED');
-EXCEPTION
-  WHEN duplicate_object THEN null;
-END $$;
-
-CREATE TABLE IF NOT EXISTS "invitation_deliveries" (
-  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  "invitation_id" uuid NOT NULL REFERENCES "invitations"("id") ON DELETE CASCADE,
-  "barbershop_id" uuid NOT NULL REFERENCES "barbershops"("id") ON DELETE CASCADE,
-  "recipient_email" text NOT NULL,
-  "recipient_name" text NOT NULL,
-  "barbershop_name" text NOT NULL,
-  "owner_name" text NOT NULL,
-  "token_hash" text NOT NULL,
-  "invitation_url" text,
-  "status" "invitation_delivery_status" DEFAULT 'PENDING' NOT NULL,
-  "attempts" integer DEFAULT 0 NOT NULL,
-  "max_attempts" integer DEFAULT 3 NOT NULL,
-  "next_attempt_at" timestamp DEFAULT now() NOT NULL,
-  "provider_message_id" text,
-  "last_error" text,
-  "locked_at" timestamp,
-  "locked_by" text,
-  "processed_at" timestamp,
-  "created_at" timestamp DEFAULT now(),
-  "updated_at" timestamp DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS "invitation_deliveries_status_idx" ON "invitation_deliveries" ("status", "next_attempt_at");
-CREATE INDEX IF NOT EXISTS "invitation_deliveries_invitation_idx" ON "invitation_deliveries" ("invitation_id");
-`);
-
     // 1. service_items snapshots
     await targetDb.execute(sql`
       ALTER TABLE "service_items" ADD COLUMN IF NOT EXISTS "title_snapshot" text;
@@ -241,6 +243,39 @@ CREATE INDEX IF NOT EXISTS "invitation_deliveries_invitation_idx" ON "invitation
       CREATE INDEX IF NOT EXISTS "invitations_barbershop_email_idx" ON "invitations" ("barbershop_id","email");
       CREATE INDEX IF NOT EXISTS "invitations_status_idx" ON "invitations" ("status");
     `);
+
+    await targetDb.execute(sql`DO $$ BEGIN
+  CREATE TYPE "invitation_delivery_status" AS ENUM('PENDING', 'PROCESSING', 'ACCEPTED', 'FAILED', 'REVOKED', 'EXPIRED');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
+
+CREATE TABLE IF NOT EXISTS "invitation_deliveries" (
+  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  "invitation_id" uuid NOT NULL REFERENCES "invitations"("id") ON DELETE CASCADE,
+  "barbershop_id" uuid NOT NULL REFERENCES "barbershops"("id") ON DELETE CASCADE,
+  "recipient_email" text NOT NULL,
+  "recipient_name" text NOT NULL,
+  "barbershop_name" text NOT NULL,
+  "owner_name" text NOT NULL,
+  "token_hash" text NOT NULL,
+  "invitation_url" text,
+  "status" "invitation_delivery_status" DEFAULT 'PENDING' NOT NULL,
+  "attempts" integer DEFAULT 0 NOT NULL,
+  "max_attempts" integer DEFAULT 3 NOT NULL,
+  "next_attempt_at" timestamp DEFAULT now() NOT NULL,
+  "provider_message_id" text,
+  "last_error" text,
+  "locked_at" timestamp,
+  "locked_by" text,
+  "processed_at" timestamp,
+  "created_at" timestamp DEFAULT now(),
+  "updated_at" timestamp DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS "invitation_deliveries_status_idx" ON "invitation_deliveries" ("status", "next_attempt_at");
+CREATE INDEX IF NOT EXISTS "invitation_deliveries_invitation_idx" ON "invitation_deliveries" ("invitation_id");
+`);
 
     await targetDb.execute(sql`
       CREATE TABLE IF NOT EXISTS "barber_registrations" (
@@ -852,9 +887,57 @@ CREATE TABLE IF NOT EXISTS media_video_jobs(media_id uuid PRIMARY KEY REFERENCES
     );
     await targetDb.execute(sql`CREATE TABLE IF NOT EXISTS media_multipart_sessions(media_id uuid PRIMARY KEY REFERENCES media(id),upload_id text NOT NULL,state text NOT NULL DEFAULT 'ACTIVE',expires_at timestamptz NOT NULL DEFAULT(NOW()+INTERVAL '24 hours'));
 `);
-    if (isDefaultDb) {
-      hasMigrated = true;
-    }
+    // Additive compatibility for legacy installations before building query indexes.
+    await targetDb.execute(sql`
+      CREATE TABLE IF NOT EXISTS barbershop_schedules (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(), barbershop_id uuid NOT NULL REFERENCES barbershops(id),
+        barberman_id uuid REFERENCES users(id), created_by uuid NOT NULL REFERENCES users(id),
+        day_of_week text NOT NULL, open_time text NOT NULL, close_time text NOT NULL, created_at timestamp DEFAULT now()
+      );
+      CREATE TABLE IF NOT EXISTS schedule_exceptions (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(), barbershop_id uuid NOT NULL REFERENCES barbershops(id),
+        barberman_id uuid REFERENCES users(id), date timestamp NOT NULL, start_time text,end_time text,reason text,created_at timestamp DEFAULT now()
+      );
+      ALTER TABLE notifications ADD COLUMN IF NOT EXISTS read_at timestamp;
+      DO $$ BEGIN
+        IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema=current_schema() AND table_name='notifications' AND column_name='read') THEN
+          UPDATE notifications SET read_at=COALESCE(created_at,now()) WHERE "read"=true AND read_at IS NULL;
+        END IF;
+      END $$;
+    `);
+    await targetDb.execute(
+      sql.raw(`
+      DO $$ BEGIN
+        IF to_regclass('barbershop_schedules') IS NOT NULL THEN
+          CREATE INDEX IF NOT EXISTS "barbershop_schedules_shop_day_barber_idx"
+            ON "barbershop_schedules" ("barbershop_id", "day_of_week", "barberman_id");
+        END IF;
+        IF to_regclass('schedule_exceptions') IS NOT NULL THEN
+          CREATE INDEX IF NOT EXISTS "schedule_exceptions_shop_date_barber_idx"
+            ON "schedule_exceptions" ("barbershop_id", "date", "barberman_id");
+        END IF;
+      END $$;
+      CREATE INDEX IF NOT EXISTS "notifications_user_created_id_idx"
+        ON "notifications" ("user_id", "created_at" DESC, "id" DESC);
+      CREATE INDEX IF NOT EXISTS "notifications_user_unread_idx"
+        ON "notifications" ("user_id") WHERE "read_at" IS NULL;
+      CREATE TABLE IF NOT EXISTS "schema_migrations_meta" (
+        "id" text PRIMARY KEY,
+        "version" text NOT NULL,
+        "applied_at" timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE TABLE IF NOT EXISTS "schema_release_history" (
+        "version" text PRIMARY KEY,
+        "applied_at" timestamptz NOT NULL DEFAULT now()
+      );
+      INSERT INTO "schema_release_history" ("version") VALUES ('${SCHEMA_MIGRATION_VERSION}') ON CONFLICT DO NOTHING;
+      INSERT INTO "schema_migrations_meta" ("id", "version", "applied_at")
+      VALUES ('canonical', '${SCHEMA_MIGRATION_VERSION}', now())
+      ON CONFLICT ("id") DO UPDATE
+        SET "version" = EXCLUDED."version",
+            "applied_at" = EXCLUDED."applied_at";
+    `),
+    );
     console.log("[Migration] Schema migrations completed successfully.");
     return {
       success: true,

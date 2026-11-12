@@ -1,4 +1,13 @@
-import { describe, it, expect, beforeAll, beforeEach } from "vitest";
+import { createPhase1TestDatabase } from "../../../test/helpers/isolated-phase1-db";
+import {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterAll,
+  vi,
+} from "vitest";
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { db } from "../drizzle";
@@ -28,6 +37,17 @@ import { CreateBarberRegistrationController } from "./controllers/barbershop/cre
 import { FakeEmailService } from "../../../test/fakes/fake-email-service";
 import { generateUuidV7 } from "../../core/security/uuidv7";
 
+const isolatedFixture = vi.hoisted(() => ({ db: null as unknown }));
+vi.mock("../drizzle/index", () => ({
+  get db() {
+    return isolatedFixture.db;
+  },
+}));
+let ownedDatabase: Awaited<ReturnType<typeof createPhase1TestDatabase>>;
+afterAll(async () => {
+  await ownedDatabase?.close();
+});
+
 describe("Barber Registration Full Test Suite (PostgreSQL Isolated)", () => {
   let fakeEmailService: FakeEmailService;
   let barbershopsRepository: DrizzleBarbershopsRepository;
@@ -48,12 +68,10 @@ describe("Barber Registration Full Test Suite (PostgreSQL Isolated)", () => {
   let otherShopId: string;
 
   beforeAll(async () => {
-    const dbUrl = process.env.DATABASE_URL ?? "";
-    if (!dbUrl.includes("55441")) {
-      throw new Error(
-        `ABORT: Teste integrado exige PostgreSQL local isolado na porta 55441. URL atual: ${dbUrl}`,
-      );
-    }
+    ownedDatabase = await createPhase1TestDatabase(
+      process.env.PHASE1_TEST_DATABASE_URL!,
+    );
+    isolatedFixture.db = ownedDatabase.db;
   });
 
   beforeEach(async () => {
@@ -262,7 +280,9 @@ describe("Barber Registration Full Test Suite (PostgreSQL Isolated)", () => {
     });
 
     expect(conflictRes.statusCode).toBe(409);
-    expect((conflictRes.body as any)?.code).toBe("IDEMPOTENCY_PAYLOAD_MISMATCH");
+    expect((conflictRes.body as any)?.code).toBe(
+      "IDEMPOTENCY_PAYLOAD_MISMATCH",
+    );
   });
 
   it("4. Chaves diferentes para o mesmo convite pendente respeitam regra de conflito (409)", async () => {

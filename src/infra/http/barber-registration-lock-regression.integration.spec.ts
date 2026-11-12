@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { createPhase1TestDatabase } from "../../../test/helpers/isolated-phase1-db";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { randomUUID } from "node:crypto";
 import { sql } from "drizzle-orm";
 import { db } from "../drizzle";
@@ -26,6 +27,17 @@ import { CreateBarberRegistrationController } from "./controllers/barbershop/cre
 import { FakeEmailService } from "../../../test/fakes/fake-email-service";
 import { generateUuidV7 } from "../../core/security/uuidv7";
 
+const isolatedFixture = vi.hoisted(() => ({ db: null as unknown }));
+vi.mock("../drizzle/index", () => ({
+  get db() {
+    return isolatedFixture.db;
+  },
+}));
+let ownedDatabase: Awaited<ReturnType<typeof createPhase1TestDatabase>>;
+afterAll(async () => {
+  await ownedDatabase?.close();
+});
+
 describe("Barber Registration Lock Regression (PostgreSQL Isolated)", () => {
   const fakeEmailService = new FakeEmailService();
 
@@ -33,13 +45,11 @@ describe("Barber Registration Lock Regression (PostgreSQL Isolated)", () => {
   let shopId: string;
 
   beforeAll(async () => {
-    // Validação estrita de isolamento: somente container local na porta 55441
-    const dbUrl = process.env.DATABASE_URL ?? "";
-    if (!dbUrl.includes("55441")) {
-      throw new Error(
-        `ABORT: Teste integrado exige PostgreSQL local isolado na porta 55441. URL atual: ${dbUrl}`,
-      );
-    }
+    // Validação estrita: o helper cria e verifica um banco descartável exclusivo.
+    ownedDatabase = await createPhase1TestDatabase(
+      process.env.PHASE1_TEST_DATABASE_URL!,
+    );
+    isolatedFixture.db = ownedDatabase.db;
 
     // Limpeza inicial
     await db.delete(barberRegistrations);

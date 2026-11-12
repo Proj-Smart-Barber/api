@@ -1,29 +1,50 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Server } from "node:http";
-import { readFileSync, existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { randomUUID } from "node:crypto";
 import app from "../../../app";
 import { db } from "../index";
 import { users } from "../schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { DEMO_CUSTOMERS, DEMO_STAFFS } from "./fixtures";
 import { Password } from "../../../domain/enterprise/entities/value-objects/password";
 
-describe("Smoke HTTP Auth — Contas Seed e Verificação", () => {
+const fixturePassword = "Fixture-only-password-123!";
+const authStaffs = DEMO_STAFFS.map((staff, index) => ({
+  ...staff,
+  id: randomUUID(),
+  name: `Synthetic staff ${index}`,
+  email: `staff-${randomUUID()}@example.invalid`,
+  cpf: randomUUID(),
+}));
+const authCustomers = DEMO_CUSTOMERS.map((customer, index) => ({
+  ...customer,
+  id: randomUUID(),
+  name: `Synthetic customer ${index}`,
+  email: `customer-${randomUUID()}@example.invalid`,
+  cpf: randomUUID(),
+  password: fixturePassword,
+}));
+
+describe("Smoke HTTP Auth — Fixtures locais e Verificação", () => {
   let server: Server;
   let baseUrl: string;
-  let staffCredentials: Record<string, { plainPassword: string }> = {};
 
   beforeAll(async () => {
-    // Carrega credenciais fortes se existirem em disco
-    const credsPath = resolve(process.cwd(), ".demo-seed-credentials.json");
-    if (existsSync(credsPath)) {
-      try {
-        staffCredentials = JSON.parse(readFileSync(credsPath, "utf-8"));
-      } catch {
-        // Fallback
-      }
-    }
+    // Fixtures own their accounts; tests never read a private seed credential file.
+    const hash = await Password.generateHashFromPlainText(fixturePassword, 10);
+    await db
+      .insert(users)
+      .values(
+        [...authStaffs, ...authCustomers].map((user) => ({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          cpf: user.cpf,
+          password: hash.value,
+          emailVerifiedAt: new Date(),
+          accountType: "CLIENT" as const,
+        })),
+      );
 
     await new Promise<void>((resolvePromise) => {
       server = app.listen(0, () => {
@@ -37,6 +58,12 @@ describe("Smoke HTTP Auth — Contas Seed e Verificação", () => {
   });
 
   afterAll(async () => {
+    await db.delete(users).where(
+      inArray(
+        users.id,
+        [...authStaffs, ...authCustomers].map((user) => user.id),
+      ),
+    );
     if (server) {
       await new Promise<void>((resolvePromise) =>
         server.close(() => resolvePromise()),
@@ -45,9 +72,8 @@ describe("Smoke HTTP Auth — Contas Seed e Verificação", () => {
   });
 
   it("deve permitir login com sucesso para os 8 staffs gerenciados pelo seed", async () => {
-    for (const staff of DEMO_STAFFS) {
-      const password =
-        staffCredentials[staff.logicalKey]?.plainPassword || "123456";
+    for (const staff of authStaffs) {
+      const password = fixturePassword;
 
       const res = await fetch(`${baseUrl}/api/users/sessions/auth`, {
         method: "POST",
@@ -71,13 +97,13 @@ describe("Smoke HTTP Auth — Contas Seed e Verificação", () => {
   }, 20000);
 
   it("deve permitir login com sucesso para os 12 clientes gerenciados pelo seed", async () => {
-    for (const customer of DEMO_CUSTOMERS) {
+    for (const customer of authCustomers) {
       const res = await fetch(`${baseUrl}/api/users/sessions/auth`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: customer.email,
-          password: "DemoCustomerSecret2026!#",
+          password: customer.password,
         }),
       });
 
@@ -132,7 +158,7 @@ describe("Smoke HTTP Auth — Contas Seed e Verificação", () => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        email: DEMO_STAFFS[0].email,
+        email: authStaffs[0].email,
         password: "senha-completamente-errada-9999",
       }),
     });

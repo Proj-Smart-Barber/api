@@ -3,7 +3,7 @@ import type { BarbershopSchedule } from "../../../domain/enterprise/entities/bar
 import type { BarbershopScheduleScope } from "../../../domain/enterprise/entities/barbershop-schedule-scope";
 import { db } from "../index";
 import { barbershopSchedules, barbershopScheduleScopes } from "../schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, or } from "drizzle-orm";
 import { DrizzleBarbershopScheduleMapper } from "../mappers/drizzle-barbershop-schedule-mapper";
 import { DrizzleBarbershopScheduleScopeMapper } from "../mappers/drizzle-barbershop-schedule-scope-mapper";
 
@@ -56,6 +56,76 @@ export class DrizzleSchedulesRepository implements SchedulesRepository {
       .where(eq(barbershopSchedules.barbershopId, barbershopId));
 
     return schedules.map(DrizzleBarbershopScheduleMapper.toDomain);
+  }
+
+  async findManyByBarbershopAndDay(
+    barbershopId: string,
+    dayOfWeek: string,
+    barbermanId?: string | null,
+    tx?: any,
+  ): Promise<BarbershopSchedule[]> {
+    const client = tx ?? db;
+    const barberFilter = barbermanId
+      ? or(
+          isNull(barbershopSchedules.barbermanId),
+          eq(barbershopSchedules.barbermanId, barbermanId),
+        )
+      : isNull(barbershopSchedules.barbermanId);
+
+    const schedules = await client
+      .select()
+      .from(barbershopSchedules)
+      .where(
+        and(
+          eq(barbershopSchedules.barbershopId, barbershopId),
+          eq(barbershopSchedules.dayOfWeek, dayOfWeek as any),
+          barberFilter,
+        ),
+      );
+
+    return schedules.map(DrizzleBarbershopScheduleMapper.toDomain);
+  }
+
+  async findScopesForBarbershop(
+    barbershopId: string,
+    barbermanId?: string | null,
+    tx?: any,
+  ): Promise<{
+    generalScope: BarbershopScheduleScope | null;
+    barberScope: BarbershopScheduleScope | null;
+  }> {
+    const client = tx ?? db;
+    const condition = barbermanId
+      ? and(
+          eq(barbershopScheduleScopes.barbershopId, barbershopId),
+          or(
+            isNull(barbershopScheduleScopes.barbermanId),
+            eq(barbershopScheduleScopes.barbermanId, barbermanId),
+          ),
+        )
+      : and(
+          eq(barbershopScheduleScopes.barbershopId, barbershopId),
+          isNull(barbershopScheduleScopes.barbermanId),
+        );
+
+    const rows = await client
+      .select()
+      .from(barbershopScheduleScopes)
+      .where(condition);
+
+    let generalScope: BarbershopScheduleScope | null = null;
+    let barberScope: BarbershopScheduleScope | null = null;
+
+    for (const row of rows) {
+      const domain = DrizzleBarbershopScheduleScopeMapper.toDomain(row);
+      if (!row.barbermanId) {
+        generalScope = domain;
+      } else if (barbermanId && row.barbermanId === barbermanId) {
+        barberScope = domain;
+      }
+    }
+
+    return { generalScope, barberScope };
   }
 
   async delete(schedule: BarbershopSchedule, tx?: any): Promise<void> {

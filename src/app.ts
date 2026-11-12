@@ -5,22 +5,47 @@ import express, { type Request, type Response } from "express";
 import swaggerUi from "swagger-ui-express";
 import { routes } from "./infra/http/routes";
 import { swaggerDocument } from "./infra/http/swagger";
-import { runSchemaMigrations } from "./infra/drizzle/migrator";
+import { runSchemaMigrations, isSchemaReady } from "./infra/drizzle/migrator";
 import { DemoSeedEngine } from "./infra/drizzle/demo-seed/canonical/engine";
+import { requestMetricsMiddleware } from "./infra/observability/request-metrics";
 
 const app = express();
 
-// Executa migrações idempotentes no boot do servidor
+app.use(requestMetricsMiddleware);
+
+// Executa migrações idempotentes no boot do servidor (pode ser desativado via AUTO_RUN_MIGRATIONS=false em serverless)
 // Integration tests prepare their isolated schema explicitly; concurrent boot DDL can deadlock fixtures.
-const schemaReady=process.env.NODE_ENV==='test' ? Promise.resolve({success:true}) : runSchemaMigrations();
-app.use(async (_request,response,next)=>{
- try{const result=await schemaReady;if(!result.success)return response.status(503).json({error:'Serviço temporariamente indisponível.'});next();}
- catch{return response.status(503).json({error:'Serviço temporariamente indisponível.'});}
+// Releases run migrations before traffic; boot DDL is now an explicit compatibility opt-in.
+const schemaReady =
+  process.env.NODE_ENV === "test"
+    ? Promise.resolve({ success: true })
+    : process.env.AUTO_RUN_MIGRATIONS === "true"
+      ? runSchemaMigrations()
+      : isSchemaReady().then((success) => ({ success }));
+app.use(async (_request, response, next) => {
+  try {
+    const result = await schemaReady;
+    if (!result.success)
+      return response
+        .status(503)
+        .json({ error: "Serviço temporariamente indisponível." });
+    next();
+  } catch {
+    return response
+      .status(503)
+      .json({ error: "Serviço temporariamente indisponível." });
+  }
 });
 app.use(
   cors({
     origin: true,
     credentials: true,
+    exposedHeaders: [
+      "Server-Timing",
+      "X-Request-Id",
+      "X-SQL-Count",
+      "X-SQL-Duration-Ms",
+    ],
   }),
 );
 app.use(
@@ -61,12 +86,16 @@ app.use("/api/system", (request, response, next) => {
     return response.status(403).json({ error: "Forbidden" });
   next();
 });
+app.use("/api", (_request, response, next) => {
+  response.setHeader("Cache-Control", "no-store");
+  next();
+});
 app.use("/api", routes);
 
 app.get(
   "/api/system/migrate",
   async (_request: Request, response: Response) => {
-    const result = await runSchemaMigrations();
+    const result = await runSchemaMigrations(undefined, { force: true });
     return response.status(result.success ? 200 : 500).json(result);
   },
 );

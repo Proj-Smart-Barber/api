@@ -233,7 +233,7 @@ describe("Booking Action Idempotency & Unified Ledger Integration (Task I2)", ()
   }
 
   it("should execute CANCEL_BOOKING once, record exactly 1 event and replay safely", async () => {
-    const booking = await createBooking("2026-11-01", "10:00");
+    const booking = await createBooking("2099-11-01", "10:00");
     const requestId = generateUuidV7();
 
     const payloadHash = canonicalOperationHash({
@@ -323,7 +323,7 @@ describe("Booking Action Idempotency & Unified Ledger Integration (Task I2)", ()
   });
 
   it("should reject replay if payloadHash differs with same requestId", async () => {
-    const booking = await createBooking("2026-11-02", "11:00");
+    const booking = await createBooking("2099-11-02", "11:00");
     const requestId = generateUuidV7();
 
     const payloadHashA = canonicalOperationHash({

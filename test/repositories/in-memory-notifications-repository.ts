@@ -76,12 +76,16 @@ export class InMemoryNotificationsRepository
     items = items.sort((a, b) => {
       const aTime = a.createdAt?.getTime() ?? 0;
       const bTime = b.createdAt?.getTime() ?? 0;
-      return bTime - aTime;
+      if (bTime !== aTime) return bTime - aTime;
+      return b.id.toString().localeCompare(a.id.toString());
     });
 
     if (options?.cursor) {
+      const rawCursorId = options.cursor.includes("|")
+        ? options.cursor.split("|")[1]
+        : options.cursor;
       const cursorIndex = items.findIndex(
-        (i) => i.id.toString() === options.cursor,
+        (i) => i.id.toString() === rawCursorId,
       );
       if (cursorIndex >= 0) {
         items = items.slice(cursorIndex + 1);

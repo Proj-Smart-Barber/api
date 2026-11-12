@@ -1,0 +1,10 @@
+{
+  "membership_user_state_shop_idx": "CREATE INDEX membership_user_state_shop_idx ON public.membership USING btree (user_id, state, barbershop_id)",
+  "barbershop_schedules_shop_day_barber_idx": "CREATE INDEX barbershop_schedules_shop_day_barber_idx ON public.barbershop_schedules USING btree (barbershop_id, day_of_week, barberman_id)",
+  "schedule_exceptions_shop_date_barber_idx": "CREATE INDEX schedule_exceptions_shop_date_barber_idx ON public.schedule_exceptions USING btree (barbershop_id, date, barberman_id)",
+  "notifications_user_created_id_idx": "CREATE INDEX notifications_user_created_id_idx ON public.notifications USING btree (user_id, created_at DESC, id DESC)",
+  "notifications_user_unread_idx": "CREATE INDEX notifications_user_unread_idx ON public.notifications USING btree (user_id) WHERE (read_at IS NULL)",
+  "bookings_customer_starts_at_id_idx": "CREATE INDEX bookings_customer_starts_at_id_idx ON public.bookings USING btree (customer_id, starts_at DESC, id DESC)",
+  "shopping_carts_user_id_idx": "CREATE INDEX shopping_carts_user_id_idx ON public.shopping_carts USING btree (user_id, id)",
+  "bookings_shop_barber_starts_at_id_idx": "CREATE INDEX bookings_shop_barber_starts_at_id_idx ON public.bookings USING btree (barbershop_id, barberman_id, starts_at, id)"
+}

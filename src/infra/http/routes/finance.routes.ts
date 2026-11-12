@@ -8,6 +8,10 @@ const uuid = z.string().uuid();
 export function createFinanceRouter(repository = new FinanceRepository()) {
   const router = Router({ mergeParams: true });
   router.use(ensureUserIsAuthenticated);
+  router.use((_request, response, next) => {
+    response.setHeader("Cache-Control", "no-store");
+    next();
+  });
   const handle =
     (operation: string) => async (request: Request, response: Response) => {
       try {
@@ -19,6 +23,11 @@ export function createFinanceRouter(repository = new FinanceRepository()) {
             month: request.query.month,
             from: request.query.from,
             to: request.query.to,
+            view: request.query.view,
+            entriesPage: request.query.entriesPage,
+            entriesLimit: request.query.entriesLimit,
+            bookingsPage: request.query.bookingsPage,
+            bookingsLimit: request.query.bookingsLimit,
           };
         if (operation === "update")
           input = {

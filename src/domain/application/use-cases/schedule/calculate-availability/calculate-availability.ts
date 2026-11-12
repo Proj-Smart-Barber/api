@@ -73,21 +73,62 @@ export class CalculateAvailabilityUseCase {
     serviceIds,
     barbermanId,
   }: CalculateAvailabilityDTO): Promise<CalculateAvailabilityResponse> {
-    const barbershop = await this.barbershopsRepository.findById(barbershopId);
-    const timezone = barbershop?.timezone || "America/Sao_Paulo";
-    const offset = getOffsetForTimezone(date, timezone);
-
-    // 1. Validar serviços únicos e ativos pertencentes à barbearia
+    // 1. Validar serviços únicos antes de ir ao banco
     const uniqueServiceIds = Array.from(new Set(serviceIds));
     if (uniqueServiceIds.length !== serviceIds.length) {
       return left(new Error("IDs de serviços duplicados."));
     }
 
-    const services =
-      await this.servicesRepository.findManyActiveByBarbershopIdAndIds(
+    const targetDate = new Date(`${date}T12:00:00Z`);
+    const dayOfWeekIndex = targetDate.getUTCDay();
+    const daysMap = [
+      "SUNDAY",
+      "MONDAY",
+      "TUESDAY",
+      "WEDNESDAY",
+      "THURSDAY",
+      "FRIDAY",
+      "SATURDAY",
+    ];
+    const dayOfWeek = daysMap[dayOfWeekIndex];
+
+    const fetchSchedulesPromise = this.schedulesRepository
+      .findManyByBarbershopAndDay
+      ? this.schedulesRepository.findManyByBarbershopAndDay(
+          barbershopId,
+          dayOfWeek,
+          barbermanId,
+        )
+      : this.schedulesRepository.findManyByBarbershopId(barbershopId);
+
+    const fetchScopesPromise = this.schedulesRepository.findScopesForBarbershop
+      ? this.schedulesRepository.findScopesForBarbershop(
+          barbershopId,
+          barbermanId,
+        )
+      : Promise.all([
+          this.schedulesRepository.findScope(barbershopId, null),
+          barbermanId
+            ? this.schedulesRepository.findScope(barbershopId, barbermanId)
+            : Promise.resolve(null),
+        ]).then(([generalScope, barberScope]) => ({
+          generalScope,
+          barberScope,
+        }));
+
+    const [barbershop, services, allSchedules, scopes] = await Promise.all([
+      this.barbershopsRepository.findById(barbershopId),
+      this.servicesRepository.findManyActiveByBarbershopIdAndIds(
         barbershopId,
         uniqueServiceIds,
-      );
+      ),
+      fetchSchedulesPromise,
+      fetchScopesPromise,
+    ]);
+
+    const timezone = barbershop?.timezone || "America/Sao_Paulo";
+    const offset = getOffsetForTimezone(date, timezone);
+
     if (services.length !== uniqueServiceIds.length) {
       return left(
         new Error(
@@ -101,37 +142,10 @@ export class CalculateAvailabilityUseCase {
       0,
     );
 
-    // 2. Buscar a jornada para o dia da semana
-    const targetDate = new Date(`${date}T12:00:00Z`);
-    const dayOfWeekIndex = new Date(`${date}T12:00:00Z`).getUTCDay();
-    const daysMap = [
-      "SUNDAY",
-      "MONDAY",
-      "TUESDAY",
-      "WEDNESDAY",
-      "THURSDAY",
-      "FRIDAY",
-      "SATURDAY",
-    ];
-    const dayOfWeek = daysMap[dayOfWeekIndex];
-
-    const allSchedules =
-      await this.schedulesRepository.findManyByBarbershopId(barbershopId);
-
-    const generalScope = await this.schedulesRepository.findScope(
-      barbershopId,
-      null,
-    );
-    const generalScopeState = generalScope?.state ?? null;
-
-    let scopeState = generalScopeState;
-    if (barbermanId) {
-      const scope = await this.schedulesRepository.findScope(
-        barbershopId,
-        barbermanId,
-      );
-      scopeState = scope ? scope.state : null;
-    }
+    const generalScopeState = scopes.generalScope?.state ?? null;
+    const scopeState = barbermanId
+      ? (scopes.barberScope?.state ?? null)
+      : generalScopeState;
 
     const { intervals } =
       EffectiveScheduleResolver.resolveEffectiveDayIntervals({
@@ -150,19 +164,47 @@ export class CalculateAvailabilityUseCase {
       });
     }
 
-    // 3. Buscar exceções do dia (tanto gerais da unidade quanto individuais)
-    const allExceptions =
-      await this.scheduleExceptionsRepository.findManyByBarbershopId(
-        barbershopId,
-      );
+    // 3. Buscar exceções do dia e agendamentos do dia em paralelo
+    const nextDate = new Date(Date.parse(`${date}T00:00:00Z`) + 86400000)
+      .toISOString()
+      .slice(0, 10);
 
-    const dayExceptions = allExceptions.filter((e) => {
-      const eDate = new Date(e.date).toISOString().split("T")[0];
-      const matchBarberman =
-        !e.barbermanId ||
-        (barbermanId && e.barbermanId?.toString() === barbermanId);
-      return eDate === date && matchBarberman;
-    });
+    const fetchExceptionsPromise = this.scheduleExceptionsRepository
+      .findManyByBarbershopAndDate
+      ? this.scheduleExceptionsRepository.findManyByBarbershopAndDate(
+          barbershopId,
+          date,
+          barbermanId,
+        )
+      : this.scheduleExceptionsRepository
+          .findManyByBarbershopId(barbershopId)
+          .then((allExceptions) =>
+            allExceptions.filter((e) => {
+              const eDate = new Date(e.date).toISOString().split("T")[0];
+              const matchBarberman =
+                !e.barbermanId ||
+                (barbermanId && e.barbermanId?.toString() === barbermanId);
+              return eDate === date && matchBarberman;
+            }),
+          );
+
+    const fetchBookingsPromise = barbermanId
+      ? this.bookingsRepository.findManyByBarbermanAndDate({
+          barbermanId,
+          date: targetDate,
+          range: {
+            startAt: new Date(`${date}T00:00:00${offset}`),
+            endAt: new Date(
+              `${nextDate}T00:00:00${getOffsetForTimezone(nextDate, timezone)}`,
+            ),
+          },
+        })
+      : Promise.resolve([]);
+
+    const [dayExceptions, dayBookings] = await Promise.all([
+      fetchExceptionsPromise,
+      fetchBookingsPromise,
+    ]);
 
     const closedAllDay = dayExceptions.some((e) => !e.startTime && !e.endTime);
     if (closedAllDay) {
@@ -172,23 +214,6 @@ export class CalculateAvailabilityUseCase {
         timezone,
       });
     }
-
-    // 4. Buscar Bookings do dia
-    const nextDate = new Date(Date.parse(`${date}T00:00:00Z`) + 86400000)
-      .toISOString()
-      .slice(0, 10);
-    const dayBookings = barbermanId
-      ? await this.bookingsRepository.findManyByBarbermanAndDate({
-          barbermanId,
-          date: targetDate, // we pass the Date object which represents the correct day
-          range: {
-            startAt: new Date(`${date}T00:00:00${offset}`),
-            endAt: new Date(
-              `${nextDate}T00:00:00${getOffsetForTimezone(nextDate, timezone)}`,
-            ),
-          },
-        })
-      : [];
 
     // 5. Gerar os slots fatiados
     const availableSlots: AvailabilitySlotDTO[] = [];

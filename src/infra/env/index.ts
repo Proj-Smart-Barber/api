@@ -45,6 +45,36 @@ const envSchema = z.object({
     .max(Number.MAX_SAFE_INTEGER)
     .optional(),
   CRON_SECRET: z.string().optional(),
+  DB_POOL_MAX: z.coerce.number().int().min(1).max(50).optional(),
+  DB_POOL_CONNECTION_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(500)
+    .max(60000)
+    .default(5000),
+  DB_POOL_IDLE_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(1000)
+    .max(300000)
+    .default(30000),
+  DB_STATEMENT_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(500)
+    .max(120000)
+    .default(15000),
+  DB_LOCK_TIMEOUT_MS: z.coerce.number().int().min(200).max(60000).default(5000),
+  DB_IDLE_IN_TX_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(1000)
+    .max(120000)
+    .default(10000),
+  AUTO_RUN_MIGRATIONS: z.enum(["true", "false"]).optional(),
+  ENABLE_PUBLIC_HTTP_CACHE: z.enum(["true", "false"]).optional(),
+  ENABLE_REQUEST_METRICS: z.enum(["true", "false"]).optional(),
+  FF_SQL_BOOKING_BATCH_HYDRATION: z.enum(["true", "false"]).default("true"),
 });
 
 export const env = envSchema.parse(process.env);

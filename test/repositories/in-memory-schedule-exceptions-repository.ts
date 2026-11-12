@@ -38,6 +38,21 @@ export class InMemoryScheduleExceptionsRepository
     );
   }
 
+  async findManyByBarbershopAndDate(
+    barbershopId: string,
+    dateStr: string,
+    barbermanId?: string | null,
+  ): Promise<ScheduleException[]> {
+    const cleanDate = dateStr.split("T")[0];
+    return this.items.filter((e) => {
+      if (e.barbershopId.toString() !== barbershopId) return false;
+      const eDate = new Date(e.date).toISOString().split("T")[0];
+      if (eDate !== cleanDate) return false;
+      if (!e.barbermanId) return true;
+      return Boolean(barbermanId && e.barbermanId.toString() === barbermanId);
+    });
+  }
+
   async delete(exception: ScheduleException): Promise<void> {
     const itemIndex = this.items.findIndex(
       (item) => item.id.toString() === exception.id.toString(),

@@ -38,6 +38,35 @@ export class InMemorySchedulesRepository implements SchedulesRepository {
     );
   }
 
+  async findManyByBarbershopAndDay(
+    barbershopId: string,
+    dayOfWeek: string,
+    barbermanId?: string | null,
+  ): Promise<BarbershopSchedule[]> {
+    return this.items.filter((item) => {
+      if (item.barbershopId.toString() !== barbershopId) return false;
+      if (item.dayOfWeek !== dayOfWeek) return false;
+      if (!item.barbermanId) return true;
+      return Boolean(
+        barbermanId && item.barbermanId.toString() === barbermanId,
+      );
+    });
+  }
+
+  async findScopesForBarbershop(
+    barbershopId: string,
+    barbermanId?: string | null,
+  ): Promise<{
+    generalScope: BarbershopScheduleScope | null;
+    barberScope: BarbershopScheduleScope | null;
+  }> {
+    const generalScope = await this.findScope(barbershopId, null);
+    const barberScope = barbermanId
+      ? await this.findScope(barbershopId, barbermanId)
+      : null;
+    return { generalScope, barberScope };
+  }
+
   async delete(schedule: BarbershopSchedule): Promise<void> {
     const itemIndex = this.items.findIndex(
       (item) => item.id.toString() === schedule.id.toString(),

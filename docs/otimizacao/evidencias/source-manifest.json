@@ -1,0 +1,428 @@
+{
+  "frontend": {
+    "base": "82f73edff9e07e6d8a5af9a3334959f2fd76481d",
+    "files": [
+      {
+        "path": "package-lock.json",
+        "sha256": "1a1202a9ecc4b37952d94d98a651dfcb3e056c152acd28ba49c7ad6c08992fb0"
+      },
+      {
+        "path": "package.json",
+        "sha256": "c5b017fe075cf523ad5b2eb86eecc2870016de5b621d2bbbb91ebb0bbb9069e5"
+      },
+      {
+        "path": "public/sw.js",
+        "sha256": "e7fdbda558f9c0218c34c8b53b624dcf3df8295f5b20220187484c36c5242b43"
+      },
+      {
+        "path": "scripts/prepare-pwa.mjs",
+        "sha256": "91ad56b8b07f2ced48a139e9f58878339908ecba5eb97bcce6b3ff06db886d35"
+      },
+      {
+        "path": "scripts/serve-pwa-preview.mjs",
+        "sha256": "5b8d3bc985cf167130a8535b569d4d7b01f89289fae5bd6f9dd8c99afcff9ecf"
+      },
+      {
+        "path": "src/app/_layout.tsx",
+        "sha256": "4a0ee2df7aecf1ded268514aa372edfbfbbaf6ce052d8258a8f5062d701b5823"
+      },
+      {
+        "path": "src/features/auth/model/session-engine.ts",
+        "sha256": "e51cab2e219ac17e96e50d61511b9cfbd2712aa1fb6a3412aaa0dddc14e870bd"
+      },
+      {
+        "path": "src/features/auth/model/use-session.tsx",
+        "sha256": "2241a536e75ec8189dedd5cc005c1c4ca08223155f42e7e57f911fc883929c78"
+      },
+      {
+        "path": "src/features/auth/tests/route-outlet-lifecycle.test.tsx",
+        "sha256": "b42798a895b8576c5d6ddbcc59b03785721fe61956db5fe2e2a6a2a5be43e57c"
+      },
+      {
+        "path": "src/features/auth/tests/session-races.test.ts",
+        "sha256": "8556c64f5c1dc6bb135f1b7bfc2d5f84a3fad8cf1c4b8f9adf2b8d24e62ad95f"
+      },
+      {
+        "path": "src/features/barbershop/api/barbershop.api.ts",
+        "sha256": "992cbca93313393c6f4a12b7075bbeb10fc3f2697eaa36de48f31b3d17049175"
+      },
+      {
+        "path": "src/features/bookings/api/bookings.api.ts",
+        "sha256": "e2e51578bb2af84aa5005cbf741461180350ae5d2060b0086c703466d693ce72"
+      },
+      {
+        "path": "src/features/bookings/api/bookings.dto.ts",
+        "sha256": "192fd51a0634fd4e610d1665ffe964696cad5bba4cbf9736d39ca147177bfc91"
+      },
+      {
+        "path": "src/features/bookings/model/booking-query-keys.ts",
+        "sha256": "c25ee7ac0229b1695a914aa409b2083887d732efc93d978d40f3002ccd5a0317"
+      },
+      {
+        "path": "src/features/bookings/model/use-booking-availability.ts",
+        "sha256": "60f2be2d9040cb95688767b8d98ab9a6b58337e317ae90e0dc057515436c1451"
+      },
+      {
+        "path": "src/features/bookings/model/use-booking-flow.ts",
+        "sha256": "3ef5a2ad3f4dc187c3d438dcdfcfe9db9f5e14149315556e7080d6d14bd4350a"
+      },
+      {
+        "path": "src/features/bookings/model/use-my-bookings.ts",
+        "sha256": "c030ae432be71cd331f2698e9ec8df9e8f32a8900f61e5715391cedc302e40a3"
+      },
+      {
+        "path": "src/features/bookings/model/use-unit-bookings.ts",
+        "sha256": "c702653ae5907dc1ac901254064577286f64b87a51c9e005c281c1958314127c"
+      },
+      {
+        "path": "src/features/bookings/tests/availability-clock.test.tsx",
+        "sha256": "5b32f71f1b26df327a5250b55f924771da80e5762cdf2fe86c80395012adeb30"
+      },
+      {
+        "path": "src/features/bookings/tests/unit-bookings-read-model.test.ts",
+        "sha256": "3afd011a0a64665401c7f877881942fb74d5e0994c24008dca7c861eb318d853"
+      },
+      {
+        "path": "src/features/discovery/api/discovery.api.ts",
+        "sha256": "d151fcaa52ae798b723c606a8173bd5b7c1651101265d16a3d351cb7703ca63c"
+      },
+      {
+        "path": "src/features/discovery/api/explore-feed.api.ts",
+        "sha256": "349cebffb2232443aa505baa6c3d8144d45d4e9096b73148e3ff2edf3f4b646d"
+      },
+      {
+        "path": "src/features/discovery/model/use-discovery.ts",
+        "sha256": "0913624f17687e017a10229a79ee8d544eea8c9ed1f8886a04765c4605fcb3bb"
+      },
+      {
+        "path": "src/features/discovery/tests/client-nearby-view.test.tsx",
+        "sha256": "c864bffd34037f9eb6da18455799f289fc16f2236def3c0465930a1ebef4b23b"
+      },
+      {
+        "path": "src/features/discovery/tests/nearby-discovery.test.tsx",
+        "sha256": "505735cf838bc37c3617eb9b8b36a941d50819be0f375c434266bafad77263de"
+      },
+      {
+        "path": "src/features/discovery/ui/ExploreFeedSlide.tsx",
+        "sha256": "86aa1a134e8991b4ccebd46b159d4998a81bb377f6fb5822e134e1bba7973f64"
+      },
+      {
+        "path": "src/features/discovery/ui/ExploreFeedView.tsx",
+        "sha256": "93746587db2dd5c943235e06c560c395340dc59a4d45ee73a8b51050663eb1e7"
+      },
+      {
+        "path": "src/features/finance/api/finance.api.ts",
+        "sha256": "8efe376162bd24b11244834a7bdfb571fab8a28c710ebdb1ced431c7cf93a903"
+      },
+      {
+        "path": "src/features/finance/tests/finance-screen.test.tsx",
+        "sha256": "0c9d2c31b15491166905da07519aef353469f9fa485607ed1f446acbd841fa5e"
+      },
+      {
+        "path": "src/features/finance/ui/FinanceScreen.tsx",
+        "sha256": "b020c565a78988e9b297a4d9a09dd64ac10ac6055b1970815d8eecbd29ee0875"
+      },
+      {
+        "path": "src/features/notifications/api/notifications.api.ts",
+        "sha256": "6a0fabc7a934540a1e513663b4a7103dd5527353ce94412c5f10a41c751772eb"
+      },
+      {
+        "path": "src/features/notifications/model/notification-queries.ts",
+        "sha256": "44d5f74b06673893af8878db9dddf53d10e310369b1a6466c11f45c1e880de50"
+      },
+      {
+        "path": "src/features/reviews/model/use-reviews.ts",
+        "sha256": "7a862a8efe74e0ff2b835ea1225812cff884bb173ebcb43b511cf6eb71458b8a"
+      },
+      {
+        "path": "src/features/reviews/tests/offline-reviews.test.tsx",
+        "sha256": "719c5c9a096695aec467d7b2078c19009e4006d014d3a7b9f701d14b4b562487"
+      },
+      {
+        "path": "src/features/reviews/ui/BarbershopReviewsList.tsx",
+        "sha256": "5456f0c38fbea53ada0a278ae69010765e7134f10a565c050d764ebad3fafc13"
+      },
+      {
+        "path": "src/features/services/api/services.api.ts",
+        "sha256": "2d428e089b15693903fc9ce1d50b03568b119b7567678117bac4cd27ef1e3f7e"
+      },
+      {
+        "path": "src/features/services/model/use-public-services.ts",
+        "sha256": "611c2418fdfcd86fd8105d4a22de5265c7353396a75fd3d80641bffe5c947af9"
+      },
+      {
+        "path": "src/features/services/model/use-services-management.ts",
+        "sha256": "2f50c1560c9300e9902a5e3790d3b02aeaab694e52a1b1d312739bbf30dfff40"
+      },
+      {
+        "path": "src/features/services/ui/PublicCatalogView.tsx",
+        "sha256": "72575a853e48e9502742f315801e08f386630db2f3d3f75f35ff7239fd7a990f"
+      },
+      {
+        "path": "src/features/team/model/use-team.ts",
+        "sha256": "2a53ba05ec2ed8f81f7e8394bdee482d8fdfac5cf2e58554973cef2eb78b70ca"
+      },
+      {
+        "path": "src/shared/api/http-client.ts",
+        "sha256": "91ea8dbc5650763003b0e14f8fdd895a8fedc8270b66e863a67908de04736347"
+      },
+      {
+        "path": "src/shared/cache/catalog-invalidation.ts",
+        "sha256": "06098d3820d2b97856712015c2e295b0a32b12f96db738989450e1ba2645d6b6"
+      },
+      {
+        "path": "src/shared/cache/public-cache-storage.ts",
+        "sha256": "edd0cfa54aba71d8d946b3049a12303b60ce7a4740ffe357e9efa896bd390b06"
+      },
+      {
+        "path": "src/shared/cache/public-query-persister.ts",
+        "sha256": "fddc2f5f8fe0907cf73158c5966d554ff2c79c4667710e5d2eb2f5372200646c"
+      },
+      {
+        "path": "src/shared/cache/query-lifecycle.ts",
+        "sha256": "87a56010e7f488f6f879c3ad141cf02aee343794351ffd091ac2957bb538568d"
+      },
+      {
+        "path": "src/shared/cache/tests/public-cache.test.ts",
+        "sha256": "b6c34492d09fd7f6d6577f96b43a2d6a3948697b292f7e4f3c95c52ae149ffde"
+      },
+      {
+        "path": "src/shared/cache/use-data-saver.ts",
+        "sha256": "300dd9edb95bbc74621a5f42d1bffd1a00227522d6ad507a6312e2a5d6cfa84e"
+      },
+      {
+        "path": "src/shared/cache/use-network-status.ts",
+        "sha256": "fc7352a9e190b06e371cc209adc000e4a50f6da839d7796110bd1e1a7bf81fbe"
+      },
+      {
+        "path": "src/shared/lib/utf8-size.ts",
+        "sha256": "67aadf88a2c6cd4e342c4f8e4ff43cf37a81699bc9b047328befe2f982bb5b03"
+      },
+      {
+        "path": "src/shared/pwa/service-worker-registration.ts",
+        "sha256": "8bc7616d38ff3f46a208d59ef7af42477c7fbb347f964bd6aefa60493142df3d"
+      },
+      {
+        "path": "src/shared/pwa/tests/service-worker.test.ts",
+        "sha256": "f559c8ed1e852a4700de1660c6c2380529b9ce4584207628571cf296c3cf134b"
+      },
+      {
+        "path": "vercel.json",
+        "sha256": "bb9f5bdb52c751c5fee2ac375bd9f0dade6b203ad2f2775fefd04a3517aa6997"
+      }
+    ]
+  },
+  "api": {
+    "base": "35e9e806f549bab6577105637cd08ea90de6008f",
+    "files": [
+      {
+        "path": "package.json",
+        "sha256": "8d0dccf305e62e8f7d2096bb5d1cbdc07a3af0ba30b5615dd2862de64d182671"
+      },
+      {
+        "path": "scripts/assess-optimization-indexes.ts",
+        "sha256": "e71e0194fe0d8bce201a95e0444bb2194a6cdd769ab3170495866d6242226e03"
+      },
+      {
+        "path": "scripts/benchmark-optimization.ts",
+        "sha256": "269de7117b7b24ac8f7c6f592ef8d894b957f28277b64ac42612d375e0ac33d4"
+      },
+      {
+        "path": "scripts/prepare-optimization-indexes.ts",
+        "sha256": "fcf7c56d50970f40c32238c4db02b555ea78672e0baa3d701eb1af89f02ce316"
+      },
+      {
+        "path": "scripts/prune-explore-snapshots.ts",
+        "sha256": "fc2cec1e44aa298f5c886f2723a1084f6e58304494b65ad86a5de6e067085fb7"
+      },
+      {
+        "path": "scripts/run-schema-migrations.ts",
+        "sha256": "70eacc6aec3cc79838817c069f06c5b77a302cf106d86f540b3b8f6b4303d700"
+      },
+      {
+        "path": "src/app.ts",
+        "sha256": "f8e9d615cd85b0840caf2bbfec22a3ace97896ab396814359f0e1e88fca97d70"
+      },
+      {
+        "path": "src/core/infra/adapters/express-route-adapter.ts",
+        "sha256": "09e47c4a745b968df281857ff0cd05649e399c93cca8b00bdb70956c1d7923f5"
+      },
+      {
+        "path": "src/domain/application/repositories/bookings-repository.ts",
+        "sha256": "f8b951a0068202294e19a844ee622a684c3c6839c6c9d299c5d784d413c1799c"
+      },
+      {
+        "path": "src/domain/application/repositories/schedule-exceptions-repository.ts",
+        "sha256": "b4de23209836c6e6f02f9a55d1346b61d1e8af9c7093f7dc7fd796b5519c20ac"
+      },
+      {
+        "path": "src/domain/application/repositories/schedules-repository.ts",
+        "sha256": "f65f2d6d5812afe75cf7e7eda2923d8efc4e36af06be1fc29a4745c0df9202aa"
+      },
+      {
+        "path": "src/domain/application/services/finance/finance.ts",
+        "sha256": "f36b5cfbcf60045a5088d65f060ca70576333349e4b5f627d636663ba3806643"
+      },
+      {
+        "path": "src/domain/application/use-cases/barbershop/fetch-unit-bookings/fetch-unit-bookings.ts",
+        "sha256": "4fbfb8d4561b81c41156476ca3c51730bbb20ce660dbd09135f74dd916a75be9"
+      },
+      {
+        "path": "src/domain/application/use-cases/barbershop/get-explore-feed/get-explore-feed.ts",
+        "sha256": "ca8deb64be203c3944953180fc8fe99100e722c42a4225a9aaa2723dbad5aabc"
+      },
+      {
+        "path": "src/domain/application/use-cases/booking/create-booking/create-booking.ts",
+        "sha256": "bc717beeeb86443edebeefea6f33d9cf2dc10c44aa13d0058130114a0779cda6"
+      },
+      {
+        "path": "src/domain/application/use-cases/booking/reschedule-booking/reschedule-booking.ts",
+        "sha256": "049dbe3608988003e4c9e776b5110f44677172aa176bf2cfb59852c8f7934e6e"
+      },
+      {
+        "path": "src/domain/application/use-cases/notifications/fetch-user-notifications/fetch-user-notifications.ts",
+        "sha256": "5e839e726aac748d4d0423957cc2da3098c72f7acdcd988cb358ed85a2bc4d2a"
+      },
+      {
+        "path": "src/domain/application/use-cases/schedule/calculate-availability/calculate-availability.ts",
+        "sha256": "54a22f12908e4af616a4762570a5ba410427acc8c74e1417819d53e794c71400"
+      },
+      {
+        "path": "src/infra/drizzle/booking-action-idempotency.integration.spec.ts",
+        "sha256": "589366fdfe5f895824da97bb56ec809add6b052ab59df1dda0e51e16a0680b07"
+      },
+      {
+        "path": "src/infra/drizzle/demo-seed/smoke-auth.e2e.spec.ts",
+        "sha256": "fdf47d63f7f22c0a3d1acda755ba67ec780f07d0affb5d424b9a25e2a0be7504"
+      },
+      {
+        "path": "src/infra/drizzle/index.ts",
+        "sha256": "3df649f89f96ff6add028eb76123163c00fe37fc3febe7564e1dcf965c3dd60f"
+      },
+      {
+        "path": "src/infra/drizzle/migrator.ts",
+        "sha256": "331e0309032e55183b16509707d9ac89eb73a6d4336e51c449644ae84d65887e"
+      },
+      {
+        "path": "src/infra/drizzle/optimization-read-models.integration.spec.ts",
+        "sha256": "e2a35348c5de91591b8a680b04b48ecb49741895c70ace1d19d8e8fdfd0007cb"
+      },
+      {
+        "path": "src/infra/drizzle/repositories/drizzle-bookings-repository.ts",
+        "sha256": "780375789fd267a188d3cb88a17471b37bee72b38b941a87120ce3a384919afd"
+      },
+      {
+        "path": "src/infra/drizzle/repositories/drizzle-discovery-repository.ts",
+        "sha256": "d49151c6ae35a6cf6b1263bfa8fedac985745f6b0c7ac546ac65b0b4f205f484"
+      },
+      {
+        "path": "src/infra/drizzle/repositories/drizzle-discovery-unbounded.spec.ts",
+        "sha256": "34610c4404adc07a4584568589d7c180e5226a6b3ebb1d8c93ac8cb07c96ca40"
+      },
+      {
+        "path": "src/infra/drizzle/repositories/drizzle-explore-snapshot-repository.ts",
+        "sha256": "25422ec95e44537069c7dd4cc431ab46e4feabe84ee2edb02dfd1a303bb51926"
+      },
+      {
+        "path": "src/infra/drizzle/repositories/drizzle-notifications-repository.ts",
+        "sha256": "f08721de73092f85ed8a7e7dbe2297fc24e4295a4dd0e8f69a7c02ed073fc18d"
+      },
+      {
+        "path": "src/infra/drizzle/repositories/drizzle-schedule-exceptions-repository.ts",
+        "sha256": "faef962ea41cebedf452c27e03f3c440dc4b6b0d27fcaa7a6c08caabc5c588be"
+      },
+      {
+        "path": "src/infra/drizzle/repositories/drizzle-schedules-repository.ts",
+        "sha256": "1b07f5268c474f06c586a445f358ba0e5937fbd6a606a50c822e5b4c53213598"
+      },
+      {
+        "path": "src/infra/drizzle/repositories/owner-promotion-preservation.integration.spec.ts",
+        "sha256": "289b47e67fc9d17c6fb6d769a47734d340b95639d974036561329890c88175f2"
+      },
+      {
+        "path": "src/infra/drizzle/schema-readiness.spec.ts",
+        "sha256": "fda225dfbb7db2b089d886b3cd839a410d8a3bf4eda2265a9d53a850efddba59"
+      },
+      {
+        "path": "src/infra/drizzle/schema.ts",
+        "sha256": "f29b47ffe7814912bd2c111c9d5c4f4ab3220f289c3e8bfb1f193448347b2ff4"
+      },
+      {
+        "path": "src/infra/env/index.ts",
+        "sha256": "bd73056e90a03d7dbd712a6cb97422ecb25706cb518b8583ef09c91b47598674"
+      },
+      {
+        "path": "src/infra/http/barber-registration-full.integration.spec.ts",
+        "sha256": "83a1843941817b899f9305411d00b3f4b5b0da4608842d4bf83ea7bfbc69cdec"
+      },
+      {
+        "path": "src/infra/http/barber-registration-lock-regression.integration.spec.ts",
+        "sha256": "d80abd9856728cdf370eb5efd10bf6a971aae2d2b81f71e7640bbca060df18a2"
+      },
+      {
+        "path": "src/infra/http/booking-actions-contract.e2e.spec.ts",
+        "sha256": "f3a448116504f2fc50d0fa2f57014b3f03ed17f3fb3956072b5ba99ce2731f45"
+      },
+      {
+        "path": "src/infra/http/controllers/barbershop/create-barbershop.controller.ts",
+        "sha256": "f9b4fe5e83bc6ac0890e647919bfbe92c5ff99f8a01a5168d8e51ed2b8c55fd4"
+      },
+      {
+        "path": "src/infra/http/controllers/barbershop/fetch-unit-bookings.controller.ts",
+        "sha256": "2ce8b4545ed6135f358c603dbec7c2d301c3f7bdeecfc08f07f4900f6b899806"
+      },
+      {
+        "path": "src/infra/http/controllers/barbershop/fetch-unit-bookings.optimization.spec.ts",
+        "sha256": "e22f58ff4afb530355203e1b43d38db4853519e82c46fc82d841ef85b23e6030"
+      },
+      {
+        "path": "src/infra/http/controllers/booking/fetch-my-bookings.controller.ts",
+        "sha256": "f47bc063ef305b02dbc451d2abdffd22e7aee3bdc2add811b9bd6cfc83d393bc"
+      },
+      {
+        "path": "src/infra/http/controllers/finance/finance-repository.ts",
+        "sha256": "33c6e30eb40cfc227b64625fd917be1a2571290d8107c9c2f952bff979c88b96"
+      },
+      {
+        "path": "src/infra/http/discovery.integration.spec.ts",
+        "sha256": "41301ab3c56dc7de21391a7467796861a03cc5b5cc51746111d292a2adde09e9"
+      },
+      {
+        "path": "src/infra/http/phase1-six-corrections.integration.spec.ts",
+        "sha256": "9039315035f5adba6f88cdeceb44c880fd0dd6c5f2e6f2616e26244bb423bda0"
+      },
+      {
+        "path": "src/infra/http/routes/finance.routes.ts",
+        "sha256": "f72abbd859d34bfd675b1420d17ec7d636f0cfae3167e72ea5fa4bdfcf7e96ea"
+      },
+      {
+        "path": "src/infra/observability/request-metrics.ts",
+        "sha256": "784fbcf0bc4370272e79cd38ec48439ff8b3ab25f41958908945a288af72b076"
+      },
+      {
+        "path": "test/discovery-group1-regressions.spec.ts",
+        "sha256": "2cd19bd9bb087e6c5e56909de067a0be82e8800b38c6a3e45787e20fa6ace9af"
+      },
+      {
+        "path": "test/repositories/in-memory-bookings-repository.ts",
+        "sha256": "3bdca32fd5b59f57d98f0f7ca149da919d89d4e403e825e7db1cad4742b438a7"
+      },
+      {
+        "path": "test/repositories/in-memory-notifications-repository.ts",
+        "sha256": "3b85c7a2342c2a575ead8223a0772999a29d434c6b2b8c8399853a5e371b4583"
+      },
+      {
+        "path": "test/repositories/in-memory-schedule-exceptions-repository.ts",
+        "sha256": "01515b1de621582d26da3ee9c42b8c3897e494a2a5906f5e55fc99f6bd4c6251"
+      },
+      {
+        "path": "test/repositories/in-memory-schedules-repository.ts",
+        "sha256": "481af3ade21594fe4b98ee36053fe601544155140d94d33cab7b10511c699597"
+      },
+      {
+        "path": "test/setup.ts",
+        "sha256": "c616296eab8f607f5f1acb266be69a69395ca0e0921a0e0735e866c8c4fef006"
+      }
+    ]
+  }
+}

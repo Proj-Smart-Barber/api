@@ -77,7 +77,8 @@ describe.skipIf(!testUrl)(
       CREATE TABLE barbershops (
         id uuid PRIMARY KEY, name text NOT NULL, avatar_url text, owner_id uuid NOT NULL REFERENCES users(id),
         slug text NOT NULL UNIQUE, cnpj text NOT NULL UNIQUE, location text NOT NULL,
-        timezone text NOT NULL, status text NOT NULL, created_at timestamp DEFAULT now()
+        timezone text NOT NULL, status text NOT NULL, created_at timestamp DEFAULT now(),
+        google_maps_url text, cover_url text, rating numeric NOT NULL DEFAULT 0, review_count integer NOT NULL DEFAULT 0
       );
       CREATE TABLE membership (
         id uuid PRIMARY KEY, role role NOT NULL, barbershop_id uuid NOT NULL REFERENCES barbershops(id),
