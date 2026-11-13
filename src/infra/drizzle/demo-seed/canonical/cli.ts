@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { DemoSeedEngine } from "./engine";
+import { buildFullDemoSeedFixtures } from "./full-profile-fixtures";
 
 async function main() {
   const args = process.argv.slice(2);
@@ -15,9 +16,21 @@ async function main() {
   }
 
   let confirmSecret: string | undefined;
+  let confirmFullProductionTarget: string | undefined;
+  let productionBackupPath: string | undefined;
+  let productionBackupSha256: string | undefined;
   for (const arg of args) {
     if (arg.startsWith("--confirm=")) {
       confirmSecret = arg.split("=")[1];
+    }
+    if (arg.startsWith("--confirm-full-production=")) {
+      confirmFullProductionTarget = arg.split("=")[1];
+    }
+    if (arg.startsWith("--production-backup=")) {
+      productionBackupPath = arg.slice("--production-backup=".length);
+    }
+    if (arg.startsWith("--production-backup-sha256=")) {
+      productionBackupSha256 = arg.split("=")[1];
     }
   }
 
@@ -36,12 +49,18 @@ async function main() {
   console.log(`Perfil: ${profile}`);
 
   try {
+    const fullProfileFixtures =
+      profile === "full" ? buildFullDemoSeedFixtures() : undefined;
     const summary = await engine.run({
       dryRun: isDryRun,
       rollback: isRollback,
       confirmSecret,
       forceReplenishDisposables: forceReplenish,
       profile,
+      fullProfileFixtures,
+      confirmFullProductionTarget,
+      productionBackupPath,
+      productionBackupSha256,
     });
 
     console.log(
@@ -111,7 +130,9 @@ async function main() {
         );
         if (profile === "full") {
           console.log(
-            "  [ATENÇÃO] A senha de teste padronizada só pode ser usada neste banco local isolado.",
+            summary.targetDatabase.isLocal
+              ? "  [INFO] A senha padronizada é exclusiva do banco local de teste."
+              : "  [ATENÇÃO] O perfil remoto criou contas sintéticas com senha compartilhada; restrinja e rotacione após os testes.",
           );
         }
         console.log(

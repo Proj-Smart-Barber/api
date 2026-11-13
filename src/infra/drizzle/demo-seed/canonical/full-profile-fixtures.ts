@@ -14,9 +14,9 @@ import type {
   DemoBarbershopFixture,
   DemoBookingFixture,
   DemoCustomerFixture,
-  DemoMembershipFixture,
   DemoScheduleExceptionFixture,
   DemoScheduleFixture,
+  DemoSeedProfileFixtures,
   DemoServiceFixture,
   DemoStaffFixture,
 } from "./types";
@@ -104,18 +104,7 @@ function addMinutes(time: string, minutes: number): string {
   return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
 }
 
-export interface FullDemoSeedFixtures {
-  barbershops: DemoBarbershopFixture[];
-  staffs: DemoStaffFixture[];
-  customers: DemoCustomerFixture[];
-  memberships: DemoMembershipFixture[];
-  schedules: DemoScheduleFixture[];
-  services: DemoServiceFixture[];
-  exceptions: DemoScheduleExceptionFixture[];
-  bookings: DemoBookingFixture[];
-}
-
-export function buildFullDemoSeedFixtures(): FullDemoSeedFixtures {
+export function buildFullDemoSeedFixtures(): DemoSeedProfileFixtures {
   fakerPT_BR.seed(RANDOM_SEED);
 
   const unrepresentedDistricts = SAO_PAULO_DISTRICT_CENTROIDS.filter(
@@ -372,7 +361,7 @@ export function buildFullDemoSeedFixtures(): FullDemoSeedFixtures {
   };
 }
 
-function assertFullFixtureIntegrity(fixtures: FullDemoSeedFixtures): void {
+function assertFullFixtureIntegrity(fixtures: DemoSeedProfileFixtures): void {
   const {
     barbershops,
     staffs,

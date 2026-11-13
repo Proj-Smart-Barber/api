@@ -91,6 +91,17 @@ export interface DemoBookingFixture {
   isDisposable?: boolean; // reserva de teste para cancelamento
 }
 
+export interface DemoSeedProfileFixtures {
+  barbershops: DemoBarbershopFixture[];
+  staffs: DemoStaffFixture[];
+  customers: DemoCustomerFixture[];
+  memberships: DemoMembershipFixture[];
+  schedules: DemoScheduleFixture[];
+  services: DemoServiceFixture[];
+  exceptions: DemoScheduleExceptionFixture[];
+  bookings: DemoBookingFixture[];
+}
+
 export interface SeedRegistryRecord {
   id: string;
   namespace: string;

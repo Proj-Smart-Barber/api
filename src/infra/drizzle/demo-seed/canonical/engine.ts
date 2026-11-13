@@ -5,8 +5,16 @@ import {
   type RegisteredBarbershop,
 } from "./retired-barbershops";
 import type { SeedRegistryRecord } from "./types";
-import { writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import {
+  createReadStream,
+  openSync,
+  readSync,
+  closeSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
+import { createHash } from "node:crypto";
+import { isAbsolute, relative, resolve, sep } from "node:path";
 import { and, eq, inArray, or, sql } from "drizzle-orm";
 import { db } from "../../index";
 import type { SeedDatabase } from "./database";
@@ -34,7 +42,6 @@ import {
   DEMO_SERVICES,
   buildDemoMemberships,
 } from "./fixtures";
-import { buildFullDemoSeedFixtures } from "./full-profile-fixtures";
 import { SeedRegistryManager } from "./registry";
 import {
   DEFAULT_DEMO_PASSWORD,
@@ -42,7 +49,11 @@ import {
   inspectDatabaseTarget,
   loadOrCreateStaffCredentials,
 } from "./security";
-import { DEMO_SEED_NAMESPACE, type DemoSeedExecutionSummary } from "./types";
+import {
+  DEMO_SEED_NAMESPACE,
+  type DemoSeedExecutionSummary,
+  type DemoSeedProfileFixtures,
+} from "./types";
 
 const MANIFEST_FILE_PATH = resolve(process.cwd(), ".demo-seed-manifest.json");
 
@@ -52,6 +63,77 @@ export interface SeedEngineOptions {
   confirmSecret?: string;
   forceReplenishDisposables?: boolean;
   profile?: "smoke" | "full";
+  fullProfileFixtures?: DemoSeedProfileFixtures;
+  confirmFullProductionTarget?: string;
+  productionBackupPath?: string;
+  productionBackupSha256?: string;
+}
+
+interface VerifiedProductionBackup {
+  sha256: string;
+  sizeBytes: number;
+  verifiedAt: string;
+}
+
+async function verifyProductionSeedBackup(
+  backupPath: string,
+  expectedSha256: string,
+): Promise<VerifiedProductionBackup> {
+  if (!isAbsolute(backupPath)) {
+    throw new Error("Production backup path must be absolute.");
+  }
+  const absolutePath = resolve(backupPath);
+  const sourceRoot = resolve(__dirname, "../../../../..");
+  const relativePath = relative(sourceRoot, absolutePath);
+  if (
+    relativePath === "" ||
+    (!isAbsolute(relativePath) &&
+      relativePath !== ".." &&
+      !relativePath.startsWith(`..${sep}`))
+  ) {
+    throw new Error("Production backup must be outside the source checkout.");
+  }
+
+  const stats = statSync(absolutePath);
+  const ageMs = Date.now() - stats.mtimeMs;
+  if (
+    !stats.isFile() ||
+    stats.size < 5 ||
+    ageMs < 0 ||
+    ageMs > 24 * 60 * 60 * 1000
+  ) {
+    throw new Error(
+      "Production backup is missing, empty, or older than 24 hours.",
+    );
+  }
+
+  const header = Buffer.alloc(5);
+  const fileDescriptor = openSync(absolutePath, "r");
+  try {
+    readSync(fileDescriptor, header, 0, header.length, 0);
+  } finally {
+    closeSync(fileDescriptor);
+  }
+  if (header.toString("ascii") !== "PGDMP") {
+    throw new Error(
+      "Production backup is not a PostgreSQL custom-format dump.",
+    );
+  }
+
+  const hash = createHash("sha256");
+  for await (const chunk of createReadStream(absolutePath)) hash.update(chunk);
+  const sha256 = hash.digest("hex");
+  if (sha256.toLowerCase() !== expectedSha256.toLowerCase()) {
+    throw new Error(
+      "Production backup SHA-256 does not match the confirmation.",
+    );
+  }
+
+  return {
+    sha256,
+    sizeBytes: stats.size,
+    verifiedAt: new Date().toISOString(),
+  };
 }
 
 export class DemoSeedEngine {
@@ -92,7 +174,13 @@ export class DemoSeedEngine {
   ): Promise<DemoSeedExecutionSummary> {
     const isDryRun = options.dryRun ?? false;
     const profile = options.profile ?? "smoke";
-    const fullProfile = profile === "full" ? buildFullDemoSeedFixtures() : null;
+    const fullProfile =
+      profile === "full" ? (options.fullProfileFixtures ?? null) : null;
+    if (profile === "full" && !fullProfile) {
+      throw new Error(
+        "The full seed profile must be built by its CLI entry point.",
+      );
+    }
     const seedStaffs = fullProfile?.staffs ?? DEMO_STAFFS;
     const seedBarbershops = fullProfile?.barbershops ?? DEMO_BARBERSHOPS;
     const seedMemberships = fullProfile?.memberships ?? buildDemoMemberships();
@@ -112,9 +200,24 @@ export class DemoSeedEngine {
         );
       }
     }
+    let productionBackup: VerifiedProductionBackup | undefined;
     if (profile === "full" && !targetInfo.isLocal && !isDryRun) {
-      throw new Error(
-        "[FULL SEED BLOQUEADO] O perfil full só pode gravar em banco local isolado.",
+      if (options.confirmFullProductionTarget !== targetInfo.database) {
+        throw new Error(
+          "[FULL SEED BLOQUEADO] Confirme o nome exato do banco remoto com --confirm-full-production=<database>.",
+        );
+      }
+      if (!options.productionBackupPath || !options.productionBackupSha256) {
+        throw new Error(
+          "[FULL SEED BLOQUEADO] Informe o dump recente e seu SHA-256 com --production-backup e --production-backup-sha256.",
+        );
+      }
+      productionBackup = await verifyProductionSeedBackup(
+        options.productionBackupPath,
+        options.productionBackupSha256,
+      );
+      console.log(
+        `[DemoSeed] Produção confirmada: ${targetInfo.database}; backup verificado (${productionBackup.sizeBytes} bytes, SHA-256 ${productionBackup.sha256}).`,
       );
     }
 
@@ -792,6 +895,13 @@ export class DemoSeedEngine {
         generatedAt: new Date().toISOString(),
         baseDateSP,
         targetDatabase: targetInfo,
+        productionBackup: productionBackup
+          ? {
+              sha256: productionBackup.sha256,
+              sizeBytes: productionBackup.sizeBytes,
+              verifiedAt: productionBackup.verifiedAt,
+            }
+          : undefined,
         staffs: seedStaffs.map((s) => ({
           logicalKey: s.logicalKey,
           id: resolvedIds[s.logicalKey],
