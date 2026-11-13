@@ -104,6 +104,20 @@ function addMinutes(time: string, minutes: number): string {
   return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
 }
 
+export function standardizeDemoServicePrice(priceInCents: number): number {
+  const whole = Math.floor(priceInCents / 100);
+  const candidates = new Set<number>();
+  for (const real of [whole - 1, whole, whole + 1]) {
+    if (real <= 0) continue;
+    for (const cents of [0, 90, 99]) candidates.add(real * 100 + cents);
+  }
+  return [...candidates].sort(
+    (left, right) =>
+      Math.abs(left - priceInCents) - Math.abs(right - priceInCents) ||
+      left - right,
+  )[0];
+}
+
 export function buildFullDemoSeedFixtures(): DemoSeedProfileFixtures {
   fakerPT_BR.seed(RANDOM_SEED);
 
@@ -216,10 +230,11 @@ export function buildFullDemoSeedFixtures(): DemoSeedProfileFixtures {
         barbershopLogicalKey: shop.logicalKey,
         title: service.title,
         description: `${service.title} com atendimento demonstrativo na região de ${shop.location.split(",")[0]}.`,
-        priceInCents:
+        priceInCents: standardizeDemoServicePrice(
           service.min +
-          ((shopIndex * 977 + serviceIndex * 613) %
-            (service.max - service.min + 1)),
+            ((shopIndex * 977 + serviceIndex * 613) %
+              (service.max - service.min + 1)),
+        ),
         durationInMinutes: service.duration,
         isActive: serviceIndex !== SERVICE_CATALOG.length - 1,
       })),
