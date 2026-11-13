@@ -6,6 +6,7 @@ import swaggerUi from "swagger-ui-express";
 import { routes } from "./infra/http/routes";
 import { swaggerDocument } from "./infra/http/swagger";
 import { runSchemaMigrations, isSchemaReady } from "./infra/drizzle/migrator";
+import { createSchemaReadinessCheck } from "./infra/drizzle/schema-readiness";
 import { DemoSeedEngine } from "./infra/drizzle/demo-seed/canonical/engine";
 import { requestMetricsMiddleware } from "./infra/observability/request-metrics";
 
@@ -16,16 +17,17 @@ app.use(requestMetricsMiddleware);
 // Executa migrações idempotentes no boot do servidor (pode ser desativado via AUTO_RUN_MIGRATIONS=false em serverless)
 // Integration tests prepare their isolated schema explicitly; concurrent boot DDL can deadlock fixtures.
 // Releases run migrations before traffic; boot DDL is now an explicit compatibility opt-in.
-const schemaReady =
-  process.env.NODE_ENV === "test"
-    ? Promise.resolve({ success: true })
-    : process.env.AUTO_RUN_MIGRATIONS === "true"
-      ? runSchemaMigrations()
-      : isSchemaReady().then((success) => ({ success }));
+const schemaReady = createSchemaReadinessCheck(async () => {
+  if (process.env.NODE_ENV === "test") return true;
+  if (process.env.AUTO_RUN_MIGRATIONS === "true") {
+    return (await runSchemaMigrations()).success;
+  }
+  return isSchemaReady();
+});
 app.use(async (_request, response, next) => {
   try {
-    const result = await schemaReady;
-    if (!result.success)
+    const ready = await schemaReady();
+    if (!ready)
       return response
         .status(503)
         .json({ error: "Serviço temporariamente indisponível." });
