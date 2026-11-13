@@ -40,7 +40,11 @@ O comando relacionado a esta entrega é `npm run db:seed:demo:dry-run` / `npm ru
 
 ## Perfil de volume para testes
 
-O perfil padrão continua `smoke`, com dez unidades canônicas. Para testes de maior volume, use explicitamente `npm run db:seed:demo:full:dry-run`, `npm run db:seed:demo:full:apply` e `npm run db:seed:demo:full:verify`. O perfil `full` só grava quando o host do banco é local; nunca use esse perfil contra banco remoto, compartilhado ou de produção. O verificador aceita apenas banco local com `test` no nome e porta 55433 ou maior.
+O perfil padrão continua `smoke`, com dez unidades canônicas. Para testes de maior volume, use explicitamente `npm run db:seed:demo:full:dry-run`, `npm run db:seed:demo:full:apply` e `npm run db:seed:demo:full:verify`. O verificador aceita apenas banco local com `test` no nome e porta 55433 ou maior.
+
+Em banco remoto, o perfil `full` exige a confirmação genérica `--confirm=CONFIRMAR_SEED_DEMO_PRODUCAO`, o nome exato do banco em `--confirm-full-production=<database>` e dump custom recente fora do checkout com caminho absoluto e SHA-256. O CLI valida assinatura `PGDMP`, idade máxima de 24 horas e hash. Rehearsal de restauração permanece obrigatório antes de usar essa exceção.
+
+O perfil remoto cria barbearias demonstrativas ativas, contas sintéticas e reservas históricas/futuras. Esses registros podem aparecer em busca e dashboards e alterar métricas financeiras. A senha compartilhada de teste também permanece ativa. Use o perfil remoto somente quando esse conteúdo sintético e essa credencial forem intencionais no banco alvo.
 
 O perfil `full` planeja 100 barbearias, 466 contas de equipe, 1.012 clientes, 962 serviços, 474 vínculos, 2.845 jornadas, 186 exceções e 22.520 reservas, além de snapshots, carrinhos, eventos e entradas no registry. Mantém as dez unidades e chaves atuais e cobre os 96 distritos administrativos com referências distritais sintéticas. A distribuição resultante é Centro 8, Leste 36, Norte 18, Sul 23 e Oeste 15 barbearias.
 
@@ -48,7 +52,7 @@ Nomes usam Faker `pt_BR` com seed determinístico versionado no código. E-mails
 
 O catálogo de centroides deriva do GeoJSON municipal de distritos, publicado sob CC BY-SA 4.0: [URBIS/GeoSampa — Distritos Municipais](https://dadosabertos.urbis.prefeitura.sp.gov.br/dataset/distritos-municipais). O arquivo de dados inclui atribuição e licença. A classificação Centro/Leste/Norte/Sul/Oeste é agrupamento aproximado para testes, não divisão oficial de zonas.
 
-No perfil `full`, as novas contas de equipe e clientes usam a senha de demonstração padrão `SmartBarber12345!`. O seed guarda credenciais em `.demo-seed-full-credentials.json`, ignorado pelo Git. As três contas para validar fluxo são `qa.owner@demo.smartbarber.test`, `qa.barber@demo.smartbarber.test` e `qa.client@demo.smartbarber.test`. Use essa senha somente em banco local isolado; não promova essas contas nem essa senha para produção. Usuários que já existiam no namespace têm credenciais preservadas.
+No perfil `full`, as novas contas de equipe e clientes usam a senha de demonstração padrão `SmartBarber12345!`. O seed guarda credenciais em `.demo-seed-full-credentials.json`, ignorado pelo Git. As três contas para validar fluxo são `qa.owner@demo.smartbarber.test`, `qa.barber@demo.smartbarber.test` e `qa.client@demo.smartbarber.test`. Usuários que já existiam no namespace têm credenciais preservadas.
 
 O perfil reaproveita o namespace incremental atual. Rollback remove o namespace completo, incluindo unidades smoke e full; conferir o alvo e o relatório antes de executar rollback.
 
