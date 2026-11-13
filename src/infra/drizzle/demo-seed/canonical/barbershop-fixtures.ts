@@ -49,6 +49,13 @@ const regionalPoints: Record<string, { latitude: number; longitude: number }> =
     "sul:barbershop": DEMO_REGIONAL_LOCATIONS.sul.point,
     "oeste:barbershop": DEMO_REGIONAL_LOCATIONS.oeste.point,
   };
+const regionalZones: Record<string, DemoBarbershopFixture["region"]> = {
+  "horizonte:barbershop": "CENTRO",
+  "estacao:barbershop": "LESTE",
+  "norte:barbershop": "NORTE",
+  "sul:barbershop": "SUL",
+  "oeste:barbershop": "OESTE",
+};
 
 export const DEMO_BARBERSHOPS: DemoBarbershopFixture[] = [
   ...LEGACY_REGIONAL_BARBERSHOPS.filter((shop) =>
@@ -56,6 +63,7 @@ export const DEMO_BARBERSHOPS: DemoBarbershopFixture[] = [
   ).map((shop) => ({
     ...shop,
     point: regionalPoints[shop.logicalKey],
+    region: regionalZones[shop.logicalKey],
   })),
   ...additions.map((brand) => {
     const reference = LEGACY_REGIONAL_BARBERSHOPS.find(
@@ -69,6 +77,7 @@ export const DEMO_BARBERSHOPS: DemoBarbershopFixture[] = [
       name: `Barbearia ${brand.name} — Demonstração`,
       slug: `barbearia-${brand.key}-demo`,
       cnpj: brand.cnpj,
+      region: "LESTE" as const,
     };
   }),
 ];

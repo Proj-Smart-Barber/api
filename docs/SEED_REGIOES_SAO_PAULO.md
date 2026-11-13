@@ -38,6 +38,20 @@ Os pontos são referências dos equipamentos públicos, não comprovação da en
 
 O comando relacionado a esta entrega é `npm run db:seed:demo:dry-run` / `npm run db:seed:demo:apply`, com o destino DATABASE_URL explicitamente conferido. O seed legado `npm run db:seed` apaga registros globalmente e não é o fluxo atualizado nesta entrega.
 
+## Perfil de volume para testes
+
+O perfil padrão continua `smoke`, com dez unidades canônicas. Para testes de maior volume, use explicitamente `npm run db:seed:demo:full:dry-run`, `npm run db:seed:demo:full:apply` e `npm run db:seed:demo:full:verify`. O perfil `full` só grava quando o host do banco é local; nunca use esse perfil contra banco remoto, compartilhado ou de produção. O verificador aceita apenas banco local com `test` no nome e porta 55433 ou maior.
+
+O perfil `full` planeja 100 barbearias, 466 contas de equipe, 1.012 clientes, 962 serviços, 474 vínculos, 2.845 jornadas, 186 exceções e 22.520 reservas, além de snapshots, carrinhos, eventos e entradas no registry. Mantém as dez unidades e chaves atuais e cobre os 96 distritos administrativos com referências distritais sintéticas. A distribuição resultante é Centro 8, Leste 36, Norte 18, Sul 23 e Oeste 15 barbearias.
+
+Nomes usam Faker `pt_BR` com seed determinístico versionado no código. E-mails de contas geradas terminam em `demo.smartbarber.test`; telefones, CPFs e CNPJs são fixtures sintéticas. Datas e estados de reserva são distribuídos para exercitar histórico, cancelamentos e agenda futura. Pinos representam centroides de distritos, não endereços de estabelecimentos reais.
+
+O catálogo de centroides deriva do GeoJSON municipal de distritos, publicado sob CC BY-SA 4.0: [URBIS/GeoSampa — Distritos Municipais](https://dadosabertos.urbis.prefeitura.sp.gov.br/dataset/distritos-municipais). O arquivo de dados inclui atribuição e licença. A classificação Centro/Leste/Norte/Sul/Oeste é agrupamento aproximado para testes, não divisão oficial de zonas.
+
+No perfil `full`, as novas contas de equipe e clientes usam a senha de demonstração padrão `SmartBarber12345!`. O seed guarda credenciais em `.demo-seed-full-credentials.json`, ignorado pelo Git. As três contas para validar fluxo são `qa.owner@demo.smartbarber.test`, `qa.barber@demo.smartbarber.test` e `qa.client@demo.smartbarber.test`. Use essa senha somente em banco local isolado; não promova essas contas nem essa senha para produção. Usuários que já existiam no namespace têm credenciais preservadas.
+
+O perfil reaproveita o namespace incremental atual. Rollback remove o namespace completo, incluindo unidades smoke e full; conferir o alvo e o relatório antes de executar rollback.
+
 Não executar apply/rollback/migrations em produção apenas para testar o código. A atualização deste seed não altera os registros já publicados até uma execução autorizada. Os quatro cadastros públicos fora do namespace de demonstração não devem ser corrigidos automaticamente por esse seed.
 
 Para testar proximidade após uma execução autorizada, executar a manutenção real protegida e consultar `/api/barbershops/nearby` perto de cada referência, nos raios suportados. O seed fornece os pontos de demonstração; Google Maps e GPS físico exigem homologação própria.
