@@ -3,6 +3,7 @@ import type { BookingServiceSnapshot } from "./booking-service-item";
 
 export interface BookingDetailsServiceItem extends BookingServiceSnapshot {
   id?: UniqueEntityId;
+  bookingServiceItemId?: string | null;
 }
 
 export interface BookingDetailsProps {

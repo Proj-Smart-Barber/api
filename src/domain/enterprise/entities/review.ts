@@ -1,6 +1,7 @@
 import { Entity } from "../../../core/entities/Entity";
-import { UniqueEntityId } from "../../../core/entities/unique-entity-id";
+import type { UniqueEntityId } from "../../../core/entities/unique-entity-id";
 import type { Optional } from "../../../core/types/optional";
+import type { ReviewItem } from "./review-item";
 
 export type ReviewStatus =
   | "PUBLISHED"
@@ -13,6 +14,7 @@ export interface ReviewProps {
   customerId: UniqueEntityId;
   rating: number;
   comment?: string;
+  items?: ReviewItem[];
   status: ReviewStatus;
   version: number;
   createdAt: Date;
@@ -40,6 +42,14 @@ export class Review extends Entity<ReviewProps> {
     return this.props.comment;
   }
 
+  get items(): ReviewItem[] {
+    return this.props.items ?? [];
+  }
+
+  setItems(items: ReviewItem[]): void {
+    this.props.items = items;
+  }
+
   get status(): ReviewStatus {
     return this.props.status;
   }
@@ -60,12 +70,22 @@ export class Review extends Entity<ReviewProps> {
     return this.props.status === "PUBLISHED";
   }
 
-  update(params: { rating: number; comment?: string; expectedVersion?: number }): void {
+  update(params: {
+    rating: number;
+    comment?: string;
+    expectedVersion?: number;
+    items?: ReviewItem[];
+  }): void {
     if (this.props.status === "HIDDEN_BY_MODERATION") {
-      throw new Error("Esta avaliação foi ocultada pela moderação e não pode ser editada diretamente.");
+      throw new Error(
+        "Esta avaliação foi ocultada pela moderação e não pode ser editada diretamente.",
+      );
     }
 
-    if (params.expectedVersion !== undefined && params.expectedVersion !== this.props.version) {
+    if (
+      params.expectedVersion !== undefined &&
+      params.expectedVersion !== this.props.version
+    ) {
       throw new Error("Conflito de versão na edição da avaliação.");
     }
 
@@ -74,6 +94,9 @@ export class Review extends Entity<ReviewProps> {
 
     this.props.rating = params.rating;
     this.props.comment = params.comment;
+    if (params.items !== undefined) {
+      this.props.items = params.items;
+    }
     this.props.version += 1;
     this.touch();
   }
@@ -93,7 +116,7 @@ export class Review extends Entity<ReviewProps> {
   restoreByModeration(): void {
     if (this.props.status !== "HIDDEN_BY_MODERATION") {
       throw new Error(
-        "Apenas avaliações ocultadas pela moderação podem ser restauradas. Avaliações removidas pelo autor não podem ser restauradas."
+        "Apenas avaliações ocultadas pela moderação podem ser restauradas. Avaliações removidas pelo autor não podem ser restauradas.",
       );
     }
     this.props.status = "PUBLISHED";
@@ -118,8 +141,11 @@ export class Review extends Entity<ReviewProps> {
   }
 
   static create(
-    props: Optional<ReviewProps, "status" | "version" | "createdAt" | "updatedAt">,
-    id?: UniqueEntityId
+    props: Optional<
+      ReviewProps,
+      "status" | "version" | "createdAt" | "updatedAt"
+    >,
+    id?: UniqueEntityId,
   ): Review {
     Review.validateRating(props.rating);
     Review.validateComment(props.comment);
@@ -132,7 +158,7 @@ export class Review extends Entity<ReviewProps> {
         createdAt: props.createdAt ?? new Date(),
         updatedAt: props.updatedAt ?? new Date(),
       },
-      id
+      id,
     );
   }
 }

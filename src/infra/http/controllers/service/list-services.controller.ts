@@ -67,7 +67,7 @@ export class ListServicesController implements Controller {
       } = result.value;
 
       return ok({
-        items: items.map(DrizzleServiceMapper.toDrizzle),
+        items: items.map(DrizzleServiceMapper.toHTTP),
         total,
         page: currentPage,
         limit: currentLimit,

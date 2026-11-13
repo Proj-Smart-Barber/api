@@ -7,15 +7,42 @@ import {
   type HttpResponse,
 } from "../../../../core/infra/http-response";
 import type { UpdateReviewUseCase } from "../../../../domain/application/use-cases/reviews/update-review/update-review";
+import { ReviewMapper } from "../../../../domain/enterprise/mappers/review-mapper";
 
-const updateReviewSchema = z.object({
-  userId: z.string().uuid(),
-  bookingId: z.string().uuid().optional(),
-  reviewId: z.string().uuid().optional(),
+const serviceRatingSchema = z.object({
+  bookingServiceItemId: z.string().uuid().nullable().optional(),
+  serviceId: z.string().uuid().nullable().optional(),
   rating: z.coerce.number().int().min(1).max(5),
-  comment: z.string().max(1000).optional(),
-  expectedVersion: z.coerce.number().int(),
 });
+
+const platformFeedbackSchema = z.object({
+  rating: z.coerce.number().int().min(1).max(5).nullable().optional(),
+  comment: z.string().max(1000).nullable().optional(),
+});
+
+const updateReviewSchema = z
+  .object({
+    userId: z.string().uuid(),
+    bookingId: z.string().uuid().optional(),
+    reviewId: z.string().uuid().optional(),
+    rating: z.coerce.number().int().min(1).max(5).optional(),
+    barbershopRating: z.coerce.number().int().min(1).max(5).optional(),
+    barberId: z.string().uuid().nullable().optional(),
+    barberRating: z.coerce.number().int().min(1).max(5).optional(),
+    serviceRatings: z.array(serviceRatingSchema).max(30).optional(),
+    comment: z.string().max(1000).optional(),
+    platformFeedback: platformFeedbackSchema.nullable().optional(),
+    expectedVersion: z.coerce.number().int(),
+  })
+  .superRefine((data, ctx) => {
+    const shopRating = data.rating ?? data.barbershopRating;
+    if (shopRating === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "A nota da barbearia é obrigatória e deve ser entre 1 e 5.",
+      });
+    }
+  });
 
 type UpdateReviewRequest = z.infer<typeof updateReviewSchema>;
 
@@ -25,13 +52,18 @@ export class UpdateReviewController implements Controller {
   async handle(request: UpdateReviewRequest): Promise<HttpResponse> {
     try {
       const parsed = updateReviewSchema.parse(request);
+      const resolvedRating = parsed.rating ?? parsed.barbershopRating!;
 
       const result = await this.updateReviewUseCase.execute({
         userId: parsed.userId,
         bookingId: parsed.bookingId,
         reviewId: parsed.reviewId,
-        rating: parsed.rating,
+        rating: resolvedRating,
+        barberId: parsed.barberId,
+        barberRating: parsed.barberRating,
+        serviceRatings: parsed.serviceRatings,
         comment: parsed.comment,
+        platformFeedback: parsed.platformFeedback,
         expectedVersion: parsed.expectedVersion,
       });
 
@@ -46,21 +78,14 @@ export class UpdateReviewController implements Controller {
         return clientError({ message: error.message });
       }
 
-      const review = result.value.review;
+      const { review, platformFeedback } = result.value;
 
       return ok({
-        review: {
-          id: review.id.toString(),
-          bookingId: review.bookingId.toString(),
-          barbershopId: review.barbershopId.toString(),
-          customerId: review.customerId.toString(),
-          rating: review.rating,
-          comment: review.comment,
-          status: review.status,
-          version: review.version,
-          createdAt: review.createdAt,
-          updatedAt: review.updatedAt,
-        },
+        review: ReviewMapper.toHTTP(
+          review,
+          review.items,
+          platformFeedback ?? null,
+        ),
       });
     } catch (err) {
       if (err instanceof ZodError) {

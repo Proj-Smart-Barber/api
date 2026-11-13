@@ -21,14 +21,24 @@ export class ModerateReviewUseCase {
     private barbershopsRepository?: BarbershopsRepository,
   ) {}
 
-  async execute(dto: ModerateReviewDTO): Promise<Either<Error, { review: Review }>> {
+  async execute(
+    dto: ModerateReviewDTO,
+  ): Promise<Either<Error, { review: Review }>> {
     if (dto.expectedVersion === undefined || dto.expectedVersion === null) {
-      return left(new Error("Versão esperada (expectedVersion) é obrigatória para moderação."));
+      return left(
+        new Error(
+          "Versão esperada (expectedVersion) é obrigatória para moderação.",
+        ),
+      );
     }
 
     const adminUser = await this.usersRepository.findById(dto.adminUserId);
     if (!adminUser || adminUser.accountType !== "PLATFORM_ADMIN") {
-      return left(new Error("Apenas administradores da plataforma podem moderar avaliações."));
+      return left(
+        new Error(
+          "Apenas administradores da plataforma podem moderar avaliações.",
+        ),
+      );
     }
 
     const review = await this.reviewsRepository.findById(dto.reviewId);
@@ -43,7 +53,9 @@ export class ModerateReviewUseCase {
 
     if (review.version !== dto.expectedVersion) {
       return left(
-        new Error("Conflito de versão: a avaliação foi modificada concorrentemente.")
+        new Error(
+          "Conflito de versão: a avaliação foi modificada concorrentemente.",
+        ),
       );
     }
 
@@ -52,8 +64,12 @@ export class ModerateReviewUseCase {
     } else if (dto.action === "RESTORE") {
       try {
         review.restoreByModeration();
-      } catch (err: any) {
-        return left(new Error(err.message));
+      } catch (err: unknown) {
+        return left(
+          new Error(
+            err instanceof Error ? err.message : "Erro ao restaurar avaliação.",
+          ),
+        );
       }
     }
 
@@ -68,31 +84,39 @@ export class ModerateReviewUseCase {
       const success = await this.reviewsRepository.moderateReview(
         review,
         log,
-        dto.expectedVersion
+        dto.expectedVersion,
       );
       if (!success) {
         return left(
-          new Error("Conflito de versão: a avaliação foi modificada concorrentemente.")
+          new Error(
+            "Conflito de versão: a avaliação foi modificada concorrentemente.",
+          ),
         );
       }
     } else {
-      const saved = await this.reviewsRepository.save(review, dto.expectedVersion);
+      const saved = await this.reviewsRepository.save(
+        review,
+        dto.expectedVersion,
+      );
       if (!saved) {
         return left(
-          new Error("Conflito de versão: a avaliação foi modificada concorrentemente.")
+          new Error(
+            "Conflito de versão: a avaliação foi modificada concorrentemente.",
+          ),
         );
       }
       await this.reviewsRepository.createModerationLog(log);
     }
 
-    const metrics = await this.reviewsRepository.calculateBarbershopRatingMetrics(
-      review.barbershopId.toString()
-    );
+    const metrics =
+      await this.reviewsRepository.calculateBarbershopRatingMetrics(
+        review.barbershopId.toString(),
+      );
     if (this.barbershopsRepository?.updateRatingMetrics) {
       await this.barbershopsRepository.updateRatingMetrics(
         review.barbershopId.toString(),
         metrics.averageRating,
-        metrics.reviewCount
+        metrics.reviewCount,
       );
     }
 

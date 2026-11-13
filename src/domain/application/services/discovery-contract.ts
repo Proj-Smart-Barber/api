@@ -4,12 +4,19 @@ export type GeoPoint = {
 };
 
 export type DiscoveryInput =
-  | { mode: "ALL"; ids?:string[]; regionKey?: string; q?: string; page: number; limit: number }
+  | {
+      mode: "ALL";
+      ids?: string[];
+      regionKey?: string;
+      q?: string;
+      page: number;
+      limit: number;
+    }
   | {
       mode: "NEARBY";
       point: GeoPoint;
       radiusKm: 5 | 10 | 25 | 50 | null;
-      ids?:string[];
+      ids?: string[];
       regionKey?: string;
       q?: string;
       page: number;
@@ -51,6 +58,8 @@ export type PublicShop = {
     width?: number;
     height?: number;
     featuredOrder: number;
+    rating?: number | null;
+    reviewCount?: number;
   }>;
 };
 

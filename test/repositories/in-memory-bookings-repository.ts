@@ -234,6 +234,7 @@ export class InMemoryBookingsRepository implements BookingsRepository {
         },
         services: items.map((item) => ({
           id: item.serviceId ? item.serviceId : undefined,
+          bookingServiceItemId: item.id.toString(),
           serviceId: item.serviceId ? item.serviceId.toString() : null,
           title: item.title,
           priceInCents: item.priceInCents,

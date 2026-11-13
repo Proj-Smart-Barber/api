@@ -43,7 +43,7 @@ export class GetServiceController implements Controller {
       }
 
       return ok({
-        service: DrizzleServiceMapper.toDrizzle(result.value.service),
+        service: DrizzleServiceMapper.toHTTP(result.value.service),
       });
     } catch (error) {
       if (error instanceof ZodError) {

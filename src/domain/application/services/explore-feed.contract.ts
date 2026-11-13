@@ -19,6 +19,8 @@ export interface ExploreFeedMediaItem {
     title: string;
     priceInCents: number;
     durationInMinutes: number;
+    rating?: number | null;
+    reviewCount?: number;
   } | null;
 }
 

@@ -6,6 +6,7 @@ import { InMemoryBarbershopsRepository } from "../../../../../test/repositories/
 import { InMemoryMembershipsRepository } from "../../../../../test/repositories/in-memory-memberships-repository";
 import { InMemoryUsersRepository } from "../../../../../test/repositories/in-memory-users-repository";
 import { Booking } from "../../../enterprise/entities/booking";
+import { BookingServiceItem } from "../../../enterprise/entities/booking-service-item";
 import { Barbershop } from "../../../enterprise/entities/barbershop";
 import { Membership, Role } from "../../../enterprise/entities/membership";
 import { User } from "../../../enterprise/entities/user";
@@ -15,6 +16,7 @@ import { UpdateReviewUseCase } from "./update-review/update-review";
 import { DeleteReviewUseCase } from "./delete-review/delete-review";
 import { GetBookingReviewUseCase } from "./get-booking-review/get-booking-review";
 import { ListBarbershopReviewsUseCase } from "./list-barbershop-reviews/list-barbershop-reviews";
+import { ListTargetReviewsUseCase } from "./list-target-reviews/list-target-reviews";
 import { ReportReviewUseCase } from "./report-review/report-review";
 import { ModerateReviewUseCase } from "./moderate-review/moderate-review";
 
@@ -30,6 +32,7 @@ describe("Reviews & Moderation Use Cases", () => {
   let deleteReviewUseCase: DeleteReviewUseCase;
   let getBookingReviewUseCase: GetBookingReviewUseCase;
   let listBarbershopReviewsUseCase: ListBarbershopReviewsUseCase;
+  let listTargetReviewsUseCase: ListTargetReviewsUseCase;
   let reportReviewUseCase: ReportReviewUseCase;
   let moderateReviewUseCase: ModerateReviewUseCase;
 
@@ -56,6 +59,7 @@ describe("Reviews & Moderation Use Cases", () => {
     updateReviewUseCase = new UpdateReviewUseCase(
       reviewsRepository,
       barbershopsRepository,
+      bookingsRepository,
     );
     deleteReviewUseCase = new DeleteReviewUseCase(
       reviewsRepository,
@@ -65,6 +69,11 @@ describe("Reviews & Moderation Use Cases", () => {
     listBarbershopReviewsUseCase = new ListBarbershopReviewsUseCase(
       reviewsRepository,
       usersRepository,
+    );
+    listTargetReviewsUseCase = new ListTargetReviewsUseCase(
+      reviewsRepository,
+      usersRepository,
+      barbershopsRepository,
     );
     reportReviewUseCase = new ReportReviewUseCase(reviewsRepository);
     moderateReviewUseCase = new ModerateReviewUseCase(
@@ -82,7 +91,7 @@ describe("Reviews & Moderation Use Cases", () => {
         accountType: "CLIENT",
         password: Password.create("hashed_pw"),
       },
-      new UniqueEntityId(clientId)
+      new UniqueEntityId(clientId),
     );
     await usersRepository.save(clientUser);
 
@@ -94,7 +103,7 @@ describe("Reviews & Moderation Use Cases", () => {
         accountType: "PLATFORM_ADMIN",
         password: Password.create("hashed_pw"),
       },
-      new UniqueEntityId(adminId)
+      new UniqueEntityId(adminId),
     );
     await usersRepository.save(adminUser);
 
@@ -105,7 +114,7 @@ describe("Reviews & Moderation Use Cases", () => {
         ownerId: new UniqueEntityId(ownerId),
         location: "Rua Central, 100",
       },
-      new UniqueEntityId(barbershopId)
+      new UniqueEntityId(barbershopId),
     );
     await barbershopsRepository.save(barbershop);
 
@@ -127,7 +136,7 @@ describe("Reviews & Moderation Use Cases", () => {
         status: "COMPLETED",
         timezone: "America/Sao_Paulo",
       },
-      new UniqueEntityId(bookingId)
+      new UniqueEntityId(bookingId),
     );
     await bookingsRepository.create(booking);
   });
@@ -162,7 +171,7 @@ describe("Reviews & Moderation Use Cases", () => {
           customerId: new UniqueEntityId(clientId),
           status: "CONFIRMED",
         },
-        new UniqueEntityId(pendingBookingId)
+        new UniqueEntityId(pendingBookingId),
       );
       await bookingsRepository.create(pendingBooking);
 
@@ -174,7 +183,9 @@ describe("Reviews & Moderation Use Cases", () => {
 
       expect(result.isLeft()).toBe(true);
       if (result.isLeft()) {
-        expect(result.value.message).toBe("Apenas agendamentos concluídos podem ser avaliados.");
+        expect(result.value.message).toBe(
+          "Apenas agendamentos concluídos podem ser avaliados.",
+        );
       }
     });
 
@@ -188,7 +199,9 @@ describe("Reviews & Moderation Use Cases", () => {
 
       expect(result.isLeft()).toBe(true);
       if (result.isLeft()) {
-        expect(result.value.message).toBe("Apenas o cliente do atendimento pode avaliar este agendamento.");
+        expect(result.value.message).toBe(
+          "Apenas o cliente do atendimento pode avaliar este agendamento.",
+        );
       }
     });
 
@@ -202,7 +215,7 @@ describe("Reviews & Moderation Use Cases", () => {
           customerId: new UniqueEntityId(staffId),
           status: "COMPLETED",
         },
-        new UniqueEntityId(staffBookingId)
+        new UniqueEntityId(staffBookingId),
       );
       await bookingsRepository.create(staffBooking);
 
@@ -214,7 +227,9 @@ describe("Reviews & Moderation Use Cases", () => {
 
       expect(result.isLeft()).toBe(true);
       if (result.isLeft()) {
-        expect(result.value.message).toBe("Proprietários e membros da equipe não podem avaliar a própria unidade.");
+        expect(result.value.message).toBe(
+          "Proprietários e membros da equipe não podem avaliar a própria unidade.",
+        );
       }
     });
 
@@ -233,7 +248,9 @@ describe("Reviews & Moderation Use Cases", () => {
 
       expect(duplicateResult.isLeft()).toBe(true);
       if (duplicateResult.isLeft()) {
-        expect(duplicateResult.value.message).toBe("Já existe uma avaliação para este agendamento.");
+        expect(duplicateResult.value.message).toBe(
+          "Já existe uma avaliação para este agendamento.",
+        );
       }
     });
 
@@ -283,7 +300,9 @@ describe("Reviews & Moderation Use Cases", () => {
       expect(updateRes.isRight()).toBe(true);
       if (updateRes.isRight()) {
         expect(updateRes.value.review.rating).toBe(5);
-        expect(updateRes.value.review.comment).toBe("Excelente, melhorou ainda mais!");
+        expect(updateRes.value.review.comment).toBe(
+          "Excelente, melhorou ainda mais!",
+        );
       }
 
       const shop = await barbershopsRepository.findById(barbershopId);
@@ -425,7 +444,283 @@ describe("Reviews & Moderation Use Cases", () => {
 
       expect(modRes.isLeft()).toBe(true);
       if (modRes.isLeft()) {
-        expect(modRes.value.message).toBe("Apenas administradores da plataforma podem moderar avaliações.");
+        expect(modRes.value.message).toBe(
+          "Apenas administradores da plataforma podem moderar avaliações.",
+        );
+      }
+    });
+  });
+
+  describe("Multi-target Reviews, Snapshots & Platform Feedback Isolation", () => {
+    const multiBookingId = "aaaaaaaa-1111-1111-1111-111111111111";
+    const serviceCorteId = "bbbbbbbb-1111-1111-1111-111111111111";
+    const serviceBarbaId = "cccccccc-1111-1111-1111-111111111111";
+    const snapshotBookingId = "dddddddd-1111-1111-1111-111111111111";
+    const snapshotItemId = "eeeeeeee-1111-1111-1111-111111111111";
+
+    beforeEach(async () => {
+      await usersRepository.save(
+        User.create(
+          {
+            name: "Barbeiro Profissional",
+            email: "barber@example.com",
+            cpf: "44455566677",
+            accountType: "CLIENT",
+            password: Password.create("hashed_pw"),
+          },
+          new UniqueEntityId(staffId),
+        ),
+      );
+
+      const multiBooking = Booking.create(
+        {
+          barbershopId: new UniqueEntityId(barbershopId),
+          barbermanId: new UniqueEntityId(staffId),
+          customerId: new UniqueEntityId(clientId),
+          status: "COMPLETED",
+          timezone: "America/Sao_Paulo",
+        },
+        new UniqueEntityId(multiBookingId),
+      );
+      await bookingsRepository.createWithItems({
+        booking: multiBooking,
+        items: [
+          BookingServiceItem.create({
+            bookingId: new UniqueEntityId(multiBookingId),
+            serviceId: new UniqueEntityId(serviceCorteId),
+            title: "Corte Navalhado",
+            priceInCents: 6000,
+            durationInMinutes: 40,
+            legacyAggregate: false,
+          }),
+          BookingServiceItem.create({
+            bookingId: new UniqueEntityId(multiBookingId),
+            serviceId: new UniqueEntityId(serviceBarbaId),
+            title: "Barba Terapia",
+            priceInCents: 4500,
+            durationInMinutes: 30,
+            legacyAggregate: false,
+          }),
+        ],
+      });
+
+      const snapshotBooking = Booking.create(
+        {
+          barbershopId: new UniqueEntityId(barbershopId),
+          barbermanId: new UniqueEntityId(staffId),
+          customerId: new UniqueEntityId(clientId),
+          status: "COMPLETED",
+          timezone: "America/Sao_Paulo",
+        },
+        new UniqueEntityId(snapshotBookingId),
+      );
+      await bookingsRepository.createWithItems({
+        booking: snapshotBooking,
+        items: [
+          BookingServiceItem.create(
+            {
+              bookingId: new UniqueEntityId(snapshotBookingId),
+              serviceId: null,
+              title: "Sobrancelha (Snapshot Legado)",
+              priceInCents: 2500,
+              durationInMinutes: 15,
+              legacyAggregate: true,
+            },
+            new UniqueEntityId(snapshotItemId),
+          ),
+        ],
+      });
+    });
+
+    it("deve criar avaliação multi-alvo (barbearia, barbeiro e vários serviços) mantendo agregados independentes e feedback privado isolado", async () => {
+      const result = await createReviewUseCase.execute({
+        userId: clientId,
+        bookingId: multiBookingId,
+        rating: 5,
+        barberId: staffId,
+        barberRating: 4,
+        serviceRatings: [
+          { serviceId: serviceCorteId, rating: 3 },
+          { serviceId: serviceBarbaId, rating: 2 },
+        ],
+        comment: "Excelente ambiente, barba poderia melhorar.",
+        platformFeedback: {
+          rating: 1,
+          comment: "Feedback privado apenas sobre o app Smart Barber.",
+        },
+      });
+
+      expect(result.isRight()).toBe(true);
+      if (result.isRight()) {
+        expect(result.value.review.rating).toBe(5);
+        expect(result.value.review.items).toHaveLength(4);
+        expect(result.value.platformFeedback?.rating).toBe(1);
+        expect(result.value.platformFeedback?.comment).toContain(
+          "Smart Barber",
+        );
+      }
+
+      const shop = await barbershopsRepository.findById(barbershopId);
+      expect(shop?.rating).toBe(5);
+      expect(shop?.reviewCount).toBe(1);
+
+      const barberReviews = await listTargetReviewsUseCase.execute({
+        barbershopId,
+        targetType: "BARBER",
+        targetId: staffId,
+      });
+      expect(barberReviews.isRight()).toBe(true);
+      if (barberReviews.isRight()) {
+        expect(barberReviews.value.averageRating).toBe(4);
+        expect(barberReviews.value.reviewCount).toBe(1);
+        expect(barberReviews.value.reviews[0].rating).toBe(4);
+      }
+
+      const corteReviews = await listTargetReviewsUseCase.execute({
+        barbershopId,
+        targetType: "SERVICE",
+        targetId: serviceCorteId,
+      });
+      expect(corteReviews.isRight()).toBe(true);
+      if (corteReviews.isRight()) {
+        expect(corteReviews.value.averageRating).toBe(3);
+        expect(corteReviews.value.reviewCount).toBe(1);
+      }
+
+      const barbaReviews = await listTargetReviewsUseCase.execute({
+        barbershopId,
+        targetType: "SERVICE",
+        targetId: serviceBarbaId,
+      });
+      expect(barbaReviews.isRight()).toBe(true);
+      if (barbaReviews.isRight()) {
+        expect(barbaReviews.value.averageRating).toBe(2);
+        expect(barbaReviews.value.reviewCount).toBe(1);
+      }
+
+      const publicShopReviews = await listBarbershopReviewsUseCase.execute({
+        barbershopId,
+      });
+      expect(publicShopReviews.isRight()).toBe(true);
+      if (publicShopReviews.isRight()) {
+        expect(publicShopReviews.value.averageRating).toBe(5);
+        expect(publicShopReviews.value.reviews[0].comment).not.toContain(
+          "Smart Barber",
+        );
+      }
+
+      const fetched = await getBookingReviewUseCase.execute({
+        userId: clientId,
+        bookingId: multiBookingId,
+      });
+      expect(fetched.isRight()).toBe(true);
+      if (fetched.isRight()) {
+        expect(fetched.value.review?.items).toHaveLength(4);
+        expect(fetched.value.platformFeedback?.rating).toBe(1);
+      }
+    });
+
+    it("deve rejeitar barbeiro ou serviço que não pertence ao agendamento", async () => {
+      const wrongBarberRes = await createReviewUseCase.execute({
+        userId: clientId,
+        bookingId: multiBookingId,
+        rating: 5,
+        barberId: "99999999-9999-9999-9999-999999999999",
+        barberRating: 5,
+      });
+      expect(wrongBarberRes.isLeft()).toBe(true);
+
+      const wrongServiceRes = await createReviewUseCase.execute({
+        userId: clientId,
+        bookingId: multiBookingId,
+        rating: 5,
+        serviceRatings: [
+          {
+            serviceId: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+            rating: 5,
+          },
+        ],
+      });
+      expect(wrongServiceRes.isLeft()).toBe(true);
+    });
+
+    it("deve preservar snapshots sem serviceId via bookingServiceItemId e impedir duplicidade por item", async () => {
+      const dupRes = await createReviewUseCase.execute({
+        userId: clientId,
+        bookingId: snapshotBookingId,
+        rating: 5,
+        serviceRatings: [
+          { bookingServiceItemId: snapshotItemId, rating: 4 },
+          { bookingServiceItemId: snapshotItemId, rating: 5 },
+        ],
+      });
+      expect(dupRes.isLeft()).toBe(true);
+
+      const okRes = await createReviewUseCase.execute({
+        userId: clientId,
+        bookingId: snapshotBookingId,
+        rating: 5,
+        serviceRatings: [{ bookingServiceItemId: snapshotItemId, rating: 4 }],
+      });
+      expect(okRes.isRight()).toBe(true);
+      if (okRes.isRight()) {
+        const serviceItem = okRes.value.review.items.find(
+          (i) => i.targetType === "SERVICE",
+        );
+        expect(serviceItem?.targetId).toBeNull();
+        expect(serviceItem?.bookingServiceItemId?.toString()).toBe(
+          snapshotItemId,
+        );
+        expect(serviceItem?.targetLabel).toBe("Sobrancelha (Snapshot Legado)");
+        expect(serviceItem?.rating).toBe(4);
+      }
+    });
+
+    it("deve atualizar itens da avaliação mantendo controle de versão e separação de alvos", async () => {
+      const created = await createReviewUseCase.execute({
+        userId: clientId,
+        bookingId: multiBookingId,
+        rating: 4,
+        barberRating: 5,
+        serviceRatings: [{ serviceId: serviceCorteId, rating: 3 }],
+      });
+      expect(created.isRight()).toBe(true);
+      if (!created.isRight()) return;
+
+      const updated = await updateReviewUseCase.execute({
+        userId: clientId,
+        bookingId: multiBookingId,
+        rating: 2,
+        barberRating: 3,
+        serviceRatings: [{ serviceId: serviceBarbaId, rating: 5 }],
+        expectedVersion: 1,
+      });
+      expect(updated.isRight()).toBe(true);
+      if (!updated.isRight()) return;
+
+      expect(updated.value.review.version).toBe(2);
+      expect(updated.value.review.rating).toBe(2);
+
+      const corteAfter = await listTargetReviewsUseCase.execute({
+        barbershopId,
+        targetType: "SERVICE",
+        targetId: serviceCorteId,
+      });
+      expect(corteAfter.isRight()).toBe(true);
+      if (corteAfter.isRight()) {
+        expect(corteAfter.value.reviewCount).toBe(0);
+        expect(corteAfter.value.averageRating).toBeNull();
+      }
+
+      const barbaAfter = await listTargetReviewsUseCase.execute({
+        barbershopId,
+        targetType: "SERVICE",
+        targetId: serviceBarbaId,
+      });
+      expect(barbaAfter.isRight()).toBe(true);
+      if (barbaAfter.isRight()) {
+        expect(barbaAfter.value.reviewCount).toBe(1);
+        expect(barbaAfter.value.averageRating).toBe(5);
       }
     });
   });

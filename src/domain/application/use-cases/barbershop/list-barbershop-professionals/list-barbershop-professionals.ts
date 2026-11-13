@@ -2,6 +2,7 @@ import { type Either, left, right } from "../../../../../core/logic/either";
 import type { BarbershopsRepository } from "../../../repositories/barbershops-repository";
 import type { MembershipsRepository } from "../../../repositories/memberships-repository";
 import type { UsersRepository } from "../../../repositories/users-repository";
+import type { ReviewsRepository } from "../../../repositories/reviews-repository";
 import { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
 
 import { Role } from "../../../../enterprise/entities/membership";
@@ -14,6 +15,8 @@ export interface BarbershopProfessionalItem {
   id: string;
   name: string;
   role: string;
+  rating: number | null;
+  reviewCount: number;
 }
 
 export interface ListBarbershopProfessionalsResponse {
@@ -30,6 +33,7 @@ export class ListBarbershopProfessionalsUseCase {
     private barbershopsRepository: BarbershopsRepository,
     private membershipsRepository: MembershipsRepository,
     private usersRepository: UsersRepository,
+    private reviewsRepository?: ReviewsRepository,
   ) {}
 
   async execute({
@@ -62,7 +66,27 @@ export class ListBarbershopProfessionalsUseCase {
           id: user.id.toString(),
           name: user.name,
           role: member.role,
+          rating: null,
+          reviewCount: 0,
         });
+      }
+    }
+
+    if (
+      professionals.length > 0 &&
+      this.reviewsRepository?.getTargetRatingMetricsBatch
+    ) {
+      const metricsMap =
+        await this.reviewsRepository.getTargetRatingMetricsBatch(
+          "BARBER",
+          professionals.map((p) => p.id),
+        );
+      for (const prof of professionals) {
+        const metrics = metricsMap.get(prof.id);
+        if (metrics && metrics.reviewCount > 0) {
+          prof.rating = metrics.averageRating;
+          prof.reviewCount = metrics.reviewCount;
+        }
       }
     }
 

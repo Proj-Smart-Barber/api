@@ -28,6 +28,7 @@ import {
   makeSetBarbershopGalleryCoverController,
 } from "../factories/make-barbershop-gallery-controllers";
 import { makeListBarbershopReviewsController } from "../factories/make-list-barbershop-reviews-controller";
+import { makeListTargetReviewsController } from "../factories/make-list-target-reviews-controller";
 import { serviceRoutes } from "./service.routes";
 
 const barbershopRoutes = Router();
@@ -133,6 +134,10 @@ barbershopRoutes.patch(
 barbershopRoutes.get(
   "/:shopId/reviews",
   adaptRoute(makeListBarbershopReviewsController()),
+);
+barbershopRoutes.get(
+  "/:shopId/professionals/:barberId/reviews",
+  adaptRoute(makeListTargetReviewsController("BARBER")),
 );
 barbershopRoutes.use("/:shopId/services", serviceRoutes);
 

@@ -359,6 +359,10 @@ export const services = pgTable(
     priceInCents: integer("price_in_cents").notNull(),
     durationInMinutes: integer("duration_in_minutes").notNull().default(30),
     isActive: boolean("is_active").notNull().default(true),
+    rating: numeric("rating", { precision: 3, scale: 2 })
+      .notNull()
+      .default("0.00"),
+    reviewCount: integer("review_count").notNull().default(0),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at")
       .defaultNow()
@@ -1121,7 +1125,100 @@ export const reviews = pgTable(
       sql`${table.rating} >= 1 AND ${table.rating} <= 5`,
     ),
     index("reviews_barbershop_status_idx").on(table.barbershopId, table.status),
+    index("reviews_barbershop_status_created_idx").on(
+      table.barbershopId,
+      table.status,
+      table.createdAt,
+    ),
     index("reviews_customer_idx").on(table.customerId),
+  ],
+);
+
+export const reviewItems = pgTable(
+  "review_items",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    reviewId: uuid("review_id")
+      .notNull()
+      .references(() => reviews.id, { onDelete: "cascade" }),
+    bookingId: uuid("booking_id")
+      .notNull()
+      .references(() => bookings.id, { onDelete: "cascade" }),
+    targetType: text("target_type").notNull(),
+    targetKey: text("target_key").notNull(),
+    targetId: uuid("target_id"),
+    bookingServiceItemId: uuid("booking_service_item_id").references(
+      () => bookingServiceItems.id,
+      { onDelete: "set null" },
+    ),
+    targetLabel: text("target_label").notNull(),
+    rating: integer("rating").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    check(
+      "review_items_target_type_check",
+      sql`${table.targetType} IN ('BARBERSHOP', 'BARBER', 'SERVICE')`,
+    ),
+    check(
+      "review_items_rating_check",
+      sql`${table.rating} >= 1 AND ${table.rating} <= 5`,
+    ),
+    uniqueIndex("review_items_review_target_key_uidx").on(
+      table.reviewId,
+      table.targetKey,
+    ),
+    uniqueIndex("review_items_review_target_id_uidx")
+      .on(table.reviewId, table.targetType, table.targetId)
+      .where(sql`${table.targetId} IS NOT NULL`),
+    index("review_items_target_lookup_idx").on(
+      table.targetType,
+      table.targetId,
+      table.createdAt,
+    ),
+    index("review_items_booking_service_item_idx")
+      .on(table.bookingServiceItemId)
+      .where(sql`${table.bookingServiceItemId} IS NOT NULL`),
+  ],
+);
+
+export const platformFeedbacks = pgTable(
+  "platform_feedbacks",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    bookingId: uuid("booking_id")
+      .notNull()
+      .unique()
+      .references(() => bookings.id, { onDelete: "cascade" }),
+    reviewId: uuid("review_id").references(() => reviews.id, {
+      onDelete: "set null",
+    }),
+    customerId: uuid("customer_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    rating: integer("rating"),
+    comment: text("comment"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    check(
+      "platform_feedbacks_rating_check",
+      sql`${table.rating} IS NULL OR (${table.rating} >= 1 AND ${table.rating} <= 5)`,
+    ),
+    index("platform_feedbacks_customer_idx").on(
+      table.customerId,
+      table.createdAt,
+    ),
   ],
 );
 

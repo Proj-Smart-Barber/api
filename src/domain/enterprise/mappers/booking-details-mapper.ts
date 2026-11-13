@@ -36,6 +36,7 @@ export interface PersistenceBookingDetails {
   };
   services?: Array<{
     id?: string;
+    bookingServiceItemId?: string | null;
     serviceId: string | null;
     title: string;
     priceInCents: number | null;
@@ -67,6 +68,7 @@ export class BookingDetailsMapper {
     if (raw.services && raw.services.length > 0) {
       resolvedServices = raw.services.map((item) => ({
         id: item.serviceId ? new UniqueEntityId(item.serviceId) : undefined,
+        bookingServiceItemId: item.bookingServiceItemId ?? null,
         serviceId: item.serviceId,
         title: item.title,
         priceInCents: item.priceInCents,
@@ -173,6 +175,7 @@ export class BookingDetailsMapper {
       },
       services: bookingDetails.services.map((service) => ({
         id: service.serviceId ?? service.id?.toString() ?? null,
+        bookingServiceItemId: service.bookingServiceItemId ?? null,
         serviceId: service.serviceId,
         title: service.title,
         priceInCents: service.priceInCents,
