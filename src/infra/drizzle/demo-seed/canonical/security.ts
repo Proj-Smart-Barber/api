@@ -4,11 +4,6 @@ import { resolve } from "node:path";
 import { hash } from "bcryptjs";
 import type { DemoStaffFixture } from "./types";
 
-const CREDENTIALS_FILE_PATH = resolve(
-  process.cwd(),
-  ".demo-seed-credentials.json",
-);
-
 export interface StaffCredential {
   githubUser: string;
   name: string;
@@ -39,12 +34,20 @@ export async function hashPlainText(password: string): Promise<string> {
 
 export async function loadOrCreateStaffCredentials(
   staffList: DemoStaffFixture[],
+  options: {
+    standardized?: boolean;
+    credentialsFilePath?: string;
+  } = {},
 ): Promise<Record<string, StaffCredential>> {
+  const credentialsFilePath = resolve(
+    process.cwd(),
+    options.credentialsFilePath ?? ".demo-seed-credentials.json",
+  );
   let existingCredentials: Record<string, StaffCredential> = {};
 
-  if (existsSync(CREDENTIALS_FILE_PATH)) {
+  if (existsSync(credentialsFilePath)) {
     try {
-      const raw = readFileSync(CREDENTIALS_FILE_PATH, "utf-8");
+      const raw = readFileSync(credentialsFilePath, "utf-8");
       existingCredentials = JSON.parse(raw);
     } catch {
       existingCredentials = {};
@@ -53,11 +56,37 @@ export async function loadOrCreateStaffCredentials(
 
   const credentialsMap: Record<string, StaffCredential> = {};
   let modified = false;
+  const standardizedHash = options.standardized
+    ? await hashPlainText(DEFAULT_DEMO_PASSWORD)
+    : undefined;
 
   for (const staff of staffList) {
     const existing = existingCredentials[staff.logicalKey];
 
     if (
+      options.standardized &&
+      existing?.plainPassword === DEFAULT_DEMO_PASSWORD &&
+      existing.passwordHash
+    ) {
+      credentialsMap[staff.logicalKey] = {
+        ...existing,
+        email: staff.email,
+        name: staff.name,
+      };
+    } else if (options.standardized && standardizedHash) {
+      const credential: StaffCredential = {
+        githubUser: staff.githubUser,
+        name: staff.name,
+        email: staff.email,
+        role: staff.role,
+        unit: staff.unitKey,
+        plainPassword: DEFAULT_DEMO_PASSWORD,
+        passwordHash: standardizedHash,
+      };
+      credentialsMap[staff.logicalKey] = credential;
+      existingCredentials[staff.logicalKey] = credential;
+      modified = true;
+    } else if (
       existing &&
       existing.plainPassword !== DEFAULT_DEMO_PASSWORD &&
       existing.passwordHash
@@ -90,7 +119,7 @@ export async function loadOrCreateStaffCredentials(
   if (modified) {
     try {
       writeFileSync(
-        CREDENTIALS_FILE_PATH,
+        credentialsFilePath,
         JSON.stringify(existingCredentials, null, 2),
         { encoding: "utf-8", mode: 0o600 },
       );

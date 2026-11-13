@@ -2,6 +2,7 @@ import { ADDITIONAL_DEMO_STAFFS } from "./additional-staff-fixtures";
 import { DEMO_BARBERSHOPS } from "./barbershop-fixtures";
 import type {
   DemoBookingFixture,
+  DemoBarbershopFixture,
   DemoCustomerFixture,
   DemoMembershipFixture,
   DemoScheduleExceptionFixture,
@@ -103,15 +104,18 @@ DEMO_STAFFS.push(...ADDITIONAL_DEMO_STAFFS);
 
 export { DEMO_BARBERSHOPS };
 
-export function buildDemoMemberships(): DemoMembershipFixture[] {
-  const original: DemoMembershipFixture[] = DEMO_STAFFS.map((staff) => ({
+export function buildDemoMemberships(
+  staffList: DemoStaffFixture[] = DEMO_STAFFS,
+  barbershopList: DemoBarbershopFixture[] = DEMO_BARBERSHOPS,
+): DemoMembershipFixture[] {
+  const original: DemoMembershipFixture[] = staffList.map((staff) => ({
     logicalKey: `${staff.logicalKey}:membership`,
     barbershopLogicalKey: `${staff.unitKey}:barbershop`,
     staffLogicalKey: staff.logicalKey,
     role: staff.role,
   }));
 
-  const additionalOwners = DEMO_BARBERSHOPS.filter(
+  const additionalOwners = barbershopList.filter(
     (shop) =>
       !original.some(
         (member) =>

@@ -8,6 +8,11 @@ async function main() {
   const isApply = args.includes("--apply");
   const isDryRun = args.includes("--dry-run") || (!isApply && !isRollback);
   const forceReplenish = args.includes("--replenish");
+  const profileArgument = args.find((arg) => arg.startsWith("--profile="));
+  const profile = profileArgument?.split("=")[1] ?? "smoke";
+  if (profile !== "smoke" && profile !== "full") {
+    throw new Error("Perfil inválido. Use --profile=smoke ou --profile=full.");
+  }
 
   let confirmSecret: string | undefined;
   for (const arg of args) {
@@ -28,6 +33,7 @@ async function main() {
   console.log(
     `Modo de Operação: ${isRollback ? "ROLLBACK" : isDryRun ? "DRY-RUN (SIMULAÇÃO SEM ESCRITA)" : "APPLY (ESCRITA NO BANCO)"}`,
   );
+  console.log(`Perfil: ${profile}`);
 
   try {
     const summary = await engine.run({
@@ -35,6 +41,7 @@ async function main() {
       rollback: isRollback,
       confirmSecret,
       forceReplenishDisposables: forceReplenish,
+      profile,
     });
 
     console.log(
@@ -95,9 +102,18 @@ async function main() {
           "  [DRY-RUN] Nenhuma credencial foi persistida no banco ou em arquivo.",
         );
       } else {
+        const credentialsFile =
+          profile === "full"
+            ? ".demo-seed-full-credentials.json"
+            : ".demo-seed-credentials.json";
         console.log(
-          "  [APPLY] As 8 senhas fortes foram salvas em '.demo-seed-credentials.json' (git-ignored).",
+          `  [APPLY] Credenciais salvas em '${credentialsFile}' (git-ignored).`,
         );
+        if (profile === "full") {
+          console.log(
+            "  [ATENÇÃO] A senha de teste padronizada só pode ser usada neste banco local isolado.",
+          );
+        }
         console.log(
           "  [INFO] Apenas hashes bcrypt com salt 12 foram gravados no banco de dados.",
         );

@@ -9,17 +9,7 @@ export interface DemoStaffFixture {
   email: string;
   cpf: string;
   role: Role;
-  unitKey:
-    | "horizonte"
-    | "estacao"
-    | "norte"
-    | "sul"
-    | "oeste"
-    | "aurora"
-    | "vertice"
-    | "raiz"
-    | "orbita"
-    | "nexo";
+  unitKey: string;
   defaultPasswordHash?: string;
 }
 
@@ -39,6 +29,7 @@ export interface DemoBarbershopFixture {
   location: string;
   timezone: string;
   status: "ACTIVE" | "INACTIVE";
+  region?: "CENTRO" | "LESTE" | "NORTE" | "SUL" | "OESTE";
   point?: { latitude: number; longitude: number };
 }
 
@@ -96,6 +87,7 @@ export interface DemoBookingFixture {
   dateOffsetDays: number; // 0 = hoje, <0 = passado, >0 = futuro
   startTime: string;
   endTime: string;
+  status?: "CONFIRMED" | "CANCELLED" | "COMPLETED";
   isDisposable?: boolean; // reserva de teste para cancelamento
 }
 

@@ -9,6 +9,7 @@ node_modules
 coverage/*
 .tmp/
 .demo-seed-credentials.json
+.demo-seed-full-credentials.json
 .demo-seed-manifest.json
 
 # Local media derivatives and isolated validation outputs

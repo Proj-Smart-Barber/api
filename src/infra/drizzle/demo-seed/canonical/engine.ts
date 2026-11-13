@@ -34,6 +34,7 @@ import {
   DEMO_SERVICES,
   buildDemoMemberships,
 } from "./fixtures";
+import { buildFullDemoSeedFixtures } from "./full-profile-fixtures";
 import { SeedRegistryManager } from "./registry";
 import {
   DEFAULT_DEMO_PASSWORD,
@@ -50,6 +51,7 @@ export interface SeedEngineOptions {
   rollback?: boolean;
   confirmSecret?: string;
   forceReplenishDisposables?: boolean;
+  profile?: "smoke" | "full";
 }
 
 export class DemoSeedEngine {
@@ -89,6 +91,16 @@ export class DemoSeedEngine {
     options: SeedEngineOptions = {},
   ): Promise<DemoSeedExecutionSummary> {
     const isDryRun = options.dryRun ?? false;
+    const profile = options.profile ?? "smoke";
+    const fullProfile = profile === "full" ? buildFullDemoSeedFixtures() : null;
+    const seedStaffs = fullProfile?.staffs ?? DEMO_STAFFS;
+    const seedBarbershops = fullProfile?.barbershops ?? DEMO_BARBERSHOPS;
+    const seedMemberships = fullProfile?.memberships ?? buildDemoMemberships();
+    const seedSchedules = fullProfile?.schedules ?? buildDemoSchedules();
+    const seedServices = fullProfile?.services ?? DEMO_SERVICES;
+    const seedCustomers = fullProfile?.customers ?? DEMO_CUSTOMERS;
+    const seedExceptions = fullProfile?.exceptions ?? DEMO_EXCEPTIONS;
+    const seedBookings = fullProfile?.bookings ?? DEMO_BOOKINGS;
     const targetInfo = inspectDatabaseTarget(env.DATABASE_URL);
 
     // ── Preflight de Segurança de Banco ──────────────────────────
@@ -99,6 +111,11 @@ export class DemoSeedEngine {
             `Para executar a escrita real em ambiente de produção, forneça a flag: --confirm=CONFIRMAR_SEED_DEMO_PRODUCAO`,
         );
       }
+    }
+    if (profile === "full" && !targetInfo.isLocal && !isDryRun) {
+      throw new Error(
+        "[FULL SEED BLOQUEADO] O perfil full só pode gravar em banco local isolado.",
+      );
     }
 
     // ── Rollback ────────────────────────────────────────────────
@@ -142,32 +159,39 @@ export class DemoSeedEngine {
     const existingRegistry = isDryRun
       ? await this.safeGetRegistryMap(DEMO_SEED_NAMESPACE)
       : await this.registry.getExistingRecords(DEMO_SEED_NAMESPACE);
-    await this.assertSeedIdentities(existingRegistry);
-    const retirementPlan =
-      await this.inspectRetiredBarbershops(existingRegistry);
+    await this.assertSeedIdentities(
+      existingRegistry,
+      seedStaffs,
+      seedCustomers,
+      seedBarbershops,
+    );
+    const retirementPlan = await this.inspectRetiredBarbershops(
+      existingRegistry,
+      seedBarbershops,
+    );
 
     const counts: Record<
       string,
       { planned: number; created: number; reused: number }
     > = {
-      staffs: { planned: DEMO_STAFFS.length, created: 0, reused: 0 },
-      barbershops: { planned: DEMO_BARBERSHOPS.length, created: 0, reused: 0 },
+      staffs: { planned: seedStaffs.length, created: 0, reused: 0 },
+      barbershops: { planned: seedBarbershops.length, created: 0, reused: 0 },
       membership: {
-        planned: buildDemoMemberships().length,
+        planned: seedMemberships.length,
         created: 0,
         reused: 0,
       },
       barbershop_schedules: { planned: 0, created: 0, reused: 0 },
-      services: { planned: DEMO_SERVICES.length, created: 0, reused: 0 },
-      customers: { planned: DEMO_CUSTOMERS.length, created: 0, reused: 0 },
+      services: { planned: seedServices.length, created: 0, reused: 0 },
+      customers: { planned: seedCustomers.length, created: 0, reused: 0 },
       schedule_exceptions: {
-        planned: DEMO_EXCEPTIONS.length,
+        planned: seedExceptions.length,
         created: 0,
         reused: 0,
       },
-      service_items: { planned: DEMO_BOOKINGS.length, created: 0, reused: 0 },
-      shopping_carts: { planned: DEMO_BOOKINGS.length, created: 0, reused: 0 },
-      bookings: { planned: DEMO_BOOKINGS.length, created: 0, reused: 0 },
+      service_items: { planned: seedBookings.length, created: 0, reused: 0 },
+      shopping_carts: { planned: seedBookings.length, created: 0, reused: 0 },
+      bookings: { planned: seedBookings.length, created: 0, reused: 0 },
     };
 
     const resolvedIds: Record<string, string> = {};
@@ -175,13 +199,18 @@ export class DemoSeedEngine {
     // ── 1. Staffs e Credenciais ─────────────────────────────────
     const staffCredentials = !isDryRun
       ? await loadOrCreateStaffCredentials(
-          DEMO_STAFFS.filter(
-            (staff) => !existingRegistry.has(staff.logicalKey),
-          ),
+          seedStaffs.filter((staff) => !existingRegistry.has(staff.logicalKey)),
+          {
+            standardized: profile === "full",
+            credentialsFilePath:
+              profile === "full"
+                ? ".demo-seed-full-credentials.json"
+                : undefined,
+          },
         )
       : ({} as Record<string, { passwordHash: string }>);
 
-    for (const staffFixture of DEMO_STAFFS) {
+    for (const staffFixture of seedStaffs) {
       const reg = existingRegistry.get(staffFixture.logicalKey);
       if (reg) {
         resolvedIds[staffFixture.logicalKey] = reg.recordId;
@@ -234,7 +263,7 @@ export class DemoSeedEngine {
     }
 
     // ── 2. Barbearias ───────────────────────────────────────────
-    for (const shopFixture of DEMO_BARBERSHOPS) {
+    for (const shopFixture of seedBarbershops) {
       const reg = existingRegistry.get(shopFixture.logicalKey);
       if (reg) {
         resolvedIds[shopFixture.logicalKey] = reg.recordId;
@@ -289,7 +318,7 @@ export class DemoSeedEngine {
       }
     }
 
-    for (const shopFixture of DEMO_BARBERSHOPS) {
+    for (const shopFixture of seedBarbershops) {
       if (isDryRun || !shopFixture.point) continue;
       const result = await reconcileDemoGeography(
         this.database,
@@ -301,7 +330,7 @@ export class DemoSeedEngine {
     }
 
     // ── 3. Memberships ──────────────────────────────────────────
-    const allMemberships = buildDemoMemberships();
+    const allMemberships = seedMemberships;
     counts.membership.planned = allMemberships.length;
 
     for (const membershipFixture of allMemberships) {
@@ -354,7 +383,7 @@ export class DemoSeedEngine {
     }
 
     // ── 4. Jornadas (barbershop_schedules) ──────────────────────
-    const allSchedules = buildDemoSchedules();
+    const allSchedules = seedSchedules;
     counts.barbershop_schedules.planned = allSchedules.length;
 
     for (const scheduleFixture of allSchedules) {
@@ -400,7 +429,7 @@ export class DemoSeedEngine {
     }
 
     // ── 5. Serviços (services) ──────────────────────────────────
-    for (const serviceFixture of DEMO_SERVICES) {
+    for (const serviceFixture of seedServices) {
       const reg = existingRegistry.get(serviceFixture.logicalKey);
 
       if (reg) {
@@ -440,7 +469,7 @@ export class DemoSeedEngine {
     // ── 6. Clientes (customers) ─────────────────────────────────
     const customerPasswordHash = await hashPlainText(DEFAULT_DEMO_PASSWORD);
 
-    for (const customerFixture of DEMO_CUSTOMERS) {
+    for (const customerFixture of seedCustomers) {
       const reg = existingRegistry.get(customerFixture.logicalKey);
 
       if (reg) {
@@ -492,7 +521,7 @@ export class DemoSeedEngine {
     }
 
     // ── 7. Exceções de Jornada (schedule_exceptions) ────────────
-    for (const exceptionFixture of DEMO_EXCEPTIONS) {
+    for (const exceptionFixture of seedExceptions) {
       const reg = existingRegistry.get(exceptionFixture.logicalKey);
 
       if (reg) {
@@ -538,7 +567,7 @@ export class DemoSeedEngine {
     }
 
     // ── 8. Reservas, Itens e Carrinhos (service_items, shopping_carts, bookings)
-    for (const bookingFixture of DEMO_BOOKINGS) {
+    for (const bookingFixture of seedBookings) {
       const regBooking = existingRegistry.get(bookingFixture.logicalKey);
 
       let needCreation = !regBooking;
@@ -671,7 +700,7 @@ export class DemoSeedEngine {
               totalPriceInCents: serviceRow.priceInCents,
               totalDurationInMinutes: serviceRow.durationInMinutes,
               createdByUserId: customerId,
-              status: "CONFIRMED",
+              status: bookingFixture.status ?? "CONFIRMED",
             })
             .returning({ id: bookings.id });
 
@@ -701,7 +730,7 @@ export class DemoSeedEngine {
               actorId: customerId,
               eventType: "CREATED",
               newVersion: 1,
-              newStatus: "CONFIRMED",
+              newStatus: bookingFixture.status ?? "CONFIRMED",
               metadata: JSON.stringify({ source: "demo-seed" }),
             })
             .returning({ id: bookingEvents.id });
@@ -763,7 +792,7 @@ export class DemoSeedEngine {
         generatedAt: new Date().toISOString(),
         baseDateSP,
         targetDatabase: targetInfo,
-        staffs: DEMO_STAFFS.map((s) => ({
+        staffs: seedStaffs.map((s) => ({
           logicalKey: s.logicalKey,
           id: resolvedIds[s.logicalKey],
           githubUser: s.githubUser,
@@ -772,7 +801,7 @@ export class DemoSeedEngine {
           role: s.role,
           unit: s.unitKey,
         })),
-        barbershops: DEMO_BARBERSHOPS.map((b) => ({
+        barbershops: seedBarbershops.map((b) => ({
           logicalKey: b.logicalKey,
           id: resolvedIds[b.logicalKey],
           name: b.name,
@@ -780,14 +809,14 @@ export class DemoSeedEngine {
           cnpj: b.cnpj,
         })),
         counts,
-        disposableBookings: DEMO_BOOKINGS.filter((b) => b.isDisposable).map(
-          (b) => ({
+        disposableBookings: seedBookings
+          .filter((b) => b.isDisposable)
+          .map((b) => ({
             logicalKey: b.logicalKey,
             bookingId: resolvedIds[b.logicalKey],
             barberman: b.barbermanLogicalKey,
             dateOffsetDays: b.dateOffsetDays,
-          }),
-        ),
+          })),
       };
 
       try {
@@ -819,8 +848,11 @@ export class DemoSeedEngine {
 
   private async assertSeedIdentities(
     registry: Map<string, SeedRegistryRecord>,
+    staffFixtures: typeof DEMO_STAFFS,
+    customerFixtures: typeof DEMO_CUSTOMERS,
+    barbershopFixtures: typeof DEMO_BARBERSHOPS,
   ) {
-    const people = [...DEMO_STAFFS, ...DEMO_CUSTOMERS];
+    const people = [...staffFixtures, ...customerFixtures];
     const existingUsers = await this.database
       .select({ id: users.id, email: users.email, cpf: users.cpf })
       .from(users)
@@ -868,15 +900,15 @@ export class DemoSeedEngine {
         or(
           inArray(
             barbershops.slug,
-            DEMO_BARBERSHOPS.map((shop) => shop.slug),
+            barbershopFixtures.map((shop) => shop.slug),
           ),
           inArray(
             barbershops.cnpj,
-            DEMO_BARBERSHOPS.map((shop) => shop.cnpj),
+            barbershopFixtures.map((shop) => shop.cnpj),
           ),
         ),
       );
-    for (const shop of DEMO_BARBERSHOPS) {
+    for (const shop of barbershopFixtures) {
       const registration = registry.get(shop.logicalKey);
       const matched = existingShops.find(
         (row) => row.slug === shop.slug || row.cnpj === shop.cnpj,
@@ -905,9 +937,10 @@ export class DemoSeedEngine {
 
   private async inspectRetiredBarbershops(
     registry: Map<string, SeedRegistryRecord>,
+    currentBarbershops: typeof DEMO_BARBERSHOPS,
   ) {
     const currentKeys = new Set(
-      DEMO_BARBERSHOPS.map((shop) => shop.logicalKey),
+      currentBarbershops.map((shop) => shop.logicalKey),
     );
     const rows = new Map<string, RegisteredBarbershop>();
     for (const fixture of LEGACY_REGIONAL_BARBERSHOPS) {
@@ -935,7 +968,7 @@ export class DemoSeedEngine {
     return planRetiredBarbershops({
       namespace: DEMO_SEED_NAMESPACE,
       previous: LEGACY_REGIONAL_BARBERSHOPS,
-      current: DEMO_BARBERSHOPS,
+      current: currentBarbershops,
       registry,
       rows,
     });
