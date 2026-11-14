@@ -1,36 +1,207 @@
 import { eq, and, desc, count, sql, inArray } from "drizzle-orm";
+import { UniqueEntityId } from "../../../core/entities/unique-entity-id";
 import { db as defaultDb } from "../index";
-import { reviews, reviewReports, reviewModerationLogs, barbershops } from "../schema";
+import {
+  reviews,
+  reviewItems,
+  platformFeedbacks,
+  reviewReports,
+  reviewModerationLogs,
+  barbershops,
+  services,
+} from "../schema";
 import { ReviewMapper } from "../../../domain/enterprise/mappers/review-mapper";
 import type {
   ReviewsRepository,
   PaginationParams,
   BarbershopRatingMetrics,
+  TargetRatingMetrics,
+  TargetReviewRecord,
+  ReviewMutationOptions,
 } from "../../../domain/application/repositories/reviews-repository";
 import type { Review } from "../../../domain/enterprise/entities/review";
+import {
+  ReviewItem,
+  type ReviewTargetType,
+} from "../../../domain/enterprise/entities/review-item";
+import type { PlatformFeedback } from "../../../domain/enterprise/entities/platform-feedback";
 import type { ReviewReport } from "../../../domain/enterprise/entities/review-report";
 import type { ReviewModerationLog } from "../../../domain/enterprise/entities/review-moderation-log";
 
 export class DrizzleReviewsRepository implements ReviewsRepository {
   constructor(private db = defaultDb) {}
 
-  async create(entity: Review): Promise<void> {
-    const data = ReviewMapper.toPersistence(entity);
-    try {
-      await this.db.insert(reviews).values(data);
-    } catch (err: any) {
-      if (err.code === "23505" || err.message?.includes("unique") || err.message?.includes("duplicate key")) {
-        throw new Error("Já existe uma avaliação para este agendamento.");
+  private resolveItemsForCreateOrUpdate(
+    entity: Review,
+    providedItems?: ReviewItem[],
+  ): ReviewItem[] {
+    if (providedItems && providedItems.length > 0) {
+      const hasBarbershop = providedItems.some(
+        (item) => item.targetType === "BARBERSHOP",
+      );
+      if (hasBarbershop) {
+        return providedItems;
       }
-      throw err;
+      return [
+        ReviewItem.create({
+          reviewId: entity.id,
+          bookingId: entity.bookingId,
+          targetType: "BARBERSHOP",
+          targetKey: ReviewItem.buildTargetKey({
+            targetType: "BARBERSHOP",
+            targetId: entity.barbershopId.toString(),
+          }),
+          targetId: entity.barbershopId,
+          bookingServiceItemId: null,
+          targetLabel: "Barbearia",
+          rating: entity.rating,
+          createdAt: entity.createdAt,
+          updatedAt: entity.updatedAt,
+        }),
+        ...providedItems,
+      ];
+    }
+
+    if (entity.items.length > 0) {
+      return entity.items;
+    }
+
+    return [
+      ReviewItem.create({
+        reviewId: entity.id,
+        bookingId: entity.bookingId,
+        targetType: "BARBERSHOP",
+        targetKey: ReviewItem.buildTargetKey({
+          targetType: "BARBERSHOP",
+          targetId: entity.barbershopId.toString(),
+        }),
+        targetId: entity.barbershopId,
+        bookingServiceItemId: null,
+        targetLabel: "Barbearia",
+        rating: entity.rating,
+        createdAt: entity.createdAt,
+        updatedAt: entity.updatedAt,
+      }),
+    ];
+  }
+
+  private async recalculateAggregatesTx(
+    tx: any,
+    barbershopId: string,
+    serviceIds: string[],
+  ): Promise<void> {
+    const [shopAgg] = await tx
+      .select({
+        avg: sql<string>`COALESCE(AVG(${reviewItems.rating}), 0)`,
+        count: count(),
+      })
+      .from(reviewItems)
+      .innerJoin(reviews, eq(reviews.id, reviewItems.reviewId))
+      .where(
+        and(
+          eq(reviewItems.targetType, "BARBERSHOP"),
+          eq(reviewItems.targetId, barbershopId),
+          eq(reviews.status, "PUBLISHED"),
+        ),
+      );
+
+    const shopAvg = Number(parseFloat(shopAgg?.avg ?? "0").toFixed(2));
+    const shopCount = Number(shopAgg?.count ?? 0);
+
+    await tx
+      .update(barbershops)
+      .set({
+        rating: (shopCount > 0 ? shopAvg : 0).toFixed(2),
+        reviewCount: shopCount,
+      })
+      .where(eq(barbershops.id, barbershopId));
+
+    const uniqueServiceIds = Array.from(new Set(serviceIds)).sort();
+    if (uniqueServiceIds.length === 0) {
+      return;
+    }
+
+    const idListSql = sql.join(
+      uniqueServiceIds.map((id) => sql`${id}::uuid`),
+      sql`, `,
+    );
+    await tx.execute(
+      sql`SELECT id FROM services WHERE id IN (${idListSql}) ORDER BY id ASC FOR UPDATE`,
+    );
+
+    const serviceAggs = await tx
+      .select({
+        serviceId: reviewItems.targetId,
+        avg: sql<string>`COALESCE(AVG(${reviewItems.rating}), 0)`,
+        count: count(),
+      })
+      .from(reviewItems)
+      .innerJoin(reviews, eq(reviews.id, reviewItems.reviewId))
+      .where(
+        and(
+          eq(reviewItems.targetType, "SERVICE"),
+          inArray(reviewItems.targetId, uniqueServiceIds),
+          eq(reviews.status, "PUBLISHED"),
+        ),
+      )
+      .groupBy(reviewItems.targetId);
+
+    const aggByServiceId = new Map<string, { avg: number; count: number }>();
+    for (const row of serviceAggs) {
+      if (!row.serviceId) continue;
+      const cnt = Number(row.count ?? 0);
+      const avg = cnt > 0 ? Number(parseFloat(row.avg ?? "0").toFixed(2)) : 0;
+      aggByServiceId.set(row.serviceId, { avg, count: cnt });
+    }
+
+    for (const serviceId of uniqueServiceIds) {
+      const agg = aggByServiceId.get(serviceId) ?? { avg: 0, count: 0 };
+      await tx
+        .update(services)
+        .set({
+          rating: agg.avg.toFixed(2),
+          reviewCount: agg.count,
+        })
+        .where(eq(services.id, serviceId));
     }
   }
 
-  async createAtomic(entity: Review): Promise<void> {
+  private async upsertPlatformFeedbackTx(
+    tx: any,
+    feedback: PlatformFeedback,
+  ): Promise<void> {
+    const data = ReviewMapper.platformFeedbackToPersistence(feedback);
+    await tx
+      .insert(platformFeedbacks)
+      .values(data)
+      .onConflictDoUpdate({
+        target: platformFeedbacks.bookingId,
+        set: {
+          reviewId: data.reviewId,
+          rating: data.rating,
+          comment: data.comment,
+          updatedAt: data.updatedAt,
+        },
+      });
+  }
+
+  async create(entity: Review): Promise<void> {
+    await this.createAtomic(entity);
+  }
+
+  async createAtomic(
+    entity: Review,
+    options?: ReviewMutationOptions,
+  ): Promise<void> {
     const barbershopId = entity.barbershopId.toString();
+    const resolvedItems = this.resolveItemsForCreateOrUpdate(
+      entity,
+      options?.items,
+    );
+
     await this.db.transaction(async (tx) => {
       await tx.execute(
-        sql`SELECT id FROM barbershops WHERE id = ${barbershopId} FOR UPDATE`
+        sql`SELECT id FROM barbershops WHERE id = ${barbershopId} FOR UPDATE`,
       );
 
       const data = ReviewMapper.toPersistence(entity);
@@ -47,68 +218,187 @@ export class DrizzleReviewsRepository implements ReviewsRepository {
         throw err;
       }
 
-      const [result] = await tx
-        .select({
-          avg: sql<string>`COALESCE(AVG(${reviews.rating}), 0)`,
-          count: count(),
-        })
-        .from(reviews)
-        .where(
-          and(
-            eq(reviews.barbershopId, barbershopId),
-            eq(reviews.status, "PUBLISHED")
-          )
-        );
+      if (resolvedItems.length > 0) {
+        await tx
+          .insert(reviewItems)
+          .values(resolvedItems.map(ReviewMapper.itemToPersistence));
+      }
 
-      const averageRating = Number(parseFloat(result?.avg ?? "0").toFixed(2));
-      const reviewCount = result?.count ?? 0;
+      if (options?.platformFeedback) {
+        await this.upsertPlatformFeedbackTx(tx, options.platformFeedback);
+      }
 
-      await tx
-        .update(barbershops)
-        .set({
-          rating: averageRating.toFixed(2),
-          reviewCount,
-        })
-        .where(eq(barbershops.id, barbershopId));
+      const affectedServiceIds = resolvedItems
+        .filter((i) => i.targetType === "SERVICE" && i.targetId)
+        .map((i) => i.targetId!.toString());
+
+      await this.recalculateAggregatesTx(tx, barbershopId, affectedServiceIds);
     });
   }
 
   async findById(id: string): Promise<Review | null> {
-    const [row] = await this.db.select().from(reviews).where(eq(reviews.id, id));
+    const [row] = await this.db
+      .select()
+      .from(reviews)
+      .where(eq(reviews.id, id));
     if (!row) return null;
-    return ReviewMapper.toDomain(row);
+    const itemRows = await this.findItemsByReviewId(row.id);
+    return ReviewMapper.toDomain(row, itemRows);
   }
 
   async findByBookingId(bookingId: string): Promise<Review | null> {
-    const [row] = await this.db.select().from(reviews).where(eq(reviews.bookingId, bookingId));
+    const [row] = await this.db
+      .select()
+      .from(reviews)
+      .where(eq(reviews.bookingId, bookingId));
     if (!row) return null;
-    return ReviewMapper.toDomain(row);
+    const itemRows = await this.findItemsByReviewId(row.id);
+    return ReviewMapper.toDomain(row, itemRows);
+  }
+
+  async findItemsByReviewId(reviewId: string): Promise<ReviewItem[]> {
+    const rows = await this.db
+      .select()
+      .from(reviewItems)
+      .where(eq(reviewItems.reviewId, reviewId));
+    return rows.map(ReviewMapper.itemToDomain);
+  }
+
+  async findItemsByReviewIds(
+    reviewIds: string[],
+  ): Promise<Map<string, ReviewItem[]>> {
+    const map = new Map<string, ReviewItem[]>();
+    if (reviewIds.length === 0) return map;
+
+    const rows = await this.db
+      .select()
+      .from(reviewItems)
+      .where(inArray(reviewItems.reviewId, reviewIds));
+
+    for (const row of rows) {
+      const domainItem = ReviewMapper.itemToDomain(row);
+      const list = map.get(row.reviewId) ?? [];
+      list.push(domainItem);
+      map.set(row.reviewId, list);
+    }
+
+    return map;
+  }
+
+  async findPlatformFeedbackByBookingId(
+    bookingId: string,
+  ): Promise<PlatformFeedback | null> {
+    const [row] = await this.db
+      .select()
+      .from(platformFeedbacks)
+      .where(eq(platformFeedbacks.bookingId, bookingId));
+    if (!row) return null;
+    return ReviewMapper.platformFeedbackToDomain(row);
   }
 
   async findManyByBarbershopId(
     barbershopId: string,
-    params: PaginationParams
+    params: PaginationParams,
   ): Promise<{ reviews: Review[]; total: number }> {
     const offset = (params.page - 1) * params.limit;
 
     const [countResult] = await this.db
       .select({ count: count() })
       .from(reviews)
-      .where(and(eq(reviews.barbershopId, barbershopId), eq(reviews.status, "PUBLISHED")));
+      .where(
+        and(
+          eq(reviews.barbershopId, barbershopId),
+          eq(reviews.status, "PUBLISHED"),
+        ),
+      );
 
-    const total = countResult?.count ?? 0;
+    const total = Number(countResult?.count ?? 0);
 
     const rows = await this.db
       .select()
       .from(reviews)
-      .where(and(eq(reviews.barbershopId, barbershopId), eq(reviews.status, "PUBLISHED")))
+      .where(
+        and(
+          eq(reviews.barbershopId, barbershopId),
+          eq(reviews.status, "PUBLISHED"),
+        ),
+      )
+      .orderBy(desc(reviews.createdAt))
+      .limit(params.limit)
+      .offset(offset);
+
+    const itemsMap = await this.findItemsByReviewIds(rows.map((r) => r.id));
+
+    return {
+      reviews: rows.map((row) =>
+        ReviewMapper.toDomain(row, itemsMap.get(row.id) ?? []),
+      ),
+      total,
+    };
+  }
+
+  async findManyByTarget(params: {
+    targetType: ReviewTargetType;
+    targetId: string;
+    barbershopId?: string;
+    page: number;
+    limit: number;
+  }): Promise<{
+    entries: TargetReviewRecord[];
+    total: number;
+    metrics: TargetRatingMetrics;
+  }> {
+    const offset = (params.page - 1) * params.limit;
+
+    const conditions = [
+      eq(reviewItems.targetType, params.targetType),
+      eq(reviewItems.targetId, params.targetId),
+      eq(reviews.status, "PUBLISHED"),
+    ];
+    if (params.barbershopId) {
+      conditions.push(eq(reviews.barbershopId, params.barbershopId));
+    }
+
+    const whereClause = and(...conditions);
+
+    const [aggRes] = await this.db
+      .select({
+        avg: sql<string | null>`AVG(${reviewItems.rating})`,
+        count: count(),
+      })
+      .from(reviewItems)
+      .innerJoin(reviews, eq(reviews.id, reviewItems.reviewId))
+      .where(whereClause);
+
+    const total = Number(aggRes?.count ?? 0);
+    const parsedAvg =
+      aggRes?.avg !== null && aggRes?.avg !== undefined
+        ? Number(parseFloat(String(aggRes.avg)).toFixed(2))
+        : null;
+    const metrics: TargetRatingMetrics = {
+      averageRating: total > 0 ? parsedAvg : null,
+      reviewCount: total,
+    };
+
+    const rows = await this.db
+      .select({
+        review: reviews,
+        item: reviewItems,
+      })
+      .from(reviewItems)
+      .innerJoin(reviews, eq(reviews.id, reviewItems.reviewId))
+      .where(whereClause)
       .orderBy(desc(reviews.createdAt))
       .limit(params.limit)
       .offset(offset);
 
     return {
-      reviews: rows.map(ReviewMapper.toDomain),
+      entries: rows.map((row) => ({
+        review: ReviewMapper.toDomain(row.review),
+        item: ReviewMapper.itemToDomain(row.item),
+      })),
       total,
+      metrics,
     };
   }
 
@@ -116,7 +406,10 @@ export class DrizzleReviewsRepository implements ReviewsRepository {
     const data = ReviewMapper.toPersistence(entity);
     const condition =
       expectedVersion !== undefined
-        ? and(eq(reviews.id, entity.id.toString()), eq(reviews.version, expectedVersion))
+        ? and(
+            eq(reviews.id, entity.id.toString()),
+            eq(reviews.version, expectedVersion),
+          )
         : eq(reviews.id, entity.id.toString());
 
     const result = await this.db
@@ -128,17 +421,28 @@ export class DrizzleReviewsRepository implements ReviewsRepository {
     return result.length > 0;
   }
 
-  async updateAtomic(entity: Review, expectedVersion: number): Promise<boolean> {
+  async updateAtomic(
+    entity: Review,
+    expectedVersion: number,
+    options?: ReviewMutationOptions,
+  ): Promise<boolean> {
     const barbershopId = entity.barbershopId.toString();
+    const reviewId = entity.id.toString();
+
     return await this.db.transaction(async (tx) => {
       await tx.execute(
-        sql`SELECT id FROM barbershops WHERE id = ${barbershopId} FOR UPDATE`
+        sql`SELECT id FROM barbershops WHERE id = ${barbershopId} FOR UPDATE`,
       );
+
+      const existingItems = await tx
+        .select()
+        .from(reviewItems)
+        .where(eq(reviewItems.reviewId, reviewId));
 
       const data = ReviewMapper.toPersistence(entity);
       const condition = and(
-        eq(reviews.id, entity.id.toString()),
-        eq(reviews.version, expectedVersion)
+        eq(reviews.id, reviewId),
+        eq(reviews.version, expectedVersion),
       );
 
       const result = await tx
@@ -151,45 +455,70 @@ export class DrizzleReviewsRepository implements ReviewsRepository {
         return false;
       }
 
-      const [metricsRes] = await tx
-        .select({
-          avg: sql<string>`COALESCE(AVG(${reviews.rating}), 0)`,
-          count: count(),
-        })
-        .from(reviews)
-        .where(
-          and(
-            eq(reviews.barbershopId, barbershopId),
-            eq(reviews.status, "PUBLISHED")
-          )
-        );
+      const nextItems =
+        options?.items !== undefined
+          ? this.resolveItemsForCreateOrUpdate(entity, options.items)
+          : undefined;
 
-      const averageRating = Number(parseFloat(metricsRes?.avg ?? "0").toFixed(2));
-      const reviewCount = metricsRes?.count ?? 0;
+      if (nextItems !== undefined) {
+        await tx.delete(reviewItems).where(eq(reviewItems.reviewId, reviewId));
+        if (nextItems.length > 0) {
+          await tx
+            .insert(reviewItems)
+            .values(nextItems.map(ReviewMapper.itemToPersistence));
+        }
+      } else {
+        await tx
+          .update(reviewItems)
+          .set({ rating: entity.rating, updatedAt: entity.updatedAt })
+          .where(
+            and(
+              eq(reviewItems.reviewId, reviewId),
+              eq(reviewItems.targetType, "BARBERSHOP"),
+            ),
+          );
+      }
 
-      await tx
-        .update(barbershops)
-        .set({
-          rating: averageRating.toFixed(2),
-          reviewCount,
-        })
-        .where(eq(barbershops.id, barbershopId));
+      if (options?.platformFeedback) {
+        await this.upsertPlatformFeedbackTx(tx, options.platformFeedback);
+      }
+
+      const affectedServiceIds = [
+        ...existingItems
+          .filter((i: any) => i.targetType === "SERVICE" && i.targetId)
+          .map((i: any) => String(i.targetId)),
+        ...(nextItems ?? [])
+          .filter((i) => i.targetType === "SERVICE" && i.targetId)
+          .map((i) => i.targetId!.toString()),
+      ];
+
+      await this.recalculateAggregatesTx(tx, barbershopId, affectedServiceIds);
 
       return true;
     });
   }
 
-  async deleteAtomic(entity: Review, expectedVersion: number): Promise<boolean> {
+  async deleteAtomic(
+    entity: Review,
+    expectedVersion: number,
+  ): Promise<boolean> {
     const barbershopId = entity.barbershopId.toString();
+    const reviewId = entity.id.toString();
+
     return await this.db.transaction(async (tx) => {
       await tx.execute(
-        sql`SELECT id FROM barbershops WHERE id = ${barbershopId} FOR UPDATE`
+        sql`SELECT id FROM barbershops WHERE id = ${barbershopId} FOR UPDATE`,
       );
+
+      const existingItems = await tx
+        .select()
+        .from(reviewItems)
+        .where(eq(reviewItems.reviewId, reviewId));
 
       const data = ReviewMapper.toPersistence(entity);
       const condition = and(
-        eq(reviews.id, entity.id.toString()),
-        eq(reviews.version, expectedVersion)
+        eq(reviews.id, reviewId),
+        eq(reviews.version, expectedVersion),
       );
 
       const result = await tx
@@ -202,29 +531,11 @@ export class DrizzleReviewsRepository implements ReviewsRepository {
         return false;
       }
 
-      const [metricsRes] = await tx
-        .select({
-          avg: sql<string>`COALESCE(AVG(${reviews.rating}), 0)`,
-          count: count(),
-        })
-        .from(reviews)
-        .where(
-          and(
-            eq(reviews.barbershopId, barbershopId),
-            eq(reviews.status, "PUBLISHED")
-          )
-        );
+      const affectedServiceIds = existingItems
+        .filter((i: any) => i.targetType === "SERVICE" && i.targetId)
+        .map((i: any) => String(i.targetId));
 
-      const averageRating = Number(parseFloat(metricsRes?.avg ?? "0").toFixed(2));
-      const reviewCount = metricsRes?.count ?? 0;
-
-      await tx
-        .update(barbershops)
-        .set({
-          rating: averageRating.toFixed(2),
-          reviewCount,
-        })
-        .where(eq(barbershops.id, barbershopId));
+      await this.recalculateAggregatesTx(tx, barbershopId, affectedServiceIds);
 
       return true;
     });
@@ -243,17 +554,25 @@ export class DrizzleReviewsRepository implements ReviewsRepository {
   async moderateReview(
     review: Review,
     log: ReviewModerationLog,
-    expectedVersion: number
+    expectedVersion: number,
   ): Promise<boolean> {
+    const barbershopId = review.barbershopId.toString();
+    const reviewId = review.id.toString();
+
     return await this.db.transaction(async (tx) => {
       await tx.execute(
-        sql`SELECT id FROM barbershops WHERE id = ${review.barbershopId.toString()} FOR UPDATE`
+        sql`SELECT id FROM barbershops WHERE id = ${barbershopId} FOR UPDATE`,
       );
+
+      const existingItems = await tx
+        .select()
+        .from(reviewItems)
+        .where(eq(reviewItems.reviewId, reviewId));
 
       const data = ReviewMapper.toPersistence(review);
       const condition = and(
-        eq(reviews.id, review.id.toString()),
-        eq(reviews.version, expectedVersion)
+        eq(reviews.id, reviewId),
+        eq(reviews.version, expectedVersion),
       );
 
       const updated = await tx
@@ -269,41 +588,21 @@ export class DrizzleReviewsRepository implements ReviewsRepository {
       const logData = ReviewMapper.moderationLogToPersistence(log);
       await tx.insert(reviewModerationLogs).values(logData);
 
-      // Recalcular métricas dentro da mesma transação
-      const [result] = await tx
-        .select({
-          avg: sql<string>`COALESCE(AVG(${reviews.rating}), 0)`,
-          count: count(),
-        })
-        .from(reviews)
-        .where(
-          and(
-            eq(reviews.barbershopId, review.barbershopId.toString()),
-            eq(reviews.status, "PUBLISHED")
-          )
-        );
+      const affectedServiceIds = existingItems
+        .filter((i: any) => i.targetType === "SERVICE" && i.targetId)
+        .map((i: any) => String(i.targetId));
 
-      const averageRating = Number(parseFloat(result?.avg ?? "0").toFixed(2));
-      const reviewCount = result?.count ?? 0;
-
-      await tx
-        .update(barbershops)
-        .set({
-          rating: averageRating.toFixed(2),
-          reviewCount,
-        })
-        .where(eq(barbershops.id, review.barbershopId.toString()));
+      await this.recalculateAggregatesTx(tx, barbershopId, affectedServiceIds);
 
       return true;
     });
   }
 
   async listModerationQueue(
-    params: PaginationParams
+    params: PaginationParams,
   ): Promise<{ reviews: Review[]; total: number }> {
     const offset = (params.page - 1) * params.limit;
 
-    // Distinct review IDs with reports
     const reportedRows = await this.db
       .selectDistinct({ reviewId: reviewReports.reviewId })
       .from(reviewReports);
@@ -320,7 +619,7 @@ export class DrizzleReviewsRepository implements ReviewsRepository {
       .from(reviews)
       .where(whereCondition);
 
-    const total = countRes?.count ?? 0;
+    const total = Number(countRes?.count ?? 0);
 
     const rows = await this.db
       .select()
@@ -331,24 +630,32 @@ export class DrizzleReviewsRepository implements ReviewsRepository {
       .offset(offset);
 
     return {
-      reviews: rows.map(ReviewMapper.toDomain),
+      reviews: rows.map((row) => ReviewMapper.toDomain(row)),
       total,
     };
   }
 
   async getBarbershopRatingMetrics(
-    barbershopId: string
+    barbershopId: string,
   ): Promise<BarbershopRatingMetrics> {
     const [result] = await this.db
       .select({
-        avg: sql<string>`COALESCE(AVG(${reviews.rating}), 0)`,
+        avg: sql<string>`COALESCE(AVG(${reviewItems.rating}), 0)`,
         count: count(),
       })
-      .from(reviews)
-      .where(and(eq(reviews.barbershopId, barbershopId), eq(reviews.status, "PUBLISHED")));
+      .from(reviewItems)
+      .innerJoin(reviews, eq(reviews.id, reviewItems.reviewId))
+      .where(
+        and(
+          eq(reviewItems.targetType, "BARBERSHOP"),
+          eq(reviewItems.targetId, barbershopId),
+          eq(reviews.status, "PUBLISHED"),
+        ),
+      );
 
-    const averageRating = Number(parseFloat(result?.avg ?? "0").toFixed(2));
-    const reviewCount = result?.count ?? 0;
+    const reviewCount = Number(result?.count ?? 0);
+    const averageRating =
+      reviewCount > 0 ? Number(parseFloat(result?.avg ?? "0").toFixed(2)) : 0;
 
     return {
       averageRating,
@@ -357,11 +664,10 @@ export class DrizzleReviewsRepository implements ReviewsRepository {
   }
 
   async calculateBarbershopRatingMetrics(
-    barbershopId: string
+    barbershopId: string,
   ): Promise<BarbershopRatingMetrics> {
     const metrics = await this.getBarbershopRatingMetrics(barbershopId);
 
-    // Update the aggregated columns in barbershops table transactionally or directly
     await this.db
       .update(barbershops)
       .set({
@@ -371,5 +677,59 @@ export class DrizzleReviewsRepository implements ReviewsRepository {
       .where(eq(barbershops.id, barbershopId));
 
     return metrics;
+  }
+
+  async getTargetRatingMetrics(
+    targetType: ReviewTargetType,
+    targetId: string,
+  ): Promise<TargetRatingMetrics> {
+    const map = await this.getTargetRatingMetricsBatch(targetType, [targetId]);
+    return (
+      map.get(targetId) ?? {
+        averageRating: null,
+        reviewCount: 0,
+      }
+    );
+  }
+
+  async getTargetRatingMetricsBatch(
+    targetType: ReviewTargetType,
+    targetIds: string[],
+  ): Promise<Map<string, TargetRatingMetrics>> {
+    const map = new Map<string, TargetRatingMetrics>();
+    if (targetIds.length === 0) return map;
+
+    const uniqueIds = Array.from(new Set(targetIds));
+    const rows = await this.db
+      .select({
+        targetId: reviewItems.targetId,
+        avg: sql<string | null>`AVG(${reviewItems.rating})`,
+        count: count(),
+      })
+      .from(reviewItems)
+      .innerJoin(reviews, eq(reviews.id, reviewItems.reviewId))
+      .where(
+        and(
+          eq(reviewItems.targetType, targetType),
+          inArray(reviewItems.targetId, uniqueIds),
+          eq(reviews.status, "PUBLISHED"),
+        ),
+      )
+      .groupBy(reviewItems.targetId);
+
+    for (const row of rows) {
+      if (!row.targetId) continue;
+      const reviewCount = Number(row.count ?? 0);
+      const parsedAvg =
+        row.avg !== null && row.avg !== undefined
+          ? Number(parseFloat(String(row.avg)).toFixed(2))
+          : null;
+      map.set(row.targetId, {
+        averageRating: reviewCount > 0 ? parsedAvg : null,
+        reviewCount,
+      });
+    }
+
+    return map;
   }
 }

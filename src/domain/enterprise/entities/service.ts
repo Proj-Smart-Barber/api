@@ -12,6 +12,8 @@ export interface ServiceProps {
   priceInCents: number;
   durationInMinutes: number;
   isActive: boolean;
+  rating?: number;
+  reviewCount?: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -53,6 +55,19 @@ export class Service extends Entity<ServiceProps> {
     return this.props.isActive;
   }
 
+  get rating(): number {
+    return this.props.rating ?? 0;
+  }
+
+  get reviewCount(): number {
+    return this.props.reviewCount ?? 0;
+  }
+
+  updateRatingMetrics(rating: number, count: number): void {
+    this.props.rating = rating;
+    this.props.reviewCount = count;
+  }
+
   get createdAt(): Date | undefined {
     return this.props.createdAt;
   }
@@ -75,7 +90,13 @@ export class Service extends Entity<ServiceProps> {
     props: Partial<
       Pick<
         ServiceProps,
-        "title" | "description" | "priceInCents" | "durationInMinutes" | "imageUrl" | "isFeatured" | "featuredOrder"
+        | "title"
+        | "description"
+        | "priceInCents"
+        | "durationInMinutes"
+        | "imageUrl"
+        | "isFeatured"
+        | "featuredOrder"
       >
     >,
   ): void {

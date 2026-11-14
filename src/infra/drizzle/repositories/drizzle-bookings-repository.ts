@@ -572,6 +572,7 @@ export class DrizzleBookingsRepository implements BookingsRepository {
             customer: fallbackCustomer,
             services: itemRows.map((item: any) => ({
               id: item.serviceId ?? undefined,
+              bookingServiceItemId: item.id,
               serviceId: item.serviceId,
               title: item.title,
               priceInCents: item.priceInCents,

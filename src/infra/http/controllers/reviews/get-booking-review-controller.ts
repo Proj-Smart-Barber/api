@@ -7,6 +7,7 @@ import {
   type HttpResponse,
 } from "../../../../core/infra/http-response";
 import type { GetBookingReviewUseCase } from "../../../../domain/application/use-cases/reviews/get-booking-review/get-booking-review";
+import { ReviewMapper } from "../../../../domain/enterprise/mappers/review-mapper";
 
 const getBookingReviewSchema = z.object({
   bookingId: z.string().uuid(),
@@ -32,22 +33,11 @@ export class GetBookingReviewController implements Controller {
         return clientError({ message: error.message });
       }
 
-      const review = result.value.review;
+      const { review, platformFeedback } = result.value;
 
       return ok({
         review: review
-          ? {
-              id: review.id.toString(),
-              bookingId: review.bookingId.toString(),
-              barbershopId: review.barbershopId.toString(),
-              customerId: review.customerId.toString(),
-              rating: review.rating,
-              comment: review.comment,
-              status: review.status,
-              version: review.version,
-              createdAt: review.createdAt,
-              updatedAt: review.updatedAt,
-            }
+          ? ReviewMapper.toHTTP(review, review.items, platformFeedback ?? null)
           : null,
       });
     } catch (err) {

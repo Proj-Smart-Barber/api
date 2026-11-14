@@ -169,15 +169,28 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
       );
       const servicesResult = await this.database.execute(sql`
         SELECT id, barbershop_id, title, price_in_cents, duration_in_minutes,
-          image_url, media_id, width, height, mime_type, variants, featured_order
+          image_url, media_id, width, height, mime_type, variants, featured_order,
+          service_rating, service_review_count
         FROM (
           SELECT s.id,s.barbershop_id::text AS barbershop_id,s.title,s.price_in_cents,s.duration_in_minutes,
             m.public_url AS image_url,m.id AS media_id,m.width,m.height,m.mime_type,m.variants,s.featured_order,
+            srv_stats.rating AS service_rating,
+            COALESCE(srv_stats.review_count, 0) AS service_review_count,
             ROW_NUMBER() OVER (
               PARTITION BY s.barbershop_id
               ORDER BY s.featured_order ASC, s.id ASC, sm.display_order ASC, m.id ASC
             ) AS rn
-          FROM services s JOIN service_media sm ON sm.service_id=s.id JOIN media m ON m.id=sm.media_id
+          FROM services s
+          JOIN service_media sm ON sm.service_id=s.id
+          JOIN media m ON m.id=sm.media_id
+          LEFT JOIN LATERAL (
+            SELECT AVG(ri.rating)::double precision AS rating, COUNT(*)::int AS review_count
+            FROM review_items ri
+            INNER JOIN reviews r ON r.id = ri.review_id
+            WHERE ri.target_type = 'SERVICE'
+              AND ri.target_id = s.id
+              AND r.status = 'PUBLISHED'
+          ) srv_stats ON TRUE
           WHERE s.barbershop_id IN (${idListSql}) AND s.is_featured=true AND s.is_active=true
             AND m.status='READY' AND m.purpose IN ('SERVICE_PHOTO','SERVICE_VIDEO') AND m.owner_entity_id=s.barbershop_id
         ) ranked_services
@@ -189,6 +202,17 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
         const sid = String(row.barbershop_id);
         const current = servicesMap.get(sid) ?? [];
         if (current.length >= 6) continue;
+        const srvReviewCount = Number(row.service_review_count ?? 0);
+        const parsedRating =
+          row.service_rating !== null && row.service_rating !== undefined
+            ? parseFloat(String(row.service_rating))
+            : null;
+        const srvRating =
+          parsedRating !== null &&
+          !Number.isNaN(parsedRating) &&
+          srvReviewCount > 0
+            ? Number(parsedRating.toFixed(2))
+            : null;
         current.push({
           mediaId: String(row.media_id),
           mimeType: String(row.mime_type),
@@ -202,6 +226,8 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
           durationInMinutes: Number(row.duration_in_minutes),
           imageUrl: String(row.image_url),
           featuredOrder: Number(row.featured_order ?? 0),
+          rating: srvRating,
+          reviewCount: srvReviewCount,
         });
         servicesMap.set(sid, current);
       }
@@ -241,7 +267,7 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
       ? sql`0.70*exp(-distance_meters/3000.0)+0.30*${quality}`
       : quality;
     const result = await this.database.execute(
-      sql`WITH candidates AS(SELECT b.id,${distance} AS distance_meters,stats.rating,stats.review_count FROM barbershops b LEFT JOIN barbershop_locations bl ON bl.barbershop_id=b.id LEFT JOIN LATERAL(SELECT AVG(rating)::double precision AS rating,COUNT(*)::int AS review_count FROM reviews WHERE barbershop_id=b.id AND status='PUBLISHED')stats ON TRUE WHERE ${sql.join(conditions, sql` AND `)}) SELECT id FROM candidates WHERE ${radius} ORDER BY ${score} DESC,distance_meters ASC NULLS LAST,review_count DESC,id ASC`,
+      sql`WITH candidates AS(SELECT b.id,${distance} AS distance_meters,stats.rating,stats.review_count FROM barbershops b LEFT JOIN barbershop_locations bl ON bl.barbershop_id=b.id LEFT JOIN LATERAL(SELECT AVG(ri.rating)::double precision AS rating,COUNT(*)::int AS review_count FROM review_items ri INNER JOIN reviews r ON r.id=ri.review_id WHERE ri.target_type='BARBERSHOP' AND ri.target_id=b.id AND r.status='PUBLISHED')stats ON TRUE WHERE ${sql.join(conditions, sql` AND `)}) SELECT id FROM candidates WHERE ${radius} ORDER BY ${score} DESC,distance_meters ASC NULLS LAST,review_count DESC,id ASC`,
     );
     return result.rows.map((row: { id: string }) => String(row.id));
   }
@@ -320,9 +346,10 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
       FROM barbershops b
       LEFT JOIN barbershop_locations bl ON bl.barbershop_id = b.id
       LEFT JOIN LATERAL (
-        SELECT AVG(r.rating) AS rating, COUNT(*)::int AS review_count
-        FROM reviews r
-        WHERE r.barbershop_id=b.id AND r.status='PUBLISHED'
+        SELECT AVG(ri.rating) AS rating, COUNT(*)::int AS review_count
+        FROM review_items ri
+        INNER JOIN reviews r ON r.id = ri.review_id
+        WHERE ri.target_type = 'BARBERSHOP' AND ri.target_id = b.id AND r.status = 'PUBLISHED'
       ) rev ON TRUE
       WHERE ${whereClause}
       ORDER BY ${input.ids ? sql`array_position(ARRAY(SELECT jsonb_array_elements_text(${JSON.stringify(input.ids)}::jsonb))::uuid[], b.id)` : normOrderName} ASC, b.id ASC
@@ -524,9 +551,10 @@ export class DrizzleDiscoveryRepository implements DiscoveryRepository {
       FROM barbershops b
       INNER JOIN barbershop_locations bl ON bl.barbershop_id = b.id
       LEFT JOIN LATERAL (
-        SELECT AVG(r.rating) AS rating, COUNT(*)::int AS review_count
-        FROM reviews r
-        WHERE r.barbershop_id=b.id AND r.status='PUBLISHED'
+        SELECT AVG(ri.rating) AS rating, COUNT(*)::int AS review_count
+        FROM review_items ri
+        INNER JOIN reviews r ON r.id = ri.review_id
+        WHERE ri.target_type = 'BARBERSHOP' AND ri.target_id = b.id AND r.status = 'PUBLISHED'
       ) rev ON TRUE
       WHERE ${baseWhere}
         AND ${radiusMeters === null ? sql`TRUE` : sql`(${haversineSql}) <= ${radiusMeters}::double precision`}

@@ -20,11 +20,11 @@ import {
   ExpiredExploreCursorError,
   EXPLORE_CURSOR_TTL_MS,
 } from "../../../services/explore-cursor-token";
-import {
-  type ExploreFeedInput,
-  type ExploreFeedPage,
-  type ExploreFeedItem,
-  type ExploreFeedMediaItem,
+import type {
+  ExploreFeedInput,
+  ExploreFeedPage,
+  ExploreFeedItem,
+  ExploreFeedMediaItem,
 } from "../../../services/explore-feed.contract";
 import { LocationServiceUnavailableError } from "../../_errors/location-service-unavailable-error";
 
@@ -269,6 +269,11 @@ export class GetExploreFeedUseCase {
                 title: srv.title,
                 priceInCents: srv.priceInCents,
                 durationInMinutes: srv.durationInMinutes,
+                rating:
+                  srv.reviewCount && srv.reviewCount > 0 && srv.rating != null
+                    ? srv.rating
+                    : null,
+                reviewCount: srv.reviewCount ?? 0,
               },
             });
           });

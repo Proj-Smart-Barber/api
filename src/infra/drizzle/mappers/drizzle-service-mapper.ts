@@ -18,6 +18,8 @@ export class DrizzleServiceMapper {
         priceInCents: raw.priceInCents,
         durationInMinutes: raw.durationInMinutes,
         isActive: raw.isActive,
+        rating: raw.rating ? Number(parseFloat(raw.rating).toFixed(2)) : 0,
+        reviewCount: raw.reviewCount ?? 0,
         createdAt: raw.createdAt ?? undefined,
         updatedAt: raw.updatedAt ?? undefined,
       },
@@ -37,8 +39,19 @@ export class DrizzleServiceMapper {
       priceInCents: service.priceInCents,
       durationInMinutes: service.durationInMinutes,
       isActive: service.isActive,
+      rating: service.rating.toFixed(2),
+      reviewCount: service.reviewCount,
       createdAt: service.createdAt ?? new Date(),
       updatedAt: service.updatedAt ?? new Date(),
+    };
+  }
+
+  static toHTTP(service: Service) {
+    const reviewCount = service.reviewCount ?? 0;
+    return {
+      ...DrizzleServiceMapper.toDrizzle(service),
+      rating: reviewCount > 0 ? Number(service.rating.toFixed(2)) : null,
+      reviewCount,
     };
   }
 }

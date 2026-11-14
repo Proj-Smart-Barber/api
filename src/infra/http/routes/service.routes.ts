@@ -8,6 +8,7 @@ import { makeUpdateServiceController } from "../factories/make-update-service-co
 import { makeToggleServiceActivationController } from "../factories/make-toggle-service-activation-controller";
 import { makeListServicesController } from "../factories/make-list-services-controller";
 import { makeGetServiceController } from "../factories/make-get-service-controller";
+import { makeListTargetReviewsController } from "../factories/make-list-target-reviews-controller";
 
 const serviceRoutes = Router({ mergeParams: true });
 
@@ -27,6 +28,10 @@ serviceRoutes.get(
   "/:serviceId",
   optionalUserAuthentication,
   adaptRoute(makeGetServiceController()),
+);
+serviceRoutes.get(
+  "/:serviceId/reviews",
+  adaptRoute(makeListTargetReviewsController("SERVICE")),
 );
 
 serviceRoutes.patch(
