@@ -29,6 +29,10 @@ import {
 } from "../factories/make-barbershop-gallery-controllers";
 import { makeListBarbershopReviewsController } from "../factories/make-list-barbershop-reviews-controller";
 import { makeListTargetReviewsController } from "../factories/make-list-target-reviews-controller";
+import { makeGetOwnerReviewSummaryController } from "../factories/make-get-owner-review-summary-controller";
+import { makeGetOwnerServiceMetricsController } from "../factories/make-get-owner-service-metrics-controller";
+import { makeGetOwnerProfessionalMetricsController } from "../factories/make-get-owner-professional-metrics-controller";
+import { makeGetOwnerFeedbacksController } from "../factories/make-get-owner-feedbacks-controller";
 import { serviceRoutes } from "./service.routes";
 
 const barbershopRoutes = Router();
@@ -139,6 +143,29 @@ barbershopRoutes.get(
   "/:shopId/professionals/:barberId/reviews",
   adaptRoute(makeListTargetReviewsController("BARBER")),
 );
+
+// Review Insights (Owner Private Management)
+barbershopRoutes.get(
+  "/:shopId/review-insights/summary",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeGetOwnerReviewSummaryController()),
+);
+barbershopRoutes.get(
+  "/:shopId/review-insights/services",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeGetOwnerServiceMetricsController()),
+);
+barbershopRoutes.get(
+  "/:shopId/review-insights/professionals",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeGetOwnerProfessionalMetricsController()),
+);
+barbershopRoutes.get(
+  "/:shopId/review-insights/feedbacks",
+  ensureUserIsAuthenticated,
+  adaptRoute(makeGetOwnerFeedbacksController()),
+);
+
 barbershopRoutes.use("/:shopId/services", serviceRoutes);
 
 export { barbershopRoutes };

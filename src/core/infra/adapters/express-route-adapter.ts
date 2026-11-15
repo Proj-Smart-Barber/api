@@ -39,7 +39,8 @@ export const adaptRoute = (controller: Controller) => {
       urlPath.includes("/notifications") ||
       urlPath.includes("/finance") ||
       urlPath.includes("/memberships") ||
-      urlPath.includes("/invitations");
+      urlPath.includes("/invitations") ||
+      urlPath.includes("/review-insights");
 
     const isPublicBarbershopCatalogGet =
       request.method === "GET" &&
