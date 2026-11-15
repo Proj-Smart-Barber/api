@@ -8,6 +8,8 @@ export type ReviewStatus =
   | "HIDDEN_BY_MODERATION"
   | "DELETED_BY_AUTHOR";
 
+export type ReviewSource = "CUSTOMER" | "DEMO";
+
 export interface ReviewProps {
   bookingId: UniqueEntityId;
   barbershopId: UniqueEntityId;
@@ -16,6 +18,7 @@ export interface ReviewProps {
   comment?: string;
   items?: ReviewItem[];
   status: ReviewStatus;
+  source?: ReviewSource;
   version: number;
   createdAt: Date;
   updatedAt: Date;
@@ -52,6 +55,10 @@ export class Review extends Entity<ReviewProps> {
 
   get status(): ReviewStatus {
     return this.props.status;
+  }
+
+  get source(): ReviewSource {
+    return this.props.source ?? "CUSTOMER";
   }
 
   get version(): number {
@@ -143,7 +150,7 @@ export class Review extends Entity<ReviewProps> {
   static create(
     props: Optional<
       ReviewProps,
-      "status" | "version" | "createdAt" | "updatedAt"
+      "status" | "source" | "version" | "createdAt" | "updatedAt"
     >,
     id?: UniqueEntityId,
   ): Review {
@@ -154,6 +161,7 @@ export class Review extends Entity<ReviewProps> {
       {
         ...props,
         status: props.status ?? "PUBLISHED",
+        source: props.source ?? "CUSTOMER",
         version: props.version ?? 1,
         createdAt: props.createdAt ?? new Date(),
         updatedAt: props.updatedAt ?? new Date(),
