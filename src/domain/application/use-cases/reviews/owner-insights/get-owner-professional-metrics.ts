@@ -4,21 +4,26 @@ import type { MembershipsRepository } from "../../../repositories/memberships-re
 import type {
   ProfessionalMetricsResponse,
   ReviewInsightsRepository,
+  ReviewSourceFilter,
 } from "../../../repositories/review-insights-repository";
 import type { NotAllowedError } from "../../_errors/not-allowed-error";
 import type { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
+import type { ValidationError } from "../../_errors/validation-error";
 import { ensureOwnerAccess } from "./ensure-owner-access";
+import { resolveOptionalPeriod } from "./period-utils";
 
 export interface GetOwnerProfessionalMetricsDTO {
   shopId: string;
   actorId: string;
   startDate?: string | Date;
   endDate?: string | Date;
-  source?: "CUSTOMER" | "DEMO" | "ALL";
+  source?: ReviewSourceFilter;
+  page?: number;
+  limit?: number;
 }
 
 export type GetOwnerProfessionalMetricsResponse = Either<
-  ResourceNotFoundError | NotAllowedError,
+  ResourceNotFoundError | NotAllowedError | ValidationError,
   ProfessionalMetricsResponse
 >;
 
@@ -35,6 +40,8 @@ export class GetOwnerProfessionalMetricsUseCase {
     startDate,
     endDate,
     source = "CUSTOMER",
+    page = 1,
+    limit = 20,
   }: GetOwnerProfessionalMetricsDTO): Promise<GetOwnerProfessionalMetricsResponse> {
     const authResult = await ensureOwnerAccess(
       this.barbershopsRepository,
@@ -47,14 +54,25 @@ export class GetOwnerProfessionalMetricsUseCase {
       return left(authResult.value);
     }
 
-    const resolvedStartDate = startDate ? new Date(startDate) : undefined;
-    const resolvedEndDate = endDate ? new Date(endDate) : undefined;
+    const { barbershop } = authResult.value;
+    const periodResult = resolveOptionalPeriod({
+      startDate,
+      endDate,
+      timezone: barbershop.timezone,
+      defaultDays: 30,
+    });
+
+    if (periodResult.isLeft()) {
+      return left(periodResult.value);
+    }
 
     const result = await this.reviewInsightsRepository.getProfessionalMetrics({
       barbershopId: shopId,
-      startDate: resolvedStartDate,
-      endDate: resolvedEndDate,
+      startDate: periodResult.value.startDate,
+      endDate: periodResult.value.endDate,
       source,
+      page,
+      limit,
     });
 
     return right(result);

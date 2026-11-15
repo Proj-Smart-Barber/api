@@ -431,6 +431,7 @@ export const bookings = pgTable(
     clientRequestId: text("client_request_id"),
     status: text("status"),
     paymentStatus: text("payment_status"),
+    source: text("source").notNull().default("CUSTOMER"),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at")
       .defaultNow()
@@ -441,6 +442,11 @@ export const bookings = pgTable(
       table.barbershopId,
       table.startsAt,
       table.id,
+    ),
+    index("bookings_barbershop_source_status_idx").on(
+      table.barbershopId,
+      table.source,
+      table.status,
     ),
     index("bookings_barberman_starts_ends_idx").on(
       table.barbermanId,

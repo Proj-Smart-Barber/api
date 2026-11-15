@@ -2,10 +2,12 @@ import { z, ZodError } from "zod";
 import type { Controller } from "../../../../core/infra/controller";
 import {
   clientError,
+  conflict,
   created,
   fail,
   type HttpResponse,
 } from "../../../../core/infra/http-response";
+import { ConflictError } from "../../../../domain/application/use-cases/_errors/conflict-error";
 import type { ReportReviewUseCase } from "../../../../domain/application/use-cases/reviews/report-review/report-review";
 
 const reportReviewSchema = z.object({
@@ -31,6 +33,9 @@ export class ReportReviewController implements Controller {
 
       if (result.isLeft()) {
         const error = result.value;
+        if (error instanceof ConflictError) {
+          return conflict({ error: "ALREADY_REPORTED", message: error.message });
+        }
         return clientError({ message: error.message });
       }
 

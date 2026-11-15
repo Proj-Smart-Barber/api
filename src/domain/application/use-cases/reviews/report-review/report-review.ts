@@ -2,6 +2,7 @@ import { type Either, left, right } from "../../../../../core/logic/either";
 import { UniqueEntityId } from "../../../../../core/entities/unique-entity-id";
 import { ReviewReport } from "../../../../enterprise/entities/review-report";
 import type { ReviewsRepository } from "../../../repositories/reviews-repository";
+import { ConflictError } from "../../_errors/conflict-error";
 
 export interface ReportReviewDTO {
   reporterUserId: string;
@@ -12,7 +13,9 @@ export interface ReportReviewDTO {
 export class ReportReviewUseCase {
   constructor(private reviewsRepository: ReviewsRepository) {}
 
-  async execute(dto: ReportReviewDTO): Promise<Either<Error, { success: boolean; reportId: string }>> {
+  async execute(
+    dto: ReportReviewDTO,
+  ): Promise<Either<Error | ConflictError, { success: boolean; reportId: string }>> {
     if (!dto.reason || dto.reason.trim().length === 0) {
       return left(new Error("O motivo da denúncia deve ser informado."));
     }
@@ -24,6 +27,16 @@ export class ReportReviewUseCase {
     const review = await this.reviewsRepository.findById(dto.reviewId);
     if (!review) {
       return left(new Error("Avaliação não encontrada."));
+    }
+
+    if (this.reviewsRepository.hasReportFromUser) {
+      const alreadyReported = await this.reviewsRepository.hasReportFromUser(
+        dto.reviewId,
+        dto.reporterUserId,
+      );
+      if (alreadyReported) {
+        return left(new ConflictError("Você já denunciou esta avaliação."));
+      }
     }
 
     const report = ReviewReport.create({

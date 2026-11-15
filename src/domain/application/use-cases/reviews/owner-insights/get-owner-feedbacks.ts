@@ -4,17 +4,20 @@ import type { MembershipsRepository } from "../../../repositories/memberships-re
 import type {
   FeedbacksResponse,
   ReviewInsightsRepository,
+  ReviewSourceFilter,
 } from "../../../repositories/review-insights-repository";
 import type { NotAllowedError } from "../../_errors/not-allowed-error";
 import type { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
+import type { ValidationError } from "../../_errors/validation-error";
 import { ensureOwnerAccess } from "./ensure-owner-access";
+import { resolveOptionalPeriod } from "./period-utils";
 
 export interface GetOwnerFeedbacksDTO {
   shopId: string;
   actorId: string;
   startDate?: string | Date;
   endDate?: string | Date;
-  source?: "CUSTOMER" | "DEMO" | "ALL";
+  source?: ReviewSourceFilter;
   targetType?: "ALL" | "BARBERSHOP" | "BARBER" | "SERVICE";
   targetId?: string;
   rating?: number;
@@ -24,7 +27,7 @@ export interface GetOwnerFeedbacksDTO {
 }
 
 export type GetOwnerFeedbacksResponse = Either<
-  ResourceNotFoundError | NotAllowedError,
+  ResourceNotFoundError | NotAllowedError | ValidationError,
   FeedbacksResponse
 >;
 
@@ -59,13 +62,22 @@ export class GetOwnerFeedbacksUseCase {
       return left(authResult.value);
     }
 
-    const resolvedStartDate = startDate ? new Date(startDate) : undefined;
-    const resolvedEndDate = endDate ? new Date(endDate) : undefined;
+    const { barbershop } = authResult.value;
+    const periodResult = resolveOptionalPeriod({
+      startDate,
+      endDate,
+      timezone: barbershop.timezone,
+      defaultDays: 30,
+    });
+
+    if (periodResult.isLeft()) {
+      return left(periodResult.value);
+    }
 
     const result = await this.reviewInsightsRepository.getFeedbacks({
       barbershopId: shopId,
-      startDate: resolvedStartDate,
-      endDate: resolvedEndDate,
+      startDate: periodResult.value.startDate,
+      endDate: periodResult.value.endDate,
       source,
       targetType,
       targetId,

@@ -4,9 +4,11 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { db, pool } from "../../../drizzle/index";
 import {
   barbershops,
+  bookingEvents,
   bookings,
   bookingServiceItems,
   membership,
+  platformFeedbacks,
   reviewItems,
   reviews,
   services,
@@ -16,6 +18,7 @@ import { makeGetOwnerReviewSummaryController } from "../../factories/make-get-ow
 import { makeGetOwnerServiceMetricsController } from "../../factories/make-get-owner-service-metrics-controller";
 import { makeGetOwnerProfessionalMetricsController } from "../../factories/make-get-owner-professional-metrics-controller";
 import { makeGetOwnerFeedbacksController } from "../../factories/make-get-owner-feedbacks-controller";
+import { makeReportReviewController } from "../../factories/make-report-review-controller";
 
 describe("Review Insights (Owner Management) Integration", () => {
   const ownerId = randomUUID();
@@ -35,6 +38,7 @@ describe("Review Insights (Owner Management) Integration", () => {
   const serviceMetricsController = makeGetOwnerServiceMetricsController();
   const professionalMetricsController = makeGetOwnerProfessionalMetricsController();
   const feedbacksController = makeGetOwnerFeedbacksController();
+  const reportReviewController = makeReportReviewController();
 
   async function cleanTestData() {
     await db.execute(
@@ -377,6 +381,417 @@ describe("Review Insights (Owner Management) Integration", () => {
       expect(feedback.customer.phone).toBeUndefined();
 
       expect(feedback.items.length).toBe(3);
+    });
+  });
+
+  describe("Regressions: Active Owner Authorization", () => {
+    it("should reject owner with INACTIVE membership across all 4 endpoints", async () => {
+      await db
+        .update(membership)
+        .set({ state: "INACTIVE" })
+        .where(sql`${membership.barbershopId} = ${shopId} AND ${membership.userId} = ${ownerId}`);
+
+      const r1 = await summaryController.handle({ shopId, userId: ownerId });
+      const r2 = await serviceMetricsController.handle({ shopId, userId: ownerId });
+      const r3 = await professionalMetricsController.handle({ shopId, userId: ownerId });
+      const r4 = await feedbacksController.handle({ shopId, userId: ownerId });
+
+      expect(r1.statusCode).toBe(403);
+      expect(r2.statusCode).toBe(403);
+      expect(r3.statusCode).toBe(403);
+      expect(r4.statusCode).toBe(403);
+    });
+
+    it("should reject removed owner (no membership row) even if barbershop.ownerId matches", async () => {
+      await db
+        .delete(membership)
+        .where(sql`${membership.barbershopId} = ${shopId} AND ${membership.userId} = ${ownerId}`);
+
+      const r1 = await summaryController.handle({ shopId, userId: ownerId });
+      expect(r1.statusCode).toBe(403);
+    });
+
+    it("should reject BARBERMAN from accessing owner insights", async () => {
+      const r1 = await summaryController.handle({ shopId, userId: barberId });
+      const r2 = await serviceMetricsController.handle({ shopId, userId: barberId });
+      expect(r1.statusCode).toBe(403);
+      expect(r2.statusCode).toBe(403);
+    });
+  });
+
+  describe("Regressions: Provenance Separation (CUSTOMER, DEMO, UNKNOWN, ALL) & Response Rate", () => {
+    it("should NOT contaminate CUSTOMER response rate with DEMO bookings or DEMO reviews", async () => {
+      const demoBookingId = randomUUID();
+      const demoReviewId = randomUUID();
+      const now = new Date();
+
+      await db.insert(bookings).values({
+        id: demoBookingId,
+        barbershopId: shopId,
+        barbermanId: barberId,
+        customerId,
+        status: "COMPLETED",
+        source: "DEMO",
+        date: now,
+        startTime: "14:00",
+        endTime: "14:30",
+      });
+
+      await db.insert(reviews).values({
+        id: demoReviewId,
+        barbershopId: shopId,
+        bookingId: demoBookingId,
+        customerId,
+        rating: 2,
+        comment: "[Demonstração] Teste",
+        status: "PUBLISHED",
+        source: "DEMO",
+        createdAt: now,
+      });
+
+      await db.insert(reviewItems).values({
+        id: randomUUID(),
+        reviewId: demoReviewId,
+        bookingId: demoBookingId,
+        targetType: "BARBERSHOP",
+        targetKey: `BARBERSHOP:${shopId}`,
+        targetId: shopId,
+        targetLabel: "Barbearia",
+        rating: 2,
+        createdAt: now,
+      });
+
+      // CUSTOMER should still see only the 2 CUSTOMER bookings and 1 CUSTOMER review (50%, avg 5)
+      const custRes = await summaryController.handle({
+        shopId,
+        userId: ownerId,
+        source: "CUSTOMER",
+      });
+      expect(custRes.statusCode).toBe(200);
+      const custData = custRes.body as any;
+      expect(custData.metrics.reviewCount).toBe(1);
+      expect(custData.metrics.averageRating).toBe(5);
+      expect(custData.responseRate.cohortCompletedBookings).toBe(2);
+      expect(custData.responseRate.reviewedBookings).toBe(1);
+      expect(custData.responseRate.ratePercentage).toBe(50);
+      expect(custData.flags.isMixedEnvironment).toBe(true);
+
+      // DEMO should see only the 1 DEMO booking and 1 DEMO review (100%, avg 2)
+      const demoRes = await summaryController.handle({
+        shopId,
+        userId: ownerId,
+        source: "DEMO",
+      });
+      expect(demoRes.statusCode).toBe(200);
+      const demoData = demoRes.body as any;
+      expect(demoData.metrics.reviewCount).toBe(1);
+      expect(demoData.metrics.averageRating).toBe(2);
+      expect(demoData.responseRate.cohortCompletedBookings).toBe(1);
+      expect(demoData.responseRate.reviewedBookings).toBe(1);
+      expect(demoData.responseRate.ratePercentage).toBe(100);
+    });
+
+    it("should classify UNKNOWN provenance explicitly and not treat it as CUSTOMER", async () => {
+      const unkBookingId = randomUUID();
+      const unkReviewId = randomUUID();
+      const now = new Date();
+
+      await db.insert(bookings).values({
+        id: unkBookingId,
+        barbershopId: shopId,
+        barbermanId: barberId,
+        customerId,
+        status: "COMPLETED",
+        source: "LEGACY_IMPORT",
+        date: now,
+        startTime: "15:00",
+        endTime: "15:30",
+      });
+
+      await db.insert(reviews).values({
+        id: unkReviewId,
+        barbershopId: shopId,
+        bookingId: unkBookingId,
+        customerId,
+        rating: 1,
+        comment: "Origem desconhecida",
+        status: "PUBLISHED",
+        source: "LEGACY_IMPORT",
+        createdAt: now,
+      });
+
+      await db.insert(reviewItems).values({
+        id: randomUUID(),
+        reviewId: unkReviewId,
+        bookingId: unkBookingId,
+        targetType: "BARBERSHOP",
+        targetKey: `BARBERSHOP:${shopId}`,
+        targetId: shopId,
+        targetLabel: "Barbearia",
+        rating: 1,
+        createdAt: now,
+      });
+
+      const custRes = await summaryController.handle({
+        shopId,
+        userId: ownerId,
+        source: "CUSTOMER",
+      });
+      const custData = custRes.body as any;
+      expect(custData.metrics.reviewCount).toBe(1);
+      expect(custData.flags.hasUnknownReviews).toBe(true);
+
+      const unkRes = await summaryController.handle({
+        shopId,
+        userId: ownerId,
+        source: "UNKNOWN",
+      });
+      const unkData = unkRes.body as any;
+      expect(unkData.metrics.reviewCount).toBe(1);
+      expect(unkData.metrics.averageRating).toBe(1);
+      expect(unkData.latestReview.source).toBe("UNKNOWN");
+    });
+  });
+
+  describe("Regressions: Cohort Completion Date, Late Reviews, Multiple Snapshots & Boundaries", () => {
+    it("should count late reviews (created after period end) in response rate if booking completed in period", async () => {
+      const lateBookingId = randomUUID();
+      const lateReviewId = randomUUID();
+
+      // Completed on 2026-10-15T15:00:00Z via booking_events
+      const completedAt = new Date("2026-10-15T15:00:00.000Z");
+      // Reviewed 10 days later on 2026-10-25T15:00:00Z (outside Oct 10-20 window)
+      const reviewedAt = new Date("2026-10-25T15:00:00.000Z");
+
+      await db.insert(bookings).values({
+        id: lateBookingId,
+        barbershopId: shopId,
+        barbermanId: barberId,
+        customerId,
+        status: "COMPLETED",
+        source: "CUSTOMER",
+        date: new Date("2026-10-01T10:00:00.000Z"), // scheduled date outside window!
+        startTime: "10:00",
+        endTime: "10:30",
+      });
+
+      await db.insert(bookingEvents).values({
+        id: randomUUID(),
+        bookingId: lateBookingId,
+        actorId: barberId,
+        eventType: "COMPLETED",
+        newVersion: 2,
+        newStatus: "COMPLETED",
+        createdAt: completedAt,
+      });
+
+      await db.insert(reviews).values({
+        id: lateReviewId,
+        barbershopId: shopId,
+        bookingId: lateBookingId,
+        customerId,
+        rating: 4,
+        status: "PUBLISHED",
+        source: "CUSTOMER",
+        createdAt: reviewedAt,
+      });
+
+      await db.insert(reviewItems).values({
+        id: randomUUID(),
+        reviewId: lateReviewId,
+        bookingId: lateBookingId,
+        targetType: "BARBERSHOP",
+        targetKey: `BARBERSHOP:${shopId}`,
+        targetId: shopId,
+        targetLabel: "Barbearia",
+        rating: 4,
+        createdAt: reviewedAt,
+      });
+
+      const res = await summaryController.handle({
+        shopId,
+        userId: ownerId,
+        source: "CUSTOMER",
+        startDate: "2026-10-10",
+        endDate: "2026-10-20",
+      });
+
+      expect(res.statusCode).toBe(200);
+      const data = res.body as any;
+      // Review was created on Oct 25, so 0 reviews received in Oct 10-20
+      expect(data.metrics.reviewCount).toBe(0);
+      // Cohort completed in Oct 10-20 = 1, and it was answered later = 1 (100%)
+      expect(data.responseRate.cohortCompletedBookings).toBe(1);
+      expect(data.responseRate.reviewedBookings).toBe(1);
+      expect(data.responseRate.ratePercentage).toBe(100);
+    });
+
+    it("should reject invalid dates and inverted intervals with 400 VALIDATION_ERROR", async () => {
+      const rInvalid = await summaryController.handle({
+        shopId,
+        userId: ownerId,
+        startDate: "2026-02-30",
+        endDate: "2026-03-10",
+      });
+      expect(rInvalid.statusCode).toBe(400);
+
+      const rInverted = await summaryController.handle({
+        shopId,
+        userId: ownerId,
+        startDate: "2026-11-10",
+        endDate: "2026-11-01",
+      });
+      expect(rInverted.statusCode).toBe(400);
+
+      const rTooLong = await summaryController.handle({
+        shopId,
+        userId: ownerId,
+        startDate: "2025-01-01",
+        endDate: "2026-12-31",
+      });
+      expect(rTooLong.statusCode).toBe(400);
+    });
+
+    it("should not overlap adjacent periods at boundary instant and return timeSeries with null for empty buckets", async () => {
+      const boundaryBookingId = randomUUID();
+      const boundaryReviewId = randomUUID();
+      // Exact start of 2026-11-10 in America/Sao_Paulo (-03:00) = 2026-11-10T03:00:00.000Z
+      const boundaryInstant = new Date("2026-11-10T03:00:00.000Z");
+
+      await db.insert(bookings).values({
+        id: boundaryBookingId,
+        barbershopId: shopId,
+        barbermanId: barberId,
+        customerId,
+        status: "COMPLETED",
+        source: "CUSTOMER",
+        date: boundaryInstant,
+        startsAt: boundaryInstant,
+        endsAt: boundaryInstant,
+        startTime: "00:00",
+        endTime: "00:30",
+      });
+
+      await db.insert(reviews).values({
+        id: boundaryReviewId,
+        barbershopId: shopId,
+        bookingId: boundaryBookingId,
+        customerId,
+        rating: 3,
+        status: "PUBLISHED",
+        source: "CUSTOMER",
+        createdAt: boundaryInstant,
+      });
+
+      await db.insert(reviewItems).values({
+        id: randomUUID(),
+        reviewId: boundaryReviewId,
+        bookingId: boundaryBookingId,
+        targetType: "BARBERSHOP",
+        targetKey: `BARBERSHOP:${shopId}`,
+        targetId: shopId,
+        targetLabel: "Barbearia",
+        rating: 3,
+        createdAt: boundaryInstant,
+      });
+
+      // Previous period 2026-11-05 to 2026-11-09 -> endDate exclusive is 2026-11-10T03:00:00.000Z
+      const prevRes = await summaryController.handle({
+        shopId,
+        userId: ownerId,
+        source: "CUSTOMER",
+        startDate: "2026-11-05",
+        endDate: "2026-11-09",
+      });
+      expect((prevRes.body as any).metrics.reviewCount).toBe(0);
+
+      // Current period 2026-11-10 to 2026-11-14 -> startDate inclusive is 2026-11-10T03:00:00.000Z
+      const currRes = await summaryController.handle({
+        shopId,
+        userId: ownerId,
+        source: "CUSTOMER",
+        startDate: "2026-11-10",
+        endDate: "2026-11-14",
+        granularity: "WEEK",
+      });
+      const currData = currRes.body as any;
+      expect(currData.metrics.reviewCount).toBe(1);
+      expect(currData.comparison.previousReviewCount).toBe(0);
+      expect(Array.isArray(currData.timeSeries)).toBe(true);
+      expect(currData.timeSeries.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("should exclude platform_feedbacks from owner metrics and prevent duplicate review reports", async () => {
+      await db.insert(platformFeedbacks).values({
+        id: randomUUID(),
+        bookingId: booking1Id,
+        reviewId: review1Id,
+        customerId,
+        rating: 1,
+        comment: "Feedback privado plataforma",
+      });
+
+      const fbRes = await feedbacksController.handle({
+        shopId,
+        userId: ownerId,
+        source: "CUSTOMER",
+      });
+      const fbData = fbRes.body as any;
+      expect(fbData.items[0].generalComment).toBe("Excelente atendimento geral!");
+      expect(JSON.stringify(fbData)).not.toContain("Feedback privado plataforma");
+
+      // Report review once -> 201, twice -> 409 Conflict
+      const rep1 = await reportReviewController.handle({
+        userId: ownerId,
+        reviewId: review1Id,
+        reason: "Conteúdo impróprio",
+      });
+      expect(rep1.statusCode).toBe(201);
+
+      const rep2 = await reportReviewController.handle({
+        userId: ownerId,
+        reviewId: review1Id,
+        reason: "Repetido",
+      });
+      expect(rep2.statusCode).toBe(409);
+    });
+
+    it("should paginate services and professionals while preserving global totals and coverage", async () => {
+      const s3Id = randomUUID();
+      await db.insert(services).values({
+        id: s3Id,
+        barbershopId: shopId,
+        title: "Sobrancelha",
+        priceInCents: 2000,
+        durationInMinutes: 15,
+        isActive: true,
+      });
+
+      const page1 = await serviceMetricsController.handle({
+        shopId,
+        userId: ownerId,
+        source: "CUSTOMER",
+        page: 1,
+        limit: 2,
+      });
+      expect(page1.statusCode).toBe(200);
+      const d1 = page1.body as any;
+      expect(d1.items.length).toBe(2);
+      expect(d1.totalServices).toBe(3);
+      expect(d1.evaluatedServices).toBe(1);
+      expect(d1.hasNext).toBe(true);
+
+      const page2 = await serviceMetricsController.handle({
+        shopId,
+        userId: ownerId,
+        source: "CUSTOMER",
+        page: 2,
+        limit: 2,
+      });
+      const d2 = page2.body as any;
+      expect(d2.items.length).toBe(1);
+      expect(d2.totalServices).toBe(3);
+      expect(d2.hasNext).toBe(false);
     });
   });
 });

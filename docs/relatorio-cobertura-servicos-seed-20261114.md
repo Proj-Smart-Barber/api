@@ -104,4 +104,51 @@ Para os 60 serviços das 10 lojas originais, existem duas opções operacionais:
 
 ## 7. Conclusão
 
-Com a unificação canônica das leituras na API, a criação dos endpoints gerenciais de insights, o novo painel privado do proprietário no frontend e a identificação confiável da origem (`CUSTOMER` vs `DEMO`), todos os 810 serviços avaliados apresentam notas consistentes em todas as telas, e os 60 serviços sem notas são tratados com total clareza técnica e transparência gerencial.
+Com a unificação canônica das leituras na API, a criação dos endpoints gerenciais de insights, o novo painel privado do proprietário no frontend e a identificação confiável da origem (`CUSTOMER` vs `DEMO` vs `UNKNOWN`), todos os 810 serviços avaliados apresentam notas consistentes em todas as telas, e os 60 serviços sem notas são tratados com total clareza técnica e transparência gerencial.
+
+---
+
+## 8. Auditoria Reprodutível, Plano de Índices (EXPLAIN) e Sincronização de Cache
+
+### 8.1 Consultas SQL Reprodutíveis para Auditoria de Cobertura e Procedência
+
+```sql
+-- 1. Serviços ativos sem avaliações publicadas no catálogo
+SELECT b.id AS barbershop_id, b.name AS barbershop_name, s.id AS service_id, s.name AS service_name
+FROM services s
+INNER JOIN barbershops b ON b.id = s.barbershop_id
+WHERE s.is_active = true
+  AND NOT EXISTS (
+    SELECT 1
+    FROM review_items ri
+    INNER JOIN reviews r ON r.id = ri.review_id
+    WHERE ri.target_type = 'SERVICE'
+      AND ri.target_id = s.id
+      AND r.status = 'PUBLISHED'
+  )
+ORDER BY b.name, s.name;
+
+-- 2. Taxa de resposta por procedência verificável (CUSTOMER vs DEMO vs UNKNOWN)
+SELECT
+  b.source AS booking_source,
+  COUNT(DISTINCT b.id) AS cohort_completed_bookings,
+  COUNT(DISTINCT CASE WHEN r.id IS NOT NULL AND r.source = b.source THEN b.id END) AS reviewed_bookings
+FROM bookings b
+LEFT JOIN reviews r ON r.booking_id = b.id AND r.status = 'PUBLISHED'
+WHERE b.barbershop_id = :shop_id
+  AND b.status = 'COMPLETED'
+GROUP BY b.source;
+```
+
+### 8.2 Análise EXPLAIN ANALYZE (Ambiente Isolado PostgreSQL)
+
+Executado em instância PostgreSQL descartável (`127.0.0.1:55432`) sobre as consultas de taxa de resposta e `NOT EXISTS`:
+- Consulta de numerador (`COUNT(DISTINCT r.booking_id)` com `reviews` + `bookings`): utiliza `Index Scan using reviews_barbershop_status_created_idx` (Execution Time: `0.465 ms`).
+- Consulta de atendimentos sem avaliação (`NOT EXISTS` sobre `bookings` + `reviews`): utiliza `Hash Right Anti Join` + `Bitmap Index Scan on reviews_barbershop_status_created_idx` (Execution Time: `0.218 ms`).
+- Novo índice composto `bookings_barbershop_source_status_idx` em `(barbershop_id, source, status)` garante filtragem direta por unidade e procedência no denominador.
+
+### 8.3 Cache, Invalidação e Sincronização com Explore
+
+- **Painel do Proprietário (`owner-reviews`)**: Todas as mutações de avaliação (criação, edição, exclusão, moderação e denúncia) invalidam o prefixo `['owner-reviews', barbershopId]`, além de `['reviews']` e `['barbershop']`. As chaves gerenciais incluem `actorId` para descartar dados privados na troca de conta ou unidade.
+- **Cabeçalhos HTTP**: Os 4 endpoints gerenciais retornam `Cache-Control: no-store, private`.
+- **Cargas Externas / Explore**: Após cargas externas (seed ou backfill), snapshots de Explore ou projeções públicas que dependem de cache HTTP/CDN devem aguardar expiração do TTL ou passar por invalidação/revalidação explícita antes de comparar contagens com o painel gerencial (que lê sempre em tempo real das tabelas canônicas).

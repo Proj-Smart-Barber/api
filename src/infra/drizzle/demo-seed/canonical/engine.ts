@@ -804,6 +804,7 @@ export class DemoSeedEngine {
               totalDurationInMinutes: serviceRow.durationInMinutes,
               createdByUserId: customerId,
               status: bookingFixture.status ?? "CONFIRMED",
+              source: "DEMO",
             })
             .returning({ id: bookings.id });
 

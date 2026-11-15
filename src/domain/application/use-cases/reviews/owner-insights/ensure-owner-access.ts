@@ -20,15 +20,14 @@ export async function ensureOwnerAccess(
     return left(new ResourceNotFoundError("Barbearia não encontrada."));
   }
 
-  const isDirectOwner = barbershop.ownerId.toString() === actorId;
   const actorMembership = await membershipsRepository.findByBarbershopAndUser(
     shopId,
     actorId,
   );
-  const isMembershipOwner =
+  const isActiveOwnerMembership =
     actorMembership?.role === "OWNER" && actorMembership?.state === "ACTIVE";
 
-  if (!isDirectOwner && !isMembershipOwner) {
+  if (!isActiveOwnerMembership) {
     return left(
       new NotAllowedError(
         "Apenas o proprietário ativo da unidade pode acessar os dados gerenciais de avaliações.",
