@@ -4,7 +4,7 @@ import { emailVerificationCodesMigration } from "./email-verification-codes-migr
 
 import { financeMigration } from "./finance-migration";
 
-export const SCHEMA_MIGRATION_VERSION = "2026-11-14-reviews-source-provenance-v1";
+export const SCHEMA_MIGRATION_VERSION = "2026-11-15-bookings-source-provenance-v1";
 const MIGRATION_ADVISORY_LOCK_KEY = 88421901;
 
 export async function isSchemaReady(targetDb: any = db): Promise<boolean> {
@@ -1044,6 +1044,28 @@ CREATE TABLE IF NOT EXISTS media_video_jobs(media_id uuid PRIMARY KEY REFERENCES
           FROM "demo_seed_registry" reg
           WHERE reg.table_name = 'reviews' AND reg.record_id = r."id";
         END IF;
+      END $$;
+
+      -- Bookings provenance: source column & backfill from demo_seed_registry / reviews
+      ALTER TABLE "bookings" ADD COLUMN IF NOT EXISTS "source" text NOT NULL DEFAULT 'CUSTOMER';
+      CREATE INDEX IF NOT EXISTS "bookings_barbershop_source_status_idx"
+        ON "bookings" ("barbershop_id", "source", "status");
+
+      DO $$
+      BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'demo_seed_registry') THEN
+          UPDATE "bookings" b
+          SET "source" = 'DEMO'
+          FROM "demo_seed_registry" reg
+          WHERE reg.table_name = 'bookings' AND reg.record_id = b."id";
+        END IF;
+
+        UPDATE "bookings" b
+        SET "source" = 'DEMO'
+        FROM "reviews" r
+        WHERE r."booking_id" = b."id"
+          AND r."source" = 'DEMO'
+          AND b."source" <> 'DEMO';
       END $$;
 
       CREATE TABLE IF NOT EXISTS "schema_migrations_meta" (

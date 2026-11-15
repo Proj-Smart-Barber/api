@@ -3,23 +3,28 @@ import type { BarbershopsRepository } from "../../../repositories/barbershops-re
 import type { MembershipsRepository } from "../../../repositories/memberships-repository";
 import type {
   ReviewInsightsRepository,
+  ReviewSourceFilter,
   ServiceMetricsResponse,
 } from "../../../repositories/review-insights-repository";
 import type { NotAllowedError } from "../../_errors/not-allowed-error";
 import type { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
+import type { ValidationError } from "../../_errors/validation-error";
 import { ensureOwnerAccess } from "./ensure-owner-access";
+import { resolveOptionalPeriod } from "./period-utils";
 
 export interface GetOwnerServiceMetricsDTO {
   shopId: string;
   actorId: string;
   startDate?: string | Date;
   endDate?: string | Date;
-  source?: "CUSTOMER" | "DEMO" | "ALL";
+  source?: ReviewSourceFilter;
   includeInactive?: boolean;
+  page?: number;
+  limit?: number;
 }
 
 export type GetOwnerServiceMetricsResponse = Either<
-  ResourceNotFoundError | NotAllowedError,
+  ResourceNotFoundError | NotAllowedError | ValidationError,
   ServiceMetricsResponse
 >;
 
@@ -37,6 +42,8 @@ export class GetOwnerServiceMetricsUseCase {
     endDate,
     source = "CUSTOMER",
     includeInactive = false,
+    page = 1,
+    limit = 20,
   }: GetOwnerServiceMetricsDTO): Promise<GetOwnerServiceMetricsResponse> {
     const authResult = await ensureOwnerAccess(
       this.barbershopsRepository,
@@ -49,15 +56,26 @@ export class GetOwnerServiceMetricsUseCase {
       return left(authResult.value);
     }
 
-    const resolvedStartDate = startDate ? new Date(startDate) : undefined;
-    const resolvedEndDate = endDate ? new Date(endDate) : undefined;
+    const { barbershop } = authResult.value;
+    const periodResult = resolveOptionalPeriod({
+      startDate,
+      endDate,
+      timezone: barbershop.timezone,
+      defaultDays: 30,
+    });
+
+    if (periodResult.isLeft()) {
+      return left(periodResult.value);
+    }
 
     const result = await this.reviewInsightsRepository.getServiceMetrics({
       barbershopId: shopId,
-      startDate: resolvedStartDate,
-      endDate: resolvedEndDate,
+      startDate: periodResult.value.startDate,
+      endDate: periodResult.value.endDate,
       source,
       includeInactive,
+      page,
+      limit,
     });
 
     return right(result);

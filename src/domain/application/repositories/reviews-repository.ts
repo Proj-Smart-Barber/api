@@ -67,6 +67,7 @@ export interface ReviewsRepository {
   ): Promise<boolean>;
   deleteAtomic(review: Review, expectedVersion: number): Promise<boolean>;
   createReport(report: ReviewReport): Promise<void>;
+  hasReportFromUser?(reviewId: string, reporterId: string): Promise<boolean>;
   createModerationLog(log: ReviewModerationLog): Promise<void>;
   moderateReview(
     review: Review,

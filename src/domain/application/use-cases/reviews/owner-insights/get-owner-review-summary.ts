@@ -3,22 +3,27 @@ import type { BarbershopsRepository } from "../../../repositories/barbershops-re
 import type { MembershipsRepository } from "../../../repositories/memberships-repository";
 import type {
   ReviewInsightsRepository,
+  ReviewSourceFilter,
   ReviewSummaryMetrics,
+  ReviewTimeSeriesGranularity,
 } from "../../../repositories/review-insights-repository";
 import type { NotAllowedError } from "../../_errors/not-allowed-error";
 import type { ResourceNotFoundError } from "../../_errors/resource-not-found-error";
+import type { ValidationError } from "../../_errors/validation-error";
 import { ensureOwnerAccess } from "./ensure-owner-access";
+import { resolveRequiredPeriod } from "./period-utils";
 
 export interface GetOwnerReviewSummaryDTO {
   shopId: string;
   actorId: string;
   startDate?: string | Date;
   endDate?: string | Date;
-  source?: "CUSTOMER" | "DEMO" | "ALL";
+  source?: ReviewSourceFilter;
+  granularity?: ReviewTimeSeriesGranularity;
 }
 
 export type GetOwnerReviewSummaryResponse = Either<
-  ResourceNotFoundError | NotAllowedError,
+  ResourceNotFoundError | NotAllowedError | ValidationError,
   ReviewSummaryMetrics
 >;
 
@@ -35,6 +40,7 @@ export class GetOwnerReviewSummaryUseCase {
     startDate,
     endDate,
     source = "CUSTOMER",
+    granularity = "WEEK",
   }: GetOwnerReviewSummaryDTO): Promise<GetOwnerReviewSummaryResponse> {
     const authResult = await ensureOwnerAccess(
       this.barbershopsRepository,
@@ -48,18 +54,30 @@ export class GetOwnerReviewSummaryUseCase {
     }
 
     const { barbershop } = authResult.value;
+    const periodResult = resolveRequiredPeriod({
+      startDate,
+      endDate,
+      timezone: barbershop.timezone,
+      defaultDays: 30,
+    });
 
-    const resolvedEndDate = endDate ? new Date(endDate) : new Date();
-    const resolvedStartDate = startDate
-      ? new Date(startDate)
-      : new Date(resolvedEndDate.getTime() - 30 * 24 * 60 * 60 * 1000);
+    if (periodResult.isLeft()) {
+      return left(periodResult.value);
+    }
+
+    const {
+      startDate: resolvedStartDate,
+      endDate: resolvedEndDate,
+      timezone,
+    } = periodResult.value;
 
     const summary = await this.reviewInsightsRepository.getSummaryMetrics({
       barbershopId: shopId,
       startDate: resolvedStartDate,
       endDate: resolvedEndDate,
       source,
-      timezone: barbershop.timezone || "America/Sao_Paulo",
+      timezone,
+      granularity,
     });
 
     return right(summary);

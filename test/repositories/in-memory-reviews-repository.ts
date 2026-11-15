@@ -394,6 +394,14 @@ export class InMemoryReviewsRepository implements ReviewsRepository {
     this.reports.push(report);
   }
 
+  async hasReportFromUser(reviewId: string, reporterId: string): Promise<boolean> {
+    return this.reports.some(
+      (r) =>
+        r.reviewId.toString() === reviewId &&
+        r.reporterId.toString() === reporterId,
+    );
+  }
+
   async createModerationLog(log: ReviewModerationLog): Promise<void> {
     this.moderationLogs.push(log);
   }

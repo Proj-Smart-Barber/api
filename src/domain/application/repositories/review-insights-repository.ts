@@ -6,6 +6,18 @@ export type StarDistribution = {
   5: number;
 };
 
+export type ReviewDataSource = "CUSTOMER" | "DEMO" | "UNKNOWN";
+export type ReviewSourceFilter = "CUSTOMER" | "DEMO" | "UNKNOWN" | "ALL";
+export type ReviewTimeSeriesGranularity = "WEEK" | "MONTH";
+
+export interface ReviewTimeSeriesPoint {
+  bucketStart: string;
+  bucketEnd: string;
+  label: string;
+  reviewCount: number;
+  averageRating: number | null;
+}
+
 export interface ReviewSummaryMetrics {
   metrics: {
     averageRating: number | null;
@@ -22,16 +34,20 @@ export interface ReviewSummaryMetrics {
     ratingDiff: number | null;
     reviewCountDiff: number;
   };
+  timeSeries: ReviewTimeSeriesPoint[];
+  granularity: ReviewTimeSeriesGranularity;
   responseRate: {
     cohortCompletedBookings: number;
     reviewedBookings: number;
     ratePercentage: number | null;
     cohortDefinition: string;
+    originScope: ReviewSourceFilter;
   };
   serviceCoverage: {
     totalActiveServices: number;
     evaluatedActiveServices: number;
     coveragePercentage: number | null;
+    scope: "PERIOD";
   };
   latestReview: {
     id: string;
@@ -39,14 +55,16 @@ export interface ReviewSummaryMetrics {
     rating: number;
     comment: string | null;
     customerName: string;
-    source: "CUSTOMER" | "DEMO";
+    source: ReviewDataSource;
   } | null;
   flags: {
     hasAnyReviews: boolean;
     hasDemoReviews: boolean;
     hasCustomerReviews: boolean;
+    hasUnknownReviews: boolean;
     isDemoEnvironment: boolean;
-    appliedSource: "CUSTOMER" | "DEMO" | "ALL";
+    isMixedEnvironment: boolean;
+    appliedSource: ReviewSourceFilter;
   };
   period: {
     startDate: string;
@@ -75,12 +93,17 @@ export interface ServiceMetricsResponse {
   totalServices: number;
   evaluatedServices: number;
   coveragePercentage: number | null;
+  page: number;
+  limit: number;
+  total: number;
+  hasNext: boolean;
 }
 
 export interface ProfessionalReviewMetricItem {
   professionalId: string;
   name: string;
   avatarUrl: string | null;
+  isActive: boolean;
   averageRating: number | null;
   reviewCount: number;
   distribution: StarDistribution;
@@ -92,6 +115,10 @@ export interface ProfessionalReviewMetricItem {
 export interface ProfessionalMetricsResponse {
   items: ProfessionalReviewMetricItem[];
   totalProfessionals: number;
+  page: number;
+  limit: number;
+  total: number;
+  hasNext: boolean;
 }
 
 export interface OwnerFeedbackReviewItem {
@@ -104,7 +131,7 @@ export interface OwnerFeedbackReviewItem {
 export interface OwnerFeedbackItem {
   id: string;
   bookingId: string;
-  source: "CUSTOMER" | "DEMO";
+  source: ReviewDataSource;
   createdAt: string;
   customer: {
     name: string;
@@ -128,30 +155,35 @@ export interface ReviewInsightsRepository {
     barbershopId: string;
     startDate: Date;
     endDate: Date;
-    source: "CUSTOMER" | "DEMO" | "ALL";
+    source: ReviewSourceFilter;
     timezone: string;
+    granularity?: ReviewTimeSeriesGranularity;
   }): Promise<ReviewSummaryMetrics>;
 
   getServiceMetrics(params: {
     barbershopId: string;
     startDate?: Date;
     endDate?: Date;
-    source: "CUSTOMER" | "DEMO" | "ALL";
+    source: ReviewSourceFilter;
     includeInactive?: boolean;
+    page?: number;
+    limit?: number;
   }): Promise<ServiceMetricsResponse>;
 
   getProfessionalMetrics(params: {
     barbershopId: string;
     startDate?: Date;
     endDate?: Date;
-    source: "CUSTOMER" | "DEMO" | "ALL";
+    source: ReviewSourceFilter;
+    page?: number;
+    limit?: number;
   }): Promise<ProfessionalMetricsResponse>;
 
   getFeedbacks(params: {
     barbershopId: string;
     startDate?: Date;
     endDate?: Date;
-    source: "CUSTOMER" | "DEMO" | "ALL";
+    source: ReviewSourceFilter;
     targetType?: "ALL" | "BARBERSHOP" | "BARBER" | "SERVICE";
     targetId?: string;
     rating?: number;

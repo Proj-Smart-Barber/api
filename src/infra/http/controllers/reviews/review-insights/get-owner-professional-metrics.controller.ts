@@ -8,7 +8,7 @@ import {
   type HttpResponse,
 } from "../../../../../core/infra/http-response";
 import { NotAllowedError } from "../../../../../domain/application/use-cases/_errors/not-allowed-error";
-import { ResourceNotFoundError } from "../../../../../domain/application/use-cases/_errors/resource-not-found-error";
+import { ValidationError } from "../../../../../domain/application/use-cases/_errors/validation-error";
 import type { GetOwnerProfessionalMetricsUseCase } from "../../../../../domain/application/use-cases/reviews/owner-insights/get-owner-professional-metrics";
 
 const querySchema = z.object({
@@ -16,7 +16,12 @@ const querySchema = z.object({
   userId: z.string().uuid({ message: "Usuário não autenticado." }),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
-  source: z.enum(["CUSTOMER", "DEMO", "ALL"]).optional().default("CUSTOMER"),
+  source: z
+    .enum(["CUSTOMER", "DEMO", "UNKNOWN", "ALL"])
+    .optional()
+    .default("CUSTOMER"),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 
 export class GetOwnerProfessionalMetricsController implements Controller {
@@ -32,10 +37,15 @@ export class GetOwnerProfessionalMetricsController implements Controller {
         startDate: parsed.startDate,
         endDate: parsed.endDate,
         source: parsed.source,
+        page: parsed.page,
+        limit: parsed.limit,
       });
 
       if (result.isLeft()) {
         const error = result.value;
+        if (error instanceof ValidationError) {
+          return clientError({ error: "VALIDATION_ERROR", message: error.message });
+        }
         if (error instanceof NotAllowedError) {
           return forbidden({ error: error.message, message: error.message });
         }

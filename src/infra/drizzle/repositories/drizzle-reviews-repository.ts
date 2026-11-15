@@ -546,6 +546,20 @@ export class DrizzleReviewsRepository implements ReviewsRepository {
     await this.db.insert(reviewReports).values(data);
   }
 
+  async hasReportFromUser(reviewId: string, reporterId: string): Promise<boolean> {
+    const [existing] = await this.db
+      .select({ id: reviewReports.id })
+      .from(reviewReports)
+      .where(
+        and(
+          eq(reviewReports.reviewId, reviewId),
+          eq(reviewReports.reporterId, reporterId),
+        ),
+      )
+      .limit(1);
+    return Boolean(existing);
+  }
+
   async createModerationLog(log: ReviewModerationLog): Promise<void> {
     const data = ReviewMapper.moderationLogToPersistence(log);
     await this.db.insert(reviewModerationLogs).values(data);
