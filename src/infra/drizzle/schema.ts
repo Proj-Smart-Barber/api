@@ -1111,6 +1111,7 @@ export const reviews = pgTable(
     rating: integer("rating").notNull(),
     comment: text("comment"),
     status: text("status").notNull().default("PUBLISHED"),
+    source: text("source").notNull().default("CUSTOMER"),
     version: integer("version").notNull().default(1),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
@@ -1125,6 +1126,11 @@ export const reviews = pgTable(
       sql`${table.rating} >= 1 AND ${table.rating} <= 5`,
     ),
     index("reviews_barbershop_status_idx").on(table.barbershopId, table.status),
+    index("reviews_barbershop_source_status_idx").on(
+      table.barbershopId,
+      table.source,
+      table.status,
+    ),
     index("reviews_barbershop_status_created_idx").on(
       table.barbershopId,
       table.status,

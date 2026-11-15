@@ -4,7 +4,7 @@ import { emailVerificationCodesMigration } from "./email-verification-codes-migr
 
 import { financeMigration } from "./finance-migration";
 
-export const SCHEMA_MIGRATION_VERSION = "2026-11-13-reviews-multi-target-v1";
+export const SCHEMA_MIGRATION_VERSION = "2026-11-14-reviews-source-provenance-v1";
 const MIGRATION_ADVISORY_LOCK_KEY = 88421901;
 
 export async function isSchemaReady(targetDb: any = db): Promise<boolean> {
@@ -1030,6 +1030,21 @@ CREATE TABLE IF NOT EXISTS media_video_jobs(media_id uuid PRIMARY KEY REFERENCES
         GROUP BY s2."id"
       ) agg
       WHERE s."id" = agg."service_id";
+
+      -- Reviews provenance: source column & backfill from demo_seed_registry
+      ALTER TABLE "reviews" ADD COLUMN IF NOT EXISTS "source" text NOT NULL DEFAULT 'CUSTOMER';
+      CREATE INDEX IF NOT EXISTS "reviews_barbershop_source_status_idx"
+        ON "reviews" ("barbershop_id", "source", "status");
+
+      DO $$
+      BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'demo_seed_registry') THEN
+          UPDATE "reviews" r
+          SET "source" = 'DEMO'
+          FROM "demo_seed_registry" reg
+          WHERE reg.table_name = 'reviews' AND reg.record_id = r."id";
+        END IF;
+      END $$;
 
       CREATE TABLE IF NOT EXISTS "schema_migrations_meta" (
         "id" text PRIMARY KEY,

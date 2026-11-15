@@ -4,17 +4,77 @@ import type {
 } from "../../../domain/application/repositories/services-repository";
 import type { Service } from "../../../domain/enterprise/entities/service";
 import { db } from "../index";
-import { services } from "../schema";
+import { services, reviewItems, reviews } from "../schema";
 import { inArray, eq, and, asc, sql } from "drizzle-orm";
 import { DrizzleServiceMapper } from "../mappers/drizzle-service-mapper";
 
 export class DrizzleServicesRepository implements ServicesRepository {
+  private customDb?: any;
+
+  constructor(customDb?: any) {
+    this.customDb = customDb;
+  }
+
+  private get database() {
+    return this.customDb ?? db;
+  }
+
+  private async enrichServicesWithCanonicalRatings(
+    servicesList: Service[],
+  ): Promise<void> {
+    if (servicesList.length === 0) {
+      return;
+    }
+
+    const serviceIds = servicesList.map((s) => s.id.toString());
+
+    const stats = await this.database
+      .select({
+        serviceId: reviewItems.targetId,
+        avgRating: sql<string>`AVG(${reviewItems.rating})::numeric(10,2)`,
+        count: sql<number>`COUNT(${reviewItems.id})::int`,
+      })
+      .from(reviewItems)
+      .innerJoin(reviews, eq(reviews.id, reviewItems.reviewId))
+      .where(
+        and(
+          eq(reviewItems.targetType, "SERVICE"),
+          inArray(reviewItems.targetId, serviceIds),
+          eq(reviews.status, "PUBLISHED"),
+        ),
+      )
+      .groupBy(reviewItems.targetId);
+
+    const statsMap = new Map<string, { rating: number; count: number }>();
+    for (const row of stats) {
+      if (!row.serviceId) continue;
+      const count = Number(row.count ?? 0);
+      const rawRating = row.avgRating ? parseFloat(String(row.avgRating)) : 0;
+      const rating =
+        count > 0 && !Number.isNaN(rawRating)
+          ? Number(rawRating.toFixed(2))
+          : 0;
+      statsMap.set(row.serviceId, { rating, count });
+    }
+
+    for (const service of servicesList) {
+      const metric = statsMap.get(service.id.toString());
+      if (metric) {
+        service.updateRatingMetrics(metric.rating, metric.count);
+      } else {
+        service.updateRatingMetrics(0, 0);
+      }
+    }
+  }
+
   async create(service: Service): Promise<void> {
-    await db.insert(services).values(DrizzleServiceMapper.toDrizzle(service));
+    await this.database
+      .insert(services)
+      .values(DrizzleServiceMapper.toDrizzle(service));
   }
 
   async save(service: Service): Promise<void> {
-    await db
+    await this.database
       .update(services)
       .set({
         title: service.title,
@@ -31,31 +91,38 @@ export class DrizzleServicesRepository implements ServicesRepository {
   }
 
   async findById(id: string): Promise<Service | null> {
-    const results = await db.select().from(services).where(eq(services.id, id));
+    const results = await this.database
+      .select()
+      .from(services)
+      .where(eq(services.id, id));
 
-    const service = results[0];
+    const serviceRow = results[0];
 
-    if (!service) {
+    if (!serviceRow) {
       return null;
     }
 
-    return DrizzleServiceMapper.toDomain(service);
+    const service = DrizzleServiceMapper.toDomain(serviceRow);
+    await this.enrichServicesWithCanonicalRatings([service]);
+    return service;
   }
 
   async findByIdAndBarbershopId(
     id: string,
     barbershopId: string,
   ): Promise<Service | null> {
-    const [service] = await db
+    const [serviceRow] = await this.database
       .select()
       .from(services)
       .where(and(eq(services.id, id), eq(services.barbershopId, barbershopId)));
 
-    if (!service) {
+    if (!serviceRow) {
       return null;
     }
 
-    return DrizzleServiceMapper.toDomain(service);
+    const service = DrizzleServiceMapper.toDomain(serviceRow);
+    await this.enrichServicesWithCanonicalRatings([service]);
+    return service;
   }
 
   async findManyByIds(ids: string[]): Promise<Service[]> {
@@ -63,12 +130,14 @@ export class DrizzleServicesRepository implements ServicesRepository {
       return [];
     }
 
-    const foundServices = await db
+    const foundServices = await this.database
       .select()
       .from(services)
       .where(inArray(services.id, ids));
 
-    return foundServices.map(DrizzleServiceMapper.toDomain);
+    const domainServices = foundServices.map(DrizzleServiceMapper.toDomain);
+    await this.enrichServicesWithCanonicalRatings(domainServices);
+    return domainServices;
   }
 
   async findManyActiveByBarbershopIdAndIds(
@@ -79,7 +148,7 @@ export class DrizzleServicesRepository implements ServicesRepository {
       return [];
     }
 
-    const foundServices = await db
+    const foundServices = await this.database
       .select()
       .from(services)
       .where(
@@ -90,7 +159,9 @@ export class DrizzleServicesRepository implements ServicesRepository {
         ),
       );
 
-    return foundServices.map(DrizzleServiceMapper.toDomain);
+    const domainServices = foundServices.map(DrizzleServiceMapper.toDomain);
+    await this.enrichServicesWithCanonicalRatings(domainServices);
+    return domainServices;
   }
 
   async findManyByBarbershopId(
@@ -103,14 +174,14 @@ export class DrizzleServicesRepository implements ServicesRepository {
       conditions.push(eq(services.isActive, true));
     }
 
-    const [countResult] = await db
+    const [countResult] = await this.database
       .select({ count: sql<number>`count(*)::int` })
       .from(services)
       .where(and(...conditions));
 
     const total = Number(countResult?.count ?? 0);
 
-    const rows = await db
+    const rows = await this.database
       .select()
       .from(services)
       .where(and(...conditions))
@@ -118,8 +189,11 @@ export class DrizzleServicesRepository implements ServicesRepository {
       .limit(limit)
       .offset((page - 1) * limit);
 
+    const domainServices = rows.map(DrizzleServiceMapper.toDomain);
+    await this.enrichServicesWithCanonicalRatings(domainServices);
+
     return {
-      services: rows.map(DrizzleServiceMapper.toDomain),
+      services: domainServices,
       total,
     };
   }
