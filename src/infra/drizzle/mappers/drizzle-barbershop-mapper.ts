@@ -47,4 +47,13 @@ export class DrizzleBarbershopMapper {
       createdAt: barbershop.createdAt,
     };
   }
+
+  static toHTTP(barbershop: Barbershop) {
+    const reviewCount = barbershop.reviewCount ?? 0;
+    return {
+      ...DrizzleBarbershopMapper.toDrizzle(barbershop),
+      rating: reviewCount > 0 ? Number(barbershop.rating.toFixed(2)) : null,
+      reviewCount,
+    };
+  }
 }

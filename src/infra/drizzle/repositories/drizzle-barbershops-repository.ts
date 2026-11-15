@@ -4,11 +4,11 @@ import {
   Role,
   type Membership,
 } from "../../../domain/enterprise/entities/membership";
-import { eq, or, and, sql } from "drizzle-orm";
+import { eq, or, and, sql, inArray } from "drizzle-orm";
 import { db } from "../index";
 import { DrizzleBarbershopMapper } from "../mappers/drizzle-barbershop-mapper";
 import { DrizzleMembershipMapper } from "../mappers/drizzle-membership-mapper";
-import { barbershops, membership, users } from "../schema";
+import { barbershops, membership, users, reviewItems, reviews } from "../schema";
 
 export class DrizzleBarbershopsRepository implements BarbershopsRepository {
   private customDb?: any;
@@ -61,34 +61,88 @@ export class DrizzleBarbershopsRepository implements BarbershopsRepository {
     });
   }
 
+  private async enrichBarbershopsWithCanonicalRatings(
+    barbershopsList: Barbershop[],
+    tx?: any,
+  ): Promise<void> {
+    if (barbershopsList.length === 0) {
+      return;
+    }
+
+    const executor = tx ?? this.database;
+    const shopIds = barbershopsList.map((b) => b.id.toString());
+
+    const stats = await executor
+      .select({
+        shopId: reviewItems.targetId,
+        avgRating: sql<string>`AVG(${reviewItems.rating})::numeric(10,2)`,
+        count: sql<number>`COUNT(${reviewItems.id})::int`,
+      })
+      .from(reviewItems)
+      .innerJoin(reviews, eq(reviews.id, reviewItems.reviewId))
+      .where(
+        and(
+          eq(reviewItems.targetType, "BARBERSHOP"),
+          inArray(reviewItems.targetId, shopIds),
+          eq(reviews.status, "PUBLISHED"),
+        ),
+      )
+      .groupBy(reviewItems.targetId);
+
+    const statsMap = new Map<string, { rating: number; count: number }>();
+    for (const row of stats) {
+      if (!row.shopId) continue;
+      const count = Number(row.count ?? 0);
+      const rawRating = row.avgRating ? parseFloat(String(row.avgRating)) : 0;
+      const rating =
+        count > 0 && !Number.isNaN(rawRating)
+          ? Number(rawRating.toFixed(2))
+          : 0;
+      statsMap.set(row.shopId, { rating, count });
+    }
+
+    for (const barbershop of barbershopsList) {
+      const metric = statsMap.get(barbershop.id.toString());
+      if (metric) {
+        barbershop.updateRatingMetrics(metric.rating, metric.count);
+      } else {
+        barbershop.updateRatingMetrics(0, 0);
+      }
+    }
+  }
+
   async findById(id: string, tx?: any): Promise<Barbershop | null> {
     const executor = tx ?? this.database;
-    const [barbershop] = await executor
+    const [barbershopRow] = await executor
       .select()
       .from(barbershops)
       .where(eq(barbershops.id, id));
 
-    if (!barbershop) {
+    if (!barbershopRow) {
       return null;
     }
 
-    return DrizzleBarbershopMapper.toDomain(barbershop);
+    const barbershop = DrizzleBarbershopMapper.toDomain(barbershopRow);
+    await this.enrichBarbershopsWithCanonicalRatings([barbershop], executor);
+    return barbershop;
   }
 
   async findBySlugOrCnpj(
     slug: string,
     cnpj: string,
   ): Promise<Barbershop | null> {
-    const [barbershop] = await this.database
+    const [barbershopRow] = await this.database
       .select()
       .from(barbershops)
       .where(or(eq(barbershops.slug, slug), eq(barbershops.cnpj, cnpj)));
 
-    if (!barbershop) {
+    if (!barbershopRow) {
       return null;
     }
 
-    return DrizzleBarbershopMapper.toDomain(barbershop);
+    const barbershop = DrizzleBarbershopMapper.toDomain(barbershopRow);
+    await this.enrichBarbershopsWithCanonicalRatings([barbershop]);
+    return barbershop;
   }
 
   async findManyByOwnerId(ownerId: string): Promise<Barbershop[]> {
@@ -97,7 +151,9 @@ export class DrizzleBarbershopsRepository implements BarbershopsRepository {
       .from(barbershops)
       .where(eq(barbershops.ownerId, ownerId));
 
-    return results.map(DrizzleBarbershopMapper.toDomain);
+    const domainBarbershops = results.map(DrizzleBarbershopMapper.toDomain);
+    await this.enrichBarbershopsWithCanonicalRatings(domainBarbershops);
+    return domainBarbershops;
   }
 
   async findManyByStaffId(
@@ -114,8 +170,13 @@ export class DrizzleBarbershopsRepository implements BarbershopsRepository {
         and(eq(membership.userId, staffId), eq(membership.state, "ACTIVE")),
       );
 
-    return rows.map((row: any) => ({
-      barbershop: DrizzleBarbershopMapper.toDomain(row.barbershop),
+    const domainBarbershops = rows.map((row: any) =>
+      DrizzleBarbershopMapper.toDomain(row.barbershop),
+    );
+    await this.enrichBarbershopsWithCanonicalRatings(domainBarbershops);
+
+    return rows.map((row: any, index: number) => ({
+      barbershop: domainBarbershops[index],
       role: row.role,
     }));
   }

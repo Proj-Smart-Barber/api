@@ -33,7 +33,7 @@ export class GetBarbershopController implements Controller {
       const barbershop = result.value.barbershop;
 
       return ok({
-        barbershop: DrizzleBarbershopMapper.toDrizzle(barbershop),
+        barbershop: DrizzleBarbershopMapper.toHTTP(barbershop),
       });
     } catch (err: unknown) {
       return fail(err as Error);
