@@ -158,6 +158,7 @@ export class InMemoryBookingsRepository implements BookingsRepository {
     options?: FindManyByCustomerIdOptions,
   ): Promise<BookingDetails[]> {
     let customerBookings = this.items.filter((b) => {
+      if (b.status === "CANCELLED") return false;
       if (b.customerId?.toString() === customerId) return true;
       const bundle = this.createdBundles.find(
         (cb) => cb.booking.id.toString() === b.id.toString(),
@@ -416,6 +417,8 @@ export class InMemoryBookingsRepository implements BookingsRepository {
     }
     if (status) {
       filtered = filtered.filter((b) => b.status === status);
+    } else {
+      filtered = filtered.filter((b) => b.status !== "CANCELLED");
     }
     if (date) {
       filtered = filtered.filter((b) => {

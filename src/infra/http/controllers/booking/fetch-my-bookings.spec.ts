@@ -354,4 +354,25 @@ describe("GET /api/bookings/me — Upcoming & History (Grupo 1)", () => {
     expect(data.bookings[0].id).toBe(inProgressId);
     expect(data.serverTime).toBeDefined();
   });
+  it("exclui canceladas das listas e dos totais sem apagar o registro", async () => {
+    const ids = [randomUUID(), randomUUID(), randomUUID()];
+    testBookingIds.push(...ids);
+    await db.insert(bookings).values(ids.map((id, index) => ({
+      id, barbershopId: shopId, barbermanId: barberUserId, customerId: otherCustomerUserId,
+      date: new Date("2099-04-12T00:00:00Z"), startTime: "10:00", endTime: "10:30",
+      startsAt: new Date("2099-04-12T10:00:00Z"), endsAt: new Date("2099-04-12T10:30:00Z"),
+      timezone: "UTC", status: ["CONFIRMED", "COMPLETED", "CANCELLED"][index],
+      totalPriceInCents: [1000, 2000, 9000][index], totalDurationInMinutes: 30,
+    })));
+    const { DrizzleBookingsRepository } = await import("../../../drizzle/repositories/drizzle-bookings-repository");
+    const repository = new DrizzleBookingsRepository();
+    const result = await repository.findUnitBookings({ barbershopId: shopId, date: "2099-04-12", timezone: "UTC" });
+    expect(result.total).toBe(2);
+    expect(result.summary.totalAmountInCents).toBe(3000);
+    expect(result.items.map(item => item.id)).not.toContain(ids[2]);
+    const personal = await repository.findManyByCustomerId(otherCustomerUserId, { page: 1, limit: 100 });
+    expect(personal.map(item => item.id)).not.toContain(ids[2]);
+    expect((await db.select().from(bookings).where(inArray(bookings.id, [ids[2]]))).length).toBe(1);
+  });
+
 });

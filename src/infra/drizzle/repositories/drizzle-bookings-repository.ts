@@ -758,6 +758,7 @@ export class DrizzleBookingsRepository implements BookingsRepository {
     const offset = (page - 1) * limit;
 
     const customerPredicates = [
+      or(ne(bookings.status, "CANCELLED"), isNull(bookings.status))!,
       or(
         eq(bookings.customerId, customerId),
         eq(shoppingCarts.userId, customerId),
@@ -946,6 +947,8 @@ export class DrizzleBookingsRepository implements BookingsRepository {
 
     if (status) {
       filters.push(eq(bookings.status, status));
+    } else {
+      filters.push(or(ne(bookings.status, "CANCELLED"), isNull(bookings.status))!);
     }
 
     if (date) {
