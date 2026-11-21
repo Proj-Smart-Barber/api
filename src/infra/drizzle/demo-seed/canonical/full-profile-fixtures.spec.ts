@@ -3,9 +3,19 @@ import { SAO_PAULO_DISTRICT_CENTROIDS } from "../district-centroids";
 import {
   buildFullDemoSeedFixtures,
   FULL_DEMO_PROFILE_COUNTS,
+  standardizeDemoServicePrice,
 } from "./full-profile-fixtures";
 
 describe("full regional demo seed profile", () => {
+  it.each([
+    [5664, 5690],
+    [5695, 5699],
+    [5601, 5600],
+    [5600, 5600],
+  ])("rounds %i cents to an allowed price ending in %i", (input, expected) => {
+    expect(standardizeDemoServicePrice(input)).toBe(expected);
+  });
+
   it("builds a deterministic tenfold barbershop catalog with all districts", () => {
     const first = buildFullDemoSeedFixtures();
     const second = buildFullDemoSeedFixtures();
@@ -53,6 +63,11 @@ describe("full regional demo seed profile", () => {
     expect(fixtures.staffs).toHaveLength(466);
     expect(fixtures.customers).toHaveLength(1_012);
     expect(fixtures.services).toHaveLength(962);
+    expect(
+      fixtures.services.every((service) =>
+        [0, 90, 99].includes(service.priceInCents % 100),
+      ),
+    ).toBe(true);
     expect(fixtures.memberships).toHaveLength(474);
     expect(fixtures.schedules).toHaveLength(2_845);
     expect(fixtures.exceptions).toHaveLength(186);
