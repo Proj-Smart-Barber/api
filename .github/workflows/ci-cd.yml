@@ -55,6 +55,14 @@ jobs:
             package-lock.json
           retention-days: 30
 
+      - name: Validar o build da imagem Docker (sem publicar)
+        if: github.event_name == 'pull_request'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: smartbarber-api:pr-${{ github.event.pull_request.number }}
+
   delivery:
     name: CD - publicar imagem Docker (GHCR)
     needs: ci
