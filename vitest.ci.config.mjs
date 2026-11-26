@@ -4,6 +4,11 @@ import { defineConfig } from "vitest/config";
  * Suite de CI: testes unitários com repositórios em memória.
  * Não depende de PostgreSQL, storage externo nem rede.
  */
+// As regras de agenda usam o fuso da barbearia (America/Sao_Paulo); os testes
+// constroem datas no fuso local, então o fuso do processo é fixado aqui para
+// que o resultado seja o mesmo na máquina do desenvolvedor e no runner (UTC).
+process.env.TZ = "America/Sao_Paulo";
+
 export default defineConfig({
   test: {
     globals: true,
