@@ -513,7 +513,10 @@ export class CreateBookingUseCase {
       tx: dto.tx,
     });
 
-    if (overlappingBooking) {
+    if (
+      overlappingBooking &&
+      overlappingBooking.barbershopId.toString() !== targetShopId
+    ) {
       return left(new SlotUnavailableError());
     }
 
