@@ -44,7 +44,7 @@ src/
       services/                        # Domain service interfaces (auth tokens, email, ...)
       use-cases/                       # Business use-cases organized by domain
         _errors/                       # Domain-specific errors (implement UseCaseError)
-        barbershop/ booking/ invitations/ notifications/ schedule/ service/ users/
+        barbershop/ booking/ invitations/ location/ media/ notifications/ reviews/ schedule/ service/ users/
                                        # Each use-case folder: DTO, Response, use-case + colocated .spec.ts
   infra/
     drizzle/                           # Persistence layer
@@ -80,21 +80,30 @@ drizzle/                               # Generated migrations + snapshots
 npm run dev
 
 # Tests
-npm test          # vitest run
+npm test          # vitest run (full suite; DB specs need Postgres on 127.0.0.1:55432)
 npm run test:watch
+npm run test:ci   # offline unit suite used by CI (vitest.ci.config.mjs, no DB/storage)
+
+# Build / run (tsup bundles src/server.ts into dist/server.js)
+npm run build
+npm start
 
 # Database (drizzle-kit), requires DATABASE_URL in .env and Postgres running
-npm run db:seed       # src/infra/drizzle/seed.ts
+npm run db:seed       # canonical demo-seed CLI in --dry-run mode (no writes)
 npm run db:push       # push schema to DB
 npm run db:migrate    # run migrations
 npm run db:generate   # generate migration from schema
 npm run db:studio     # open drizzle studio
 
-# Demo seed (isolated demo data engine)
+# Demo seed (canonical engine: src/infra/drizzle/demo-seed/canonical/)
 npm run db:seed:demo:dry-run   # simulate, no writes
 npm run db:seed:demo:apply     # write (requires confirm secret for remote/production)
 npm run db:seed:demo:verify    # verify generated data
 npm run db:seed:demo:rollback  # remove demo data
+
+# Media
+npm run media:video:worker     # out-of-band video processing worker (`-- --once` for one iteration)
+npm run test:explore:media     # offline Explore/media suite (vitest.media.config.mjs allowlist)
 
 # Lint / format (Biome)
 npm run lint        # biome check .
@@ -125,6 +134,13 @@ Validated at import time by `src/infra/env/index.ts` (Zod); the app fails fast i
 | `VERIFICATION_TOKEN_EXPIRES_IN` | default `1d` | Email verification token TTL |
 | `PASSWORD_RECOVERY_TOKEN_EXPIRES_IN` | default `1h` | Password recovery token TTL |
 | `INVITATION_EXPIRES_IN` | default `7d` | Barbershop invitation TTL |
+| `EMAIL_VERIFICATION_URL` | optional | Empty string is normalized to `undefined` |
+| `STORAGE_ENDPOINT`, `STORAGE_ACCESS_KEY_ID`, `STORAGE_SECRET_ACCESS_KEY`, `STORAGE_STAGING_BUCKET`, `STORAGE_PUBLIC_BUCKET`, `STORAGE_PUBLIC_URL`, `STORAGE_BUCKET` | optional | S3-compatible (R2) storage; media is disabled when unset. Staging and public must be distinct buckets |
+| `STORAGE_REGION` | default `auto` | |
+| `MEDIA_VIDEO_ENABLED` | default `false` | Enable only once the video worker is provisioned |
+| `R2_GLOBAL_BUDGET_BYTES` / `R2_SHOP_BUDGET_BYTES` | optional | Media byte quotas |
+| `CRON_SECRET` | optional | Protects `/api/internal/*` cron endpoints |
+| `SYSTEM_MAINTENANCE_SECRET` | optional | ≥32 chars; read from `process.env` in `app.ts`. Without it `/api/system/*` is unavailable |
 
 ## Coding Conventions
 
@@ -195,10 +211,11 @@ export class CreateUserUseCase {
 - **Validation:** controllers parse input with Zod schemas and return `clientError({ error: z.prettifyError(error) })` on `ZodError`.
 - **Factories:** `src/infra/http/factories/make-*-controller.ts` wire repositories + use-cases into controllers; routes call `adaptRoute(makeXController())`.
 - **Routes:** registered under `/api` in `src/infra/http/routes/index.ts`:
-  - `/users` and alias `/staffs`, `/invitations`, `/notifications`, `/barbershops`, `/bookings`
+  - `/users` and alias `/staffs`, `/invitations`, `/notifications`, `/barbershops`, `/barbers`, `/bookings`, `/media`, `/reviews`, `/operation-attempts`, `/geocoding`
   - `/barbershops/:shopId` (schedule + barbershop invitation routes, `Router({ mergeParams: true })`)
+  - `/internal`: cron/maintenance (`locations/refresh`, run daily by the Vercel cron in `vercel.json`; `storage/cleanup`)
   - Health check at `/`; Swagger UI at `/docs`, spec at `/docs-json`
-- **System endpoints:** `GET /api/system/migrate` (runs idempotent migrations), `GET/POST /api/system/demo-seed` (dry-run / confirmed apply).
+- **System endpoints:** `GET /api/system/migrate` (runs idempotent migrations), `GET/POST /api/system/demo-seed` (dry-run / confirmed apply). They are gated by `SYSTEM_MAINTENANCE_SECRET` (header `x-maintenance-key`). The app waits for `runSchemaMigrations()` before it serves requests; migrations are additive only.
 
 ## Auth & Security
 
@@ -215,6 +232,15 @@ export class CreateUserUseCase {
 - Templates in `src/infra/email/templates/` with render helpers (`render-*-email.tsx`) covered by `.spec.tsx` tests.
 - `test/fakes/fake-email-service.ts` is used in use-case tests.
 
+## Media & Storage
+
+- `StorageService` port → `R2StorageService` (`src/infra/storage/`). `storage-service-factory.ts` returns an `UnconfiguredStorageService` that throws `StorageUnavailableError` when the `STORAGE_*` vars are missing, so media degrades instead of crashing. `GET /api/media/capabilities` reports what is enabled.
+- Upload flow: `POST /api/media/upload-intent` (presigned URL to the **staging** bucket) → client uploads → `POST /api/media/:mediaId/confirm` (server inspects the object and writes processed variants to the **public** bucket). Large videos use resumable multipart sessions (`/multipart`, `/multipart/part`, `/multipart/complete`).
+- Images are processed with `sharp`. Videos are processed by `scripts/media-video-worker.ts` (ffmpeg/ffprobe, DB-backed job queue with leases), which must not run inside a Vercel function.
+- Quotas (`domain/application/services/media-quota.ts`) block new intents above 90% of the budget, counting stored objects plus reservations.
+- Service photos link through `service_media` (up to 6 per service, ordered, with a cover) and must be `READY` media owned by an active OWNER of the shop.
+- Demo-media tooling (`media:prepare`, `media:import`, `media:demo:*`) lives in `scripts/`. See `docs/EXPLORAR_UPLOADS_VIDEOS.md`, `docs/PLANO_IMPORTACAO_MIDIAS_DEMO.md` and `docs/RECONSTRUCAO_BANCOS_DEMO.md`.
+
 ## Database & Migrations
 
 - Schema, enums (`role`, `barbershop_status`, `invitation_status`) and relations live in `src/infra/drizzle/schema.ts`. Core tables include `users`, `refresh_tokens`, `email_verifications`, `password_recovery_tokens`, `barbershops`, `membership`, `invitations`, `services`, `service_items`, `shopping_carts`, `bookings`, `barbershop_schedules`, `schedule_exceptions`, `notifications`.
@@ -223,7 +249,7 @@ export class CreateUserUseCase {
 
 ## Demo Seed
 
-`src/infra/drizzle/demo-seed/` generates isolated, namespaced demo data (dry-run, apply, rollback, verify). See `cli.ts` for flags (`--apply`, `--rollback`, `--dry-run`, `--replenish`, `--confirm=<secret>`). It writes `.demo-seed-credentials.json` and `.demo-seed-manifest.json` (both gitignored) and refuses remote/production writes without the confirm secret (`CONFIRMAR_SEED_DEMO_PRODUCAO`).
+`src/infra/drizzle/demo-seed/canonical/` is the active engine behind every `db:seed*` script. It generates isolated, namespaced demo data (dry-run, apply, rollback, verify). The top-level `demo-seed/cli.ts`/`engine.ts` and `drizzle/seed.ts` are legacy. See `canonical/cli.ts` for flags (`--apply`, `--rollback`, `--dry-run`, `--replenish`, `--confirm=<secret>`). It writes `.demo-seed-credentials.json` and `.demo-seed-manifest.json` (both gitignored) and refuses remote/production writes without the confirm secret (`CONFIRMAR_SEED_DEMO_PRODUCAO`).
 
 ## Testing
 
@@ -243,6 +269,8 @@ export class CreateUserUseCase {
 
 - `vercel.json` builds `src/app.ts` with `@vercel/node` and rewrites all paths to it; `src/server.ts` is used for local/runtime process listening.
 - In production the DB client uses the Neon serverless driver; locally it uses node-postgres.
+- `Dockerfile` (multi-stage, `node:24-slim`) builds with `npm run build` and runs `node dist/server.js` on port 3333.
+- CI/CD: `.github/workflows/ci-cd.yml`. On PRs to `main` and pushes to `main` the `ci` job runs `npm ci` → `npm run test:ci` → `npm run build` → uploads `dist/` as an Actions artifact. On pushes to `main` only, the `delivery` job (`needs: ci`) publishes the Docker image to GHCR (`ghcr.io/proj-smart-barber/api`, tags `latest`, `v1.0.<run_number>`, `sha-<short>`). Secrets: `JWT_SECRET_TEST`, `RESEND_API_KEY_TEST` (optional, defaults exist); variables: `NODE_VERSION`, `APP_URL`.
 
 ## Git Conventions
 

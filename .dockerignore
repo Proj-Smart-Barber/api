@@ -1,0 +1,13 @@
+node_modules
+dist
+coverage
+.git
+.github
+.husky
+.env*
+.vercel
+.media-import
+assets/demo-media
+.demo-seed-*.json
+docs
+*.dump
