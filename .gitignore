@@ -28,3 +28,4 @@ scripts/review-*.cjs
 /benchmark-*.json
 /index-assessment.json
 /index-candidate-definitions.json
+dist
